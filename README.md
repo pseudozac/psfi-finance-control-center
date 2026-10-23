@@ -1,5 +1,7 @@
 # PsFi — Finance Control Center
 
+**Live demo:** [pseudo-fi.vercel.app](https://pseudo-fi.vercel.app/)
+
 A responsive, interactive personal finance dashboard designed for India. It uses INR throughout and runs entirely in your browser. Your plan is held in local page state; this starter does not connect to a bank or store data on a server.
 
 ## What you can do
@@ -52,4 +54,3 @@ npm run preview
 
 - React 18, TypeScript, Vite 6, Recharts, Lucide icons.
 - Static client-side app; no API keys, backend, or database required.
-
