@@ -20,7 +20,10 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('Overview')
   const [notice, setNotice] = useState('')
   const [mobileMenu, setMobileMenu] = useState(false)
-  const [profileName, setProfileName] = useState(() => localStorage.getItem('psfi-profile-name') || 'Aditya Sharma')
+  const [profileName, setProfileName] = useState(() => {
+    const savedName = localStorage.getItem('psfi-profile-name')
+    return savedName && savedName !== 'Aditya Sharma' ? savedName : 'Pseudo'
+  })
   const [profileDraft, setProfileDraft] = useState(profileName)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
@@ -85,5 +88,3 @@ export default function App() {
 function Metric({ icon: Icon, label, amount, note, tone }: { icon: typeof Wallet; label: string; amount: string; note: string; tone: string }) { return <section className="card metric-card"><div className={`metric-icon ${tone}`}><Icon size={17}/></div><div className="eyebrow muted">{label}</div><strong>{amount}</strong><span>{note}</span></section> }
 function CategoryRow({ icon: Icon, label, value, color, onChange }: { icon: typeof Home; label: string; value: number; color: string; onChange: (v: string) => void }) { return <label className="category-row"><span className="category-color" style={{ background: color }}/><Icon size={15} className="category-icon"/><span className="category-name">{label}</span><input aria-label={`${label} monthly spending`} type="number" min="0" step="500" value={value} onChange={e => onChange(e.target.value)}/><span className="category-edit">₹</span></label> }
 function SliderRow({ label, value, max, onChange }: { label: string; value: number; max: number; onChange: (v: string) => void }) { return <label className="slider-row"><span>{label}</span><b>{inr(value)}</b><input type="range" min="0" max={max} step="500" value={Math.min(value, max)} onChange={e => onChange(e.target.value)} style={{ '--range': `${max ? Math.min(value, max) / max * 100 : 0}%` } as React.CSSProperties}/></label> }
-
-
