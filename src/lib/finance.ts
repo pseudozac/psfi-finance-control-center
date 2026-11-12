@@ -1,8 +1,13 @@
 import type {
   BudgetRuleAnalysis,
+  CustomExpenseItem,
   DebtPayoffResult,
+  EmergencyStressTestResult,
+  ExpenseBreakdown,
   FinancePlan,
   FinanceSummary,
+  FireAnalysis,
+  FireMilestone,
   MonthlyProjectionPoint,
   PlanPreset,
   TaxComparisonResult,
@@ -22,6 +27,7 @@ export const DEFAULT_PLAN: FinancePlan = {
     transport: 6_500,
     lifestyle: 10_000,
     insurance: 4_000,
+    custom: [],
   },
   savings: {
     emergencyFundBalance: 240_000,
@@ -39,6 +45,9 @@ export const DEFAULT_PLAN: FinancePlan = {
   tax: {
     deductions80C: 150_000,
     deductions80D: 25_000,
+    deductionsNPS: 50_000,
+    rentPaidMonthly: 28_000,
+    isMetroCity: true,
   },
 };
 
@@ -56,6 +65,7 @@ export const SCRATCH_PLAN: FinancePlan = {
     transport: 0,
     lifestyle: 0,
     insurance: 0,
+    custom: [],
   },
   savings: {
     emergencyFundBalance: 0,
@@ -73,6 +83,9 @@ export const SCRATCH_PLAN: FinancePlan = {
   tax: {
     deductions80C: 0,
     deductions80D: 0,
+    deductionsNPS: 0,
+    rentPaidMonthly: 0,
+    isMetroCity: false,
   },
 };
 
@@ -91,9 +104,24 @@ export function sumValues(record: Record<string, number>): number {
   return Object.values(record).reduce((acc, val) => acc + (Number.isFinite(val) ? val : 0), 0);
 }
 
+export function calculateTotalMonthlyExpenses(expenses: ExpenseBreakdown): number {
+  const base =
+    expenses.housing +
+    expenses.groceries +
+    expenses.utilities +
+    expenses.transport +
+    expenses.lifestyle +
+    expenses.insurance;
+  const customTotal = (expenses.custom ?? []).reduce(
+    (sum, item) => sum + (Number.isFinite(item.amount) ? item.amount : 0),
+    0
+  );
+  return base + customTotal;
+}
+
 export function calculateSummary(plan: FinancePlan): FinanceSummary {
   const monthlyIncome = sumValues(plan.income as unknown as Record<string, number>);
-  const monthlyExpenses = sumValues(plan.expenses as unknown as Record<string, number>);
+  const monthlyExpenses = calculateTotalMonthlyExpenses(plan.expenses);
   const monthlySurplus = monthlyIncome - monthlyExpenses;
   const savingsRatePercent =
     monthlyIncome > 0
@@ -165,6 +193,115 @@ export function calculateProjections(
   return points;
 }
 
+export function calculateFireAnalysis(plan: FinancePlan): FireAnalysis {
+  const summary = calculateSummary(plan);
+  const annualLivingExpenses = summary.monthlyExpenses * 12;
+  const fireTarget = Math.round(annualLivingExpenses * 25);
+  const leanFireTarget = Math.round(annualLivingExpenses * 20);
+  const fatFireTarget = Math.round(annualLivingExpenses * 35);
+  const currentLiquidNetWorth = plan.savings.emergencyFundBalance;
+
+  const milestoneConfigs = [
+    { id: '10l', label: '₹10 Lakhs (First Milestone)', targetAmount: 1_000_000 },
+    { id: '25l', label: '₹25 Lakhs (Quarter Crore)', targetAmount: 2_500_000 },
+    { id: '50l', label: '₹50 Lakhs (Half Crore)', targetAmount: 5_000_000 },
+    { id: '1cr', label: '₹1 Crore (The Landmark)', targetAmount: 10_000_000 },
+    { id: 'fire', label: `FIRE Target (${formatINR(fireTarget)})`, targetAmount: fireTarget },
+    { id: '2.5cr', label: '₹2.5 Crores (Executive Freedom)', targetAmount: 25_000_000 },
+  ];
+
+  const monthlyRate = plan.savings.expectedReturnPercent / 100 / 12;
+  const stepUpFactor = 1 + plan.savings.stepUpSipPercent / 100;
+  let corpus = currentLiquidNetWorth;
+  let currentSip = plan.savings.monthlySip;
+
+  const milestoneMonths: Record<string, number | null> = {};
+  for (const m of milestoneConfigs) {
+    milestoneMonths[m.id] = corpus >= m.targetAmount ? 0 : null;
+  }
+
+  const maxMonths = 360; // 30 years simulation
+  for (let m = 1; m <= maxMonths; m++) {
+    if (m > 1 && (m - 1) % 12 === 0) {
+      currentSip *= stepUpFactor;
+    }
+    const monthlyContribution = plan.savings.monthlySavings + currentSip;
+    corpus = corpus * (1 + monthlyRate) + monthlyContribution;
+
+    for (const target of milestoneConfigs) {
+      if (milestoneMonths[target.id] === null && corpus >= target.targetAmount) {
+        milestoneMonths[target.id] = m;
+      }
+    }
+  }
+
+  const milestones: FireMilestone[] = milestoneConfigs.map((t) => {
+    const month = milestoneMonths[t.id];
+    return {
+      id: t.id,
+      label: t.label,
+      targetAmount: t.targetAmount,
+      month,
+      years: month !== null ? Number((month / 12).toFixed(1)) : null,
+      achieved: currentLiquidNetWorth >= t.targetAmount,
+    };
+  });
+
+  const fireMilestone = milestones.find((m) => m.id === 'fire');
+  const fireProgressPercent =
+    fireTarget > 0 ? Math.min(100, (currentLiquidNetWorth / fireTarget) * 100) : 0;
+
+  return {
+    annualLivingExpenses,
+    fireTarget,
+    leanFireTarget,
+    fatFireTarget,
+    currentLiquidNetWorth,
+    fireProgressPercent,
+    fireEtaMonths: fireMilestone?.month ?? null,
+    fireEtaYears: fireMilestone?.years ?? null,
+    milestones,
+  };
+}
+
+export function calculateEmergencyStressTest(plan: FinancePlan): EmergencyStressTestResult {
+  const liquidReserve = plan.savings.emergencyFundBalance;
+  const debtPayment = plan.debt.cardBalance > 0 ? plan.debt.monthlyPayment : 0;
+
+  // 1. Barebones: Housing + Groceries + Utilities + Min Debt
+  const barebonesMonthly =
+    plan.expenses.housing + plan.expenses.groceries + plan.expenses.utilities + debtPayment;
+
+  // 2. Standard: Essential needs + Term insurance + Transport + Debt
+  const standardMonthly =
+    barebonesMonthly + plan.expenses.insurance + plan.expenses.transport;
+
+  // 3. Full: Everything (including lifestyle & custom) + Debt
+  const fullMonthly = calculateTotalMonthlyExpenses(plan.expenses) + debtPayment;
+
+  const barebonesRunwayMonths =
+    barebonesMonthly > 0 ? Number((liquidReserve / barebonesMonthly).toFixed(1)) : 0;
+  const standardRunwayMonths =
+    standardMonthly > 0 ? Number((liquidReserve / standardMonthly).toFixed(1)) : 0;
+  const fullRunwayMonths =
+    fullMonthly > 0 ? Number((liquidReserve / fullMonthly).toFixed(1)) : 0;
+
+  let status: 'critical' | 'moderate' | 'fortified' = 'moderate';
+  if (fullRunwayMonths < 3) status = 'critical';
+  else if (fullRunwayMonths >= 6) status = 'fortified';
+
+  return {
+    liquidReserve,
+    barebonesMonthly,
+    barebonesRunwayMonths,
+    standardMonthly,
+    standardRunwayMonths,
+    fullMonthly,
+    fullRunwayMonths,
+    status,
+  };
+}
+
 export function calculateDebtPayoff(
   balance: number,
   aprPercent: number,
@@ -180,62 +317,76 @@ export function calculateDebtPayoff(
     };
   }
 
-  const monthlyRate = Math.max(0, aprPercent) / 100 / 12;
-  const monthlyInterestAtStart = balance * monthlyRate;
+  const monthlyRate = aprPercent / 100 / 12;
+  const initialMonthlyInterest = balance * monthlyRate;
 
-  if (monthlyPayment <= 0 || (monthlyRate > 0 && monthlyPayment <= monthlyInterestAtStart)) {
+  if (monthlyPayment <= initialMonthlyInterest) {
     return {
       months: null,
       totalInterest: null,
       totalPaid: null,
-      monthlyInterestAtStart: Math.round(monthlyInterestAtStart),
-      warning: `Payment (${formatINR(monthlyPayment)}) does not exceed first-month interest (${formatINR(monthlyInterestAtStart)}).`,
+      monthlyInterestAtStart: Math.round(initialMonthlyInterest),
+      warning: `Monthly payment (${formatINR(monthlyPayment)}) does not exceed initial monthly interest (${formatINR(initialMonthlyInterest)}). Debt will never amortize.`,
     };
   }
 
-  let remaining = balance;
+  let remBalance = balance;
   let totalInterest = 0;
   let totalPaid = 0;
   let months = 0;
+  const maxMonths = 360;
 
-  while (remaining > 0.01 && months < 600) {
-    const interest = remaining * monthlyRate;
-    const principalAndInterest = remaining + interest;
-    const payment = Math.min(monthlyPayment, principalAndInterest);
-    remaining = principalAndInterest - payment;
-    totalInterest += interest;
-    totalPaid += payment;
+  while (remBalance > 0 && months < maxMonths) {
     months += 1;
+    const interest = remBalance * monthlyRate;
+    totalInterest += interest;
+    if (remBalance + interest <= monthlyPayment) {
+      totalPaid += remBalance + interest;
+      remBalance = 0;
+      break;
+    } else {
+      remBalance = remBalance + interest - monthlyPayment;
+      totalPaid += monthlyPayment;
+    }
   }
 
   return {
     months,
     totalInterest: Math.round(totalInterest),
     totalPaid: Math.round(totalPaid),
-    monthlyInterestAtStart: Math.round(monthlyInterestAtStart),
-    warning: null,
+    monthlyInterestAtStart: Math.round(initialMonthlyInterest),
+    warning:
+      months >= maxMonths ? 'Payoff exceeds 30-year horizon. Increase monthly allocation.' : null,
   };
 }
 
-function computeSlabs(taxable: number, slabs: Array<[number, number]>): number {
+function computeSlabs(income: number, slabs: [number, number][]): number {
   let tax = 0;
-  let prevLimit = 0;
+  let previousLimit = 0;
+
   for (const [limit, rate] of slabs) {
-    if (taxable <= prevLimit) break;
-    const chunk = Math.min(taxable, limit) - prevLimit;
-    tax += chunk * rate;
-    prevLimit = limit;
+    if (income > previousLimit) {
+      const taxableInSlab = Math.min(income, limit) - previousLimit;
+      tax += taxableInSlab * rate;
+      previousLimit = limit;
+    } else {
+      break;
+    }
   }
   return tax;
 }
 
 /**
  * Estimates Indian personal income tax under New vs Old regimes (FY 2024-25 / AY 2025-26 baseline).
+ * Enhanced with NPS 80CCD(1B) and HRA exemptions under the Old Regime.
  */
 export function estimateIndianIncomeTax(
   annualGrossIncome: number,
   deductions80C = 0,
-  deductions80D = 0
+  deductions80D = 0,
+  deductionsNPS = 0,
+  rentPaidMonthly = 0,
+  isMetroCity = false
 ): TaxComparisonResult {
   const gross = Math.max(0, annualGrossIncome);
 
@@ -254,10 +405,24 @@ export function estimateIndianIncomeTax(
         ]);
   const newRegimeTax = Math.round(newBaseTax * 1.04); // 4% Health & Education Cess
 
-  // Old Regime: Rs 50,000 standard deduction + capped 80C (1.5L) + 80D (75k)
+  // Old Regime: Rs 50,000 standard deduction + 80C (1.5L) + 80D (75k) + NPS 80CCD(1B) (50k) + HRA
   const capped80C = Math.min(150_000, Math.max(0, deductions80C));
   const capped80D = Math.min(75_000, Math.max(0, deductions80D));
-  const oldTaxable = Math.max(0, gross - 50_000 - capped80C - capped80D);
+  const cappedNPS = Math.min(50_000, Math.max(0, deductionsNPS));
+
+  let hraExemption = 0;
+  if (rentPaidMonthly > 0 && gross > 0) {
+    const annualRent = rentPaidMonthly * 12;
+    const basicEst = gross * 0.5; // typical basic salary ~50% of gross
+    const rentMinusTenPctBasic = Math.max(0, annualRent - basicEst * 0.1);
+    const metroCap = basicEst * (isMetroCity ? 0.5 : 0.4);
+    hraExemption = Math.round(Math.min(rentMinusTenPctBasic, metroCap));
+  }
+
+  const oldTaxable = Math.max(
+    0,
+    gross - 50_000 - capped80C - capped80D - cappedNPS - hraExemption
+  );
   let oldBaseTax =
     oldTaxable <= 500_000
       ? 0
@@ -270,7 +435,8 @@ export function estimateIndianIncomeTax(
   const oldRegimeTax = Math.round(oldBaseTax * 1.04);
 
   const diff = Math.abs(oldRegimeTax - newRegimeTax);
-  const recommended = newRegimeTax < oldRegimeTax ? 'new' : oldRegimeTax < newRegimeTax ? 'old' : 'tie';
+  const recommended =
+    newRegimeTax < oldRegimeTax ? 'new' : oldRegimeTax < newRegimeTax ? 'old' : 'tie';
 
   return {
     annualGrossIncome: Math.round(gross),
@@ -278,6 +444,8 @@ export function estimateIndianIncomeTax(
     newRegimeTax,
     recommended,
     savings: diff,
+    hraExemption,
+    npsDeduction: cappedNPS,
   };
 }
 
@@ -305,6 +473,18 @@ export function validateImportedPlan(raw: unknown): FinancePlan {
     throw new Error('Missing required "income" or "expenses" sections.');
   }
 
+  // Parse custom expenses safely
+  let customExpenses: CustomExpenseItem[] = [];
+  if (Array.isArray(exp.custom)) {
+    customExpenses = exp.custom
+      .filter((c) => c && typeof c === 'object')
+      .map((c) => ({
+        id: String(c.id ?? Math.random().toString(36).substring(2, 7)),
+        name: String(c.name ?? 'Custom Expense'),
+        amount: finiteNonNeg(c.amount, 0),
+      }));
+  }
+
   return {
     schemaVersion: 2,
     income: {
@@ -319,14 +499,23 @@ export function validateImportedPlan(raw: unknown): FinancePlan {
       transport: finiteNonNeg(exp.transport, DEFAULT_PLAN.expenses.transport),
       lifestyle: finiteNonNeg(exp.lifestyle, DEFAULT_PLAN.expenses.lifestyle),
       insurance: finiteNonNeg(exp.insurance, DEFAULT_PLAN.expenses.insurance),
+      custom: customExpenses,
     },
     savings: {
-      emergencyFundBalance: finiteNonNeg(sav.emergencyFundBalance, DEFAULT_PLAN.savings.emergencyFundBalance),
+      emergencyFundBalance: finiteNonNeg(
+        sav.emergencyFundBalance,
+        DEFAULT_PLAN.savings.emergencyFundBalance
+      ),
       monthlySavings: finiteNonNeg(sav.monthlySavings, DEFAULT_PLAN.savings.monthlySavings),
       monthlySip: finiteNonNeg(sav.monthlySip, DEFAULT_PLAN.savings.monthlySip),
       stepUpSipPercent: finiteNonNeg(sav.stepUpSipPercent, DEFAULT_PLAN.savings.stepUpSipPercent),
-      expectedReturnPercent: finiteNonNeg(sav.expectedReturnPercent, DEFAULT_PLAN.savings.expectedReturnPercent),
+      expectedReturnPercent: finiteNonNeg(
+        sav.expectedReturnPercent,
+        DEFAULT_PLAN.savings.expectedReturnPercent
+      ),
       inflationPercent: finiteNonNeg(sav.inflationPercent, DEFAULT_PLAN.savings.inflationPercent),
+      epfMonthly: sav.epfMonthly ? finiteNonNeg(sav.epfMonthly, 0) : undefined,
+      ppfAnnual: sav.ppfAnnual ? finiteNonNeg(sav.ppfAnnual, 0) : undefined,
     },
     debt: {
       cardBalance: finiteNonNeg(debt.cardBalance, DEFAULT_PLAN.debt.cardBalance),
@@ -336,6 +525,9 @@ export function validateImportedPlan(raw: unknown): FinancePlan {
     tax: {
       deductions80C: finiteNonNeg(tax.deductions80C, DEFAULT_PLAN.tax.deductions80C),
       deductions80D: finiteNonNeg(tax.deductions80D, DEFAULT_PLAN.tax.deductions80D),
+      deductionsNPS: finiteNonNeg(tax.deductionsNPS, 0),
+      rentPaidMonthly: finiteNonNeg(tax.rentPaidMonthly, 0),
+      isMetroCity: Boolean(tax.isMetroCity),
     },
   };
 }
@@ -363,13 +555,14 @@ export function calculateBudgetRule(plan: FinancePlan): BudgetRuleAnalysis {
   const totalIncome = plan.income.salary + plan.income.freelance + plan.income.other;
   const safeIncome = Math.max(1, totalIncome);
 
+  const customTotal = (plan.expenses.custom ?? []).reduce((sum, item) => sum + item.amount, 0);
   const needsAmount =
     plan.expenses.housing +
     plan.expenses.groceries +
     plan.expenses.utilities +
     plan.expenses.transport +
     plan.expenses.insurance;
-  const wantsAmount = plan.expenses.lifestyle;
+  const wantsAmount = plan.expenses.lifestyle + customTotal;
   const savingsAmount = plan.savings.monthlySavings + plan.savings.monthlySip;
 
   const needsPercent = Math.round((needsAmount / safeIncome) * 100);
@@ -405,10 +598,10 @@ export const PLAN_PRESETS: PlanPreset[] = [
     plan: {
       schemaVersion: 2,
       income: { salary: 65_000, freelance: 8_000, other: 0 },
-      expenses: { housing: 18_000, groceries: 8_000, utilities: 3_500, transport: 4_500, lifestyle: 9_000, insurance: 2_000 },
+      expenses: { housing: 18_000, groceries: 8_000, utilities: 3_500, transport: 4_500, lifestyle: 9_000, insurance: 2_000, custom: [] },
       savings: { emergencyFundBalance: 120_000, monthlySavings: 10_000, monthlySip: 15_000, stepUpSipPercent: 12, expectedReturnPercent: 13, inflationPercent: 6 },
       debt: { cardBalance: 15_000, aprPercent: 18, monthlyPayment: 5_000 },
-      tax: { deductions80C: 50_000, deductions80D: 15_000 },
+      tax: { deductions80C: 50_000, deductions80D: 15_000, deductionsNPS: 0, rentPaidMonthly: 18_000, isMetroCity: true },
     },
   },
   {
@@ -419,10 +612,10 @@ export const PLAN_PRESETS: PlanPreset[] = [
     plan: {
       schemaVersion: 2,
       income: { salary: 180_000, freelance: 20_000, other: 5_000 },
-      expenses: { housing: 48_000, groceries: 20_000, utilities: 8_000, transport: 9_500, lifestyle: 18_000, insurance: 7_500 },
+      expenses: { housing: 48_000, groceries: 20_000, utilities: 8_000, transport: 9_500, lifestyle: 18_000, insurance: 7_500, custom: [] },
       savings: { emergencyFundBalance: 450_000, monthlySavings: 25_000, monthlySip: 40_000, stepUpSipPercent: 10, expectedReturnPercent: 12, inflationPercent: 6 },
       debt: { cardBalance: 0, aprPercent: 0, monthlyPayment: 0 },
-      tax: { deductions80C: 150_000, deductions80D: 50_000 },
+      tax: { deductions80C: 150_000, deductions80D: 50_000, deductionsNPS: 50_000, rentPaidMonthly: 0, isMetroCity: true },
     },
   },
   {
@@ -433,10 +626,10 @@ export const PLAN_PRESETS: PlanPreset[] = [
     plan: {
       schemaVersion: 2,
       income: { salary: 280_000, freelance: 45_000, other: 15_000 },
-      expenses: { housing: 42_000, groceries: 16_000, utilities: 6_000, transport: 6_000, lifestyle: 15_000, insurance: 6_000 },
+      expenses: { housing: 42_000, groceries: 16_000, utilities: 6_000, transport: 6_000, lifestyle: 15_000, insurance: 6_000, custom: [] },
       savings: { emergencyFundBalance: 800_000, monthlySavings: 40_000, monthlySip: 160_000, stepUpSipPercent: 15, expectedReturnPercent: 13.5, inflationPercent: 6 },
       debt: { cardBalance: 0, aprPercent: 0, monthlyPayment: 0 },
-      tax: { deductions80C: 150_000, deductions80D: 25_000 },
+      tax: { deductions80C: 150_000, deductions80D: 25_000, deductionsNPS: 50_000, rentPaidMonthly: 42_000, isMetroCity: true },
     },
   },
   {
@@ -447,11 +640,10 @@ export const PLAN_PRESETS: PlanPreset[] = [
     plan: {
       schemaVersion: 2,
       income: { salary: 95_000, freelance: 10_000, other: 0 },
-      expenses: { housing: 24_000, groceries: 10_000, utilities: 4_500, transport: 5_000, lifestyle: 6_500, insurance: 3_000 },
+      expenses: { housing: 24_000, groceries: 10_000, utilities: 4_500, transport: 5_000, lifestyle: 6_500, insurance: 3_000, custom: [] },
       savings: { emergencyFundBalance: 75_000, monthlySavings: 5_000, monthlySip: 5_000, stepUpSipPercent: 5, expectedReturnPercent: 11, inflationPercent: 6 },
       debt: { cardBalance: 160_000, aprPercent: 36, monthlyPayment: 25_000 },
-      tax: { deductions80C: 100_000, deductions80D: 15_000 },
+      tax: { deductions80C: 100_000, deductions80D: 15_000, deductionsNPS: 0, rentPaidMonthly: 24_000, isMetroCity: false },
     },
   },
 ];
-

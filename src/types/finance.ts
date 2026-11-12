@@ -1,5 +1,11 @@
 export type ViewPeriod = 'monthly' | 'annual';
 
+export interface CustomExpenseItem {
+  id: string;
+  name: string;
+  amount: number;
+}
+
 export interface IncomeBreakdown {
   salary: number;
   freelance: number;
@@ -13,6 +19,7 @@ export interface ExpenseBreakdown {
   transport: number;
   lifestyle: number;
   insurance: number;
+  custom?: CustomExpenseItem[];
 }
 
 export interface FinancePlan {
@@ -26,6 +33,8 @@ export interface FinancePlan {
     stepUpSipPercent: number;
     expectedReturnPercent: number;
     inflationPercent: number;
+    epfMonthly?: number;
+    ppfAnnual?: number;
   };
   debt: {
     cardBalance: number;
@@ -35,6 +44,9 @@ export interface FinancePlan {
   tax: {
     deductions80C: number;
     deductions80D: number;
+    deductionsNPS?: number;
+    rentPaidMonthly?: number;
+    isMetroCity?: boolean;
   };
 }
 
@@ -69,6 +81,8 @@ export interface TaxComparisonResult {
   newRegimeTax: number;
   recommended: 'new' | 'old' | 'tie';
   savings: number;
+  hraExemption?: number;
+  npsDeduction?: number;
 }
 
 export interface BudgetRuleAnalysis {
@@ -80,6 +94,38 @@ export interface BudgetRuleAnalysis {
   savingsPercent: number;
   score: number;
   rating: 'Optimal' | 'Healthy' | 'Attention Needed';
+}
+
+export interface FireMilestone {
+  id: string;
+  label: string;
+  targetAmount: number;
+  month: number | null;
+  years: number | null;
+  achieved: boolean;
+}
+
+export interface FireAnalysis {
+  annualLivingExpenses: number;
+  fireTarget: number; // 25x annual expenses
+  leanFireTarget: number; // 20x annual expenses
+  fatFireTarget: number; // 35x annual expenses
+  currentLiquidNetWorth: number;
+  fireProgressPercent: number;
+  fireEtaMonths: number | null;
+  fireEtaYears: number | null;
+  milestones: FireMilestone[];
+}
+
+export interface EmergencyStressTestResult {
+  liquidReserve: number;
+  barebonesMonthly: number;
+  barebonesRunwayMonths: number;
+  standardMonthly: number;
+  standardRunwayMonths: number;
+  fullMonthly: number;
+  fullRunwayMonths: number;
+  status: 'critical' | 'moderate' | 'fortified';
 }
 
 export interface PlanPreset {

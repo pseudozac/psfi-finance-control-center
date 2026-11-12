@@ -13,6 +13,8 @@ import {
   Eye,
   EyeOff,
   FolderKanban,
+  Printer,
+  Sparkles,
 } from 'lucide-react';
 import type { FinancePlan, ViewPeriod } from './types/finance';
 import {
@@ -31,6 +33,9 @@ import { PersonaPresetBar } from './components/PersonaPresetBar';
 import { IncomeExpensePanel } from './components/IncomeExpensePanel';
 import { ProjectionSection } from './components/ProjectionSection';
 import { IndiaTaxAndDebtPanel } from './components/IndiaTaxAndDebtPanel';
+import { FireMilestoneTracker } from './components/FireMilestoneTracker';
+import { EmergencyStressTestWidget } from './components/EmergencyStressTestWidget';
+import { WhatIfSandboxModal } from './components/WhatIfSandboxModal';
 
 type AppPhase = 'loading' | 'gateway' | 'dashboard';
 
@@ -59,6 +64,7 @@ export function App() {
   const [period, setPeriod] = useState<ViewPeriod>('monthly');
   const [horizonMonths, setHorizonMonths] = useState<number>(24);
   const [privacyMode, setPrivacyMode] = useState<boolean>(false);
+  const [showSandbox, setShowSandbox] = useState<boolean>(false);
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     const saved = localStorage.getItem('psfi_theme');
     if (saved === 'light' || saved === 'dark') return saved;
@@ -87,7 +93,15 @@ export function App() {
     [plan.debt]
   );
   const taxComparison = useMemo(
-    () => estimateIndianIncomeTax(summary.monthlyIncome * 12, plan.tax.deductions80C, plan.tax.deductions80D),
+    () =>
+      estimateIndianIncomeTax(
+        summary.monthlyIncome * 12,
+        plan.tax.deductions80C,
+        plan.tax.deductions80D,
+        plan.tax.deductionsNPS ?? 0,
+        plan.tax.rentPaidMonthly ?? 0,
+        Boolean(plan.tax.isMetroCity)
+      ),
     [summary.monthlyIncome, plan.tax]
   );
 
@@ -202,6 +216,16 @@ export function App() {
             </button>
           )}
 
+          {/* What-If Scenario Sandbox */}
+          <button
+            type="button"
+            className="action-pill"
+            onClick={() => setShowSandbox(true)}
+            title="Open What-If Scenario Sandbox"
+          >
+            <Sparkles size={13} className="text-quasar" /> sandbox
+          </button>
+
           {/* File Operations */}
           <button type="button" className="action-pill" onClick={() => fileInputRef.current?.click()}>
             <Upload size={13} /> import
@@ -220,6 +244,17 @@ export function App() {
           <button type="button" className="action-pill" onClick={() => exportCSV(horizonMonths)}>
             <FileSpreadsheet size={13} /> csv
           </button>
+
+          {/* 1-Page Printable Executive Statement */}
+          <button
+            type="button"
+            className="action-pill"
+            onClick={() => window.print()}
+            title="Print executive financial summary"
+          >
+            <Printer size={13} /> print
+          </button>
+
           <button type="button" className="icon-pill" onClick={resetToDefaults} title="Reset to defaults">
             <RotateCcw size={13} />
           </button>
@@ -271,6 +306,12 @@ export function App() {
         {/* 50/30/20 Budget Health Audit */}
         <BudgetHealthWidget analysis={budgetRule} />
 
+        {/* Emergency Runway Survival Stress Test */}
+        <EmergencyStressTestWidget plan={plan} />
+
+        {/* FIRE & Wealth Milestone Tracker */}
+        <FireMilestoneTracker plan={plan} />
+
         {/* Cashflow Inflow & Outflow Mix */}
         <IncomeExpensePanel plan={plan} period={period} onChange={setPlan} />
 
@@ -292,6 +333,19 @@ export function App() {
           onChange={setPlan}
         />
       </main>
+
+      {/* What-If Scenario Modal */}
+      {showSandbox && (
+        <WhatIfSandboxModal
+          currentPlan={plan}
+          onApply={(simPlan) => {
+            setPlan(simPlan);
+            setShowSandbox(false);
+            setStatusMessage('Simulated sandbox scenario applied to active vault!');
+          }}
+          onClose={() => setShowSandbox(false)}
+        />
+      )}
 
       {/* Hipuku-Style Minimalist Footer */}
       <footer className="footer-capsule">

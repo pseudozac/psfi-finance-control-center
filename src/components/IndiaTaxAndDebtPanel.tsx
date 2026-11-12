@@ -133,6 +133,44 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
             step={2_500}
             onChange={(v) => updateTax('deductions80D', v)}
           />
+          <SliderNumberField
+            id="tax-nps"
+            label="Section 80CCD(1B) National Pension System (NPS, max ₹50k)"
+            value={plan.tax.deductionsNPS ?? 0}
+            min={0}
+            max={50_000}
+            step={5_000}
+            onChange={(v) => updateTax('deductionsNPS', v)}
+          />
+
+          <div className="hra-config-box mt-2">
+            <div className="flex-between flex-align mb-1">
+              <span className="text-xs font-semibold text-muted">HRA Exemption Lever (Old Regime)</span>
+              <button
+                type="button"
+                className={`tag-pill cursor-pointer ${plan.tax.isMetroCity ? 'tag-nebula' : 'tag-muted'}`}
+                onClick={() => onChange({ ...plan, tax: { ...plan.tax, isMetroCity: !plan.tax.isMetroCity } })}
+                title="Toggle Metro (Delhi/Mumbai/Kolkata/Chennai) 50% vs Non-Metro 40%"
+              >
+                {plan.tax.isMetroCity ? '● Metro (50% Basic)' : '○ Non-Metro (40% Basic)'}
+              </button>
+            </div>
+            <SliderNumberField
+              id="tax-rent"
+              label="Monthly Rent Paid for HRA Exemption"
+              value={plan.tax.rentPaidMonthly ?? 0}
+              min={0}
+              max={100_000}
+              step={1_000}
+              onChange={(v) => updateTax('rentPaidMonthly', v)}
+            />
+            {Boolean(taxComparison.hraExemption && taxComparison.hraExemption > 0) && (
+              <div className="text-xs font-mono text-nebula mt-1 flex-align gap-1">
+                <CheckCircle2 size={11} />
+                <span>Calculated Annual HRA Exemption: <strong>{formatINR(taxComparison.hraExemption ?? 0)}</strong></span>
+              </div>
+            )}
+          </div>
 
           <div className="tax-regime-grid mt-3">
             {/* New Regime Card */}
@@ -164,7 +202,7 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
               <div className="tax-amount font-mono">
                 {formatINR(taxComparison.oldRegimeTax)}
               </div>
-              <span className="tax-note">₹50k Std Ded + 80C/80D</span>
+              <span className="tax-note">₹50k Std + 80C + 80D + NPS + HRA</span>
             </div>
           </div>
         </div>

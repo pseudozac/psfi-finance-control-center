@@ -1,7 +1,25 @@
 import React from 'react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
-import { Home, ShoppingBag, Wifi, Car, Utensils, Shield, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import type { ExpenseBreakdown, FinancePlan, IncomeBreakdown, ViewPeriod } from '../types/finance';
+import {
+  Home,
+  ShoppingBag,
+  Wifi,
+  Car,
+  Utensils,
+  Shield,
+  ArrowUpRight,
+  ArrowDownRight,
+  Plus,
+  Trash2,
+  Tag,
+} from 'lucide-react';
+import type {
+  CustomExpenseItem,
+  ExpenseBreakdown,
+  FinancePlan,
+  IncomeBreakdown,
+  ViewPeriod,
+} from '../types/finance';
 import { formatINR } from '../lib/finance';
 import { SliderNumberField } from './SliderNumberField';
 
@@ -39,25 +57,79 @@ export const IncomeExpensePanel: React.FC<IncomeExpensePanelProps> = ({ plan, pe
     });
   };
 
+  const addCustomExpense = () => {
+    const newItem: CustomExpenseItem = {
+      id: `cust_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      name: 'Custom Outflow',
+      amount: 2500,
+    };
+    onChange({
+      ...plan,
+      expenses: {
+        ...plan.expenses,
+        custom: [...(plan.expenses.custom ?? []), newItem],
+      },
+    });
+  };
+
+  const updateCustomExpense = (id: string, updates: Partial<CustomExpenseItem>) => {
+    const nextCustom = (plan.expenses.custom ?? []).map((item) =>
+      item.id === id ? { ...item, ...updates } : item
+    );
+    onChange({
+      ...plan,
+      expenses: {
+        ...plan.expenses,
+        custom: nextCustom,
+      },
+    });
+  };
+
+  const removeCustomExpense = (id: string) => {
+    const nextCustom = (plan.expenses.custom ?? []).filter((item) => item.id !== id);
+    onChange({
+      ...plan,
+      expenses: {
+        ...plan.expenses,
+        custom: nextCustom,
+      },
+    });
+  };
+
+  const customTotal = (plan.expenses.custom ?? []).reduce(
+    (sum, item) => sum + (Number.isFinite(item.amount) ? item.amount : 0),
+    0
+  );
+
   const totalExpense =
     (plan.expenses.housing +
       plan.expenses.groceries +
       plan.expenses.utilities +
       plan.expenses.transport +
       plan.expenses.lifestyle +
-      plan.expenses.insurance) *
+      plan.expenses.insurance +
+      customTotal) *
     mult;
 
   const totalIncome =
     (plan.income.salary + plan.income.freelance + plan.income.other) * mult;
 
+  const customPieItems = (plan.expenses.custom ?? [])
+    .filter((c) => c.amount > 0)
+    .map((c) => ({
+      name: c.name.trim() || 'Custom',
+      value: c.amount * mult,
+      color: '#bf9ff1', // Quasar accent for custom
+    }));
+
   const pieData = [
-    { name: 'Housing', value: plan.expenses.housing * mult },
-    { name: 'Groceries', value: plan.expenses.groceries * mult },
-    { name: 'Utilities', value: plan.expenses.utilities * mult },
-    { name: 'Transport', value: plan.expenses.transport * mult },
-    { name: 'Lifestyle', value: plan.expenses.lifestyle * mult },
-    { name: 'Insurance', value: plan.expenses.insurance * mult },
+    { name: 'Housing', value: plan.expenses.housing * mult, color: CATEGORY_COLORS.Housing.color },
+    { name: 'Groceries', value: plan.expenses.groceries * mult, color: CATEGORY_COLORS.Groceries.color },
+    { name: 'Utilities', value: plan.expenses.utilities * mult, color: CATEGORY_COLORS.Utilities.color },
+    { name: 'Transport', value: plan.expenses.transport * mult, color: CATEGORY_COLORS.Transport.color },
+    { name: 'Lifestyle', value: plan.expenses.lifestyle * mult, color: CATEGORY_COLORS.Lifestyle.color },
+    { name: 'Insurance', value: plan.expenses.insurance * mult, color: CATEGORY_COLORS.Insurance.color },
+    ...customPieItems,
   ].filter((d) => d.value > 0);
 
   return (
@@ -99,6 +171,66 @@ export const IncomeExpensePanel: React.FC<IncomeExpensePanelProps> = ({ plan, pe
           <SliderNumberField id="exp-lifestyle" label="Dining Out, Leisure &amp; Shopping" value={plan.expenses.lifestyle} min={0} max={60_000} step={500} onChange={(v) => updateExpense('lifestyle', v)} />
           <SliderNumberField id="exp-insurance" label="Life Term &amp; Comprehensive Health" value={plan.expenses.insurance} min={0} max={30_000} step={500} onChange={(v) => updateExpense('insurance', v)} />
         </div>
+
+        {/* Custom Outflow Streams */}
+        <div className="sub-group">
+          <div className="flex-between flex-align mb-2">
+            <h3 className="group-title text-pulsar m-0">
+              <span>●</span> Custom Expense Lines ({periodLabel})
+            </h3>
+            <button
+              type="button"
+              className="tag-pill tag-pulsar cursor-pointer flex-align gap-1"
+              onClick={addCustomExpense}
+            >
+              <Plus size={11} /> Add Outflow Line
+            </button>
+          </div>
+
+          {(plan.expenses.custom ?? []).length === 0 ? (
+            <p className="muted text-xs font-mono m-0">
+              No custom lines configured. Tap "+ Add Outflow Line" to add pets, gym, cloud subscriptions, tuition, or family remittances.
+            </p>
+          ) : (
+            <div className="custom-expense-list">
+              {(plan.expenses.custom ?? []).map((c) => (
+                <div key={c.id} className="custom-expense-row flex-align gap-2">
+                  <input
+                    type="text"
+                    value={c.name}
+                    placeholder="Expense Label"
+                    className="custom-expense-input flex-1"
+                    onChange={(e) => updateCustomExpense(c.id, { name: e.target.value })}
+                  />
+                  <div className="custom-expense-amt-box flex-align gap-1">
+                    <span className="muted font-mono text-xs">₹</span>
+                    <input
+                      type="number"
+                      min={0}
+                      step={500}
+                      value={c.amount || ''}
+                      placeholder="0"
+                      className="custom-expense-num font-mono"
+                      onChange={(e) =>
+                        updateCustomExpense(c.id, {
+                          amount: Math.max(0, Number(e.target.value) || 0),
+                        })
+                      }
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="icon-pill delete-pill"
+                    onClick={() => removeCustomExpense(c.id)}
+                    title="Remove expense"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </section>
 
       {/* Right Column: Outflow Donut & Progress Bars */}
@@ -131,7 +263,7 @@ export const IncomeExpensePanel: React.FC<IncomeExpensePanelProps> = ({ plan, pe
                 {pieData.map((entry) => (
                   <Cell
                     key={entry.name}
-                    fill={CATEGORY_COLORS[entry.name]?.color ?? '#636b7b'}
+                    fill={CATEGORY_COLORS[entry.name]?.color ?? entry.color ?? '#bf9ff1'}
                     stroke="var(--surface)"
                     strokeWidth={2}
                   />
@@ -161,8 +293,8 @@ export const IncomeExpensePanel: React.FC<IncomeExpensePanelProps> = ({ plan, pe
           {pieData.map((item) => {
             const meta = CATEGORY_COLORS[item.name] ?? {
               label: item.name,
-              icon: null,
-              color: '#636b7b',
+              icon: <Tag size={13} />,
+              color: item.color ?? '#bf9ff1',
             };
             const pct = totalExpense > 0 ? Math.round((item.value / totalExpense) * 100) : 0;
             return (
