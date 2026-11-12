@@ -25,6 +25,7 @@ import {
   Share2,
   Terminal,
   FileText,
+  Crown,
 } from 'lucide-react';
 import type { FinancePlan, ViewPeriod } from './types/finance';
 import {
@@ -52,6 +53,8 @@ import { SocialShareModal } from './components/SocialShareModal';
 import { QRVaultSyncModal } from './components/QRVaultSyncModal';
 import { CommandPaletteModal } from './components/CommandPaletteModal';
 import { StatementParserModal } from './components/StatementParserModal';
+import { SovereignSkillTreeModal } from './components/SovereignSkillTreeModal';
+import { ImpulseShieldWidget } from './components/ImpulseShieldWidget';
 import { decodeVaultBeam } from './lib/vaultBeam';
 
 type AppPhase = 'loading' | 'gateway' | 'dashboard';
@@ -90,6 +93,7 @@ export function App() {
   const [showQRModal, setShowQRModal] = useState<boolean>(false);
   const [showCmdK, setShowCmdK] = useState<boolean>(false);
   const [showStatementParser, setShowStatementParser] = useState<boolean>(false);
+  const [showSkillTree, setShowSkillTree] = useState<boolean>(false);
   const [toolsMenuOpen, setToolsMenuOpen] = useState<boolean>(false);
   const toolsDropdownRef = useRef<HTMLDivElement>(null);
   const [layoutMode, setLayoutMode] = useState<'mobile' | 'desktop'>(() => {
@@ -356,6 +360,17 @@ export function App() {
             <span className="font-mono text-xs">tour</span>
           </button>
 
+          {/* Sovereign Skill Tree Trigger */}
+          <button
+            type="button"
+            className="action-pill pill-skills"
+            onClick={() => setShowSkillTree(true)}
+            title="Sovereign Wealth RPG Skill Tree (Gamified Financial Freedom)"
+          >
+            <Crown size={12} className="text-solstice" />
+            <span className="font-mono text-xs">skills</span>
+          </button>
+
           {/* Unified Tools Dropdown Menu */}
           <div className="tools-dropdown-wrapper" ref={toolsDropdownRef}>
             <button
@@ -380,6 +395,18 @@ export function App() {
                   <div>
                     <span className="item-title">Ingest Statements</span>
                     <span className="item-sub">CAS, Bank, Cards & Payslips (100% Private)</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="tools-menu-item"
+                  onClick={() => { setShowSkillTree(true); setToolsMenuOpen(false); }}
+                >
+                  <Crown size={13} className="text-solstice" />
+                  <div>
+                    <span className="item-title">Sovereign Skill Tree</span>
+                    <span className="item-sub">Gamified RPG financial independence milestones</span>
                   </div>
                 </button>
 
@@ -618,6 +645,9 @@ export function App() {
               {/* 50/30/20 Budget Health Audit */}
               <BudgetHealthWidget analysis={budgetRule} />
 
+              {/* Local Impulse Shield & Daily Burn Pocket */}
+              <ImpulseShieldWidget plan={plan} summary={summary} />
+
               {/* Emergency Runway Survival Stress Test & FIRE Milestones */}
               <div id="tour-survival" className="tour-survival-block">
                 <EmergencyStressTestWidget plan={plan} />
@@ -727,6 +757,16 @@ export function App() {
         onResetDefaults={resetToDefaults}
         onLoadDemo={launchDemoVault}
         onOpenStatementParser={() => setShowStatementParser(true)}
+        onOpenSkillTree={() => setShowSkillTree(true)}
+      />
+
+      {/* Sovereign Wealth RPG Skill Tree Modal */}
+      <SovereignSkillTreeModal
+        isOpen={showSkillTree}
+        onClose={() => setShowSkillTree(false)}
+        plan={plan}
+        summary={summary}
+        taxSavingsDelta={taxComparison.savings}
       />
 
       {/* Zero-Server Private Statement & Document Ingestion Modal */}

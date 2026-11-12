@@ -33,6 +33,7 @@ import {
   History,
   Coins,
   FileText,
+  Crown,
 } from 'lucide-react';
 import { PLAN_PRESETS, formatINR } from '../lib/finance';
 import type { FinancePlan } from '../types/finance';
@@ -69,6 +70,7 @@ interface CommandPaletteModalProps {
   period: 'monthly' | 'annual';
   onTogglePeriod: () => void;
   onOpenStatementParser?: () => void;
+  onOpenSkillTree?: () => void;
   onExportJSON: () => void;
   onExportCSV: () => void;
   onPrint: () => void;
@@ -187,6 +189,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   period,
   onTogglePeriod,
   onOpenStatementParser,
+  onOpenSkillTree,
   onExportJSON,
   onExportCSV,
   onPrint,
@@ -514,6 +517,19 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         icon: <FileText size={15} className="text-nebula" />,
         badge: '100% Private',
         execute: () => onOpenStatementParser(),
+      });
+    }
+
+    if (onOpenSkillTree) {
+      list.push({
+        id: 'tool_skill_tree',
+        category: 'Tools',
+        title: 'Sovereign Wealth RPG Skill Tree',
+        subtitle: 'Gamified tech tree milestones: Survival Fortress, Velocity Engine & Autonomy',
+        keywords: 'skill tree rpg game gamify level rank milestones fortress velocity autonomy progress fire crown',
+        icon: <Crown size={15} className="text-solstice" />,
+        badge: 'RPG Progression',
+        execute: () => onOpenSkillTree(),
       });
     }
 
