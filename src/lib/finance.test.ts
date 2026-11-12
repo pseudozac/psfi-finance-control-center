@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_PLAN,
+  PLAN_PRESETS,
+  calculateBudgetRule,
   calculateDebtPayoff,
   calculateProjections,
   calculateSummary,
@@ -81,5 +83,15 @@ describe('finance calculations', () => {
     const csv = planToCSV(DEFAULT_PLAN, pts);
     expect(csv).toContain('"Summary","Monthly Income","140000"');
     expect(csv).toContain('"Projection","M12"');
+  });
+
+  it('evaluates 50/30/20 budget rules and presets', () => {
+    const analysis = calculateBudgetRule(DEFAULT_PLAN);
+    expect(analysis.needsAmount).toBeGreaterThan(0);
+    expect(analysis.wantsAmount).toBeGreaterThan(0);
+    expect(analysis.savingsAmount).toBeGreaterThan(0);
+    expect(analysis.score).toBeGreaterThanOrEqual(10);
+    expect(analysis.score).toBeLessThanOrEqual(100);
+    expect(PLAN_PRESETS.length).toBe(4);
   });
 });

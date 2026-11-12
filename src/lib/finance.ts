@@ -1,8 +1,10 @@
 import type {
+  BudgetRuleAnalysis,
   DebtPayoffResult,
   FinancePlan,
   FinanceSummary,
   MonthlyProjectionPoint,
+  PlanPreset,
   TaxComparisonResult,
 } from '../types/finance';
 
@@ -322,3 +324,100 @@ export function planToCSV(plan: FinancePlan, projections: MonthlyProjectionPoint
   ];
   return rows.map((r) => r.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(',')).join('\n');
 }
+
+export function calculateBudgetRule(plan: FinancePlan): BudgetRuleAnalysis {
+  const totalIncome = plan.income.salary + plan.income.freelance + plan.income.other;
+  const safeIncome = Math.max(1, totalIncome);
+
+  const needsAmount =
+    plan.expenses.housing +
+    plan.expenses.groceries +
+    plan.expenses.utilities +
+    plan.expenses.transport +
+    plan.expenses.insurance;
+  const wantsAmount = plan.expenses.lifestyle;
+  const savingsAmount = plan.savings.monthlySavings + plan.savings.monthlySip;
+
+  const needsPercent = Math.round((needsAmount / safeIncome) * 100);
+  const wantsPercent = Math.round((wantsAmount / safeIncome) * 100);
+  const savingsPercent = Math.round((savingsAmount / safeIncome) * 100);
+
+  let score = 100;
+  if (needsPercent > 50) score -= (needsPercent - 50) * 1.5;
+  if (wantsPercent > 30) score -= (wantsPercent - 30) * 1.5;
+  if (savingsPercent < 20) score -= (20 - savingsPercent) * 2;
+  score = Math.max(10, Math.min(100, Math.round(score)));
+
+  const rating = score >= 80 ? 'Optimal' : score >= 60 ? 'Healthy' : 'Attention Needed';
+
+  return {
+    needsAmount,
+    needsPercent,
+    wantsAmount,
+    wantsPercent,
+    savingsAmount,
+    savingsPercent,
+    score,
+    rating,
+  };
+}
+
+export const PLAN_PRESETS: PlanPreset[] = [
+  {
+    id: 'starter',
+    name: 'Early Career',
+    tagline: 'Building emergency runway & starting disciplined monthly SIP',
+    badge: 'Foundation',
+    plan: {
+      schemaVersion: 2,
+      income: { salary: 65_000, freelance: 8_000, other: 0 },
+      expenses: { housing: 18_000, groceries: 8_000, utilities: 3_500, transport: 4_500, lifestyle: 9_000, insurance: 2_000 },
+      savings: { emergencyFundBalance: 120_000, monthlySavings: 10_000, monthlySip: 15_000, stepUpSipPercent: 12, expectedReturnPercent: 13, inflationPercent: 6 },
+      debt: { cardBalance: 15_000, aprPercent: 18, monthlyPayment: 5_000 },
+      tax: { deductions80C: 50_000, deductions80D: 15_000 },
+    },
+  },
+  {
+    id: 'family',
+    name: 'Family Growth',
+    tagline: 'Home EMI, children school, family term health cover & 80C optimization',
+    badge: 'Balanced',
+    plan: {
+      schemaVersion: 2,
+      income: { salary: 180_000, freelance: 20_000, other: 5_000 },
+      expenses: { housing: 48_000, groceries: 20_000, utilities: 8_000, transport: 9_500, lifestyle: 18_000, insurance: 7_500 },
+      savings: { emergencyFundBalance: 450_000, monthlySavings: 25_000, monthlySip: 40_000, stepUpSipPercent: 10, expectedReturnPercent: 12, inflationPercent: 6 },
+      debt: { cardBalance: 0, aprPercent: 0, monthlyPayment: 0 },
+      tax: { deductions80C: 150_000, deductions80D: 50_000 },
+    },
+  },
+  {
+    id: 'fire',
+    name: 'Aggressive FIRE',
+    tagline: 'High savings rate (60%+) & compound step-up SIP for early financial independence',
+    badge: 'High Velocity',
+    plan: {
+      schemaVersion: 2,
+      income: { salary: 280_000, freelance: 45_000, other: 15_000 },
+      expenses: { housing: 42_000, groceries: 16_000, utilities: 6_000, transport: 6_000, lifestyle: 15_000, insurance: 6_000 },
+      savings: { emergencyFundBalance: 800_000, monthlySavings: 40_000, monthlySip: 160_000, stepUpSipPercent: 15, expectedReturnPercent: 13.5, inflationPercent: 6 },
+      debt: { cardBalance: 0, aprPercent: 0, monthlyPayment: 0 },
+      tax: { deductions80C: 150_000, deductions80D: 25_000 },
+    },
+  },
+  {
+    id: 'debt_crush',
+    name: 'Debt Crusher',
+    tagline: 'Rapid elimination of high-interest revolving card debt to restore positive surplus',
+    badge: 'Freedom Plan',
+    plan: {
+      schemaVersion: 2,
+      income: { salary: 95_000, freelance: 10_000, other: 0 },
+      expenses: { housing: 24_000, groceries: 10_000, utilities: 4_500, transport: 5_000, lifestyle: 6_500, insurance: 3_000 },
+      savings: { emergencyFundBalance: 75_000, monthlySavings: 5_000, monthlySip: 5_000, stepUpSipPercent: 5, expectedReturnPercent: 11, inflationPercent: 6 },
+      debt: { cardBalance: 160_000, aprPercent: 36, monthlyPayment: 25_000 },
+      tax: { deductions80C: 100_000, deductions80D: 15_000 },
+    },
+  },
+];
+

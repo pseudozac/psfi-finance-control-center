@@ -1,4 +1,5 @@
 import React from 'react';
+import { CreditCard, Landmark, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
 import type { DebtPayoffResult, FinancePlan, TaxComparisonResult } from '../types/finance';
 import { formatINR } from '../lib/finance';
 import { SliderNumberField } from './SliderNumberField';
@@ -24,47 +25,138 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
     onChange({ ...plan, tax: { ...plan.tax, [key]: val } });
   };
 
+  const hasDebt = plan.debt.cardBalance > 0;
+
   return (
     <div className="two-col-grid">
-      <section className="card">
-        <h2>Credit Card / Loan Payoff</h2>
-        <SliderNumberField id="debt-bal" label="Outstanding Balance" value={plan.debt.cardBalance} min={0} max={1_000_000} step={2_500} onChange={(v) => updateDebt('cardBalance', v)} />
-        <SliderNumberField id="debt-apr" label="Annual Interest (APR)" value={plan.debt.aprPercent} min={0} max={45} step={0.5} unit="%" onChange={(v) => updateDebt('aprPercent', v)} />
-        <SliderNumberField id="debt-pay" label="Monthly Payment" value={plan.debt.monthlyPayment} min={0} max={100_000} step={500} onChange={(v) => updateDebt('monthlyPayment', v)} />
-
-        {debtPayoff.warning ? (
-          <div className="alert-warn" role="alert">{debtPayoff.warning}</div>
-        ) : (
-          <div className="info-box">
-            <div>Payoff time: <strong>{debtPayoff.months} months</strong></div>
-            <div>Total interest: <strong>{formatINR(debtPayoff.totalInterest ?? 0)}</strong></div>
-            <div>Total paid: <strong>{formatINR(debtPayoff.totalPaid ?? 0)}</strong></div>
+      {/* 1. Debt Card */}
+      <section className="card flex-col justify-between">
+        <div>
+          <div className="section-head mb-2">
+            <div className="flex-align gap-2">
+              <div className="icon-badge icon-badge-amber">
+                <CreditCard size={18} />
+              </div>
+              <div>
+                <h2 className="title-sm m-0">Credit Card &amp; Personal Loan Payoff</h2>
+                <p className="muted text-xs">Amortization calculator for high-APR revolving debt</p>
+              </div>
+            </div>
+            {hasDebt && (
+              <span className="badge-pill badge-amber">
+                {plan.debt.aprPercent}% APR
+              </span>
+            )}
           </div>
-        )}
+
+          <SliderNumberField id="debt-bal" label="Current Outstanding Balance" value={plan.debt.cardBalance} min={0} max={1_000_000} step={2_500} onChange={(v) => updateDebt('cardBalance', v)} />
+          <SliderNumberField id="debt-apr" label="Annual Percentage Rate (APR)" value={plan.debt.aprPercent} min={0} max={48} step={0.5} unit="%" onChange={(v) => updateDebt('aprPercent', v)} />
+          <SliderNumberField id="debt-pay" label="Dedicated Monthly Payment" value={plan.debt.monthlyPayment} min={0} max={100_000} step={500} onChange={(v) => updateDebt('monthlyPayment', v)} />
+        </div>
+
+        <div>
+          {debtPayoff.warning ? (
+            <div className="alert-box alert-warn flex-align gap-2">
+              <AlertTriangle size={18} className="shrink-0" />
+              <div>
+                <strong>Payoff Alert:</strong> {debtPayoff.warning}
+              </div>
+            </div>
+          ) : !hasDebt ? (
+            <div className="alert-box alert-success flex-align gap-2">
+              <CheckCircle2 size={18} className="text-emerald shrink-0" />
+              <div>
+                <strong>Zero Revolving Debt!</strong> You are not paying any high-interest penalties. Your entire surplus compounds in savings and SIP.
+              </div>
+            </div>
+          ) : (
+            <div className="debt-summary-box">
+              <div className="debt-metric">
+                <span className="muted text-xs">Debt-Free In</span>
+                <span className="font-mono font-bold text-base text-amber">{debtPayoff.months} Months</span>
+              </div>
+              <div className="debt-metric">
+                <span className="muted text-xs">Total Interest</span>
+                <span className="font-mono font-bold text-base text-rose">{formatINR(debtPayoff.totalInterest ?? 0)}</span>
+              </div>
+              <div className="debt-metric">
+                <span className="muted text-xs">Total Cash Outflow</span>
+                <span className="font-mono font-bold text-base">{formatINR(debtPayoff.totalPaid ?? 0)}</span>
+              </div>
+            </div>
+          )}
+        </div>
       </section>
 
-      <section className="card">
-        <h2>India Tax Regime Estimator (FY 2024-25)</h2>
-        <p className="muted">Based on annual gross income of <strong>{formatINR(taxComparison.annualGrossIncome)}</strong></p>
-
-        <SliderNumberField id="tax-80c" label="Section 80C (max ₹1.5L)" value={plan.tax.deductions80C} min={0} max={150_000} step={5_000} onChange={(v) => updateTax('deductions80C', v)} />
-        <SliderNumberField id="tax-80d" label="Section 80D Health (max ₹75k)" value={plan.tax.deductions80D} min={0} max={75_000} step={2_500} onChange={(v) => updateTax('deductions80D', v)} />
-
-        <div className="tax-grid">
-          <div className={`tax-pill ${taxComparison.recommended === 'new' ? 'tax-best' : ''}`}>
-            <span>New Regime</span>
-            <strong>{formatINR(taxComparison.newRegimeTax)}</strong>
+      {/* 2. India Tax Estimator */}
+      <section className="card flex-col justify-between">
+        <div>
+          <div className="section-head mb-2">
+            <div className="flex-align gap-2">
+              <div className="icon-badge icon-badge-purple">
+                <Landmark size={18} />
+              </div>
+              <div>
+                <h2 className="title-sm m-0">Income Tax Regime (FY 2024-25)</h2>
+                <p className="muted text-xs">Gross Income: <strong>{formatINR(taxComparison.annualGrossIncome)}</strong> / year</p>
+              </div>
+            </div>
+            <span className="badge-pill badge-purple">Sec 87A + 4% Cess</span>
           </div>
-          <div className={`tax-pill ${taxComparison.recommended === 'old' ? 'tax-best' : ''}`}>
-            <span>Old Regime</span>
-            <strong>{formatINR(taxComparison.oldRegimeTax)}</strong>
+
+          <SliderNumberField id="tax-80c" label="Section 80C Deductions (PPF, ELSS, EPF, max ₹1.5L)" value={plan.tax.deductions80C} min={0} max={150_000} step={5_000} onChange={(v) => updateTax('deductions80C', v)} />
+          <SliderNumberField id="tax-80d" label="Section 80D Health Cover (Self + Parents, max ₹75k)" value={plan.tax.deductions80D} min={0} max={75_000} step={2_500} onChange={(v) => updateTax('deductions80D', v)} />
+
+          <div className="tax-regime-grid">
+            {/* New Regime Card */}
+            <div className={`tax-card ${taxComparison.recommended === 'new' ? 'tax-card-winner' : ''}`}>
+              <div className="tax-card-head">
+                <span className="font-semibold text-sm">New Regime</span>
+                {taxComparison.recommended === 'new' && (
+                  <span className="tax-winner-tag">
+                    <CheckCircle2 size={12} /> Best Choice
+                  </span>
+                )}
+              </div>
+              <div className="tax-card-val font-mono font-bold text-lg">
+                {formatINR(taxComparison.newRegimeTax)}
+              </div>
+              <span className="muted text-xs">₹75k Standard Ded. · Zero tax &le; ₹7L</span>
+            </div>
+
+            {/* Old Regime Card */}
+            <div className={`tax-card ${taxComparison.recommended === 'old' ? 'tax-card-winner' : ''}`}>
+              <div className="tax-card-head">
+                <span className="font-semibold text-sm">Old Regime</span>
+                {taxComparison.recommended === 'old' && (
+                  <span className="tax-winner-tag">
+                    <CheckCircle2 size={12} /> Best Choice
+                  </span>
+                )}
+              </div>
+              <div className="tax-card-val font-mono font-bold text-lg">
+                {formatINR(taxComparison.oldRegimeTax)}
+              </div>
+              <span className="muted text-xs">₹50k Std. Ded. + 80C + 80D Slabs</span>
+            </div>
           </div>
         </div>
-        <p className="muted">
-          {taxComparison.recommended === 'tie'
-            ? 'Both regimes result in the same estimated tax.'
-            : `${taxComparison.recommended === 'new' ? 'New' : 'Old'} Regime saves ${formatINR(taxComparison.savings)}/year (incl. 4% cess).`}
-        </p>
+
+        <div className="tax-verdict-banner">
+          {taxComparison.recommended === 'tie' ? (
+            <span>Both tax regimes result in identical tax liability for this income bracket.</span>
+          ) : (
+            <div className="flex-align gap-2">
+              <span className="text-emerald font-bold">
+                {taxComparison.recommended === 'new' ? 'New' : 'Old'} Regime is optimal
+              </span>
+              <ArrowRight size={14} className="text-muted" />
+              <span>
+                Saves <strong className="text-emerald font-mono">{formatINR(taxComparison.savings)}</strong> annually
+              </span>
+            </div>
+          )}
+        </div>
       </section>
     </div>
   );

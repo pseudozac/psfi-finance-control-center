@@ -28,6 +28,9 @@ export const SliderNumberField: React.FC<SliderNumberFieldProps> = ({
     }
   };
 
+  const clampedVal = Math.min(max, Math.max(min, value));
+  const fillPct = max > min ? Math.max(0, Math.min(100, ((clampedVal - min) / (max - min)) * 100)) : 0;
+
   return (
     <div className="field-row">
       <div className="field-header">
@@ -43,22 +46,25 @@ export const SliderNumberField: React.FC<SliderNumberFieldProps> = ({
             step={step}
             value={value}
             onChange={handleNumber}
-            className="number-input"
+            className="number-input font-mono"
             aria-label={label}
           />
           {unit === '%' && <span className="unit-suffix">%</span>}
         </div>
       </div>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={Math.min(max, Math.max(min, value))}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="range-slider"
-        aria-label={`${label} slider`}
-      />
+      <div className="slider-track-wrap">
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={clampedVal}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="range-slider"
+          style={{ '--fill-pct': `${fillPct}%` } as React.CSSProperties}
+          aria-label={`${label} slider`}
+        />
+      </div>
     </div>
   );
 };

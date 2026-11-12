@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, TrendingUp, Wallet, CreditCard } from 'lucide-react';
+import { ShieldCheck, TrendingUp, Wallet, CreditCard, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import type { DebtPayoffResult, FinanceSummary, ViewPeriod } from '../types/finance';
 import { formatINR } from '../lib/finance';
 
@@ -13,53 +13,100 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, debtPayoff,
   const mult = period === 'annual' ? 12 : 1;
   const periodLabel = period === 'annual' ? 'Annual' : 'Monthly';
 
+  const isSurplusPositive = summary.monthlySurplus >= 0;
+
   return (
     <section className="summary-grid" aria-label="Key Financial Metrics">
-      <div className="kpi-card">
+      {/* 1. Surplus Card */}
+      <div className="kpi-card kpi-emerald">
         <div className="kpi-head">
-          <span>{periodLabel} Surplus</span>
-          <Wallet size={18} className="icon-emerald" />
+          <span className="kpi-label">{periodLabel} Surplus</span>
+          <div className="icon-chip icon-chip-emerald">
+            <Wallet size={18} />
+          </div>
         </div>
-        <div className={`kpi-value ${summary.monthlySurplus < 0 ? 'text-rose' : ''}`}>
+        <div className={`kpi-value font-mono ${!isSurplusPositive ? 'text-rose' : 'text-emerald'}`}>
           {formatINR(summary.monthlySurplus * mult)}
         </div>
-        <div className="kpi-sub">
-          Income {formatINR(summary.monthlyIncome * mult)} − Expenses {formatINR(summary.monthlyExpenses * mult)}
+        <div className="kpi-footer">
+          <div className="kpi-badge">
+            {isSurplusPositive ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
+            <span>{isSurplusPositive ? 'Positive Cashflow' : 'Deficit'}</span>
+          </div>
+          <span className="kpi-sub font-mono">
+            +{formatINR(summary.monthlyIncome * mult)} / −{formatINR(summary.monthlyExpenses * mult)}
+          </span>
         </div>
       </div>
 
-      <div className="kpi-card">
+      {/* 2. Savings & SIP Rate Card */}
+      <div className="kpi-card kpi-sky">
         <div className="kpi-head">
-          <span>Savings + SIP Rate</span>
-          <TrendingUp size={18} className="icon-sky" />
+          <span className="kpi-label">Savings &amp; SIP Rate</span>
+          <div className="icon-chip icon-chip-sky">
+            <TrendingUp size={18} />
+          </div>
         </div>
-        <div className="kpi-value">{summary.savingsRatePercent.toFixed(1)}%</div>
-        <div className="kpi-sub">Target benchmark: 20%+ of gross income</div>
+        <div className="kpi-value font-mono text-sky">
+          {summary.savingsRatePercent.toFixed(1)}%
+        </div>
+        <div className="kpi-footer">
+          <div className={`kpi-badge ${summary.savingsRatePercent >= 20 ? 'kpi-badge-good' : 'kpi-badge-warn'}`}>
+            {summary.savingsRatePercent >= 20 ? 'Target Met (20%+)' : 'Below 20% Goal'}
+          </div>
+          <span className="kpi-sub">of Gross Income</span>
+        </div>
       </div>
 
-      <div className="kpi-card">
+      {/* 3. Emergency Runway Card */}
+      <div className="kpi-card kpi-purple">
         <div className="kpi-head">
-          <span>Emergency Runway</span>
-          <ShieldCheck size={18} className="icon-emerald" />
+          <span className="kpi-label">Emergency Runway</span>
+          <div className="icon-chip icon-chip-purple">
+            <ShieldCheck size={18} />
+          </div>
         </div>
-        <div className="kpi-value">{summary.emergencyRunwayMonths.toFixed(1)} mo</div>
-        <div className="kpi-sub">
-          {summary.emergencyRunwayMonths >= 6 ? 'Healthy (6+ months covered)' : 'Below 6-month target'}
+        <div className="kpi-value font-mono text-purple">
+          {summary.emergencyRunwayMonths.toFixed(1)} <span className="kpi-unit">mo</span>
+        </div>
+        <div className="kpi-footer">
+          <div className={`kpi-badge ${summary.emergencyRunwayMonths >= 6 ? 'kpi-badge-good' : 'kpi-badge-warn'}`}>
+            {summary.emergencyRunwayMonths >= 6 ? 'Rock Solid (6+ mo)' : 'Rebuild to 6 mo'}
+          </div>
+          <span className="kpi-sub">Expense Buffer</span>
         </div>
       </div>
 
-      <div className="kpi-card">
+      {/* 4. Debt Payoff ETA Card */}
+      <div className="kpi-card kpi-amber">
         <div className="kpi-head">
-          <span>Debt-Free ETA</span>
-          <CreditCard size={18} className="icon-amber" />
+          <span className="kpi-label">Debt-Free ETA</span>
+          <div className="icon-chip icon-chip-amber">
+            <CreditCard size={18} />
+          </div>
         </div>
-        <div className="kpi-value">
-          {debtPayoff.months === null ? 'Never' : debtPayoff.months === 0 ? 'Debt-Free' : `${debtPayoff.months} mo`}
+        <div className="kpi-value font-mono text-amber">
+          {debtPayoff.months === null ? (
+            'Overdrawn'
+          ) : debtPayoff.months === 0 ? (
+            <span className="text-emerald">Debt Free</span>
+          ) : (
+            <>
+              {debtPayoff.months} <span className="kpi-unit">mo</span>
+            </>
+          )}
         </div>
-        <div className="kpi-sub">
-          {debtPayoff.totalInterest !== null
-            ? `Total interest: ${formatINR(debtPayoff.totalInterest)}`
-            : 'Increase monthly payment'}
+        <div className="kpi-footer">
+          <div className="kpi-badge">
+            {debtPayoff.totalInterest !== null ? (
+              <span>Interest: {formatINR(debtPayoff.totalInterest)}</span>
+            ) : (
+              <span>Warning</span>
+            )}
+          </div>
+          <span className="kpi-sub">
+            {debtPayoff.months === 0 ? 'Zero Card Balance' : 'Full Amortization'}
+          </span>
         </div>
       </div>
     </section>

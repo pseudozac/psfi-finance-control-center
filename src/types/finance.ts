@@ -71,6 +71,25 @@ export interface TaxComparisonResult {
   savings: number;
 }
 
+export interface BudgetRuleAnalysis {
+  needsAmount: number;
+  needsPercent: number;
+  wantsAmount: number;
+  wantsPercent: number;
+  savingsAmount: number;
+  savingsPercent: number;
+  score: number;
+  rating: 'Optimal' | 'Healthy' | 'Attention Needed';
+}
+
+export interface PlanPreset {
+  id: string;
+  name: string;
+  tagline: string;
+  badge: string;
+  plan: FinancePlan;
+}
+
 export interface ExportEnvelope {
   app: 'psfi-finance-control-center';
   exportedAt: string;
