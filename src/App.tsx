@@ -262,7 +262,8 @@ export function App() {
             title="Tactile Control Center (Sliders & Cockpit)"
           >
             <Sliders size={12} />
-            <span className="view-label">Control Center</span>
+            <span className="view-label view-label-full">Control Center</span>
+            <span className="view-label view-label-compact">Control</span>
           </button>
           <button
             type="button"
@@ -271,7 +272,8 @@ export function App() {
             title="Wealth Terminal (Stock-Market Expenditure & Valuation Engine)"
           >
             <TrendingUp size={12} className={activeView === 'terminal' ? 'text-nebula' : ''} />
-            <span className="view-label">Wealth Terminal</span>
+            <span className="view-label view-label-full">Wealth Terminal</span>
+            <span className="view-label view-label-compact">Terminal</span>
           </button>
         </div>
 

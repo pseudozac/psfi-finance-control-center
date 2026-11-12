@@ -94,8 +94,10 @@
 html, body {
   margin: 0;
   padding: 0;
+  width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
+  box-sizing: border-box;
   background-color: var(--surface-page);
   color: var(--ink-primary);
   font-family: 'Parkinsans', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
@@ -103,6 +105,12 @@ html, body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: clip;
 }
 
 body {
@@ -129,8 +137,11 @@ body {
 
 .app-shell {
   max-width: min(1640px, 96vw);
+  width: 100%;
   margin: 0 auto;
   padding: 24px 24px 80px;
+  box-sizing: border-box;
+  overflow-x: clip;
 }
 
 /* --------------------------------------------------------------------------
@@ -143,7 +154,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   padding: 8px 14px 8px 18px;
   background: var(--surface-dock);
   backdrop-filter: blur(16px);
@@ -152,6 +163,9 @@ body {
   border-radius: var(--radius-full);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
   margin-bottom: 36px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   transition: border-color 0.2s var(--ease-smooth);
 }
 
@@ -345,6 +359,8 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 .dock-utility-icons {
@@ -353,10 +369,12 @@ body {
   gap: 6px;
   padding-left: 8px;
   border-left: 1px solid var(--border-subtle);
+  flex-shrink: 0;
 }
 
 .tools-dropdown-wrapper {
   position: relative;
+  flex-shrink: 0;
 }
 
 .tools-dropdown-menu {
@@ -364,6 +382,8 @@ body {
   top: calc(100% + 8px);
   right: 0;
   width: 270px;
+  max-width: min(280px, calc(100vw - 28px));
+  box-sizing: border-box;
   background: rgba(18, 20, 26, 0.96);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
@@ -559,6 +579,8 @@ body {
   gap: 28px;
   align-items: start;
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .cockpit-col {
@@ -566,12 +588,14 @@ body {
   flex-direction: column;
   gap: 24px;
   min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1180px) {
   .cockpit-grid {
     grid-template-columns: 1fr;
-    gap: 24px;
+    gap: 20px;
   }
 }
 
@@ -581,23 +605,28 @@ body {
 .archetype-container {
   margin-bottom: 24px;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .archetype-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 14px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1280px) {
   .archetype-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
 }
 
 @media (max-width: 640px) {
   .archetype-grid {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 }
 
@@ -614,6 +643,8 @@ body {
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .archetype-card:hover {
@@ -690,6 +721,21 @@ body {
   padding-top: 8px;
   border-top: 1px solid var(--border-subtle);
   color: var(--ink-muted);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 10px;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.archetype-metrics-strip .archetype-metric-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
 }
 
 /* --------------------------------------------------------------------------
@@ -699,6 +745,22 @@ body {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1180px) {
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 580px) {
+  .summary-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
 }
 
 .hipuku-kpi-card {
@@ -1420,48 +1482,109 @@ body {
 .block { display: block; }
 .text-right { text-align: right; }
 
-/* Responsive Adjustments */
-@media (max-width: 900px) {
-  .summary-grid {
-    grid-template-columns: repeat(2, 1fr);
+/* Responsive Viewport Optimizations */
+.view-label-full {
+  display: inline;
+}
+.view-label-compact {
+  display: none;
+}
+
+@media (max-width: 1180px) and (min-width: 681px) {
+  .view-label-full {
+    display: none;
   }
-  .two-col-grid {
-    grid-template-columns: 1fr;
+  .view-label-compact {
+    display: inline;
   }
-  .budget-breakdown-grid {
-    grid-template-columns: 1fr;
+}
+
+@media (max-width: 1180px) {
+  .navbar-dock {
+    padding: 7px 12px;
+    gap: 10px;
   }
-  .telemetry-capsule-row {
-    grid-template-columns: repeat(2, 1fr);
+  .dock-actions-cluster {
+    gap: 6px;
+  }
+  .period-switcher button {
+    padding: 4px 8px;
+    font-size: 10.5px;
+  }
+  .action-pill {
+    padding: 5px 9px;
+    font-size: 11.5px;
+  }
+  .vault-pill-name {
+    max-width: 95px;
+  }
+}
+
+@media (max-width: 980px) {
+  .navbar-dock {
+    flex-wrap: wrap;
+    row-gap: 10px;
+    column-gap: 12px;
+    padding: 10px 14px;
+    border-radius: var(--radius-xl);
+  }
+  .brand-cluster {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .dock-actions-cluster {
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+  .vault-pill-name {
+    max-width: 85px;
   }
 }
 
 @media (max-width: 768px) {
   .navbar-dock {
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: stretch;
     border-radius: var(--radius-xl);
-    padding: 10px 14px;
-    gap: 8px;
-    margin-bottom: 24px;
+    padding: 10px 12px;
+    gap: 10px;
+    margin-bottom: 20px;
   }
-  .mobile-drawer-btn {
-    display: inline-flex;
-  }
-  .dock-actions {
-    display: none;
+  .brand-cluster {
     width: 100%;
-    justify-content: center;
-    gap: 8px;
-    padding-top: 10px;
-    border-top: var(--hair) solid var(--border-subtle);
-    animation: fadeIn 0.2s var(--ease-smooth);
+    justify-content: space-between;
   }
-  .dock-actions.actions-drawer-open {
+  .dock-view-switcher {
+    width: 100%;
     display: flex;
   }
-  .summary-grid {
+  .dock-view-switcher button {
+    flex: 1;
+    justify-content: center;
+    padding: 6px 10px;
+  }
+  .dock-actions-cluster {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 8px;
+  }
+  .dock-utility-icons {
+    border-left: none;
+    padding-left: 0;
+    gap: 4px;
+  }
+  .vault-pill-name {
+    max-width: 130px;
+  }
+  .two-col-grid {
+    grid-template-columns: 1fr;
+  }
+  .budget-breakdown-grid {
     grid-template-columns: 1fr;
   }
   .telemetry-capsule-row {
@@ -1475,6 +1598,16 @@ body {
   }
 }
 
+@media (max-width: 480px) {
+  .dock-actions-cluster {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .tax-regime-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Layout Density Modes */
 .layout-mobile .hero-headline {
   font-size: clamp(22px, 5.5vw, 30px);
@@ -1484,7 +1617,7 @@ body {
   line-height: 1.5;
 }
 .layout-mobile .summary-grid {
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr !important;
 }
 .layout-mobile .telemetry-capsule-row {
   grid-template-columns: 1fr;
@@ -1499,8 +1632,10 @@ body {
 .layout-desktop .main-stack {
   gap: 24px;
 }
-.layout-desktop .summary-grid {
-  grid-template-columns: repeat(4, 1fr);
+@media (min-width: 1181px) {
+  .layout-desktop .summary-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 
@@ -2280,6 +2415,12 @@ body {
 
 .vault-pill-name {
   font-size: 12px;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .link-btn {
@@ -3653,10 +3794,14 @@ body {
   font-size: 11px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1180px) {
   .terminal-stats-matrix {
     grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
+}
+
+@media (max-width: 768px) {
   .tour-bottom-control-dock {
     width: calc(100vw - 20px);
     height: 50px;
@@ -3676,6 +3821,16 @@ body {
   }
   .tour-dots {
     display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .terminal-stats-matrix {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .terminal-price {
+    font-size: 26px;
   }
 }
 

@@ -80,9 +80,13 @@ export const PersonaPresetBar: React.FC<PersonaPresetBarProps> = ({ currentPlan,
                 {preset.tagline}
               </p>
 
-              <div className="archetype-metrics-strip font-mono text-[11px] flex-between">
-                <span>Inflow: <strong className="text-nebula">+{formatINR(monthlyIncome)}</strong></span>
-                <span>SIP: <strong className="text-quasar">{formatINR(sipAmount)}/mo</strong></span>
+              <div className="archetype-metrics-strip font-mono text-[11px]">
+                <span className="archetype-metric-item">
+                  Inflow: <strong className="text-nebula">+{formatINR(monthlyIncome)}</strong>
+                </span>
+                <span className="archetype-metric-item">
+                  SIP: <strong className="text-quasar">{formatINR(sipAmount)}/mo</strong>
+                </span>
               </div>
             </button>
           );
