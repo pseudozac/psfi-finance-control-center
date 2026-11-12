@@ -8,7 +8,7 @@ import {
   FileSpreadsheet,
   Moon,
   Sun,
-  Shield,
+  ShieldCheck,
   CheckCircle2,
 } from 'lucide-react';
 import type { FinancePlan, ViewPeriod } from './types/finance';
@@ -47,7 +47,7 @@ export function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     const saved = localStorage.getItem('psfi_theme');
     if (saved === 'light' || saved === 'dark') return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'dark';
+    return 'dark';
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -78,7 +78,7 @@ export function App() {
 
   const handleSelectPreset = (presetPlan: FinancePlan, name: string) => {
     setPlan(presetPlan);
-    setStatusMessage(`Loaded "${name}" simulation blueprint. Adjust any parameter below!`);
+    setStatusMessage(`Loaded "${name}" scenario. Drag any slider to customize.`);
   };
 
   const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,99 +86,64 @@ export function App() {
     if (!file) return;
     try {
       await importJSON(file);
-      setStatusMessage('Plan snapshot successfully imported from JSON!');
+      setStatusMessage('Plan imported successfully from JSON!');
     } catch (err) {
-      setStatusMessage(err instanceof Error ? `Import failed: ${err.message}` : 'Import failed: invalid JSON structure.');
+      setStatusMessage(err instanceof Error ? `Import failed: ${err.message}` : 'Import failed: invalid JSON.');
     } finally {
       e.target.value = '';
     }
   };
 
-  const handlePinBaseline = () => {
-    pinBaseline();
-    setStatusMessage('Pinned current plan as Baseline for delta comparison on projections.');
-  };
-
-  const handleClearBaseline = () => {
-    clearBaseline();
-    setStatusMessage('Baseline cleared.');
-  };
-
-  const handleExportJSON = () => {
-    exportJSON();
-    setStatusMessage('Encrypted JSON plan snapshot exported to downloads.');
-  };
-
-  const handleExportCSV = () => {
-    exportCSV(horizonMonths);
-    setStatusMessage(`Exported ${horizonMonths}-month wealth projection as CSV for spreadsheets.`);
-  };
-
-  const handleReset = () => {
-    resetToDefaults();
-    setStatusMessage('Restored all parameters to original default model.');
-  };
-
   return (
     <div className="app-shell">
-      {/* Background Cyber Ambient Flares */}
-      <div className="ambient-glow-top-left" aria-hidden="true" />
-      <div className="ambient-glow-bottom-right" aria-hidden="true" />
-
-      {/* Floating HUD Top Navigation */}
-      <header className="top-bar">
-        <div className="brand-group">
-          <div className="brand-logo-hud">
-            <span className="logo-symbol font-mono">₹</span>
-            <span className="logo-pulse-ring" />
+      {/* Floating Pill Dock Navbar */}
+      <header className="navbar-dock">
+        <div className="brand-cluster">
+          <div className="wordmark">
+            <span className="wm-p">p</span>
+            <span className="wm-s">s</span>
+            <span className="wm-f">f</span>
+            <span className="wm-i">i</span>
           </div>
-          <div>
-            <div className="brand-title-wrap">
-              <h1 className="brand-title font-mono">PsFi</h1>
-              <span className="tech-badge-primary font-mono">v2.1 PRO</span>
-              <span className="badge-vault font-mono">
-                <Shield size={11} className="text-emerald" /> LOCAL ENCLAVE
-              </span>
-            </div>
-            <p className="brand-subtitle font-mono">
-              ENGINEERING-GRADE PERSONAL FINANCE CONTROL CENTER · INDIA (INR ₹)
-            </p>
+          <div className="status-pill">
+            <span className="status-dot" />
+            <span>local vault</span>
           </div>
         </div>
 
-        <div className="toolbar">
-          {/* View Period Segmented Control */}
-          <div className="segmented" role="group" aria-label="View period">
+        <div className="dock-actions">
+          {/* Period Toggle */}
+          <div className="pill-segmented" role="group" aria-label="View period">
             <button
               type="button"
-              className={period === 'monthly' ? 'seg-active' : ''}
+              className={period === 'monthly' ? 'pill-active' : ''}
               onClick={() => setPeriod('monthly')}
             >
-              MONTHLY
+              monthly
             </button>
             <button
               type="button"
-              className={period === 'annual' ? 'seg-active' : ''}
+              className={period === 'annual' ? 'pill-active' : ''}
               onClick={() => setPeriod('annual')}
             >
-              ANNUAL
+              annual
             </button>
           </div>
 
           {/* Baseline Button */}
           {baseline ? (
-            <button type="button" className="btn btn-amber font-mono" onClick={handleClearBaseline} title="Clear pinned baseline">
-              <PinOff size={14} /> Clear Baseline
+            <button type="button" className="action-pill pill-amber" onClick={clearBaseline}>
+              <PinOff size={13} /> clear baseline
             </button>
           ) : (
-            <button type="button" className="btn font-mono" onClick={handlePinBaseline} title="Pin current plan as baseline for what-if comparison">
-              <Pin size={14} /> Pin Baseline
+            <button type="button" className="action-pill" onClick={pinBaseline}>
+              <Pin size={13} /> pin baseline
             </button>
           )}
 
-          {/* Import / Export Actions */}
-          <button type="button" className="btn font-mono" onClick={() => fileInputRef.current?.click()} title="Import JSON plan snapshot">
-            <Upload size={14} /> Import
+          {/* File Operations */}
+          <button type="button" className="action-pill" onClick={() => fileInputRef.current?.click()}>
+            <Upload size={13} /> import
           </button>
           <input
             ref={fileInputRef}
@@ -188,57 +153,67 @@ export function App() {
             hidden
           />
 
-          <button type="button" className="btn font-mono" onClick={handleExportJSON} title="Download JSON snapshot">
-            <Download size={14} /> JSON
+          <button type="button" className="action-pill" onClick={exportJSON}>
+            <Download size={13} /> json
           </button>
-          <button type="button" className="btn font-mono" onClick={handleExportCSV} title="Download projection CSV">
-            <FileSpreadsheet size={14} /> CSV
+          <button type="button" className="action-pill" onClick={() => exportCSV(horizonMonths)}>
+            <FileSpreadsheet size={13} /> csv
           </button>
-          <button type="button" className="btn btn-icon" onClick={handleReset} title="Reset to standard defaults">
-            <RotateCcw size={14} />
+          <button type="button" className="icon-pill" onClick={resetToDefaults} title="Reset to defaults">
+            <RotateCcw size={13} />
           </button>
 
           {/* Theme Toggle */}
           <button
             type="button"
-            className="btn btn-icon theme-btn"
+            className="icon-pill"
             onClick={toggleTheme}
-            title={`Toggle ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
-            aria-label="Toggle theme"
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
           >
-            {theme === 'dark' ? <Sun size={15} className="text-amber" /> : <Moon size={15} className="text-cyan" />}
+            {theme === 'dark' ? <Sun size={14} className="text-solstice" /> : <Moon size={14} className="text-pulsar" />}
           </button>
         </div>
       </header>
 
-      {/* Floating Status Notification */}
+      {/* Hipuku Editorial Hero Header */}
+      <section className="hero-section">
+        <h1 className="hero-headline">
+          Tactile personal finance control for India<span className="text-corona">.</span>
+        </h1>
+        <p className="hero-lede">
+          Model your <span className="hl-quasar">monthly cashflow</span>, compound with{' '}
+          <span className="hl-nebula">step-up SIPs</span>, audit your{' '}
+          <span className="hl-solstice">50/30/20 budget balance</span>, and compare{' '}
+          <span className="hl-pulsar">FY 2024-25 tax regimes</span>. Completely private, client-side, and offline.
+        </p>
+      </section>
+
+      {/* Toast Notification */}
       {statusMessage && (
-        <div className="status-banner animate-fade-in font-mono" role="status">
-          <div className="flex-align gap-2">
-            <CheckCircle2 size={16} className="text-emerald shrink-0" />
-            <span>{statusMessage}</span>
-          </div>
+        <div className="hipuku-toast" role="status">
+          <CheckCircle2 size={15} className="text-nebula shrink-0" />
+          <span>{statusMessage}</span>
           <button type="button" onClick={() => setStatusMessage(null)} aria-label="Dismiss">
             ×
           </button>
         </div>
       )}
 
-      {/* Main Dashboard Grid Stack */}
+      {/* Main Stack */}
       <main className="main-stack">
-        {/* Simulation Archetypes Bar */}
+        {/* Archetypes Persona Bar */}
         <PersonaPresetBar currentPlan={plan} onSelectPreset={handleSelectPreset} />
 
-        {/* Executive KPI Telemetry HUD */}
+        {/* Key Vitals Telemetry */}
         <SummaryCards summary={summary} debtPayoff={debtPayoff} period={period} />
 
-        {/* 50/30/20 Capital Allocation Architecture */}
+        {/* 50/30/20 Budget Health Audit */}
         <BudgetHealthWidget analysis={budgetRule} />
 
-        {/* Inflows & Outflows Matrix */}
+        {/* Cashflow Inflow & Outflow Mix */}
         <IncomeExpensePanel plan={plan} period={period} onChange={setPlan} />
 
-        {/* Forward Wealth Accumulation Curve */}
+        {/* Forward Wealth Curve */}
         <ProjectionSection
           plan={plan}
           baseline={baseline}
@@ -248,7 +223,7 @@ export function App() {
           onChange={setPlan}
         />
 
-        {/* Debt Elimination & Tax Regime Optimizer */}
+        {/* Debt Elimination & Tax Regime */}
         <IndiaTaxAndDebtPanel
           plan={plan}
           debtPayoff={debtPayoff}
@@ -257,19 +232,15 @@ export function App() {
         />
       </main>
 
-      {/* Engineering Footer */}
-      <footer className="app-footer font-mono">
-        <div className="footer-content">
-          <div className="flex-align gap-2 text-xs">
-            <div className="live-dot-pulse">
-              <span className="live-dot" />
-            </div>
-            <span className="font-semibold text-emerald">PSFI LOCAL ENCLAVE</span>
-            <span className="muted">· Zero External Telemetry · Zero Server Latency · Client-Side State</span>
-          </div>
-          <div className="footer-links text-xs muted">
-            <span>[FY 2024-25 TAX ENGINE · RECHARTS 2.15 · VITE 6 · PWA OFFLINE]</span>
-          </div>
+      {/* Hipuku-Style Minimalist Footer */}
+      <footer className="footer-capsule">
+        <div className="flex-align gap-2">
+          <ShieldCheck size={14} className="text-nebula" />
+          <span className="font-semibold text-sm">psfi</span>
+          <span className="muted text-xs">· client-side financial laboratory · zero server telemetry · inr (₹)</span>
+        </div>
+        <div className="muted text-xs font-mono">
+          <span>built with react 18 · vite 6 · recharts · vitest</span>
         </div>
       </footer>
     </div>

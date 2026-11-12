@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Terminal } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { PLAN_PRESETS } from '../lib/finance';
 import type { FinancePlan } from '../types/finance';
 
@@ -16,33 +16,26 @@ export const PersonaPresetBar: React.FC<PersonaPresetBarProps> = ({ currentPlan,
   );
 
   return (
-    <div className="preset-bar-card">
-      <div className="preset-bar-header">
-        <div className="flex-align gap-2">
-          <div className="icon-chip icon-chip-emerald icon-chip-sm">
-            <Terminal size={14} />
-          </div>
-          <div>
-            <span className="preset-title font-mono uppercase">Simulation Archetypes</span>
-            <span className="muted text-xs hidden-mobile"> · Click to load realistic scenario models</span>
-          </div>
-        </div>
+    <div className="persona-bar">
+      <div className="persona-label">
+        <span className="dot dot-quasar" />
+        <span className="font-semibold text-xs text-secondary uppercase font-mono">Archetype Models:</span>
       </div>
 
-      <div className="preset-pills-row">
+      <div className="persona-pills">
         {PLAN_PRESETS.map((preset) => {
           const isSelected = activePreset?.id === preset.id;
           return (
             <button
               key={preset.id}
               type="button"
-              className={`preset-pill ${isSelected ? 'preset-pill-active' : ''}`}
+              className={`persona-pill ${isSelected ? 'pill-selected' : ''}`}
               onClick={() => onSelectPreset(preset.plan, preset.name)}
               title={preset.tagline}
             >
-              <span className="preset-badge font-mono">{preset.badge}</span>
-              <span className="preset-name">{preset.name}</span>
-              <Sparkles size={11} className={isSelected ? 'text-emerald' : 'muted'} />
+              <span className="pill-badge">{preset.badge}</span>
+              <span className="pill-name">{preset.name}</span>
+              <Sparkles size={11} className={isSelected ? 'text-nebula' : 'muted'} />
             </button>
           );
         })}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { CreditCard, Landmark, CheckCircle2, ArrowRight, ShieldAlert } from 'lucide-react';
+import { CheckCircle2, ArrowRight, ShieldAlert } from 'lucide-react';
 import type { DebtPayoffResult, FinancePlan, TaxComparisonResult } from '../types/finance';
 import { formatINR } from '../lib/finance';
 import { SliderNumberField } from './SliderNumberField';
@@ -29,62 +29,75 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
 
   return (
     <div className="two-col-grid">
-      {/* 1. High-APR Debt Payoff Engine */}
-      <section className="card flex-col justify-between">
+      {/* 1. Debt Payoff & Amortization */}
+      <section className="hipuku-card flex-col justify-between">
         <div>
-          <div className="section-head mb-2">
-            <div className="flex-align gap-3">
-              <div className="icon-chip icon-chip-amber">
-                <CreditCard size={16} />
-              </div>
-              <div>
-                <div className="flex-align gap-2">
-                  <span className="tech-badge">// MODULE 05</span>
-                  <span className="text-xs font-mono text-amber">AMORTIZATION ENGINE</span>
-                </div>
-                <h2 className="title-sm m-0">Credit Card &amp; Personal Debt Elimination</h2>
-              </div>
+          <div className="card-header-row mb-4">
+            <div className="flex-align gap-2">
+              <span className="tag-pill tag-solstice">amortization</span>
+              <span className="card-title">Debt Elimination</span>
             </div>
             {hasDebt && (
-              <span className="badge-pill badge-amber">
+              <span className="tag-pill tag-flare">
                 {plan.debt.aprPercent}% APR
               </span>
             )}
           </div>
 
-          <SliderNumberField id="debt-bal" label="Current Revolving Balance" value={plan.debt.cardBalance} min={0} max={1_000_000} step={2_500} onChange={(v) => updateDebt('cardBalance', v)} />
-          <SliderNumberField id="debt-apr" label="Annual Percentage Rate (APR %)" value={plan.debt.aprPercent} min={0} max={48} step={0.5} unit="%" onChange={(v) => updateDebt('aprPercent', v)} />
-          <SliderNumberField id="debt-pay" label="Dedicated Monthly Capital" value={plan.debt.monthlyPayment} min={0} max={100_000} step={500} onChange={(v) => updateDebt('monthlyPayment', v)} />
+          <SliderNumberField
+            id="debt-bal"
+            label="Current Revolving Balance"
+            value={plan.debt.cardBalance}
+            min={0}
+            max={1_000_000}
+            step={2_500}
+            onChange={(v) => updateDebt('cardBalance', v)}
+          />
+          <SliderNumberField
+            id="debt-apr"
+            label="Annual Percentage Rate (APR %)"
+            value={plan.debt.aprPercent}
+            min={0}
+            max={48}
+            step={0.5}
+            unit="%"
+            onChange={(v) => updateDebt('aprPercent', v)}
+          />
+          <SliderNumberField
+            id="debt-pay"
+            label="Dedicated Monthly Capital"
+            value={plan.debt.monthlyPayment}
+            min={0}
+            max={100_000}
+            step={500}
+            onChange={(v) => updateDebt('monthlyPayment', v)}
+          />
         </div>
 
-        <div>
+        <div className="mt-4">
           {debtPayoff.warning ? (
-            <div className="alert-box alert-warn flex-align gap-2">
-              <ShieldAlert size={18} className="shrink-0" />
-              <div>
-                <strong className="font-mono">NEGATIVE AMORTIZATION:</strong> {debtPayoff.warning}
-              </div>
+            <div className="alert-pill alert-pill-warn flex-align gap-2">
+              <ShieldAlert size={16} className="shrink-0 text-flare" />
+              <span><strong>Warning:</strong> {debtPayoff.warning}</span>
             </div>
           ) : !hasDebt ? (
-            <div className="alert-box alert-success flex-align gap-2">
-              <CheckCircle2 size={18} className="text-emerald shrink-0" />
-              <div>
-                <strong className="font-mono">REVOLVING DEBT CLEARED:</strong> Zero high-APR interest leaks. 100% of discretionary surplus compounds in mutual funds.
-              </div>
+            <div className="alert-pill alert-pill-success flex-align gap-2">
+              <CheckCircle2 size={16} className="text-nebula shrink-0" />
+              <span><strong>Zero revolving debt:</strong> 100% of discretionary surplus is available for compounding.</span>
             </div>
           ) : (
-            <div className="debt-summary-box">
-              <div className="debt-metric">
-                <span className="muted text-xs font-mono">PAYOFF HORIZON</span>
-                <span className="font-mono font-bold text-base text-amber">{debtPayoff.months} Months</span>
+            <div className="hipuku-metric-row">
+              <div className="hipuku-metric-pill">
+                <span className="metric-label">Payoff Horizon</span>
+                <span className="metric-val text-solstice font-mono">{debtPayoff.months} mos</span>
               </div>
-              <div className="debt-metric">
-                <span className="muted text-xs font-mono">FINANCE CHARGES</span>
-                <span className="font-mono font-bold text-base text-rose">{formatINR(debtPayoff.totalInterest ?? 0)}</span>
+              <div className="hipuku-metric-pill">
+                <span className="metric-label">Finance Charges</span>
+                <span className="metric-val text-flare font-mono">{formatINR(debtPayoff.totalInterest ?? 0)}</span>
               </div>
-              <div className="debt-metric">
-                <span className="muted text-xs font-mono">TOTAL REPAYMENT</span>
-                <span className="font-mono font-bold text-base">{formatINR(debtPayoff.totalPaid ?? 0)}</span>
+              <div className="hipuku-metric-pill">
+                <span className="metric-label">Total Outflow</span>
+                <span className="metric-val font-mono">{formatINR(debtPayoff.totalPaid ?? 0)}</span>
               </div>
             </div>
           )}
@@ -92,77 +105,87 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
       </section>
 
       {/* 2. Indian Tax Regime Optimization */}
-      <section className="card flex-col justify-between">
+      <section className="hipuku-card flex-col justify-between">
         <div>
-          <div className="section-head mb-2">
-            <div className="flex-align gap-3">
-              <div className="icon-chip icon-chip-purple">
-                <Landmark size={16} />
-              </div>
-              <div>
-                <div className="flex-align gap-2">
-                  <span className="tech-badge">// MODULE 06</span>
-                  <span className="text-xs font-mono text-purple">FY 2024-25 REBATE COMPARISON</span>
-                </div>
-                <h2 className="title-sm m-0">Old vs New Tax Regime Verdict</h2>
-              </div>
+          <div className="card-header-row mb-4">
+            <div className="flex-align gap-2">
+              <span className="tag-pill tag-quasar">tax engine</span>
+              <span className="card-title">FY 2024-25 Regime Verdict</span>
             </div>
-            <span className="badge-pill badge-purple">Sec 87A + 4% Cess</span>
+            <span className="tag-pill tag-pulsar">Sec 87A + 4% Cess</span>
           </div>
 
-          <SliderNumberField id="tax-80c" label="Section 80C Deductions (PPF, ELSS, EPF, max ₹1.5L)" value={plan.tax.deductions80C} min={0} max={150_000} step={5_000} onChange={(v) => updateTax('deductions80C', v)} />
-          <SliderNumberField id="tax-80d" label="Section 80D Health Premiums (Self + Parents, max ₹75k)" value={plan.tax.deductions80D} min={0} max={75_000} step={2_500} onChange={(v) => updateTax('deductions80D', v)} />
+          <SliderNumberField
+            id="tax-80c"
+            label="Section 80C Deductions (PPF, ELSS, EPF, max ₹1.5L)"
+            value={plan.tax.deductions80C}
+            min={0}
+            max={150_000}
+            step={5_000}
+            onChange={(v) => updateTax('deductions80C', v)}
+          />
+          <SliderNumberField
+            id="tax-80d"
+            label="Section 80D Health Premiums (Self + Parents, max ₹75k)"
+            value={plan.tax.deductions80D}
+            min={0}
+            max={75_000}
+            step={2_500}
+            onChange={(v) => updateTax('deductions80D', v)}
+          />
 
-          <div className="tax-regime-grid">
+          <div className="tax-regime-grid mt-3">
             {/* New Regime Card */}
-            <div className={`tax-card ${taxComparison.recommended === 'new' ? 'tax-card-winner' : ''}`}>
-              <div className="tax-card-head">
-                <span className="font-semibold text-sm">New Regime</span>
+            <div className={`tax-compare-card ${taxComparison.recommended === 'new' ? 'winner-card' : ''}`}>
+              <div className="tax-compare-head">
+                <span className="tax-name">New Regime</span>
                 {taxComparison.recommended === 'new' && (
-                  <span className="tax-winner-tag font-mono">
-                    <CheckCircle2 size={12} /> VERIFIED OPTIMAL
+                  <span className="winner-badge">
+                    <CheckCircle2 size={11} /> OPTIMAL
                   </span>
                 )}
               </div>
-              <div className="tax-card-val font-mono font-bold text-lg">
+              <div className="tax-amount font-mono">
                 {formatINR(taxComparison.newRegimeTax)}
               </div>
-              <span className="muted text-xs font-mono">₹75k Std Ded · Rebate &le; ₹7L</span>
+              <span className="tax-note">₹75k Std Ded · Rebate &le; ₹7L</span>
             </div>
 
             {/* Old Regime Card */}
-            <div className={`tax-card ${taxComparison.recommended === 'old' ? 'tax-card-winner' : ''}`}>
-              <div className="tax-card-head">
-                <span className="font-semibold text-sm">Old Regime</span>
+            <div className={`tax-compare-card ${taxComparison.recommended === 'old' ? 'winner-card' : ''}`}>
+              <div className="tax-compare-head">
+                <span className="tax-name">Old Regime</span>
                 {taxComparison.recommended === 'old' && (
-                  <span className="tax-winner-tag font-mono">
-                    <CheckCircle2 size={12} /> VERIFIED OPTIMAL
+                  <span className="winner-badge">
+                    <CheckCircle2 size={11} /> OPTIMAL
                   </span>
                 )}
               </div>
-              <div className="tax-card-val font-mono font-bold text-lg">
+              <div className="tax-amount font-mono">
                 {formatINR(taxComparison.oldRegimeTax)}
               </div>
-              <span className="muted text-xs font-mono">₹50k Std Ded + 80C/80D</span>
+              <span className="tax-note">₹50k Std Ded + 80C/80D</span>
             </div>
           </div>
         </div>
 
-        <div className="tax-verdict-banner">
-          {taxComparison.recommended === 'tie' ? (
-            <span className="font-mono text-xs">Both tax regimes produce identical tax liability for this income structure.</span>
-          ) : (
-            <div className="flex-align gap-2 font-mono text-xs">
-              <span className="text-emerald font-bold">
-                {taxComparison.recommended === 'new' ? 'NEW REGIME' : 'OLD REGIME'} IS RECOMMENDED
-              </span>
-              <ArrowRight size={14} className="text-muted" />
-              <span>
-                Net Annual Savings:{' '}
-                <strong className="text-emerald font-mono font-bold">{formatINR(taxComparison.savings)}</strong>
-              </span>
-            </div>
-          )}
+        <div className="mt-4">
+          <div className="verdict-banner">
+            {taxComparison.recommended === 'tie' ? (
+              <span className="font-mono text-xs">Both regimes produce identical tax liability for this income structure.</span>
+            ) : (
+              <div className="flex-align gap-2 text-xs">
+                <span className="text-nebula font-bold font-mono">
+                  {taxComparison.recommended === 'new' ? 'NEW REGIME' : 'OLD REGIME'} RECOMMENDED
+                </span>
+                <ArrowRight size={13} className="text-muted" />
+                <span>
+                  Net Annual Savings:{' '}
+                  <strong className="text-nebula font-mono">{formatINR(taxComparison.savings)}</strong>
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </section>
     </div>
