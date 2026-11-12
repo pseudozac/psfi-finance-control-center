@@ -115,11 +115,11 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
     // Header: Brand & Tagline
     ctx.fillStyle = '#bf9ff1';
     ctx.font = 'bold 36px monospace';
-    ctx.fillText('p · s · f · i', 60, 80);
+    ctx.fillText('psfi', 60, 82);
 
     ctx.fillStyle = '#8a90a2';
-    ctx.font = '500 18px sans-serif';
-    ctx.fillText('FINANCIAL HEALTH SCORECARD · CLIENT-SIDE & PRIVATE', 260, 75);
+    ctx.font = '500 16px sans-serif';
+    ctx.fillText('·  FINANCIAL HEALTH SCORECARD · CLIENT-SIDE & PRIVATE', 170, 78);
 
     // Score Ring / Pill Box
     ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
