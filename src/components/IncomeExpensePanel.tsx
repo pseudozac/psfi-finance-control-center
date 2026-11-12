@@ -174,13 +174,13 @@ export const IncomeExpensePanel: React.FC<IncomeExpensePanelProps> = ({ plan, pe
 
         {/* Custom Outflow Streams */}
         <div className="sub-group">
-          <div className="flex-between flex-align mb-2">
-            <h3 className="group-title text-pulsar m-0">
+          <div className="flex-between flex-wrap gap-2 mb-3">
+            <h3 className="group-title text-pulsar m-0 whitespace-nowrap">
               <span>●</span> Custom Expense Lines ({periodLabel})
             </h3>
             <button
               type="button"
-              className="tag-pill tag-pulsar cursor-pointer flex-align gap-1"
+              className="tag-pill tag-pulsar cursor-pointer flex-align gap-1 shrink-0"
               onClick={addCustomExpense}
             >
               <Plus size={11} /> Add Outflow Line

@@ -359,8 +359,8 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-shrink: 0;
   min-width: 0;
+  max-width: 100%;
 }
 
 .dock-utility-icons {
@@ -872,6 +872,8 @@ body {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 10px 14px;
 }
 
 .card-title {
@@ -1449,6 +1451,92 @@ body {
   align-items: center;
 }
 
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.whitespace-nowrap {
+  white-space: nowrap;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Institutional Design System Buttons */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  background: var(--surface-overlay);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  color: var(--ink-primary);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.btn-secondary:hover {
+  background: var(--surface-raised);
+  border-color: var(--border-hover);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.btn-secondary:active {
+  transform: translateY(0);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, var(--colour-quasar), var(--colour-nebula));
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  color: #0b0f19;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(191, 159, 241, 0.25);
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.95;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(191, 159, 241, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .flex-col {
   display: flex;
   flex-direction: column;
@@ -1540,6 +1628,9 @@ body {
   .vault-pill-name {
     max-width: 85px;
   }
+  .two-col-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1569,9 +1660,10 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 6px;
+    gap: 8px 6px;
     border-top: 1px solid var(--border-subtle);
     padding-top: 8px;
+    flex-wrap: wrap;
   }
   .dock-utility-icons {
     border-left: none;
@@ -1600,8 +1692,15 @@ body {
 
 @media (max-width: 480px) {
   .dock-actions-cluster {
-    flex-wrap: wrap;
+    justify-content: center;
     gap: 6px;
+    flex-wrap: wrap;
+  }
+  .dock-utility-icons {
+    border-left: none;
+    padding-left: 0;
+    justify-content: center;
+    width: 100%;
   }
   .tax-regime-grid {
     grid-template-columns: 1fr;
@@ -2725,6 +2824,26 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
+}
+
+.modal-card {
+  background: var(--surface-primary);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-xl);
+  padding: 22px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85);
+  box-sizing: border-box;
+  animation: slideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 16px;
+  position: relative;
+  gap: 12px;
 }
 
 .sandbox-levers-grid {
@@ -3950,12 +4069,12 @@ body {
    Cross-Device QR Vault Beam Modal & Live Camera Scanner
    -------------------------------------------------------------------------- */
 .qr-sync-modal {
-  max-width: 440px;
+  max-width: 480px;
   width: 92vw;
   background: var(--surface-primary);
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-xl);
-  padding: 20px;
+  padding: 22px;
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85);
   animation: slideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -3982,8 +4101,20 @@ body {
   background: rgba(94, 196, 145, 0.1);
   border: 1px solid rgba(94, 196, 145, 0.3);
   color: var(--colour-nebula);
-  padding: 4px 12px;
+  padding: 5px 14px;
   border-radius: var(--radius-full);
+  white-space: nowrap;
+  font-size: 11px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 420px) {
+  .qr-privacy-pill {
+    white-space: normal;
+    text-align: center;
+    font-size: 10px;
+  }
 }
 
 .video-viewport-wrapper {

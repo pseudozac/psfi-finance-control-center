@@ -209,11 +209,11 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
         <div className="flex-align gap-3">
           <button
             type="button"
-            className="btn-secondary font-mono text-xs flex-align gap-1.5"
+            className="btn-secondary font-mono text-xs flex-align gap-1.5 shrink-0"
             onClick={onReturnToDashboard}
             title="Return to Control Center Cockpit"
           >
-            <ArrowLeft size={13} />
+            <ArrowLeft size={13} className="text-quasar" />
             <span>Control Center</span>
           </button>
           <span className="text-muted text-xs">/</span>

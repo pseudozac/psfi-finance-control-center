@@ -274,18 +274,18 @@ export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
     <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-label="Cross-Device QR Vault Beam">
       <div className="modal-card qr-sync-modal" onClick={(e) => e.stopPropagation()}>
         {/* Modal Header */}
-        <div className="modal-header flex-between items-center">
-          <div className="flex-align gap-2">
-            <QrCode size={16} className="text-quasar" />
-            <h3 className="modal-title font-semibold text-sm m-0">Cross-Device QR Vault Beam</h3>
+        <div className="modal-header">
+          <div className="flex-align gap-2 min-w-0">
+            <QrCode size={16} className="text-quasar shrink-0" />
+            <h3 className="modal-title font-semibold text-sm m-0 truncate">Cross-Device QR Vault Beam</h3>
           </div>
-          <button type="button" className="icon-pill" onClick={onClose} title="Close (Esc)">
+          <button type="button" className="icon-pill shrink-0" onClick={onClose} title="Close (Esc)">
             <X size={15} />
           </button>
         </div>
 
         {/* Tab Switcher: Beam (Send) vs Scan (Receive) */}
-        <div className="pill-segmented mt-2.5 mb-3 w-full flex" role="tablist">
+        <div className="pill-segmented mb-3 w-full flex" role="tablist">
           <button
             type="button"
             className={`flex-1 flex-align justify-center gap-1.5 ${activeTab === 'beam' ? 'pill-active' : ''}`}
@@ -317,16 +317,16 @@ export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
             </div>
 
             {/* Optional 4-Digit Security PIN */}
-            <div className="qr-pin-control-box mt-3 p-2.5 border border-subtle rounded-lg w-full flex-between items-center">
-              <div className="flex-align gap-2 text-left">
-                {pinProtection ? <Lock size={14} className="text-solstice" /> : <Unlock size={14} className="text-muted" />}
+            <div className="qr-pin-control-box mt-3 p-2.5 border border-subtle rounded-lg w-full flex-between items-center gap-2">
+              <div className="flex-align gap-2 text-left min-w-0">
+                {pinProtection ? <Lock size={14} className="text-solstice shrink-0" /> : <Unlock size={14} className="text-muted shrink-0" />}
                 <div>
-                  <span className="font-semibold text-xs block text-primary">Lock with 4-Digit PIN</span>
+                  <span className="font-semibold text-xs block text-primary whitespace-nowrap">Lock with 4-Digit PIN</span>
                   <span className="text-[11px] text-muted block">Prevent unauthorized camera scans</span>
                 </div>
               </div>
 
-              <div className="flex-align gap-2">
+              <div className="flex-align gap-2 shrink-0">
                 {pinProtection && (
                   <input
                     type="password"
@@ -352,16 +352,16 @@ export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
               </div>
             </div>
 
-            <div className="qr-privacy-pill font-mono text-[11px] flex-align gap-1.5 mt-2.5">
-              <ShieldCheck size={13} className="text-nebula" />
+            <div className="qr-privacy-pill font-mono text-[11px] flex-align justify-center gap-1.5 mt-3 mx-auto">
+              <ShieldCheck size={13} className="text-nebula shrink-0" />
               <span>100% Peer-to-Peer Visual Beam · Zero Server Sync</span>
             </div>
 
             {/* Alternative Direct Link & Copy Tools */}
-            <div className="mt-3 pt-3 border-t border-subtle w-full flex-between items-center gap-2">
+            <div className="mt-3 pt-3 border-t border-subtle w-full flex items-center gap-2 flex-wrap">
               <button
                 type="button"
-                className="btn-secondary font-mono text-xs flex-align gap-1.5 flex-1 justify-center"
+                className="btn-secondary font-mono text-xs flex-align gap-1.5 flex-1 justify-center py-2"
                 onClick={() => {
                   navigator.clipboard.writeText(directUrl);
                   setCopiedLink(true);
@@ -375,7 +375,7 @@ export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
 
               <button
                 type="button"
-                className="btn-secondary font-mono text-xs flex-align gap-1.5 flex-1 justify-center"
+                className="btn-secondary font-mono text-xs flex-align gap-1.5 flex-1 justify-center py-2"
                 onClick={() => {
                   navigator.clipboard.writeText(beamString);
                   setCopiedString(true);

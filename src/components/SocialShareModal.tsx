@@ -505,25 +505,25 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
         </div>
 
         {/* Privacy & Action Controls Toolbar */}
-        <div className="share-modal-toolbar flex-between items-center mt-3 pt-3 border-t border-subtle">
+        <div className="share-modal-toolbar flex-between items-center mt-3 pt-3 border-t border-subtle flex-wrap gap-3">
           {/* Privacy Anonymize Toggle */}
           <button
             type="button"
-            className={`action-pill ${anonymized ? 'pill-active-mode' : ''}`}
+            className={`action-pill shrink-0 ${anonymized ? 'pill-active-mode' : ''}`}
             onClick={() => setAnonymized(!anonymized)}
             title={anonymized ? 'Showing percentages and ratings only (Safe for LinkedIn/X)' : 'Showing raw rupee numbers'}
           >
             {anonymized ? <EyeOff size={13} className="text-corona" /> : <Eye size={13} />}
-            <span className="font-mono text-xs">
+            <span className="font-mono text-xs whitespace-nowrap">
               {anonymized ? 'Anonymized Ratios (Safe to Share)' : 'Show Rupee Figures'}
             </span>
           </button>
 
           {/* Action Buttons */}
-          <div className="flex-align gap-2">
+          <div className="flex-align gap-2 flex-wrap shrink-0">
             <button
               type="button"
-              className="btn-secondary font-mono text-xs flex-align gap-1.5"
+              className="btn-secondary font-mono text-xs flex-align gap-1.5 shrink-0"
               onClick={shareTwitterIntent}
               title="Post to X / Twitter"
             >
@@ -533,7 +533,7 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
 
             <button
               type="button"
-              className="btn-secondary font-mono text-xs flex-align gap-1.5"
+              className="btn-secondary font-mono text-xs flex-align gap-1.5 shrink-0"
               onClick={handleCopyImage}
               title="Copy card image to clipboard"
             >
@@ -543,7 +543,7 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
 
             <button
               type="button"
-              className="btn-primary font-mono text-xs flex-align gap-1.5"
+              className="btn-primary font-mono text-xs flex-align gap-1.5 shrink-0"
               onClick={handleDownload}
               title="Download card as high-res PNG"
             >
