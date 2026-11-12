@@ -128,9 +128,9 @@ body {
 }
 
 .app-shell {
-  max-width: 1200px;
+  max-width: min(1640px, 96vw);
   margin: 0 auto;
-  padding: 24px 20px 80px;
+  padding: 24px 24px 80px;
 }
 
 /* --------------------------------------------------------------------------
@@ -341,6 +341,97 @@ body {
   display: none;
 }
 
+.dock-actions-cluster {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dock-utility-icons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 8px;
+  border-left: 1px solid var(--border-subtle);
+}
+
+.tools-dropdown-wrapper {
+  position: relative;
+}
+
+.tools-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 270px;
+  background: rgba(18, 20, 26, 0.96);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  padding: 8px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tools-menu-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: var(--radius-lg);
+  background: transparent;
+  border: none;
+  color: var(--ink-primary);
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  transition: all var(--trans-fast);
+}
+
+.tools-menu-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.tools-menu-item svg {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.tools-menu-item .item-title {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  line-height: 1.3;
+}
+
+.tools-menu-item .item-sub {
+  display: block;
+  font-size: 10.5px;
+  color: var(--ink-muted);
+  line-height: 1.3;
+  margin-top: 1px;
+}
+
+.tools-menu-item.item-danger:hover {
+  background: rgba(229, 107, 111, 0.12);
+}
+
+.tools-menu-item.item-danger .item-title {
+  color: var(--colour-corona);
+}
+
+.tools-menu-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 4px 6px;
+}
+
 .pill-demo {
   border-color: rgba(247, 141, 44, 0.35);
   background: rgba(247, 141, 44, 0.08);
@@ -459,73 +550,146 @@ body {
   gap: 24px;
 }
 
-.persona-bar-wrap {
+/* --------------------------------------------------------------------------
+   Cockpit Desktop Grid (Wide Screen Real Estate Optimization)
+   -------------------------------------------------------------------------- */
+.cockpit-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 28px;
+  align-items: start;
+  width: 100%;
+}
+
+.cockpit-col {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+@media (max-width: 1200px) {
+  .cockpit-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Calibrated Financial Archetypes Grid
+   -------------------------------------------------------------------------- */
+.archetype-container {
+  margin-bottom: 24px;
+  width: 100%;
+}
+
+.archetype-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 1100px) {
+  .archetype-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .archetype-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.archetype-card {
+  background: var(--surface-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.archetype-card:hover {
+  border-color: var(--border-medium);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+  background: var(--surface-overlay);
+}
+
+.archetype-card-active {
+  border-color: var(--colour-quasar) !important;
+  background: rgba(191, 159, 241, 0.08) !important;
+  box-shadow: 0 0 0 1px var(--colour-quasar), 0 8px 24px rgba(191, 159, 241, 0.15);
+}
+
+.archetype-card-active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--colour-quasar), var(--colour-nebula));
+}
+
+.archetype-icon-box {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+  background: var(--surface-dock);
+  border: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
-  gap: 12px;
-  overflow-x: auto;
-  padding: 4px 0 10px;
-  scrollbar-width: none;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.persona-bar-wrap::-webkit-scrollbar {
-  display: none;
-}
-
-.persona-bar-label {
-  font-size: 11px;
-  font-weight: 700;
+.archetype-badge {
+  font-size: 9.5px;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
   color: var(--ink-muted);
-  white-space: nowrap;
+  letter-spacing: 0.06em;
+  display: block;
 }
 
-.persona-capsule-list {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+.archetype-name {
+  font-size: 13px;
+  color: var(--ink-primary);
+  line-height: 1.2;
 }
 
-.persona-pill {
+.archetype-active-badge {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 6px 14px;
-  background: var(--surface-raised);
-  border: var(--hair) solid var(--border-subtle);
+  gap: 4px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  background: rgba(94, 196, 145, 0.15);
+  color: var(--colour-nebula);
+  padding: 3px 8px;
   border-radius: var(--radius-full);
-  color: var(--ink-secondary);
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s var(--ease-smooth);
+  border: 1px solid rgba(94, 196, 145, 0.3);
 }
 
-.persona-pill:hover {
-  border-color: var(--border-medium);
-  color: var(--ink-primary);
-  transform: translateY(-1px);
+.archetype-tagline {
+  color: var(--ink-muted);
+  font-size: 11.5px;
+  line-height: 1.4;
 }
 
-.persona-pill.pill-active {
-  background: var(--colour-quasar-subtle);
-  border-color: var(--colour-quasar);
-  color: var(--ink-primary);
-  font-weight: 600;
-}
-
-.persona-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--ink-muted);
-}
-
-.persona-pill.pill-active .persona-dot {
-  background: var(--colour-quasar);
+.archetype-metrics-strip {
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+  color: var(--ink-muted);
 }
 
 /* --------------------------------------------------------------------------
@@ -2831,6 +2995,19 @@ body {
   transform: scale(0.85);
 }
 
+.mouse-dragging-active {
+  transition: transform 0.65s cubic-bezier(0.25, 1, 0.5, 1) !important;
+}
+
+.cursor-drag-hand {
+  transform: scale(1.12) rotate(-8deg);
+}
+
+.glow-amber {
+  background: var(--colour-solstice) !important;
+  box-shadow: 0 0 12px #ffb454 !important;
+}
+
 .cursor-tip-glow {
   position: absolute;
   top: 2px;
@@ -3079,6 +3256,44 @@ body {
   padding: 14px 18px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   animation: slideDown 0.3s ease-out;
+}
+
+/* Wealth Terminal Interactive Coach Walkthrough */
+.terminal-tutorial-modal-card {
+  background: rgba(18, 20, 26, 0.96);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(191, 159, 241, 0.35);
+  border-radius: var(--radius-xl);
+  padding: 16px 20px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75), 0 0 20px rgba(191, 159, 241, 0.12);
+  margin-bottom: 20px;
+  animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.terminal-tutorial-desc {
+  color: var(--ink-secondary);
+  font-size: 12.5px;
+}
+
+.terminal-tutorial-tip {
+  background: rgba(255, 180, 84, 0.08);
+  border: 1px solid rgba(255, 180, 84, 0.22);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  color: var(--ink-primary);
+}
+
+.terminal-highlight-focus {
+  position: relative;
+  border-color: var(--colour-solstice) !important;
+  box-shadow: 0 0 0 2px rgba(255, 180, 84, 0.4), 0 0 28px rgba(255, 180, 84, 0.2) !important;
+  animation: highlightPulse 2s infinite alternate;
+}
+
+@keyframes highlightPulse {
+  0% { box-shadow: 0 0 0 2px rgba(255, 180, 84, 0.3), 0 0 20px rgba(255, 180, 84, 0.15); }
+  100% { box-shadow: 0 0 0 3px rgba(255, 180, 84, 0.7), 0 0 32px rgba(255, 180, 84, 0.35); }
 }
 
 .terminal-hero-card {

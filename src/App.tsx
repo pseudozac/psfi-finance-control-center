@@ -17,11 +17,10 @@ import {
   Sparkles,
   Smartphone,
   Monitor,
-  SlidersHorizontal,
-  X,
   Compass,
   Sliders,
   TrendingUp,
+  ChevronDown,
 } from 'lucide-react';
 import type { FinancePlan, ViewPeriod } from './types/finance';
 import {
@@ -44,7 +43,7 @@ import { FireMilestoneTracker } from './components/FireMilestoneTracker';
 import { EmergencyStressTestWidget } from './components/EmergencyStressTestWidget';
 import { WhatIfSandboxModal } from './components/WhatIfSandboxModal';
 import { GuidedTourModal } from './components/GuidedTourModal';
-import { MarketPnLTerminal } from './components/MarketPnLTerminal';
+import { WealthTerminal } from './components/WealthTerminal';
 
 type AppPhase = 'loading' | 'gateway' | 'dashboard';
 
@@ -77,7 +76,8 @@ export function App() {
   const [privacyMode, setPrivacyMode] = useState<boolean>(false);
   const [showSandbox, setShowSandbox] = useState<boolean>(false);
   const [showTour, setShowTour] = useState<boolean>(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const [toolsMenuOpen, setToolsMenuOpen] = useState<boolean>(false);
+  const toolsDropdownRef = useRef<HTMLDivElement>(null);
   const [layoutMode, setLayoutMode] = useState<'mobile' | 'desktop'>(() => {
     const saved = localStorage.getItem('psfi_layout_mode');
     if (saved === 'mobile' || saved === 'desktop') return saved;
@@ -96,6 +96,23 @@ export function App() {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('psfi_theme', theme);
   }, [theme]);
+
+  // Click outside to close tools dropdown
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
+      if (toolsDropdownRef.current && !toolsDropdownRef.current.contains(e.target as Node)) {
+        setToolsMenuOpen(false);
+      }
+    };
+    if (toolsMenuOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+      document.addEventListener('touchstart', handleOutsideClick);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+    };
+  }, [toolsMenuOpen]);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -185,7 +202,8 @@ export function App() {
   return (
     <div className={`app-shell layout-${layoutMode} ${privacyMode ? 'privacy-masked' : ''}`}>
       {/* Floating Pill Dock Navbar */}
-      <header className={`navbar-dock ${mobileMenuOpen ? 'dock-expanded' : ''}`} id="tour-dock">
+      <header className="navbar-dock" id="tour-dock">
+        {/* Left: Brand & Active Vault */}
         <div className="brand-cluster">
           <div className="wordmark" onClick={() => setAppPhase('gateway')} style={{ cursor: 'pointer' }} title="Return to Gateway">
             <span className="wm-p">p</span>
@@ -194,7 +212,6 @@ export function App() {
             <span className="wm-i">i</span>
           </div>
 
-          {/* Active Vault Switcher Pill */}
           <button
             type="button"
             className="action-pill pill-vault"
@@ -207,13 +224,13 @@ export function App() {
           </button>
         </div>
 
-        {/* Workspace View Switcher: Control Center vs Stock Market P&L Terminal */}
+        {/* Center: Primary Workspace Switcher (Control Center vs Wealth Terminal) */}
         <div className="pill-segmented dock-view-switcher" role="group" aria-label="Workspace view">
           <button
             type="button"
             className={activeView === 'control' ? 'pill-active' : ''}
             onClick={() => setActiveView('control')}
-            title="Tactile Control Center (Sliders & Modules)"
+            title="Tactile Control Center (Sliders & Cockpit)"
           >
             <Sliders size={12} />
             <span className="view-label">Control Center</span>
@@ -222,167 +239,204 @@ export function App() {
             type="button"
             className={activeView === 'terminal' ? 'pill-active pill-terminal-active' : ''}
             onClick={() => setActiveView('terminal')}
-            title="Stock Market-Style Expenditure & Wealth Terminal (1D to 12M)"
+            title="Wealth Terminal (Stock-Market Expenditure & Valuation Engine)"
           >
             <TrendingUp size={12} className={activeView === 'terminal' ? 'text-nebula' : ''} />
-            <span className="view-label">Market P&L</span>
+            <span className="view-label">Wealth Terminal</span>
           </button>
         </div>
 
-        {/* Core Controls Strip (Always accessible on mobile & desktop) */}
-        <div className="dock-core-controls">
-          {/* Interactive Guided Tour */}
-          <button
-            type="button"
-            className="icon-pill pill-tour-icon"
-            onClick={() => setShowTour(true)}
-            title="Start Interactive Guided Tour"
-            aria-label="Start interactive tour"
-          >
-            <Compass size={14} className="text-quasar" />
-          </button>
-
-          {/* Mobile vs Desktop View Density Switcher */}
-          <button
-            type="button"
-            className={`icon-pill pill-density-toggle ${layoutMode === 'mobile' ? 'mode-mobile-active' : 'mode-desktop-active'}`}
-            onClick={toggleLayoutMode}
-            title={layoutMode === 'mobile' ? 'Mobile Touch View active. Tap to switch to Desktop Power View' : 'Desktop View active. Tap to switch to Mobile Touch View'}
-          >
-            {layoutMode === 'mobile' ? <Smartphone size={14} className="text-nebula" /> : <Monitor size={14} className="text-pulsar" />}
-            <span className="density-label font-mono">{layoutMode}</span>
-          </button>
-
-          {/* Privacy Mask Toggle */}
-          <button
-            type="button"
-            className={`icon-pill ${privacyMode ? 'pill-active-mode' : ''}`}
-            onClick={() => setPrivacyMode(!privacyMode)}
-            title={privacyMode ? 'Disable privacy masking' : 'Enable privacy mask (blur sensitive numbers)'}
-          >
-            {privacyMode ? <EyeOff size={14} className="text-corona" /> : <Eye size={14} />}
-          </button>
-
-          {/* Theme Toggle */}
-          <button
-            type="button"
-            className="icon-pill"
-            onClick={toggleTheme}
-            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-          >
-            {theme === 'dark' ? <Sun size={14} className="text-solstice" /> : <Moon size={14} className="text-pulsar" />}
-          </button>
-
-          {/* Mobile Drawer Toggle (Only rendered on small screens) */}
-          <button
-            type="button"
-            className={`icon-pill mobile-drawer-btn ${mobileMenuOpen ? 'pill-active-mode' : ''}`}
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            title="Toggle more tools & actions"
-            aria-label="Toggle actions drawer"
-          >
-            {mobileMenuOpen ? <X size={14} /> : <SlidersHorizontal size={14} />}
-          </button>
-        </div>
-
-        {/* Collapsible Action Pills (Inline on desktop, clean drawer on mobile) */}
-        <div className={`dock-actions ${mobileMenuOpen ? 'actions-drawer-open' : ''}`}>
-          {/* Interactive Guided Tour */}
-          <button
-            type="button"
-            className="action-pill pill-tour"
-            onClick={() => { setShowTour(true); setMobileMenuOpen(false); }}
-            title="Take a 45-second interactive tour of PsFi"
-          >
-            <Compass size={13} className="text-quasar" /> tour
-          </button>
-
-          {/* Period Toggle */}
-          <div className="pill-segmented" role="group" aria-label="View period">
+        {/* Right: Consolidated Action Cluster */}
+        <div className="dock-actions-cluster">
+          {/* Frequency Toggle */}
+          <div className="pill-segmented period-switcher" role="group" aria-label="View period">
             <button
               type="button"
               className={period === 'monthly' ? 'pill-active' : ''}
-              onClick={() => { setPeriod('monthly'); setMobileMenuOpen(false); }}
+              onClick={() => setPeriod('monthly')}
             >
               monthly
             </button>
             <button
               type="button"
               className={period === 'annual' ? 'pill-active' : ''}
-              onClick={() => { setPeriod('annual'); setMobileMenuOpen(false); }}
+              onClick={() => setPeriod('annual')}
             >
               annual
             </button>
           </div>
 
-          {/* Baseline Button */}
-          {baseline ? (
-            <button type="button" className="action-pill pill-amber" onClick={() => { clearBaseline(); setMobileMenuOpen(false); }}>
-              <PinOff size={13} /> clear baseline
+          {/* Guided Tour Trigger */}
+          <button
+            type="button"
+            className="action-pill pill-tour"
+            onClick={() => setShowTour(true)}
+            title="Start Interactive Guided Tour"
+          >
+            <Compass size={13} className="text-quasar" />
+            <span className="font-mono text-xs">tour</span>
+          </button>
+
+          {/* Unified Tools Dropdown Menu */}
+          <div className="tools-dropdown-wrapper" ref={toolsDropdownRef}>
+            <button
+              type="button"
+              className={`action-pill ${toolsMenuOpen ? 'pill-active-mode' : ''}`}
+              onClick={() => setToolsMenuOpen(!toolsMenuOpen)}
+              title="Tools, Scenarios & Data Operations"
+            >
+              <Sparkles size={13} className="text-solstice" />
+              <span className="font-mono text-xs">tools</span>
+              <ChevronDown size={11} className={`text-muted transition-transform ${toolsMenuOpen ? 'rotate-180' : ''}`} />
             </button>
-          ) : (
-            <button type="button" className="action-pill" onClick={() => { pinBaseline(); setMobileMenuOpen(false); }}>
-              <Pin size={13} /> pin baseline
+
+            {toolsMenuOpen && (
+              <div className="tools-dropdown-menu" role="menu">
+                <button
+                  type="button"
+                  className="tools-menu-item"
+                  onClick={() => { setShowSandbox(true); setToolsMenuOpen(false); }}
+                >
+                  <Sparkles size={13} className="text-quasar" />
+                  <div>
+                    <span className="item-title">What-If Sandbox</span>
+                    <span className="item-sub">Simulate raises, bonuses & inflation</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="tools-menu-item"
+                  onClick={() => {
+                    if (baseline) clearBaseline(); else pinBaseline();
+                    setToolsMenuOpen(false);
+                  }}
+                >
+                  {baseline ? <PinOff size={13} className="text-solstice" /> : <Pin size={13} />}
+                  <div>
+                    <span className="item-title">{baseline ? 'Clear Baseline' : 'Pin Baseline'}</span>
+                    <span className="item-sub">{baseline ? 'Remove comparison snapshot' : 'Snapshot current figures for deltas'}</span>
+                  </div>
+                </button>
+
+                <div className="tools-menu-divider" />
+
+                <button
+                  type="button"
+                  className="tools-menu-item"
+                  onClick={() => { fileInputRef.current?.click(); setToolsMenuOpen(false); }}
+                >
+                  <Upload size={13} className="text-muted" />
+                  <div>
+                    <span className="item-title">Import JSON</span>
+                    <span className="item-sub">Load vault backup file</span>
+                  </div>
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/json,.json"
+                  onChange={handleFileImport}
+                  hidden
+                />
+
+                <button
+                  type="button"
+                  className="tools-menu-item"
+                  onClick={() => { exportJSON(); setToolsMenuOpen(false); }}
+                >
+                  <Download size={13} className="text-muted" />
+                  <div>
+                    <span className="item-title">Export JSON</span>
+                    <span className="item-sub">Download vault state</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="tools-menu-item"
+                  onClick={() => { exportCSV(horizonMonths); setToolsMenuOpen(false); }}
+                >
+                  <FileSpreadsheet size={13} className="text-muted" />
+                  <div>
+                    <span className="item-title">Export CSV</span>
+                    <span className="item-sub">Spreadsheet projections matrix</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="tools-menu-item"
+                  onClick={() => { setToolsMenuOpen(false); window.print(); }}
+                >
+                  <Printer size={13} className="text-muted" />
+                  <div>
+                    <span className="item-title">Print Executive Statement</span>
+                    <span className="item-sub">1-page formatted PDF report</span>
+                  </div>
+                </button>
+
+                <div className="tools-menu-divider" />
+
+                <button
+                  type="button"
+                  className="tools-menu-item"
+                  onClick={() => { launchDemoVault(); setToolsMenuOpen(false); }}
+                >
+                  <Sparkles size={13} className="text-solstice" />
+                  <div>
+                    <span className="item-title">Load Demo Vault</span>
+                    <span className="item-sub">Seeded Indian tech profile</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="tools-menu-item item-danger"
+                  onClick={() => { resetToDefaults(); setToolsMenuOpen(false); }}
+                >
+                  <RotateCcw size={13} />
+                  <div>
+                    <span className="item-title">Reset to Defaults</span>
+                    <span className="item-sub">Clear plan to zeroed slate</span>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Quick Utility Icon Group */}
+          <div className="dock-utility-icons">
+            {/* View Density Switcher */}
+            <button
+              type="button"
+              className={`icon-pill pill-density-toggle ${layoutMode === 'mobile' ? 'mode-mobile-active' : 'mode-desktop-active'}`}
+              onClick={toggleLayoutMode}
+              title={layoutMode === 'mobile' ? 'Mobile View. Click for Desktop View' : 'Desktop View. Click for Mobile View'}
+            >
+              {layoutMode === 'mobile' ? <Smartphone size={13} className="text-nebula" /> : <Monitor size={13} className="text-pulsar" />}
             </button>
-          )}
 
-          {/* What-If Scenario Sandbox */}
-          <button
-            type="button"
-            className="action-pill"
-            onClick={() => { setShowSandbox(true); setMobileMenuOpen(false); }}
-            title="Open What-If Scenario Sandbox"
-          >
-            <Sparkles size={13} className="text-quasar" /> sandbox
-          </button>
+            {/* Privacy Mask Toggle */}
+            <button
+              type="button"
+              className={`icon-pill ${privacyMode ? 'pill-active-mode' : ''}`}
+              onClick={() => setPrivacyMode(!privacyMode)}
+              title={privacyMode ? 'Disable privacy masking' : 'Enable privacy mask (blur sensitive figures)'}
+            >
+              {privacyMode ? <EyeOff size={13} className="text-corona" /> : <Eye size={13} />}
+            </button>
 
-          {/* File Operations */}
-          <button type="button" className="action-pill" onClick={() => { fileInputRef.current?.click(); setMobileMenuOpen(false); }}>
-            <Upload size={13} /> import
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="application/json,.json"
-            onChange={handleFileImport}
-            hidden
-          />
-
-          <button type="button" className="action-pill" onClick={() => { exportJSON(); setMobileMenuOpen(false); }}>
-            <Download size={13} /> json
-          </button>
-          <button type="button" className="action-pill" onClick={() => { exportCSV(horizonMonths); setMobileMenuOpen(false); }}>
-            <FileSpreadsheet size={13} /> csv
-          </button>
-
-          {/* 1-Page Printable Executive Statement */}
-          <button
-            type="button"
-            className="action-pill"
-            onClick={() => { setMobileMenuOpen(false); window.print(); }}
-            title="Print executive financial summary"
-          >
-            <Printer size={13} /> print
-          </button>
-
-          {/* Load Demo Data Action */}
-          <button
-            type="button"
-            className="action-pill pill-demo"
-            onClick={() => { launchDemoVault(); setMobileMenuOpen(false); }}
-            title="Load realistic Indian tech professional demo vault"
-          >
-            <Sparkles size={13} className="text-solstice" /> demo vault
-          </button>
-
-          <button
-            type="button"
-            className="icon-pill"
-            onClick={() => { resetToDefaults(); setMobileMenuOpen(false); }}
-            title="Reset active vault to zeroes/defaults"
-          >
-            <RotateCcw size={13} />
-          </button>
+            {/* Theme Toggle */}
+            <button
+              type="button"
+              className="icon-pill"
+              onClick={toggleTheme}
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            >
+              {theme === 'dark' ? <Sun size={13} className="text-solstice" /> : <Moon size={13} className="text-pulsar" />}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -410,9 +464,9 @@ export function App() {
         </div>
       )}
 
-      {/* View Switch: Core Control Stack vs Stock Market P&L Terminal */}
+      {/* View Switch: Core Control Stack vs Wealth Terminal */}
       {activeView === 'terminal' ? (
-        <MarketPnLTerminal
+        <WealthTerminal
           plan={plan}
           summary={summary}
           onReturnToDashboard={() => setActiveView('control')}
@@ -426,35 +480,42 @@ export function App() {
           {/* Key Vitals Telemetry */}
           <SummaryCards summary={summary} debtPayoff={debtPayoff} period={period} />
 
-          {/* Cashflow Inflow & Outflow Mix */}
-          <IncomeExpensePanel plan={plan} period={period} onChange={setPlan} />
+          {/* 2-Column Wide Desktop Cockpit Grid (Eliminates side gutters) */}
+          <div className="cockpit-grid">
+            <div className="cockpit-col">
+              {/* Cashflow Inflow & Outflow Mix */}
+              <IncomeExpensePanel plan={plan} period={period} onChange={setPlan} />
 
-          {/* 50/30/20 Budget Health Audit */}
-          <BudgetHealthWidget analysis={budgetRule} />
+              {/* Debt Elimination & Tax Regime */}
+              <IndiaTaxAndDebtPanel
+                plan={plan}
+                debtPayoff={debtPayoff}
+                taxComparison={taxComparison}
+                onChange={setPlan}
+              />
+            </div>
 
-          {/* Emergency Runway Survival Stress Test & FIRE Milestones */}
-          <div id="tour-survival" className="tour-survival-block">
-            <EmergencyStressTestWidget plan={plan} />
-            <FireMilestoneTracker plan={plan} />
+            <div className="cockpit-col">
+              {/* 50/30/20 Budget Health Audit */}
+              <BudgetHealthWidget analysis={budgetRule} />
+
+              {/* Emergency Runway Survival Stress Test & FIRE Milestones */}
+              <div id="tour-survival" className="tour-survival-block">
+                <EmergencyStressTestWidget plan={plan} />
+                <FireMilestoneTracker plan={plan} />
+              </div>
+
+              {/* Forward Wealth Curve */}
+              <ProjectionSection
+                plan={plan}
+                baseline={baseline}
+                projections={projections}
+                horizonMonths={horizonMonths}
+                onHorizonChange={setHorizonMonths}
+                onChange={setPlan}
+              />
+            </div>
           </div>
-
-          {/* Forward Wealth Curve */}
-          <ProjectionSection
-            plan={plan}
-            baseline={baseline}
-            projections={projections}
-            horizonMonths={horizonMonths}
-            onHorizonChange={setHorizonMonths}
-            onChange={setPlan}
-          />
-
-          {/* Debt Elimination & Tax Regime */}
-          <IndiaTaxAndDebtPanel
-            plan={plan}
-            debtPayoff={debtPayoff}
-            taxComparison={taxComparison}
-            onChange={setPlan}
-          />
         </main>
       )}
 

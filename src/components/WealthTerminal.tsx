@@ -8,6 +8,10 @@ import {
   Zap,
   BarChart3,
   ArrowLeft,
+  Sparkles,
+  ChevronRight,
+  ChevronLeft,
+  X,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -27,13 +31,13 @@ import { InfoTooltip } from './InfoTooltip';
 export type PnLTimeframe = '1D' | '1W' | '1M' | '3M' | '6M' | '12M';
 export type PnLChartMode = 'pnl' | 'cashflow' | 'valuation';
 
-interface MarketPnLTerminalProps {
+interface WealthTerminalProps {
   plan: FinancePlan;
   summary: FinanceSummary;
   onReturnToDashboard: () => void;
 }
 
-export const MarketPnLTerminal: React.FC<MarketPnLTerminalProps> = ({
+export const WealthTerminal: React.FC<WealthTerminalProps> = ({
   plan,
   summary,
   onReturnToDashboard,
@@ -71,7 +75,6 @@ export const MarketPnLTerminal: React.FC<MarketPnLTerminalProps> = ({
   const timeSeriesData = useMemo(() => {
     switch (timeframe) {
       case '1D': {
-        // 30-day daily breakdown showing payday spikes, rent/EMI drop days, and daily living burn
         const days = 30;
         let cumulative = currentSavings;
         return Array.from({ length: days }, (_, i) => {
@@ -79,22 +82,10 @@ export const MarketPnLTerminal: React.FC<MarketPnLTerminalProps> = ({
           let dayInflow = 0;
           let dayOutflow = dailyBurn;
 
-          // Salary lands on Day 1
-          if (dayNum === 1) {
-            dayInflow += salary;
-          }
-          // Freelance lands mid-month (Day 15)
-          if (dayNum === 15) {
-            dayInflow += freelance;
-          }
-          // Housing deducted on Day 2
-          if (dayNum === 2) {
-            dayOutflow += housing;
-          }
-          // EMI deducted on Day 5
-          if (dayNum === 5) {
-            dayOutflow += emi;
-          }
+          if (dayNum === 1) dayInflow += salary;
+          if (dayNum === 15) dayInflow += freelance;
+          if (dayNum === 2) dayOutflow += housing;
+          if (dayNum === 5) dayOutflow += emi;
 
           const netPnL = dayInflow - dayOutflow;
           cumulative += netPnL;
@@ -111,14 +102,12 @@ export const MarketPnLTerminal: React.FC<MarketPnLTerminalProps> = ({
       }
 
       case '1W': {
-        // 8 weeks trajectory
         const weeks = 8;
         const weeklyInflow = Math.round(monthlyInflow / 4.33);
         const weeklyOutflow = Math.round(monthlyOutflow / 4.33);
         let cumulative = currentSavings;
 
         return Array.from({ length: weeks }, (_, i) => {
-          // Add slight realistic variability +/- 4%
           const variance = 1 + ((i % 3) - 1) * 0.04;
           const adjustedOutflow = Math.round(weeklyOutflow * variance);
           const net = weeklyInflow - adjustedOutflow;
@@ -135,15 +124,13 @@ export const MarketPnLTerminal: React.FC<MarketPnLTerminalProps> = ({
       }
 
       case '1M': {
-        // Past 6 months to forward 6 months (12 months cycle)
         const months = 12;
         let cumulative = currentSavings;
         return Array.from({ length: months }, (_, i) => {
           const mNum = i + 1;
-          // Apply annual step-up compounding proportionally
           const stepUpMultiplier = 1 + (stepUpRate / 100) * (i / 12);
           const currentInflow = Math.round(monthlyInflow * stepUpMultiplier);
-          const currentOutflow = Math.round(monthlyOutflow * (1 + 0.06 * (i / 12))); // 6% lifestyle inflation
+          const currentOutflow = Math.round(monthlyOutflow * (1 + 0.06 * (i / 12)));
           const net = currentInflow - currentOutflow;
           cumulative += net;
 
@@ -160,7 +147,6 @@ export const MarketPnLTerminal: React.FC<MarketPnLTerminalProps> = ({
       }
 
       case '3M': {
-        // 4 Quarters: Q1, Q2, Q3, Q4
         let cumulative = currentSavings;
         return ['Q1', 'Q2', 'Q3', 'Q4'].map((q, idx) => {
           const qInflow = Math.round(monthlyInflow * 3 * (1 + (stepUpRate / 100) * (idx / 4)));
@@ -179,7 +165,6 @@ export const MarketPnLTerminal: React.FC<MarketPnLTerminalProps> = ({
       }
 
       case '6M': {
-        // H1 and H2
         let cumulative = currentSavings;
         return ['H1 (First Half)', 'H2 (Second Half)'].map((h, idx) => {
           const hInflow = Math.round(monthlyInflow * 6 * (1 + (stepUpRate / 100) * (idx / 2)));
@@ -198,7 +183,6 @@ export const MarketPnLTerminal: React.FC<MarketPnLTerminalProps> = ({
       }
 
       case '12M': {
-        // 5 Years Trajectory (Annual blocks)
         let cumulative = currentSavings;
         return [1, 2, 3, 4, 5].map((year) => {
           const growthFactor = Math.pow(1 + stepUpRate / 100, year - 1);
@@ -222,44 +206,50 @@ export const MarketPnLTerminal: React.FC<MarketPnLTerminalProps> = ({
     }
   }, [timeframe, currentSavings, salary, freelance, housing, emi, stepUpRate, investmentRate, monthlyInflow, monthlyOutflow, dailyBurn]);
 
-  // Terminal Tutorial Steps
+  // Terminal Interactive Walkthrough Steps
   const TERMINAL_TUTORIAL_STEPS = [
     {
-      title: 'Stock Market Ticker & Live P&L',
-      badge: '1. TICKER BASICS',
-      text: 'Just like AAPL or RELIANCE on the stock exchange, your personal financial machine has a Net Gain/Loss P&L. A positive green surplus means your personal enterprise generates free cashflow!',
-      target: 'terminal-ticker',
+      targetId: 'terminal-ticker',
+      badge: '1. CAPITAL TICKER & FREE CASHFLOW',
+      title: 'Personal Enterprise P&L Ticker',
+      text: 'Just like publicly traded companies (AAPL, RELIANCE) on stock exchanges, your household operates as a capital entity. Monthly Surplus is your Free Cashflow (Operating Profit)—the unencumbered capital that compounds into equity.',
+      tip: 'An Operating Margin above 20% (green) proves your lifestyle is structurally profitable.',
     },
     {
-      title: 'Dynamic Timeframe Switches (1D to 12M)',
-      badge: '2. TIMEFRAMES',
-      text: 'Toggle between Daily (1D) burn, Weekly (1W) pace, Monthly (1M) compounding, Quarterly (3M) earnings, and Annual (12M) wealth valuation to detect dangerous cash leaks.',
-      target: 'terminal-timeframes',
+      targetId: 'terminal-timeframes',
+      badge: '2. TIMEFRAME VELOCITY',
+      title: '1D Daily Burn to 12M Compounding',
+      text: 'Switch between 1D (daily living cash burn & payday spikes), 1W (weekly pace), 1M (monthly compounding), 3M (quarterly earnings), and 12M (annual wealth valuation). This lets you catch micro cash drains before they become structural deficits.',
+      tip: 'Use 1D to track salary day liquidity buffers vs mid-month rent and EMI deductions.',
     },
     {
-      title: 'Net P&L vs Inflow/Outflow Waterfall',
-      badge: '3. CHART MODES',
-      text: 'Switch between the Net P&L Area Chart (Green for surplus gain, Red for cash deficit), Inflow vs Outflow Waterfall, or the Cumulative Valuation curve.',
-      target: 'terminal-chart-controls',
+      targetId: 'terminal-chart-controls',
+      badge: '3. DUAL-STREAM VISUALIZATION',
+      title: 'Net P&L, Waterfall & Valuation Curves',
+      text: 'Toggle between the Net P&L Curve (glowing green area for surplus gain, crimson red for deficit burn), Inflow vs Outflow Waterfall bars, or the Long-Horizon Cumulative Valuation curve.',
+      tip: 'Hover any point on the chart to inspect granular rupee inflows, outflows, and variance.',
     },
     {
-      title: 'Corporate Financial Statement',
-      badge: '4. AUDIT MATRIX',
-      text: 'Review Top-Line Revenue, Operating Living Expenses, COGS, and Discretionary Burn. Learn how high operating margins protect your emergency runway.',
-      target: 'terminal-financial-statement',
+      targetId: 'terminal-financial-statement',
+      badge: '4. CORPORATE AUDIT MATRIX',
+      title: 'GAAP/IFRS Personal Income Statement',
+      text: 'An institutional audit of your cashflow: Section 1 Operating Revenue, Section 2 Cost of Survival & Overhead (housing, groceries, utilities, EMIs), and the Bottom Line Net Free Cashflow with percentage-of-revenue margins.',
+      tip: 'Keep Essential Overhead (COGS) below 50% of revenue to guarantee financial antifragility.',
     },
   ];
+
+  const currentTut = TERMINAL_TUTORIAL_STEPS[tutorialStep];
 
   return (
     <div className="terminal-container">
       {/* Top Breadcrumb & Action Bar */}
-      <div className="terminal-header-bar">
+      <div className="terminal-header-bar flex-between items-center">
         <div className="flex-align gap-3">
           <button
             type="button"
             className="btn-secondary font-mono text-xs flex-align gap-1.5"
             onClick={onReturnToDashboard}
-            title="Return to Core Dashboard"
+            title="Return to Control Center Cockpit"
           >
             <ArrowLeft size={13} />
             <span>Control Center</span>
@@ -267,51 +257,59 @@ export const MarketPnLTerminal: React.FC<MarketPnLTerminalProps> = ({
           <span className="text-muted text-xs">/</span>
           <div className="terminal-ticker-tag font-mono">
             <span className="ticker-symbol">$PSFI.VAULT</span>
-            <span className="ticker-exchange">· PERSONAL CAPITAL INDEX</span>
+            <span className="ticker-exchange">· WEALTH TERMINAL</span>
           </div>
         </div>
 
         <div className="flex-align gap-2">
           <button
             type="button"
-            className={`terminal-tour-btn font-mono text-xs ${showTerminalTutorial ? 'active' : ''}`}
-            onClick={() => setShowTerminalTutorial((prev) => !prev)}
+            className={`terminal-tour-btn font-mono text-xs flex-align gap-1.5 ${showTerminalTutorial ? 'active' : ''}`}
+            onClick={() => {
+              setShowTerminalTutorial((prev) => !prev);
+              setTutorialStep(0);
+            }}
           >
             <Lightbulb size={13} className="text-solstice" />
-            <span>{showTerminalTutorial ? 'Close Tutorial' : 'P&L Terminal Guide'}</span>
+            <span>{showTerminalTutorial ? 'Close Terminal Guide' : 'Interactive Terminal Guide'}</span>
           </button>
         </div>
       </div>
 
-      {/* Terminal Interactive Tutorial Banner (if active) */}
+      {/* Interactive Terminal Walkthrough Coach (Modern Floating Card) */}
       {showTerminalTutorial && (
-        <div className="terminal-tutorial-card">
-          <div className="flex-between items-center">
+        <div className="terminal-tutorial-modal-card">
+          <div className="flex-between items-center mb-2">
             <div className="flex-align gap-2">
-              <span className="tag-pill tag-quasar font-mono text-xs">
-                {TERMINAL_TUTORIAL_STEPS[tutorialStep].badge}
+              <span className="tag-pill tag-quasar font-mono text-xs font-bold">
+                {currentTut.badge}
               </span>
-              <h4 className="font-semibold text-sm m-0">
-                {TERMINAL_TUTORIAL_STEPS[tutorialStep].title}
-              </h4>
+              <span className="text-muted font-mono text-xs">
+                Step {tutorialStep + 1} of {TERMINAL_TUTORIAL_STEPS.length}
+              </span>
             </div>
-            <div className="flex-align gap-2 font-mono text-xs text-muted">
-              <span>{tutorialStep + 1} of {TERMINAL_TUTORIAL_STEPS.length}</span>
-              <button
-                type="button"
-                className="tour-close-btn"
-                onClick={() => setShowTerminalTutorial(false)}
-              >
-                ✕
-              </button>
-            </div>
+
+            <button
+              type="button"
+              className="tour-close-btn"
+              onClick={() => setShowTerminalTutorial(false)}
+              aria-label="Close guide"
+            >
+              <X size={13} />
+            </button>
           </div>
 
-          <p className="terminal-tutorial-desc text-xs mt-2">
-            {TERMINAL_TUTORIAL_STEPS[tutorialStep].text}
+          <h4 className="font-semibold text-sm m-0 text-primary">{currentTut.title}</h4>
+          <p className="terminal-tutorial-desc text-xs mt-1.5 leading-relaxed text-secondary m-0">
+            {currentTut.text}
           </p>
 
-          <div className="flex-between items-center mt-3 pt-2 border-t border-subtle">
+          <div className="terminal-tutorial-tip font-mono text-xs mt-2.5 flex-align gap-2">
+            <Sparkles size={12} className="text-solstice shrink-0" />
+            <span><strong>Pro Tip:</strong> {currentTut.tip}</span>
+          </div>
+
+          <div className="flex-between items-center mt-3 pt-2.5 border-t border-subtle">
             <div className="flex-align gap-1.5">
               {TERMINAL_TUTORIAL_STEPS.map((_, i) => (
                 <button
@@ -319,34 +317,36 @@ export const MarketPnLTerminal: React.FC<MarketPnLTerminalProps> = ({
                   type="button"
                   className={`tour-dot ${i === tutorialStep ? 'tour-dot-active' : ''}`}
                   onClick={() => setTutorialStep(i)}
+                  aria-label={`Go to guide step ${i + 1}`}
                 />
               ))}
             </div>
+
             <div className="flex-align gap-2">
               {tutorialStep > 0 && (
                 <button
                   type="button"
-                  className="btn-secondary text-xs px-2.5 py-1"
+                  className="btn-secondary font-mono text-xs px-2.5 py-1 flex-align gap-1"
                   onClick={() => setTutorialStep((p) => p - 1)}
                 >
-                  Prev
+                  <ChevronLeft size={12} /> Prev
                 </button>
               )}
               {tutorialStep < TERMINAL_TUTORIAL_STEPS.length - 1 ? (
                 <button
                   type="button"
-                  className="btn-primary text-xs px-3 py-1 font-mono"
+                  className="btn-primary font-mono text-xs px-3 py-1 flex-align gap-1"
                   onClick={() => setTutorialStep((p) => p + 1)}
                 >
-                  Next Guide Tip →
+                  Next Step <ChevronRight size={12} />
                 </button>
               ) : (
                 <button
                   type="button"
-                  className="btn-primary text-xs px-3 py-1 font-mono"
+                  className="btn-primary font-mono text-xs px-3 py-1"
                   onClick={() => setShowTerminalTutorial(false)}
                 >
-                  Got It! Close Guide
+                  Finish Guide ✓
                 </button>
               )}
             </div>
@@ -355,8 +355,11 @@ export const MarketPnLTerminal: React.FC<MarketPnLTerminalProps> = ({
       )}
 
       {/* Stock Ticker Hero & Telemetry Strip */}
-      <section className="terminal-hero-card" id="terminal-ticker">
-        <div className="terminal-ticker-row">
+      <section
+        className={`terminal-hero-card ${showTerminalTutorial && currentTut.targetId === 'terminal-ticker' ? 'terminal-highlight-focus' : ''}`}
+        id="terminal-ticker"
+      >
+        <div className="terminal-ticker-row flex-between items-center">
           <div>
             <div className="flex-align gap-2">
               <span className="font-mono text-xs text-muted uppercase tracking-wider">
@@ -418,7 +421,10 @@ export const MarketPnLTerminal: React.FC<MarketPnLTerminalProps> = ({
       </section>
 
       {/* Timeframe & Chart Controls Bar */}
-      <div className="terminal-controls-bar" id="terminal-timeframes">
+      <div
+        className={`terminal-controls-bar flex-between items-center ${showTerminalTutorial && currentTut.targetId === 'terminal-timeframes' ? 'terminal-highlight-focus' : ''}`}
+        id="terminal-timeframes"
+      >
         {/* Timeframe selector (1D, 1W, 1M, 3M, 6M, 12M) */}
         <div className="timeframe-pill-group" role="group" aria-label="Select timeframe">
           {(['1D', '1W', '1M', '3M', '6M', '12M'] as PnLTimeframe[]).map((tf) => (
@@ -434,7 +440,10 @@ export const MarketPnLTerminal: React.FC<MarketPnLTerminalProps> = ({
         </div>
 
         {/* Chart View Modes */}
-        <div className="chart-mode-pill-group" id="terminal-chart-controls">
+        <div
+          className={`chart-mode-pill-group ${showTerminalTutorial && currentTut.targetId === 'terminal-chart-controls' ? 'terminal-highlight-focus' : ''}`}
+          id="terminal-chart-controls"
+        >
           <button
             type="button"
             className={`chart-mode-btn font-mono ${chartMode === 'pnl' ? 'mode-active' : ''}`}
@@ -464,10 +473,10 @@ export const MarketPnLTerminal: React.FC<MarketPnLTerminalProps> = ({
 
       {/* High-Precision Interactive Stock Market Chart */}
       <section className="terminal-chart-card">
-        <div className="terminal-chart-header">
+        <div className="terminal-chart-header flex-between items-center mb-3">
           <div className="flex-align gap-2">
             <span className="dot-live-indicator" />
-            <h3 className="terminal-chart-title font-mono text-xs uppercase tracking-wider text-muted">
+            <h3 className="terminal-chart-title font-mono text-xs uppercase tracking-wider text-muted m-0">
               {timeframe === '1D' && '30-Day Daily Cash Burn & Payday Spikes'}
               {timeframe === '1W' && '8-Week Cashflow Run-Rate'}
               {timeframe === '1M' && '12-Month Compounding Trajectory'}
@@ -490,7 +499,7 @@ export const MarketPnLTerminal: React.FC<MarketPnLTerminalProps> = ({
           </div>
         </div>
 
-        <div className="terminal-chart-wrapper" style={{ height: 340, width: '100%' }}>
+        <div className="terminal-chart-wrapper" style={{ height: 350, width: '100%' }}>
           <ResponsiveContainer width="100%" height="100%">
             {chartMode === 'cashflow' ? (
               <BarChart data={timeSeriesData} margin={{ top: 20, right: 10, left: 10, bottom: 5 }}>
@@ -564,8 +573,11 @@ export const MarketPnLTerminal: React.FC<MarketPnLTerminalProps> = ({
       </section>
 
       {/* Corporate Financial Statement Matrix (P&L Breakdown) */}
-      <section className="terminal-statement-card" id="terminal-financial-statement">
-        <div className="terminal-statement-header">
+      <section
+        className={`terminal-statement-card ${showTerminalTutorial && currentTut.targetId === 'terminal-financial-statement' ? 'terminal-highlight-focus' : ''}`}
+        id="terminal-financial-statement"
+      >
+        <div className="terminal-statement-header flex-between items-center mb-3">
           <div className="flex-align gap-2">
             <h3 className="font-semibold text-base m-0">Personal Income Statement (P&L Audit)</h3>
             <span className="tag-pill tag-nebula font-mono text-[10px]">GAAP/IFRS ANALOGY</span>

@@ -68,10 +68,10 @@ const TOUR_STEPS: TourStep[] = [
     targetId: 'tour-dock',
     badge: '5. SUPERPOWERS',
     badgeColor: 'pulsar',
-    title: 'Top Dock Controls & Market P&L Terminal',
+    title: 'Top Dock Controls & Wealth Terminal',
     description:
-      'Switch vaults, toggle Privacy Blur Mode (Eye icon) to conceal sensitive figures in public, open the Market P&L Terminal to audit cashflow like a stock ticker, toggle Mobile vs Desktop views, or print a 1-page statement.',
-    tip: 'Tap the Market P&L button in the dock anytime to switch between the tactical dashboard and the stock market-style financial statement!',
+      'Switch vaults, toggle Privacy Blur Mode (Eye icon) to conceal sensitive figures in public, open the Wealth Terminal for stock-style cashflow analytics, toggle Mobile vs Desktop views, or access the consolidated Tools menu.',
+    tip: 'Tap the Wealth Terminal button in the dock anytime to switch between the tactical cockpit and the institutional cashflow terminal!',
     icon: <Compass size={16} className="text-pulsar" />,
   },
 ];
@@ -316,16 +316,6 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({ isOpen, onClos
               {currentStepIndex + 1} of {TOUR_STEPS.length}
             </span>
           </div>
-
-          <button
-            type="button"
-            className="tour-close-btn"
-            onClick={onClose}
-            title="Cancel tour (Esc)"
-            aria-label="Close tour"
-          >
-            <X size={14} />
-          </button>
         </div>
 
         <div className="tour-popup-body">
