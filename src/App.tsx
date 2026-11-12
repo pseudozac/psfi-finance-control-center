@@ -48,6 +48,7 @@ import { GuidedTourModal } from './components/GuidedTourModal';
 import { WealthTerminal } from './components/WealthTerminal';
 import { SocialShareModal } from './components/SocialShareModal';
 import { QRVaultSyncModal } from './components/QRVaultSyncModal';
+import { decodeVaultBeam } from './lib/vaultBeam';
 
 type AppPhase = 'loading' | 'gateway' | 'dashboard';
 
@@ -120,6 +121,27 @@ export function App() {
       document.removeEventListener('touchstart', handleOutsideClick);
     };
   }, [toolsMenuOpen]);
+
+  // Listen for incoming #beam= URL hash transfers
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash;
+      if (hash && hash.startsWith('#beam=')) {
+        const payload = hash.slice(6);
+        const result = decodeVaultBeam(payload);
+        if (result.success && result.plan) {
+          setPlan(result.plan);
+          setStatusMessage(`Beamed vault successfully imported from link: ${result.vaultName || 'Shared Vault'}`);
+          window.history.replaceState(null, '', window.location.pathname);
+        } else if (result.needsPin) {
+          setShowQRModal(true);
+        }
+      }
+    };
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, [setPlan, setStatusMessage]);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));

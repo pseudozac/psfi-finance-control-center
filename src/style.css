@@ -3749,6 +3749,25 @@ body {
   gap: 12px;
 }
 
+.share-controls-row {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.share-canvas-container.share-format-landscape {
+  max-height: 340px;
+}
+
+.share-canvas-container.share-format-square {
+  max-height: 420px;
+}
+
+.share-canvas-container.share-format-story {
+  max-height: 480px;
+  max-width: 270px;
+  margin: 12px auto 0;
+}
+
 /* --------------------------------------------------------------------------
    Cross-Device QR Vault Beam Modal & Live Camera Scanner
    -------------------------------------------------------------------------- */
@@ -3867,6 +3886,60 @@ body {
 }
 
 .imported-confirmation-card {
+  animation: fadeIn 0.25s ease-out;
+}
+
+.qr-pin-control-box {
+  background: var(--surface-overlay);
+}
+
+.qr-pin-input {
+  width: 64px;
+  background: var(--surface-dock);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  color: var(--ink-primary);
+  padding: 4px 6px;
+  letter-spacing: 4px;
+}
+
+.qr-pin-input-large {
+  width: 140px;
+  background: var(--surface-dock);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  color: var(--ink-primary);
+  padding: 8px 12px;
+  letter-spacing: 8px;
+  font-size: 18px;
+}
+
+.camera-flip-btn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(18, 20, 26, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--ink-primary);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--trans-fast);
+  z-index: 5;
+}
+
+.camera-flip-btn:hover {
+  background: rgba(191, 159, 241, 0.2);
+  border-color: var(--colour-quasar);
+  transform: rotate(180deg);
+}
+
+.pin-prompt-card {
   animation: fadeIn 0.25s ease-out;
 }
 

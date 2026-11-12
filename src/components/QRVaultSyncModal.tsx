@@ -10,10 +10,15 @@ import {
   AlertCircle,
   Sparkles,
   ShieldCheck,
+  Lock,
+  Unlock,
+  Link as LinkIcon,
+  RefreshCw,
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import jsQR from 'jsqr';
 import type { FinancePlan } from '../types/finance';
+import { encodeVaultBeam, decodeVaultBeam } from '../lib/vaultBeam';
 
 interface QRVaultSyncModalProps {
   isOpen: boolean;
@@ -21,6 +26,26 @@ interface QRVaultSyncModalProps {
   plan: FinancePlan;
   activeAccountName: string;
   onImportPlan: (importedPlan: FinancePlan, vaultName?: string) => void;
+}
+
+// Zero-dependency audio recognition chime when QR is detected
+function playScanChime() {
+  try {
+    const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1600, ctx.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.06, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.12);
+  } catch {
+    // Ignore audio failures
+  }
 }
 
 export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
@@ -31,9 +56,18 @@ export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
   onImportPlan,
 }) => {
   const [activeTab, setActiveTab] = useState<'beam' | 'scan'>('beam');
-  const [copied, setCopied] = useState(false);
+  const [pinProtection, setPinProtection] = useState(false);
+  const [beamPin, setBeamPin] = useState('');
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedString, setCopiedString] = useState(false);
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+
+  // Incoming scan resolution states
+  const [scannedRaw, setScannedRaw] = useState<string | null>(null);
+  const [promptPinInput, setPromptPinInput] = useState('');
+  const [pinError, setPinError] = useState<string | null>(null);
   const [importedPreview, setImportedPreview] = useState<{
     plan: FinancePlan;
     vaultName: string;
@@ -47,23 +81,18 @@ export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const animFrameIdRef = useRef<number | null>(null);
 
-  // Compact payload structure for high-density QR representation
-  const payloadObject = {
-    v: 1,
-    app: 'psfi',
-    name: activeAccountName,
-    plan,
-    ts: Date.now(),
-  };
-  const payloadString = JSON.stringify(payloadObject);
+  // Generate compact, high-speed beam payload
+  const activePin = pinProtection && beamPin.length >= 4 ? beamPin : undefined;
+  const beamString = encodeVaultBeam(plan, activeAccountName, activePin);
+  const directUrl = `${window.location.origin}${window.location.pathname}#beam=${beamString}`;
 
-  // Generate QR code when Beam tab is active
+  // Render high-contrast, clean QR code canvas
   useEffect(() => {
     if (!isOpen || activeTab !== 'beam' || !qrCanvasRef.current) return;
 
     QRCode.toCanvas(
       qrCanvasRef.current,
-      payloadString,
+      beamString,
       {
         width: 280,
         margin: 2,
@@ -77,9 +106,9 @@ export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
         if (err) console.error('QR Render Error:', err);
       }
     );
-  }, [isOpen, activeTab, payloadString]);
+  }, [isOpen, activeTab, beamString]);
 
-  // Clean up camera stream when closing or switching tabs
+  // Clean up camera stream
   const stopCamera = () => {
     if (animFrameIdRef.current) {
       cancelAnimationFrame(animFrameIdRef.current);
@@ -100,46 +129,59 @@ export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
     return () => stopCamera();
   }, [isOpen, activeTab]);
 
-  // Process incoming scanned text payload
-  const handlePayloadString = (rawText: string) => {
-    try {
-      const parsed = JSON.parse(rawText);
-      if (!parsed || parsed.app !== 'psfi' || !parsed.plan) {
-        setCameraError('Unrecognized QR code. Please scan a valid PsFi vault QR code.');
-        return;
-      }
+  // Handle incoming decoded beam payload
+  const handlePayloadString = (rawText: string, pinToUse?: string) => {
+    const result = decodeVaultBeam(rawText, pinToUse);
 
-      const p = parsed.plan as FinancePlan;
-      const inc = p.income.salary + p.income.freelance + p.income.other;
-      const exp =
-        p.expenses.housing +
-        p.expenses.groceries +
-        p.expenses.utilities +
-        p.expenses.transport +
-        p.expenses.insurance +
-        p.expenses.lifestyle +
-        (p.expenses.custom?.reduce((acc: number, c: { amount: number }) => acc + c.amount, 0) || 0) +
-        (p.debt?.monthlyPayment || 0);
-
-      setImportedPreview({
-        plan: p,
-        vaultName: parsed.name || 'Beamed Vault',
-        monthlyIncome: inc,
-        monthlyOutflow: exp,
-      });
+    if (result.needsPin) {
+      setScannedRaw(rawText);
+      setPinError(null);
       stopCamera();
-      setCameraError(null);
-    } catch {
-      setCameraError('Failed to parse QR code data. Invalid JSON structure.');
+      return;
     }
+
+    if (!result.success || !result.plan) {
+      if (scannedRaw) {
+        setPinError(result.error || 'Incorrect PIN.');
+      } else {
+        setCameraError(result.error || 'Unrecognized QR code format.');
+      }
+      return;
+    }
+
+    // Success! Play recognition audio chime
+    playScanChime();
+
+    const p = result.plan;
+    const inc = p.income.salary + p.income.freelance + p.income.other;
+    const exp =
+      p.expenses.housing +
+      p.expenses.groceries +
+      p.expenses.utilities +
+      p.expenses.transport +
+      p.expenses.insurance +
+      p.expenses.lifestyle +
+      (p.expenses.custom?.reduce((acc, c) => acc + c.amount, 0) || 0) +
+      (p.debt?.monthlyPayment || 0);
+
+    setImportedPreview({
+      plan: p,
+      vaultName: result.vaultName || 'Beamed Vault',
+      monthlyIncome: inc,
+      monthlyOutflow: exp,
+    });
+    setScannedRaw(null);
+    setPinError(null);
+    setCameraError(null);
+    stopCamera();
   };
 
-  // Start live device camera for QR scanning
-  const startCamera = async () => {
+  // Start live device camera
+  const startCamera = async (mode: 'environment' | 'user' = facingMode) => {
     setCameraError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
+        video: { facingMode: mode },
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -153,6 +195,14 @@ export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
       setCameraError(e.message || 'Camera permission denied or camera not found.');
       setCameraActive(false);
     }
+  };
+
+  // Switch between front & back camera
+  const flipCamera = () => {
+    const nextMode = facingMode === 'environment' ? 'user' : 'environment';
+    setFacingMode(nextMode);
+    stopCamera();
+    startCamera(nextMode);
   };
 
   // Continuous frame scanning loop using jsQR
@@ -235,11 +285,11 @@ export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
         </div>
 
         {/* Tab Switcher: Beam (Send) vs Scan (Receive) */}
-        <div className="pill-segmented mt-2 mb-3 w-full flex" role="tablist">
+        <div className="pill-segmented mt-2.5 mb-3 w-full flex" role="tablist">
           <button
             type="button"
             className={`flex-1 flex-align justify-center gap-1.5 ${activeTab === 'beam' ? 'pill-active' : ''}`}
-            onClick={() => { setActiveTab('beam'); setImportedPreview(null); }}
+            onClick={() => { setActiveTab('beam'); setImportedPreview(null); setScannedRaw(null); }}
             role="tab"
             aria-selected={activeTab === 'beam'}
           >
@@ -261,15 +311,45 @@ export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
         {/* TAB 1: BEAM OUT (DESKTOP / SENDER) */}
         {activeTab === 'beam' && (
           <div className="qr-tab-content beam-tab-wrap flex-column items-center text-center">
+            {/* High-Contrast Fast-Scanning QR Code */}
             <div className="qr-canvas-holder">
               <canvas ref={qrCanvasRef} className="qr-code-canvas" />
             </div>
 
-            <div className="qr-instructions mt-3">
-              <h4 className="font-semibold text-sm m-0 text-primary">Scan with Mobile Camera</h4>
-              <p className="text-xs text-secondary mt-1 leading-relaxed max-w-sm">
-                Open PsFi on your mobile phone and tap <strong>Tools &gt; QR Vault Beam &gt; Scan</strong>, or point your phone camera at this QR code.
-              </p>
+            {/* Optional 4-Digit Security PIN */}
+            <div className="qr-pin-control-box mt-3 p-2.5 border border-subtle rounded-lg w-full flex-between items-center">
+              <div className="flex-align gap-2 text-left">
+                {pinProtection ? <Lock size={14} className="text-solstice" /> : <Unlock size={14} className="text-muted" />}
+                <div>
+                  <span className="font-semibold text-xs block text-primary">Lock with 4-Digit PIN</span>
+                  <span className="text-[11px] text-muted block">Prevent unauthorized camera scans</span>
+                </div>
+              </div>
+
+              <div className="flex-align gap-2">
+                {pinProtection && (
+                  <input
+                    type="password"
+                    maxLength={4}
+                    placeholder="PIN"
+                    value={beamPin}
+                    onChange={(e) => setBeamPin(e.target.value.replace(/\D/g, ''))}
+                    className="qr-pin-input font-mono text-center text-xs"
+                    autoFocus
+                  />
+                )}
+                <button
+                  type="button"
+                  className={`action-pill ${pinProtection ? 'pill-active-mode' : ''}`}
+                  onClick={() => {
+                    const next = !pinProtection;
+                    setPinProtection(next);
+                    if (!next) setBeamPin('');
+                  }}
+                >
+                  <span className="font-mono text-xs">{pinProtection ? 'Enabled' : 'Disabled'}</span>
+                </button>
+              </div>
             </div>
 
             <div className="qr-privacy-pill font-mono text-[11px] flex-align gap-1.5 mt-2.5">
@@ -277,20 +357,34 @@ export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
               <span>100% Peer-to-Peer Visual Beam · Zero Server Sync</span>
             </div>
 
-            {/* Manual String Copy Alternative */}
-            <div className="mt-3 pt-3 border-t border-subtle w-full flex-between items-center">
-              <span className="text-xs text-muted font-mono">Vault: {activeAccountName}</span>
+            {/* Alternative Direct Link & Copy Tools */}
+            <div className="mt-3 pt-3 border-t border-subtle w-full flex-between items-center gap-2">
               <button
                 type="button"
-                className="btn-secondary font-mono text-xs flex-align gap-1.5"
+                className="btn-secondary font-mono text-xs flex-align gap-1.5 flex-1 justify-center"
                 onClick={() => {
-                  navigator.clipboard.writeText(payloadString);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 2000);
+                  navigator.clipboard.writeText(directUrl);
+                  setCopiedLink(true);
+                  setTimeout(() => setCopiedLink(false), 2000);
                 }}
+                title="Copy shareable browser link containing encrypted vault payload"
               >
-                {copied ? <Check size={12} className="text-nebula" /> : <Copy size={12} />}
-                <span>{copied ? 'Copied Payload!' : 'Copy Beam String'}</span>
+                {copiedLink ? <Check size={12} className="text-nebula" /> : <LinkIcon size={12} />}
+                <span>{copiedLink ? 'Copied Direct Link!' : 'Copy Direct Link'}</span>
+              </button>
+
+              <button
+                type="button"
+                className="btn-secondary font-mono text-xs flex-align gap-1.5 flex-1 justify-center"
+                onClick={() => {
+                  navigator.clipboard.writeText(beamString);
+                  setCopiedString(true);
+                  setTimeout(() => setCopiedString(false), 2000);
+                }}
+                title="Copy raw payload string"
+              >
+                {copiedString ? <Check size={12} className="text-nebula" /> : <Copy size={12} />}
+                <span>{copiedString ? 'Copied Payload!' : 'Copy String'}</span>
               </button>
             </div>
           </div>
@@ -299,7 +393,48 @@ export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
         {/* TAB 2: SCAN IN (RECEIVER) */}
         {activeTab === 'scan' && (
           <div className="qr-tab-content scan-tab-wrap">
-            {importedPreview ? (
+            {/* PIN Unlock Prompt if Vault was PIN-Protected */}
+            {scannedRaw ? (
+              <div className="pin-prompt-card p-4 border border-solstice rounded-xl bg-surface-overlay text-center">
+                <Lock size={28} className="text-solstice mx-auto mb-2" />
+                <h4 className="font-semibold text-sm text-primary m-0">This Beamed Vault is PIN-Protected</h4>
+                <p className="text-xs text-secondary mt-1">
+                  Enter the 4-digit PIN set by the sender to decrypt the payload:
+                </p>
+
+                <div className="mt-3 flex-align justify-center gap-2">
+                  <input
+                    type="password"
+                    maxLength={4}
+                    placeholder="4-digit PIN"
+                    value={promptPinInput}
+                    onChange={(e) => setPromptPinInput(e.target.value.replace(/\D/g, ''))}
+                    className="qr-pin-input-large font-mono text-center text-sm"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    className="btn-primary font-mono text-xs px-3"
+                    onClick={() => handlePayloadString(scannedRaw, promptPinInput)}
+                    disabled={promptPinInput.length < 4}
+                  >
+                    Unlock
+                  </button>
+                </div>
+
+                {pinError && (
+                  <p className="text-xs text-corona font-mono mt-2 m-0">{pinError}</p>
+                )}
+
+                <button
+                  type="button"
+                  className="link-btn font-mono text-xs mt-3 block mx-auto text-muted"
+                  onClick={() => { setScannedRaw(null); setPromptPinInput(''); }}
+                >
+                  Cancel & Rescan
+                </button>
+              </div>
+            ) : importedPreview ? (
               /* Confirmation Box */
               <div className="imported-confirmation-card p-4 border border-quasar rounded-xl bg-surface-overlay text-center">
                 <Sparkles size={24} className="text-quasar mx-auto mb-2" />
@@ -331,7 +466,7 @@ export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
                 </div>
               </div>
             ) : (
-              /* Active Scanning View */
+              /* Active Camera Scanner View */
               <div className="scanner-container flex-column items-center">
                 {cameraActive ? (
                   <div className="video-viewport-wrapper">
@@ -344,6 +479,16 @@ export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
                       <div className="reticle-corner corner-br" />
                       <div className="scanner-laser" />
                     </div>
+
+                    {/* Camera Flip Button */}
+                    <button
+                      type="button"
+                      className="camera-flip-btn"
+                      onClick={flipCamera}
+                      title="Flip between front and rear camera"
+                    >
+                      <RefreshCw size={14} />
+                    </button>
                   </div>
                 ) : (
                   <div className="camera-standby-box p-6 text-center border border-dashed border-subtle rounded-xl w-full">
@@ -352,7 +497,7 @@ export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
                     <button
                       type="button"
                       className="btn-primary font-mono text-xs mt-3 flex-align gap-1.5 mx-auto"
-                      onClick={startCamera}
+                      onClick={() => startCamera()}
                     >
                       <Scan size={13} />
                       <span>Start Camera Scanner</span>
