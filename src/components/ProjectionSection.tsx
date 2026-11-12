@@ -78,7 +78,7 @@ export const ProjectionSection: React.FC<ProjectionSectionProps> = ({
         </div>
       </div>
 
-      {/* Hipuku Telemetry Capsule Row */}
+      {/* Telemetry Capsule Row */}
       {finalPoint && (
         <div className="telemetry-capsule-row mb-4">
           <div className="telemetry-pill">

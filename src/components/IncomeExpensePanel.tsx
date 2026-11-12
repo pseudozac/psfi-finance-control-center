@@ -29,7 +29,7 @@ interface IncomeExpensePanelProps {
   onChange: (next: FinancePlan) => void;
 }
 
-// Hipuku Cosmic Chroma Palette for categories
+// Cosmic Chroma Palette for categories
 const CATEGORY_COLORS: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
   Housing: { label: 'Housing & Home EMI', icon: <Home size={13} />, color: '#bf9ff1' }, // Quasar
   Groceries: { label: 'Groceries & Provisions', icon: <ShoppingBag size={13} />, color: '#5ec491' }, // Nebula

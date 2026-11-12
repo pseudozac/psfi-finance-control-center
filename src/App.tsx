@@ -335,7 +335,7 @@ export function App() {
         </div>
       </header>
 
-      {/* Hipuku Editorial Hero Header */}
+      {/* Editorial Hero Header */}
       <section className="hero-section">
         <h1 className="hero-headline">
           Tactile personal finance control for India<span className="text-corona">.</span>
@@ -411,7 +411,7 @@ export function App() {
         />
       )}
 
-      {/* Hipuku-Style Minimalist Footer */}
+      {/* Minimalist Footer */}
       <footer className="footer-capsule">
         <div className="flex-align gap-2">
           <ShieldCheck size={14} className="text-nebula" />

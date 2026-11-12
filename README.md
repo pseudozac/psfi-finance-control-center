@@ -10,7 +10,7 @@
 
 **Live Production Deployment:** [https://pseudo-fi.vercel.app/](https://pseudo-fi.vercel.app/)
 
-**PsFi** is an offline-first, client-side personal finance control center engineered specifically for the Indian financial ecosystem (INR ₹). Inspired by the tactile editorial aesthetic of [hipuku.dev](https://www.hipuku.dev/), PsFi empowers individuals to model monthly cashflows, stress-test emergency runways, track FIRE milestones, project step-up SIP wealth curves, and compare FY 2024–25 tax regimes—with **100% client-side privacy** and zero cloud leakage.
+**PsFi** is an offline-first, client-side personal finance control center engineered specifically for the Indian financial ecosystem (INR ₹). Built with a bespoke tactile editorial aesthetic, PsFi empowers individuals to model monthly cashflows, stress-test emergency runways, track FIRE milestones, project step-up SIP wealth curves, and compare FY 2024–25 tax regimes—with **100% client-side privacy** and zero cloud leakage.
 
 ---
 
@@ -19,7 +19,7 @@
 - [Live Application](https://pseudo-fi.vercel.app/)
 - [Key Features & Capabilities](#key-features--capabilities)
 - [Security & Privacy Architecture](#security--privacy-architecture)
-- [Design Engineering (Hipuku Aesthetic)](#design-engineering-hipuku-aesthetic)
+- [Tactile Editorial Design System](#tactile-editorial-design-system)
 - [Mobile Browser & Density Views](#mobile-browser--density-views)
 - [Interactive Demo Mode](#interactive-demo-mode)
 - [Local Development & Testing](#local-development--testing)
@@ -102,9 +102,9 @@ PsFi was intentionally engineered to eliminate the security and privacy risks co
 
 ---
 
-## 🎨 Design Engineering (Hipuku Aesthetic)
+## 🎨 Tactile Editorial Design System
 
-PsFi implements the **Hipuku Design Engineering System**, featuring:
+PsFi implements a bespoke **Tactile Editorial Design System**, featuring:
 - **Dark Void Canvas:** `#0d0e12` deep slate canvas with blueprint hairline grid overlay.
 - **Cosmic Chroma Hierarchy:**
   - `Quasar` (`#bf9ff1` lilac) for equity, savings, and investments.

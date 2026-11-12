@@ -135,7 +135,7 @@ export const IntroLoader: React.FC<IntroLoaderProps> = ({ onFinish }) => {
       </div>
 
       <div className="loader-center-stage">
-        {/* Playful Bouncing Hipuku Wordmark */}
+        {/* Playful Bouncing Wordmark */}
         <div className="loader-wordmark">
           <span className="wm-letter wm-p">p</span>
           <span className="wm-letter wm-s">s</span>

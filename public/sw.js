@@ -1,4 +1,4 @@
-const CACHE_NAME = 'psfi-hipuku-v3.3';
+const CACHE_NAME = 'psfi-v3.3';
 
 self.addEventListener('install', () => {
   self.skipWaiting();
