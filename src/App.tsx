@@ -23,6 +23,7 @@ import {
   ChevronDown,
   QrCode,
   Share2,
+  Terminal,
 } from 'lucide-react';
 import type { FinancePlan, ViewPeriod } from './types/finance';
 import {
@@ -48,6 +49,7 @@ import { GuidedTourModal } from './components/GuidedTourModal';
 import { WealthTerminal } from './components/WealthTerminal';
 import { SocialShareModal } from './components/SocialShareModal';
 import { QRVaultSyncModal } from './components/QRVaultSyncModal';
+import { CommandPaletteModal } from './components/CommandPaletteModal';
 import { decodeVaultBeam } from './lib/vaultBeam';
 
 type AppPhase = 'loading' | 'gateway' | 'dashboard';
@@ -84,6 +86,7 @@ export function App() {
   const [tourInitialStep, setTourInitialStep] = useState<number>(0);
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
   const [showQRModal, setShowQRModal] = useState<boolean>(false);
+  const [showCmdK, setShowCmdK] = useState<boolean>(false);
   const [toolsMenuOpen, setToolsMenuOpen] = useState<boolean>(false);
   const toolsDropdownRef = useRef<HTMLDivElement>(null);
   const [layoutMode, setLayoutMode] = useState<'mobile' | 'desktop'>(() => {
@@ -142,6 +145,26 @@ export function App() {
     window.addEventListener('hashchange', handleHash);
     return () => window.removeEventListener('hashchange', handleHash);
   }, [setPlan, setStatusMessage]);
+
+  // Global hotkey listener for Cmd+K / Ctrl+K and '/'
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const targetTag = (e.target as HTMLElement)?.tagName;
+      const isInput =
+        targetTag === 'INPUT' || targetTag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable;
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setShowCmdK((prev) => !prev);
+      } else if (e.key === '/' && !isInput) {
+        e.preventDefault();
+        setShowCmdK(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -296,6 +319,17 @@ export function App() {
               annual
             </button>
           </div>
+
+          {/* Terminal Command Omnibar Trigger */}
+          <button
+            type="button"
+            className="action-pill pill-cmdk"
+            onClick={() => setShowCmdK(true)}
+            title="Terminal Command Omnibar (Cmd+K / Ctrl+K or '/')"
+          >
+            <Terminal size={12} className="text-quasar" />
+            <span className="font-mono text-xs">⌘K</span>
+          </button>
 
           {/* Guided Tour Trigger */}
           <button
@@ -630,6 +664,42 @@ export function App() {
           setPlan(importedPlan);
           setStatusMessage(`Beamed vault successfully imported: ${vaultName || 'Imported Vault'}`);
         }}
+      />
+
+      {/* Terminal Command Omnibar Modal (Cmd+K / Ctrl+K) */}
+      <CommandPaletteModal
+        isOpen={showCmdK}
+        onClose={() => setShowCmdK(false)}
+        currentPlan={plan}
+        onUpdatePlan={(updater, note) => {
+          setPlan(updater(plan));
+          setStatusMessage(note);
+        }}
+        onSelectPreset={handleSelectPreset}
+        activeView={activeView}
+        onViewChange={(v) => setActiveView(v)}
+        privacyMode={privacyMode}
+        onTogglePrivacy={() => setPrivacyMode(!privacyMode)}
+        onOpenTour={() => setShowTour(true)}
+        onOpenShare={() => setShowShareModal(true)}
+        onOpenQR={() => setShowQRModal(true)}
+        onOpenSandbox={() => setShowSandbox(true)}
+        baseline={baseline}
+        onToggleBaseline={() => {
+          if (baseline) clearBaseline();
+          else pinBaseline();
+        }}
+        layoutMode={layoutMode}
+        onToggleLayout={toggleLayoutMode}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        period={period}
+        onTogglePeriod={() => setPeriod(period === 'monthly' ? 'annual' : 'monthly')}
+        onExportJSON={exportJSON}
+        onExportCSV={() => exportCSV(horizonMonths)}
+        onPrint={() => window.print()}
+        onResetDefaults={resetToDefaults}
+        onLoadDemo={launchDemoVault}
       />
 
       {/* Minimalist Footer */}
