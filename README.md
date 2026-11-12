@@ -1,56 +1,57 @@
-# PsFi — Finance Control Center
+# PsFi — Finance Control Center (v2)
 
-**Live demo:** [pseudo-fi.vercel.app](https://pseudo-fi.vercel.app/)
+**Live demo:** [https://pseudo-fi.vercel.app/](https://pseudo-fi.vercel.app/)
 
-A responsive, interactive personal finance dashboard designed for India. It uses INR throughout and runs entirely in your browser. Your plan is held in local page state; this starter does not connect to a bank or store data on a server.
+A responsive, offline-first personal finance control center designed for India (INR ₹). Built with **React 18**, **TypeScript**, **Vite 6**, **Recharts**, and **Vitest**.
 
-## What you can do
+Runs entirely in your browser with zero external tracking or database dependencies—your financial plans are held securely in local page state and can be saved, exported, or compared offline.
 
-- Switch between monthly and annual income views.
-- Edit income and spending categories; use sliders to adjust savings, investments, debt payments, and expected returns.
-- Explore a 12-month savings and investment projection and card payoff estimate.
-- Export the current plan as a JSON snapshot.
-- Use the dashboard on desktop or mobile.
+---
 
-Numbers are illustrative planning inputs, not financial advice. Investment projections are estimates and do not guarantee returns.
+## What's New in v2
 
-## Run locally
+- **Modular Architecture:** Decoupled pure financial calculations (`src/lib/finance.ts`), reactive plan state (`src/hooks/useFinancePlan.ts`), types (`src/types/finance.ts`), and focused UI components (`src/components/`).
+- **India-Specific Tax Regime Estimator:** Compare **Old vs. New Tax Regimes (FY 2024-25)** factoring in Section 87A rebates, standard deduction (₹75k New / ₹50k Old), 80C, and 80D deductions.
+- **Credit Card / Loan Debt Payoff:** Accurate amortized debt payoff calculator with monthly interest tracking and warnings for underwater balances.
+- **Step-Up SIP & Inflation Adjustments:** 12-month wealth projection with configurable annual step-up percentage and real purchasing power toggle.
+- **Emergency Fund Runway:** Live calculation of your survival runway in months based on current monthly living expenses.
+- **What-If Baseline Comparison:** Pin any existing plan as a baseline to visually compare hypothetical changes side-by-side on the projection chart.
+- **Validated JSON Import & CSV Export:** Export complete plan snapshots as JSON and download projection tables as CSV for Excel/Google Sheets.
+- **PWA & Offline Ready:** Progressive Web App manifest and service worker caching for offline access on desktop and mobile.
+- **Automated Unit Tests:** Full Vitest test suite covering INR formatting, debt payoff edge cases, tax regimes, and snapshot validation.
 
-Install Node.js 20 or newer, then from this folder run:
+---
+
+## Getting Started Locally
+
+Requires **Node.js 18+**:
 
 ```bash
+# Install dependencies
 npm install
+
+# Run automated unit tests
+npm test
+
+# Start local development server
 npm run dev
-```
 
-Open the local address printed by Vite. To check the production bundle locally:
-
-```bash
+# Build production bundle
 npm run build
+
+# Preview production build locally
 npm run preview
 ```
 
-## Publish with GitHub and Vercel Hobby
+---
 
-1. Create a new empty repository on GitHub.
-2. Extract this ZIP, open a terminal in the `finance-control-center` folder, and initialize/push the project:
+## Deploying to Vercel
 
-   ```bash
-   git init
-   git add .
-   git commit -m "Add PsFi Finance Control Center"
-   git branch -M main
-   git remote add origin https://github.com/YOUR-USERNAME/YOUR-REPOSITORY.git
-   git push -u origin main
-   ```
+The project is pre-configured for zero-config deployment on Vercel:
 
-   Replace the remote URL with the repository URL shown by GitHub.
+1. **Framework Preset:** Vite
+2. **Build Command:** `npm run build` (`tsc -b && vite build`)
+3. **Output Directory:** `dist`
+4. **Environment Variables:** None required
 
-3. Sign in to Vercel, choose **Add New → Project**, and import the GitHub repository.
-4. Keep the detected **Vite** framework settings. The build command is `npm run build`; the output directory is `dist`. No environment variables are needed.
-5. Select the **Hobby** plan and deploy. Vercel will provide a `*.vercel.app` URL. Later pushes to `main` deploy updates automatically.
-
-## Project details
-
-- React 18, TypeScript, Vite 6, Recharts, Lucide icons.
-- Static client-side app; no API keys, backend, or database required.
+Every push to the `main` branch automatically builds and deploys to production.
