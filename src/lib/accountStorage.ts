@@ -39,8 +39,10 @@ export function loadAllAccounts(): UserAccount[] {
       if (Array.isArray(parsed) && parsed.length > 0) {
         return parsed.map((acc) => {
           const validated = validateImportedPlan(acc.plan);
-          // If the account was seeded with the old static sample data, initialize it cleanly with zeroes
-          const finalPlan = isOldSamplePlan(validated) ? structuredClone(SCRATCH_PLAN) : validated;
+          // If the primary vault was seeded with the old static sample data, initialize it cleanly with zeroes
+          const finalPlan = (acc.id === 'vault_default' && isOldSamplePlan(validated))
+            ? structuredClone(SCRATCH_PLAN)
+            : validated;
           return {
             ...acc,
             plan: finalPlan,
@@ -103,6 +105,10 @@ export function loadOrCreateDemoAccount(): UserAccount {
   const accounts = loadAllAccounts();
   const existing = accounts.find((a) => a.id === 'vault_demo');
   if (existing) {
+    if (existing.plan.income.salary === 0) {
+      existing.plan = structuredClone(DEFAULT_PLAN);
+      updateExistingAccount(existing);
+    }
     setActiveAccountId(existing.id);
     return existing;
   }
