@@ -2,6 +2,7 @@ import React from 'react';
 import { ShieldCheck, TrendingUp, Wallet, CreditCard, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import type { DebtPayoffResult, FinanceSummary, ViewPeriod } from '../types/finance';
 import { formatINR } from '../lib/finance';
+import { InfoTooltip } from './InfoTooltip';
 
 interface SummaryCardsProps {
   summary: FinanceSummary;
@@ -19,7 +20,15 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, debtPayoff,
       {/* 1. Cash Surplus */}
       <div className="hipuku-kpi-card card-nebula">
         <div className="kpi-top">
-          <span className="kpi-title">{periodLabel} Surplus</span>
+          <div className="flex-align gap-1.5">
+            <span className="kpi-title">{periodLabel} Surplus</span>
+            <InfoTooltip
+              title={`${periodLabel} Surplus (Free Cashflow)`}
+              explanation="The net unencumbered liquidity generated each month. Any positive surplus flows into step-up SIPs and emergency reserves."
+              formula="Surplus = Total Inflows − Total Outflows"
+              benchmark="Target: > 20% of net monthly income."
+            />
+          </div>
           <div className="kpi-icon-pill icon-nebula">
             <Wallet size={15} />
           </div>
@@ -41,7 +50,15 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, debtPayoff,
       {/* 2. Compounding Rate */}
       <div className="hipuku-kpi-card card-pulsar">
         <div className="kpi-top">
-          <span className="kpi-title">Savings &amp; SIP Rate</span>
+          <div className="flex-align gap-1.5">
+            <span className="kpi-title">Savings &amp; SIP Rate</span>
+            <InfoTooltip
+              title="Compounding Savings Rate"
+              explanation="The percentage of your total inflow that is preserved and directed toward investments and emergency reserves."
+              formula="(Monthly Surplus ÷ Gross Inflow) × 100"
+              benchmark="20% is good; 35%+ accelerates financial independence (FIRE) by over a decade."
+            />
+          </div>
           <div className="kpi-icon-pill icon-pulsar">
             <TrendingUp size={15} />
           </div>
@@ -60,7 +77,15 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, debtPayoff,
       {/* 3. Emergency Runway */}
       <div className="hipuku-kpi-card card-quasar">
         <div className="kpi-top">
-          <span className="kpi-title">Emergency Runway</span>
+          <div className="flex-align gap-1.5">
+            <span className="kpi-title">Emergency Runway</span>
+            <InfoTooltip
+              title="Emergency Runway Duration"
+              explanation="How many months your household can survive with zero income using current liquid reserves."
+              formula="Liquid Savings ÷ Total Monthly Expenses"
+              benchmark="Maintain at least 6 months of living expenses in high-liquidity instruments."
+            />
+          </div>
           <div className="kpi-icon-pill icon-quasar">
             <ShieldCheck size={15} />
           </div>
@@ -79,7 +104,15 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, debtPayoff,
       {/* 4. Debt Payoff */}
       <div className="hipuku-kpi-card card-solstice">
         <div className="kpi-top">
-          <span className="kpi-title">Debt-Free ETA</span>
+          <div className="flex-align gap-1.5">
+            <span className="kpi-title">Debt-Free ETA</span>
+            <InfoTooltip
+              title="Debt Amortization ETA"
+              explanation="The calculated time required to eliminate credit card and personal loan balances at your current repayment velocity."
+              formula="Standard amortization incorporating monthly APR compounding"
+              benchmark="Aim for zero high-interest revolving debt (APR > 15%)."
+            />
+          </div>
           <div className="kpi-icon-pill icon-solstice">
             <CreditCard size={15} />
           </div>

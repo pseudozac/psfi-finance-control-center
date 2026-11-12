@@ -20,6 +20,8 @@ import {
   SlidersHorizontal,
   X,
   Compass,
+  Sliders,
+  TrendingUp,
 } from 'lucide-react';
 import type { FinancePlan, ViewPeriod } from './types/finance';
 import {
@@ -42,6 +44,7 @@ import { FireMilestoneTracker } from './components/FireMilestoneTracker';
 import { EmergencyStressTestWidget } from './components/EmergencyStressTestWidget';
 import { WhatIfSandboxModal } from './components/WhatIfSandboxModal';
 import { GuidedTourModal } from './components/GuidedTourModal';
+import { MarketPnLTerminal } from './components/MarketPnLTerminal';
 
 type AppPhase = 'loading' | 'gateway' | 'dashboard';
 
@@ -68,6 +71,7 @@ export function App() {
 
   // App phase control: loading -> gateway -> dashboard
   const [appPhase, setAppPhase] = useState<AppPhase>('loading');
+  const [activeView, setActiveView] = useState<'control' | 'terminal'>('control');
   const [period, setPeriod] = useState<ViewPeriod>('monthly');
   const [horizonMonths, setHorizonMonths] = useState<number>(24);
   const [privacyMode, setPrivacyMode] = useState<boolean>(false);
@@ -200,6 +204,28 @@ export function App() {
             <span className={`status-dot dot-${activeAccount.avatarColor || 'nebula'}`} />
             <span className="vault-pill-name">{activeAccount.name}</span>
             <FolderKanban size={12} className="text-muted" />
+          </button>
+        </div>
+
+        {/* Workspace View Switcher: Control Center vs Stock Market P&L Terminal */}
+        <div className="pill-segmented dock-view-switcher" role="group" aria-label="Workspace view">
+          <button
+            type="button"
+            className={activeView === 'control' ? 'pill-active' : ''}
+            onClick={() => setActiveView('control')}
+            title="Tactile Control Center (Sliders & Modules)"
+          >
+            <Sliders size={12} />
+            <span className="view-label">Control Center</span>
+          </button>
+          <button
+            type="button"
+            className={activeView === 'terminal' ? 'pill-active pill-terminal-active' : ''}
+            onClick={() => setActiveView('terminal')}
+            title="Stock Market-Style Expenditure & Wealth Terminal (1D to 12M)"
+          >
+            <TrendingUp size={12} className={activeView === 'terminal' ? 'text-nebula' : ''} />
+            <span className="view-label">Market P&L</span>
           </button>
         </div>
 
@@ -384,44 +410,53 @@ export function App() {
         </div>
       )}
 
-      {/* Main Stack */}
-      <main className="main-stack">
-        {/* Archetypes Persona Bar */}
-        <PersonaPresetBar currentPlan={plan} onSelectPreset={handleSelectPreset} />
-
-        {/* Key Vitals Telemetry */}
-        <SummaryCards summary={summary} debtPayoff={debtPayoff} period={period} />
-
-        {/* Cashflow Inflow & Outflow Mix */}
-        <IncomeExpensePanel plan={plan} period={period} onChange={setPlan} />
-
-        {/* 50/30/20 Budget Health Audit */}
-        <BudgetHealthWidget analysis={budgetRule} />
-
-        {/* Emergency Runway Survival Stress Test & FIRE Milestones */}
-        <div id="tour-survival" className="tour-survival-block">
-          <EmergencyStressTestWidget plan={plan} />
-          <FireMilestoneTracker plan={plan} />
-        </div>
-
-        {/* Forward Wealth Curve */}
-        <ProjectionSection
+      {/* View Switch: Core Control Stack vs Stock Market P&L Terminal */}
+      {activeView === 'terminal' ? (
+        <MarketPnLTerminal
           plan={plan}
-          baseline={baseline}
-          projections={projections}
-          horizonMonths={horizonMonths}
-          onHorizonChange={setHorizonMonths}
-          onChange={setPlan}
+          summary={summary}
+          onReturnToDashboard={() => setActiveView('control')}
         />
+      ) : (
+        /* Main Stack */
+        <main className="main-stack">
+          {/* Archetypes Persona Bar */}
+          <PersonaPresetBar currentPlan={plan} onSelectPreset={handleSelectPreset} />
 
-        {/* Debt Elimination & Tax Regime */}
-        <IndiaTaxAndDebtPanel
-          plan={plan}
-          debtPayoff={debtPayoff}
-          taxComparison={taxComparison}
-          onChange={setPlan}
-        />
-      </main>
+          {/* Key Vitals Telemetry */}
+          <SummaryCards summary={summary} debtPayoff={debtPayoff} period={period} />
+
+          {/* Cashflow Inflow & Outflow Mix */}
+          <IncomeExpensePanel plan={plan} period={period} onChange={setPlan} />
+
+          {/* 50/30/20 Budget Health Audit */}
+          <BudgetHealthWidget analysis={budgetRule} />
+
+          {/* Emergency Runway Survival Stress Test & FIRE Milestones */}
+          <div id="tour-survival" className="tour-survival-block">
+            <EmergencyStressTestWidget plan={plan} />
+            <FireMilestoneTracker plan={plan} />
+          </div>
+
+          {/* Forward Wealth Curve */}
+          <ProjectionSection
+            plan={plan}
+            baseline={baseline}
+            projections={projections}
+            horizonMonths={horizonMonths}
+            onHorizonChange={setHorizonMonths}
+            onChange={setPlan}
+          />
+
+          {/* Debt Elimination & Tax Regime */}
+          <IndiaTaxAndDebtPanel
+            plan={plan}
+            debtPayoff={debtPayoff}
+            taxComparison={taxComparison}
+            onChange={setPlan}
+          />
+        </main>
+      )}
 
       {/* What-If Scenario Modal */}
       {showSandbox && (

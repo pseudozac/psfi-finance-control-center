@@ -11,6 +11,7 @@ import {
   Receipt,
   Lightbulb,
 } from 'lucide-react';
+import { VirtualMouseInstructor } from './VirtualMouseInstructor';
 
 export interface TourStep {
   targetId: string;
@@ -31,7 +32,7 @@ const TOUR_STEPS: TourStep[] = [
     description:
       'Monitor your monthly cash surplus, net inflows, living outflows, and compounding savings rate. These telemetry cards react instantaneously to every change you make.',
     tip: 'A savings rate above 20% turns green as the golden benchmark for wealth building.',
-    icon: <TrendingUp size={18} className="text-nebula" />,
+    icon: <TrendingUp size={16} className="text-nebula" />,
   },
   {
     targetId: 'tour-cashflows',
@@ -41,7 +42,7 @@ const TOUR_STEPS: TourStep[] = [
     description:
       'Tune your primary salary, consulting gigs, and living expenses with tactile sliders. You can also add arbitrary custom categories (e.g. Parent Support, Pet Care, Fitness) with dedicated rupee allocations.',
     tip: 'Drag any slider or type exact numbers directly in the input boxes to customize your ledger.',
-    icon: <Sparkles size={18} className="text-quasar" />,
+    icon: <Sparkles size={16} className="text-quasar" />,
   },
   {
     targetId: 'tour-survival',
@@ -51,7 +52,7 @@ const TOUR_STEPS: TourStep[] = [
     description:
       'Stress-test your emergency fund across 3 real-world shocks: Tier 1 Barebones, Tier 2 Lean Living, and Tier 3 Full Lifestyle. Track live ETA countdowns to ₹10L, ₹50L, ₹1 Crore, and your 25× annual expense FIRE milestone.',
     tip: 'Maintaining 6+ months of Tier 2 survival runway builds a fortress against sudden market downturns or career shifts.',
-    icon: <ShieldCheck size={18} className="text-solstice" />,
+    icon: <ShieldCheck size={16} className="text-solstice" />,
   },
   {
     targetId: 'tour-tax',
@@ -61,17 +62,17 @@ const TOUR_STEPS: TourStep[] = [
     description:
       'Automated side-by-side tax calculation incorporating the ₹75,000 standard deduction, Section 87A rebate (zero tax up to ₹7.75L under New Regime), Section 80CCD(1B) NPS ₹50k deduction, and Metro vs. Non-Metro HRA exemptions.',
     tip: 'PsFi automatically compares both regimes and highlights the OPTIMAL choice with your exact net annual rupee savings.',
-    icon: <Receipt size={18} className="text-corona" />,
+    icon: <Receipt size={16} className="text-corona" />,
   },
   {
     targetId: 'tour-dock',
     badge: '5. SUPERPOWERS',
     badgeColor: 'pulsar',
-    title: 'Top Dock Controls & Privacy Enclave',
+    title: 'Top Dock Controls & Market P&L Terminal',
     description:
-      'Switch vaults, toggle Privacy Blur Mode (Eye icon) to conceal sensitive figures in public, simulate salary hikes in the What-If Sandbox, toggle Mobile vs Desktop views, or print a 1-page executive statement.',
-    tip: 'Tap the Smartphone / Monitor icon anytime to switch between Mobile Touch View and Desktop Power View!',
-    icon: <Compass size={18} className="text-pulsar" />,
+      'Switch vaults, toggle Privacy Blur Mode (Eye icon) to conceal sensitive figures in public, open the Market P&L Terminal to audit cashflow like a stock ticker, toggle Mobile vs Desktop views, or print a 1-page statement.',
+    tip: 'Tap the Market P&L button in the dock anytime to switch between the tactical dashboard and the stock market-style financial statement!',
+    icon: <Compass size={16} className="text-pulsar" />,
   },
 ];
 
@@ -108,7 +109,7 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({ isOpen, onClos
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       const navOffset = 80; // top floating dock clearance
-      const cardReservedHeight = 240; // floating tour card clearance at bottom
+      const cardReservedHeight = 200; // bottom space clearance
       const rect = el.getBoundingClientRect();
       const currentScrollY = window.scrollY || window.pageYOffset;
       const elementAbsoluteTop = currentScrollY + rect.top;
@@ -207,9 +208,84 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({ isOpen, onClos
     }
   };
 
+  // Smart Contextual Message Popup Placement:
+  // Dynamically position popup directly adjacent to the element without obscuring its contents.
+  const getPopupStyle = (): React.CSSProperties => {
+    if (!targetRect) {
+      return {
+        bottom: '88px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+      };
+    }
+
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    const popupHeight = 200;
+    const popupWidth = Math.min(460, viewportWidth - 32);
+
+    // On narrow mobile screens (<= 640px), place at top or bottom depending on spotlight position
+    if (viewportWidth <= 640) {
+      if (targetRect.top > 260) {
+        return {
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 'calc(100vw - 28px)',
+        };
+      } else {
+        return {
+          bottom: '80px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 'calc(100vw - 28px)',
+        };
+      }
+    }
+
+    // On desktop:
+    // If element is tour-dock (at the very top), place popup comfortably below the dock
+    if (step.targetId === 'tour-dock') {
+      return {
+        top: `${Math.round(targetRect.bottom + 16)}px`,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: `${popupWidth}px`,
+      };
+    }
+
+    // If space below the spotlighted element is sufficient:
+    if (targetRect.bottom + popupHeight < viewportHeight - 85) {
+      return {
+        top: `${Math.round(targetRect.bottom + 14)}px`,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: `${popupWidth}px`,
+      };
+    }
+
+    // Otherwise place above the spotlighted element
+    if (targetRect.top - popupHeight > 85) {
+      return {
+        bottom: `${Math.round(viewportHeight - targetRect.top + 14)}px`,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: `${popupWidth}px`,
+      };
+    }
+
+    // Fallback: place in safe lower-middle viewport
+    return {
+      bottom: '88px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      width: `${popupWidth}px`,
+    };
+  };
+
   return (
     <div className="tour-backdrop" role="dialog" aria-modal="true" aria-label="PsFi Interactive Guided Tour">
-      {/* Target Element Spotlight Cutout */}
+      {/* 1. Target Element Spotlight Cutout */}
       {targetRect && (
         <div
           className="tour-spotlight-box"
@@ -222,10 +298,16 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({ isOpen, onClos
         />
       )}
 
-      {/* Floating Tour Navigation Card */}
-      <div className="tour-floating-card">
-        {/* Card Header */}
-        <div className="tour-card-header">
+      {/* 2. Virtual Mouse / Cursor Instructor */}
+      <VirtualMouseInstructor
+        targetRect={targetRect}
+        stepIndex={currentStepIndex}
+        targetId={step.targetId}
+      />
+
+      {/* 3. Modern Anchored Message Popup (Positioned so it NEVER obscures parameters) */}
+      <div className="tour-contextual-popup" style={getPopupStyle()}>
+        <div className="tour-popup-header">
           <div className="flex-align gap-2">
             <span className={`tag-pill tag-${step.badgeColor} font-mono font-bold text-xs`}>
               {step.badge}
@@ -239,15 +321,14 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({ isOpen, onClos
             type="button"
             className="tour-close-btn"
             onClick={onClose}
-            title="Skip tour (Esc)"
+            title="Cancel tour (Esc)"
             aria-label="Close tour"
           >
-            <X size={15} />
+            <X size={14} />
           </button>
         </div>
 
-        {/* Card Body */}
-        <div className="tour-card-body">
+        <div className="tour-popup-body">
           <div className="tour-title-row">
             <div className="tour-step-icon">{step.icon}</div>
             <h3 className="tour-title">{step.title}</h3>
@@ -255,16 +336,43 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({ isOpen, onClos
           <p className="tour-desc">{step.description}</p>
 
           <div className="tour-tip-box font-mono">
-            <Lightbulb size={13} className="text-solstice shrink-0" />
+            <Lightbulb size={12} className="text-solstice shrink-0" />
             <span>
               <strong>Pro Tip:</strong> {step.tip}
             </span>
           </div>
         </div>
+      </div>
 
-        {/* Card Footer with Steps & Actions */}
-        <div className="tour-card-footer">
-          {/* Step Dots */}
+      {/* 4. Dedicated Fixed Bottom Master Control Dock */}
+      {/* (Left: Previous, Center: Cancel & Progress Dots, Right: Next / Complete) */}
+      <div className="tour-bottom-control-dock">
+        {/* Left Side: Previous Button */}
+        <div className="tour-dock-side tour-dock-left">
+          <button
+            type="button"
+            className={`tour-dock-btn tour-btn-prev font-mono ${isFirst ? 'disabled-btn' : ''}`}
+            onClick={handlePrev}
+            disabled={isFirst}
+            title={isFirst ? 'On first step' : 'Return to previous step (←)'}
+          >
+            <ArrowLeft size={14} />
+            <span>Previous</span>
+          </button>
+        </div>
+
+        {/* Center: Cancel / Exit Tour & Stepper Dots */}
+        <div className="tour-dock-center">
+          <button
+            type="button"
+            className="tour-dock-cancel-btn font-mono"
+            onClick={onClose}
+            title="Cancel tour anytime (Esc)"
+          >
+            <X size={13} />
+            <span>Cancel Tour</span>
+          </button>
+
           <div className="tour-dots">
             {TOUR_STEPS.map((_, idx) => (
               <button
@@ -272,33 +380,28 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({ isOpen, onClos
                 type="button"
                 className={`tour-dot ${idx === currentStepIndex ? 'tour-dot-active' : ''}`}
                 onClick={() => setCurrentStepIndex(idx)}
-                aria-label={`Go to step ${idx + 1}`}
+                aria-label={`Jump to step ${idx + 1}`}
+                title={`Jump to step ${idx + 1}`}
               />
             ))}
           </div>
 
-          {/* Action Buttons */}
-          <div className="tour-actions">
-            {!isFirst && (
-              <button
-                type="button"
-                className="tour-btn btn-secondary font-mono"
-                onClick={handlePrev}
-              >
-                <ArrowLeft size={13} />
-                <span>Prev</span>
-              </button>
-            )}
+          <span className="tour-dock-step-label font-mono text-xs text-muted">
+            {currentStepIndex + 1}/{TOUR_STEPS.length}
+          </span>
+        </div>
 
-            <button
-              type="button"
-              className="tour-btn btn-primary font-mono"
-              onClick={handleNext}
-            >
-              <span>{isLast ? 'Complete Tour' : 'Next Step'}</span>
-              {isLast ? <CheckCircle2 size={14} /> : <ArrowRight size={14} />}
-            </button>
-          </div>
+        {/* Right Side: Next / Finish Button */}
+        <div className="tour-dock-side tour-dock-right">
+          <button
+            type="button"
+            className={`tour-dock-btn font-mono ${isLast ? 'tour-btn-complete' : 'tour-btn-next'}`}
+            onClick={handleNext}
+            title={isLast ? 'Finish tour' : 'Advance to next step (→ or Enter)'}
+          >
+            <span>{isLast ? 'Finish Tour' : 'Next Step'}</span>
+            {isLast ? <CheckCircle2 size={14} /> : <ArrowRight size={14} />}
+          </button>
         </div>
       </div>
     </div>

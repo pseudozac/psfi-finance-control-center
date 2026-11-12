@@ -3,6 +3,7 @@ import { CheckCircle2, ArrowRight, ShieldAlert } from 'lucide-react';
 import type { DebtPayoffResult, FinancePlan, TaxComparisonResult } from '../types/finance';
 import { formatINR } from '../lib/finance';
 import { SliderNumberField } from './SliderNumberField';
+import { InfoTooltip } from './InfoTooltip';
 
 interface IndiaTaxAndDebtPanelProps {
   plan: FinancePlan;
@@ -111,6 +112,12 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
             <div className="flex-align gap-2">
               <span className="tag-pill tag-quasar">tax engine</span>
               <span className="card-title">FY 2024-25 Regime Verdict</span>
+              <InfoTooltip
+                title="FY 2024–25 Indian Tax Regime Engine"
+                explanation="Calculates net tax liabilities under both Old and New Tax Regimes. The New Regime features a standard deduction of ₹75,000, revised slab brackets, and Section 87A rebate (zero tax up to ₹7.75L). The Old Regime permits deductions under 80C, 80D, NPS 80CCD(1B), and HRA exemptions."
+                formula="Tax Liability = Slab Computation − Rebate 87A + 4% Health & Edu Cess"
+                benchmark="PsFi automatically highlights the optimal regime and calculates your exact net rupee savings delta."
+              />
             </div>
             <span className="tag-pill tag-pulsar">Sec 87A + 4% Cess</span>
           </div>

@@ -2,6 +2,7 @@ import React from 'react';
 import { CheckCircle2, AlertCircle, Info } from 'lucide-react';
 import type { BudgetRuleAnalysis } from '../types/finance';
 import { formatINR } from '../lib/finance';
+import { InfoTooltip } from './InfoTooltip';
 
 interface BudgetHealthWidgetProps {
   analysis: BudgetRuleAnalysis;
@@ -15,6 +16,12 @@ export const BudgetHealthWidget: React.FC<BudgetHealthWidgetProps> = ({ analysis
           <div className="flex-align gap-2 mb-1">
             <span className="dot dot-nebula" />
             <h2 className="card-title m-0">50 / 30 / 20 Budget Health Audit</h2>
+            <InfoTooltip
+              title="50/30/20 Budgeting Rule"
+              explanation="A time-tested personal financial framework: 50% for Essential Needs (housing, food, utilities, EMIs), 30% for Discretionary Wants (dining, hobbies, subscriptions), and 20%+ strictly dedicated to Savings, Step-Up SIPs, and Emergency Reserves."
+              formula="Score = 100 − (Needs Variance + Wants Variance + Savings Shortfall)"
+              benchmark="Needs ≤ 50% · Wants ≤ 30% · Savings ≥ 20%"
+            />
           </div>
           <p className="muted text-xs">
             Balanced wealth benchmark: 50% Essential Needs · 30% Lifestyle · 20%+ Savings &amp; SIP

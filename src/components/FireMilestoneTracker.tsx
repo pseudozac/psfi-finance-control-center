@@ -2,6 +2,7 @@ import React from 'react';
 import { Target, CheckCircle2, Clock, Sparkles } from 'lucide-react';
 import type { FinancePlan } from '../types/finance';
 import { calculateFireAnalysis, formatINR } from '../lib/finance';
+import { InfoTooltip } from './InfoTooltip';
 
 interface FireMilestoneTrackerProps {
   plan: FinancePlan;
@@ -17,6 +18,12 @@ export const FireMilestoneTracker: React.FC<FireMilestoneTrackerProps> = ({ plan
           <div className="flex-align gap-2 mb-1">
             <span className="dot dot-solstice" />
             <h2 className="card-title m-0">FIRE &amp; Wealth Milestone Countdown</h2>
+            <InfoTooltip
+              title="FIRE 25× Rule & Milestones"
+              explanation="Financial Independence, Retire Early (FIRE) is grounded in the 4% Safe Withdrawal Rule: accumulating 25× your annual living expenses generates self-sustaining passive returns that cover lifestyle without capital depletion."
+              formula="FIRE Corpus Target = Annual Living Expenses × 25"
+              benchmark="ETA accelerates by 3–7 years for every +5% step-up SIP boost."
+            />
           </div>
           <p className="muted text-xs">
             Financial Independence target (25× annual expenses) &amp; compounding timeline to key Indian Rupee landmarks

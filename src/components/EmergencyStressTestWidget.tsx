@@ -2,6 +2,7 @@ import React from 'react';
 import { ShieldAlert, ShieldCheck, AlertCircle, HeartPulse } from 'lucide-react';
 import type { FinancePlan } from '../types/finance';
 import { calculateEmergencyStressTest, formatINR } from '../lib/finance';
+import { InfoTooltip } from './InfoTooltip';
 
 interface EmergencyStressTestWidgetProps {
   plan: FinancePlan;
@@ -17,6 +18,12 @@ export const EmergencyStressTestWidget: React.FC<EmergencyStressTestWidgetProps>
           <div className="flex-align gap-2 mb-1">
             <span className="dot dot-corona" />
             <h2 className="card-title m-0">Emergency Runway &amp; Survival Stress Test</h2>
+            <InfoTooltip
+              title="3-Tier Emergency Survival Runway"
+              explanation="Simulates cash survival across three real-world hardship tiers: Tier 1 Barebones (rent + food + EMIs), Tier 2 Lean Living (+ essential utilities & health), and Tier 3 Full Lifestyle (zero cutbacks). Tier 2 is the institutional benchmark."
+              formula="Runway Months = Liquid Reserve ÷ Tier Monthly Outflow"
+              benchmark="Maintain ≥ 6.0 months of Tier 2 runway for financial antifragility."
+            />
           </div>
           <p className="muted text-xs">
             How many months would your family survive if primary income stopped tomorrow?
