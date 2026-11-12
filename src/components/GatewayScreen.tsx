@@ -173,7 +173,7 @@ export const GatewayScreen: React.FC<GatewayScreenProps> = ({
             className="gateway-btn btn-continue"
             onClick={onContinue}
           >
-            <span>Continue in {activeAccount.name}</span>
+            <span>{activeSummary.monthlyIncome === 0 ? `Open & Setup ${activeAccount.name}` : `Continue in ${activeAccount.name}`}</span>
             <ArrowRight size={16} />
           </button>
 

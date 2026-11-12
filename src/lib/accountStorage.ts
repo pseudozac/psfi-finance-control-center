@@ -1,6 +1,6 @@
 import type { UserAccount, AccountAvatarColor } from '../types/account';
 import type { FinancePlan } from '../types/finance';
-import { DEFAULT_PLAN, validateImportedPlan } from './finance';
+import { SCRATCH_PLAN, validateImportedPlan } from './finance';
 
 const STORAGE_KEY_ACCOUNTS = 'psfi_accounts_v1';
 const STORAGE_KEY_ACTIVE = 'psfi_active_account_id';
@@ -27,33 +27,44 @@ function loadLegacyBaseline(): FinancePlan | null {
   }
 }
 
+function isOldSamplePlan(plan: FinancePlan): boolean {
+  return plan.income.salary === 120_000 && plan.expenses.housing === 28_000 && plan.savings.monthlySip === 25_000;
+}
+
 export function loadAllAccounts(): UserAccount[] {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY_ACCOUNTS);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.map((acc) => ({
-          ...acc,
-          plan: validateImportedPlan(acc.plan),
-          baseline: acc.baseline ? validateImportedPlan(acc.baseline) : null,
-        }));
+        return parsed.map((acc) => {
+          const validated = validateImportedPlan(acc.plan);
+          // If the account was seeded with the old static sample data, initialize it cleanly with zeroes
+          const finalPlan = isOldSamplePlan(validated) ? structuredClone(SCRATCH_PLAN) : validated;
+          return {
+            ...acc,
+            plan: finalPlan,
+            baseline: acc.baseline ? validateImportedPlan(acc.baseline) : null,
+          };
+        });
       }
     }
   } catch {
     // fallback to legacy or default
   }
 
-  // Migrate legacy data if available, or create initial "Primary Vault"
+  // Migrate legacy data if available, or create initial "Primary Vault" starting clean with zeroes
   const legacyPlan = loadLegacyPlan();
   const legacyBaseline = loadLegacyBaseline();
+  const initialPlan = legacyPlan && !isOldSamplePlan(legacyPlan) ? legacyPlan : structuredClone(SCRATCH_PLAN);
+
   const initialAccount: UserAccount = {
     id: 'vault_default',
     name: 'Primary Vault',
     avatarColor: 'nebula',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    plan: legacyPlan ?? DEFAULT_PLAN,
+    plan: initialPlan,
     baseline: legacyBaseline,
   };
 
@@ -129,7 +140,7 @@ export function removeAccount(id: string): UserAccount[] {
       avatarColor: 'nebula',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      plan: DEFAULT_PLAN,
+      plan: SCRATCH_PLAN,
       baseline: null,
     };
     saveAllAccounts([fresh]);

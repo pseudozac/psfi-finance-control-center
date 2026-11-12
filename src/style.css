@@ -1241,7 +1241,7 @@ body {
 
 
 /* --------------------------------------------------------------------------
-   17. Hipuku Intro Loader Screen
+   17. Hipuku Intro Loader Screen & Money Animation
    -------------------------------------------------------------------------- */
 .intro-loader-overlay {
   position: fixed;
@@ -1255,33 +1255,107 @@ body {
     linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
   background-size: 36px 36px;
-  cursor: pointer;
-  transition: opacity 0.3s var(--ease-smooth), transform 0.3s var(--ease-smooth);
+  overflow: hidden;
+  transition: opacity 0.35s var(--ease-smooth), transform 0.35s var(--ease-smooth);
 }
 
 .intro-loader-overlay.loader-fade-out {
   opacity: 0;
-  transform: scale(0.98);
+  transform: scale(0.97);
   pointer-events: none;
 }
 
-.loader-content {
-  text-align: center;
-  max-width: 360px;
-  width: 90%;
+/* Floating Financial Tokens */
+.money-tokens-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.floating-money-token {
+  position: absolute;
+  color: rgba(255, 255, 255, 0.15);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  user-select: none;
+  animation: floatToken ease-in-out infinite;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.08);
+}
+
+@keyframes floatToken {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.12;
+  }
+  50% {
+    transform: translateY(-24px) rotate(4deg);
+    opacity: 0.32;
+    color: rgba(191, 159, 241, 0.3);
+  }
+}
+
+/* Ambient Glowing Orbs */
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.12;
+  pointer-events: none;
+  animation: pulseOrb 9s ease-in-out infinite alternate;
+}
+
+.orb-quasar {
+  top: 15%;
+  left: 10%;
+  width: 320px;
+  height: 320px;
+  background: var(--colour-quasar);
+}
+
+.orb-nebula {
+  bottom: 15%;
+  right: 10%;
+  width: 360px;
+  height: 360px;
+  background: var(--colour-nebula);
+}
+
+.orb-solstice {
+  top: 55%;
+  left: 45%;
+  width: 280px;
+  height: 280px;
+  background: var(--colour-solstice);
+}
+
+@keyframes pulseOrb {
+  0% { transform: scale(1) translate(0, 0); opacity: 0.08; }
+  100% { transform: scale(1.25) translate(20px, -20px); opacity: 0.18; }
+}
+
+/* Center Stage */
+.loader-center-stage {
+  position: relative;
+  z-index: 10;
+  max-width: 520px;
+  width: 92%;
   display: flex;
   flex-direction: column;
   align-items: center;
+  text-align: center;
   gap: 16px;
 }
 
 .loader-wordmark {
   display: flex;
-  gap: 4px;
-  font-size: 52px;
+  gap: 6px;
+  font-size: 64px;
   font-weight: 800;
   letter-spacing: -0.05em;
-  margin-bottom: 4px;
+  margin-bottom: 0;
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.5));
 }
 
 .loader-wordmark .wm-letter {
@@ -1294,26 +1368,108 @@ body {
 .loader-wordmark .wm-f { color: var(--colour-solstice); animation-delay: 0.24s; }
 .loader-wordmark .wm-i { color: var(--colour-nebula); animation-delay: 0.36s; }
 
-@keyframes letterBounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+.loader-hero-subtitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
 }
 
-.loader-brand-title {
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
+/* PsFi Advertising Feature Card */
+.advertising-feature-card {
+  background: rgba(21, 23, 30, 0.9);
+  border: var(--hair) solid var(--border-medium);
+  border-radius: var(--radius-xl);
+  padding: 20px 24px;
+  text-align: left;
+  width: 100%;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  animation: fadeIn 0.3s var(--ease-smooth);
+  transition: all 0.3s var(--ease-smooth);
+}
+
+.advertising-feature-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+}
+
+.ad-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.ad-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--ink-primary);
+  background: var(--surface-overlay);
+  padding: 4px 11px;
+  border-radius: var(--radius-full);
+  border: var(--hair) solid var(--border-subtle);
+}
+
+.ad-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ad-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: none;
+  background: var(--border-medium);
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.ad-dot-active {
+  background: var(--colour-nebula);
+  width: 16px;
+  border-radius: var(--radius-full);
+}
+
+.ad-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink-primary);
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
+}
+
+.ad-card-desc {
+  font-size: 12.5px;
   color: var(--ink-secondary);
-  text-transform: lowercase;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* Micro Progress Bar */
+.loader-progress-area {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
 }
 
 .loader-track {
   width: 100%;
-  height: 3px;
+  height: 4px;
   background: var(--surface-overlay);
   border-radius: var(--radius-full);
   overflow: hidden;
-  margin: 8px 0;
 }
 
 .loader-fill {
@@ -1321,28 +1477,43 @@ body {
   background: linear-gradient(90deg, var(--colour-quasar), var(--colour-nebula));
   border-radius: var(--radius-full);
   transition: width 0.08s ease-out;
+  box-shadow: 0 0 10px var(--colour-nebula);
 }
 
-.loader-status {
+.loader-status-row {
+  display: flex;
+  justify-content: space-between;
   font-size: 11px;
   color: var(--ink-muted);
-  display: flex;
+  padding: 0 2px;
+}
+
+/* Loader Launch Actions */
+.loader-actions {
+  margin-top: 4px;
+}
+
+.launch-vault-btn {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 0 4px;
+  gap: 8px;
+  padding: 11px 26px;
+  border-radius: var(--radius-full);
+  background: var(--colour-nebula);
+  color: #0d0e12;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-smooth);
+  box-shadow: 0 4px 18px rgba(94, 196, 145, 0.35);
 }
 
-.status-cursor {
-  color: var(--colour-quasar);
-  margin-right: 4px;
-}
-
-.loader-skip-hint {
-  font-size: 10px;
-  color: var(--ink-muted);
-  opacity: 0.7;
-  margin-top: 12px;
+.launch-vault-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+  box-shadow: 0 8px 26px rgba(94, 196, 145, 0.5);
 }
 
 /* --------------------------------------------------------------------------
