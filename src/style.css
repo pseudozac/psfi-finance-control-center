@@ -3411,6 +3411,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
   padding: 6px 0;
 }
 
@@ -3418,6 +3420,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
 }
 
 .ticker-symbol {
@@ -3429,6 +3432,26 @@ body {
 .ticker-exchange {
   color: var(--ink-muted);
   font-size: 11px;
+}
+
+.tour-guide-label-full {
+  display: inline;
+}
+
+.tour-guide-label-short {
+  display: none;
+}
+
+@media (max-width: 580px) {
+  .ticker-exchange {
+    display: none;
+  }
+  .tour-guide-label-full {
+    display: none;
+  }
+  .tour-guide-label-short {
+    display: inline;
+  }
 }
 
 .terminal-tour-btn {

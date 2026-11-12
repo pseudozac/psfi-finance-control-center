@@ -231,7 +231,8 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
             title="Launch Integrated Tour for Wealth Terminal"
           >
             <Compass size={13} className="text-solstice" />
-            <span>Interactive Tour Guide</span>
+            <span className="tour-guide-label-full">Interactive Tour Guide</span>
+            <span className="tour-guide-label-short">Tour</span>
           </button>
         </div>
       </div>
