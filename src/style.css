@@ -1395,7 +1395,7 @@ body {
 
 .gateway-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
   gap: 24px;
 }
 
@@ -1788,7 +1788,7 @@ body {
   color: var(--colour-nebula);
 }
 
-@media (max-width: 800px) {
+@media (max-width: 600px) {
   .gateway-grid {
     grid-template-columns: 1fr;
   }
