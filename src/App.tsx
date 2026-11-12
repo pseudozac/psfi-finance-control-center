@@ -24,6 +24,7 @@ import {
   QrCode,
   Share2,
   Terminal,
+  FileText,
 } from 'lucide-react';
 import type { FinancePlan, ViewPeriod } from './types/finance';
 import {
@@ -50,6 +51,7 @@ import { WealthTerminal } from './components/WealthTerminal';
 import { SocialShareModal } from './components/SocialShareModal';
 import { QRVaultSyncModal } from './components/QRVaultSyncModal';
 import { CommandPaletteModal } from './components/CommandPaletteModal';
+import { StatementParserModal } from './components/StatementParserModal';
 import { decodeVaultBeam } from './lib/vaultBeam';
 
 type AppPhase = 'loading' | 'gateway' | 'dashboard';
@@ -87,6 +89,7 @@ export function App() {
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
   const [showQRModal, setShowQRModal] = useState<boolean>(false);
   const [showCmdK, setShowCmdK] = useState<boolean>(false);
+  const [showStatementParser, setShowStatementParser] = useState<boolean>(false);
   const [toolsMenuOpen, setToolsMenuOpen] = useState<boolean>(false);
   const toolsDropdownRef = useRef<HTMLDivElement>(null);
   const [layoutMode, setLayoutMode] = useState<'mobile' | 'desktop'>(() => {
@@ -331,6 +334,17 @@ export function App() {
             <span className="font-mono text-xs">⌘K</span>
           </button>
 
+          {/* Statement Parser Trigger */}
+          <button
+            type="button"
+            className="action-pill pill-ingest"
+            onClick={() => setShowStatementParser(true)}
+            title="Ingest Financial Statements: Mutual Fund CAS, Bank, Credit Cards & Payslips (100% Private in-memory)"
+          >
+            <FileText size={12} className="text-nebula" />
+            <span className="font-mono text-xs">ingest</span>
+          </button>
+
           {/* Guided Tour Trigger */}
           <button
             type="button"
@@ -357,6 +371,18 @@ export function App() {
 
             {toolsMenuOpen && (
               <div className="tools-dropdown-menu" role="menu">
+                <button
+                  type="button"
+                  className="tools-menu-item"
+                  onClick={() => { setShowStatementParser(true); setToolsMenuOpen(false); }}
+                >
+                  <FileText size={13} className="text-nebula" />
+                  <div>
+                    <span className="item-title">Ingest Statements</span>
+                    <span className="item-sub">CAS, Bank, Cards & Payslips (100% Private)</span>
+                  </div>
+                </button>
+
                 <button
                   type="button"
                   className="tools-menu-item"
@@ -700,6 +726,22 @@ export function App() {
         onPrint={() => window.print()}
         onResetDefaults={resetToDefaults}
         onLoadDemo={launchDemoVault}
+        onOpenStatementParser={() => setShowStatementParser(true)}
+      />
+
+      {/* Zero-Server Private Statement & Document Ingestion Modal */}
+      <StatementParserModal
+        isOpen={showStatementParser}
+        onClose={() => setShowStatementParser(false)}
+        currentPlan={plan}
+        onApplyPlan={(updatedPlan, msg) => {
+          setPlan(updatedPlan);
+          setStatusMessage(msg);
+        }}
+        onCreateVault={(name, vaultPlan) => {
+          createVaultAndSwitch(name, vaultPlan);
+          setStatusMessage(`Created and switched to new isolated vault: "${name}"`);
+        }}
       />
 
       {/* Minimalist Footer */}

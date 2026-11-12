@@ -32,6 +32,7 @@ import {
   Zap,
   History,
   Coins,
+  FileText,
 } from 'lucide-react';
 import { PLAN_PRESETS, formatINR } from '../lib/finance';
 import type { FinancePlan } from '../types/finance';
@@ -67,6 +68,7 @@ interface CommandPaletteModalProps {
   onToggleTheme: () => void;
   period: 'monthly' | 'annual';
   onTogglePeriod: () => void;
+  onOpenStatementParser?: () => void;
   onExportJSON: () => void;
   onExportCSV: () => void;
   onPrint: () => void;
@@ -184,6 +186,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   onToggleTheme,
   period,
   onTogglePeriod,
+  onOpenStatementParser,
   onExportJSON,
   onExportCSV,
   onPrint,
@@ -501,6 +504,19 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
     });
 
     // Tools & Scenarios
+    if (onOpenStatementParser) {
+      list.push({
+        id: 'tool_statement_parser',
+        category: 'Tools',
+        title: 'Ingest Financial Statements & Documents',
+        subtitle: 'Parse Mutual Fund CAS, Bank Statement, Credit Card, or Payslip in local memory',
+        keywords: 'statement ingest parse pdf cas bank statement payslip salary slip credit card cams kfintech zerodha import',
+        icon: <FileText size={15} className="text-nebula" />,
+        badge: '100% Private',
+        execute: () => onOpenStatementParser(),
+      });
+    }
+
     list.push({
       id: 'tool_share',
       category: 'Tools',
