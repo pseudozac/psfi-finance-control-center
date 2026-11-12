@@ -52,7 +52,6 @@ export function App() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync theme with document
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('psfi_theme', theme);
@@ -79,7 +78,7 @@ export function App() {
 
   const handleSelectPreset = (presetPlan: FinancePlan, name: string) => {
     setPlan(presetPlan);
-    setStatusMessage(`Loaded "${name}" archetype. Adjust any slider to explore your plan!`);
+    setStatusMessage(`Loaded "${name}" simulation blueprint. Adjust any parameter below!`);
   };
 
   const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,9 +86,9 @@ export function App() {
     if (!file) return;
     try {
       await importJSON(file);
-      setStatusMessage('Plan successfully imported from JSON snapshot!');
+      setStatusMessage('Plan snapshot successfully imported from JSON!');
     } catch (err) {
-      setStatusMessage(err instanceof Error ? `Import failed: ${err.message}` : 'Import failed: invalid JSON.');
+      setStatusMessage(err instanceof Error ? `Import failed: ${err.message}` : 'Import failed: invalid JSON structure.');
     } finally {
       e.target.value = '';
     }
@@ -97,7 +96,7 @@ export function App() {
 
   const handlePinBaseline = () => {
     pinBaseline();
-    setStatusMessage('Current plan pinned as baseline! Tweak sliders to see delta on the chart.');
+    setStatusMessage('Pinned current plan as Baseline for delta comparison on projections.');
   };
 
   const handleClearBaseline = () => {
@@ -107,73 +106,78 @@ export function App() {
 
   const handleExportJSON = () => {
     exportJSON();
-    setStatusMessage('Exported encrypted JSON snapshot to your downloads.');
+    setStatusMessage('Encrypted JSON plan snapshot exported to downloads.');
   };
 
   const handleExportCSV = () => {
     exportCSV(horizonMonths);
-    setStatusMessage(`Exported ${horizonMonths}-month projection as CSV for Excel/Sheets.`);
+    setStatusMessage(`Exported ${horizonMonths}-month wealth projection as CSV for spreadsheets.`);
   };
 
   const handleReset = () => {
     resetToDefaults();
-    setStatusMessage('Reset all values to baseline defaults.');
+    setStatusMessage('Restored all parameters to original default model.');
   };
 
   return (
     <div className="app-shell">
-      {/* Top Header */}
+      {/* Background Cyber Ambient Flares */}
+      <div className="ambient-glow-top-left" aria-hidden="true" />
+      <div className="ambient-glow-bottom-right" aria-hidden="true" />
+
+      {/* Floating HUD Top Navigation */}
       <header className="top-bar">
         <div className="brand-group">
-          <div className="brand-logo">
-            <span className="logo-symbol">₹</span>
+          <div className="brand-logo-hud">
+            <span className="logo-symbol font-mono">₹</span>
+            <span className="logo-pulse-ring" />
           </div>
           <div>
             <div className="brand-title-wrap">
-              <h1 className="brand-title">PsFi</h1>
-              <span className="version-pill">v2.1 Pro</span>
-              <span className="badge-vault">
-                <Shield size={11} /> Offline Vault
+              <h1 className="brand-title font-mono">PsFi</h1>
+              <span className="tech-badge-primary font-mono">v2.1 PRO</span>
+              <span className="badge-vault font-mono">
+                <Shield size={11} className="text-emerald" /> LOCAL ENCLAVE
               </span>
             </div>
-            <p className="brand-subtitle">
-              Executive Finance Control Center · India (INR ₹) · Step-Up SIP · Tax Regimes · 50/30/20 Audit
+            <p className="brand-subtitle font-mono">
+              ENGINEERING-GRADE PERSONAL FINANCE CONTROL CENTER · INDIA (INR ₹)
             </p>
           </div>
         </div>
 
         <div className="toolbar">
-          {/* Monthly / Annual Switcher */}
+          {/* View Period Segmented Control */}
           <div className="segmented" role="group" aria-label="View period">
             <button
               type="button"
               className={period === 'monthly' ? 'seg-active' : ''}
               onClick={() => setPeriod('monthly')}
             >
-              Monthly
+              MONTHLY
             </button>
             <button
               type="button"
               className={period === 'annual' ? 'seg-active' : ''}
               onClick={() => setPeriod('annual')}
             >
-              Annual
+              ANNUAL
             </button>
           </div>
 
           {/* Baseline Button */}
           {baseline ? (
-            <button type="button" className="btn btn-amber" onClick={handleClearBaseline} title="Remove comparison baseline">
+            <button type="button" className="btn btn-amber font-mono" onClick={handleClearBaseline} title="Clear pinned baseline">
               <PinOff size={14} /> Clear Baseline
             </button>
           ) : (
-            <button type="button" className="btn" onClick={handlePinBaseline} title="Pin current plan as baseline">
+            <button type="button" className="btn font-mono" onClick={handlePinBaseline} title="Pin current plan as baseline for what-if comparison">
               <Pin size={14} /> Pin Baseline
             </button>
           )}
 
           {/* Import / Export Actions */}
-          <button type="button" className="btn" onClick={() => fileInputRef.current?.click()}>
+          <button type="button" className="btn font-mono" onClick={() => fileInputRef.current?.click()} title="Import JSON plan snapshot">
             <Upload size={14} /> Import
           </button>
           <input
@@ -184,13 +188,13 @@ export function App() {
             hidden
           />
 
-          <button type="button" className="btn" onClick={handleExportJSON}>
+          <button type="button" className="btn font-mono" onClick={handleExportJSON} title="Download JSON snapshot">
             <Download size={14} /> JSON
           </button>
-          <button type="button" className="btn" onClick={handleExportCSV}>
+          <button type="button" className="btn font-mono" onClick={handleExportCSV} title="Download projection CSV">
             <FileSpreadsheet size={14} /> CSV
           </button>
-          <button type="button" className="btn btn-icon" onClick={handleReset} title="Reset to defaults">
+          <button type="button" className="btn btn-icon" onClick={handleReset} title="Reset to standard defaults">
             <RotateCcw size={14} />
           </button>
 
@@ -199,17 +203,17 @@ export function App() {
             type="button"
             className="btn btn-icon theme-btn"
             onClick={toggleTheme}
-            title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+            title={`Toggle ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
             aria-label="Toggle theme"
           >
-            {theme === 'dark' ? <Sun size={15} className="text-amber" /> : <Moon size={15} className="text-indigo" />}
+            {theme === 'dark' ? <Sun size={15} className="text-amber" /> : <Moon size={15} className="text-cyan" />}
           </button>
         </div>
       </header>
 
       {/* Floating Status Notification */}
       {statusMessage && (
-        <div className="status-banner animate-fade-in" role="status">
+        <div className="status-banner animate-fade-in font-mono" role="status">
           <div className="flex-align gap-2">
             <CheckCircle2 size={16} className="text-emerald shrink-0" />
             <span>{statusMessage}</span>
@@ -220,21 +224,21 @@ export function App() {
         </div>
       )}
 
-      {/* Main Dashboard Stack */}
+      {/* Main Dashboard Grid Stack */}
       <main className="main-stack">
-        {/* Archetypes Persona Bar */}
+        {/* Simulation Archetypes Bar */}
         <PersonaPresetBar currentPlan={plan} onSelectPreset={handleSelectPreset} />
 
-        {/* Executive KPI Cards */}
+        {/* Executive KPI Telemetry HUD */}
         <SummaryCards summary={summary} debtPayoff={debtPayoff} period={period} />
 
-        {/* 50/30/20 Rule Health Gauge */}
+        {/* 50/30/20 Capital Allocation Architecture */}
         <BudgetHealthWidget analysis={budgetRule} />
 
-        {/* Income & Expense Breakdown */}
+        {/* Inflows & Outflows Matrix */}
         <IncomeExpensePanel plan={plan} period={period} onChange={setPlan} />
 
-        {/* Wealth & Step-Up SIP Compounding */}
+        {/* Forward Wealth Accumulation Curve */}
         <ProjectionSection
           plan={plan}
           baseline={baseline}
@@ -244,7 +248,7 @@ export function App() {
           onChange={setPlan}
         />
 
-        {/* Tax Regime & Debt Payoff */}
+        {/* Debt Elimination & Tax Regime Optimizer */}
         <IndiaTaxAndDebtPanel
           plan={plan}
           debtPayoff={debtPayoff}
@@ -253,16 +257,18 @@ export function App() {
         />
       </main>
 
-      {/* Modern Footer */}
-      <footer className="app-footer">
+      {/* Engineering Footer */}
+      <footer className="app-footer font-mono">
         <div className="footer-content">
-          <div className="flex-align gap-2">
-            <Shield size={14} className="text-emerald" />
-            <span className="font-semibold">PsFi Local Vault</span>
-            <span className="muted">· Private by design. No backend database or bank credentials required.</span>
+          <div className="flex-align gap-2 text-xs">
+            <div className="live-dot-pulse">
+              <span className="live-dot" />
+            </div>
+            <span className="font-semibold text-emerald">PSFI LOCAL ENCLAVE</span>
+            <span className="muted">· Zero External Telemetry · Zero Server Latency · Client-Side State</span>
           </div>
-          <div className="footer-links">
-            <span className="muted">FY 2024-25 India Tax Rules · Recharts · PWA Enabled</span>
+          <div className="footer-links text-xs muted">
+            <span>[FY 2024-25 TAX ENGINE · RECHARTS 2.15 · VITE 6 · PWA OFFLINE]</span>
           </div>
         </div>
       </footer>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Compass } from 'lucide-react';
+import { Sparkles, Terminal } from 'lucide-react';
 import { PLAN_PRESETS } from '../lib/finance';
 import type { FinancePlan } from '../types/finance';
 
@@ -9,7 +9,6 @@ interface PersonaPresetBarProps {
 }
 
 export const PersonaPresetBar: React.FC<PersonaPresetBarProps> = ({ currentPlan, onSelectPreset }) => {
-  // Check if current plan matches any preset by salary & monthly SIP
   const activePreset = PLAN_PRESETS.find(
     (p) =>
       p.plan.income.salary === currentPlan.income.salary &&
@@ -20,9 +19,13 @@ export const PersonaPresetBar: React.FC<PersonaPresetBarProps> = ({ currentPlan,
     <div className="preset-bar-card">
       <div className="preset-bar-header">
         <div className="flex-align gap-2">
-          <Compass size={16} className="text-emerald" />
-          <span className="preset-title">Instant Archetypes:</span>
-          <span className="muted text-xs hidden-mobile">Explore realistic Indian financial scenarios</span>
+          <div className="icon-chip icon-chip-emerald icon-chip-sm">
+            <Terminal size={14} />
+          </div>
+          <div>
+            <span className="preset-title font-mono uppercase">Simulation Archetypes</span>
+            <span className="muted text-xs hidden-mobile"> · Click to load realistic scenario models</span>
+          </div>
         </div>
       </div>
 
@@ -37,9 +40,9 @@ export const PersonaPresetBar: React.FC<PersonaPresetBarProps> = ({ currentPlan,
               onClick={() => onSelectPreset(preset.plan, preset.name)}
               title={preset.tagline}
             >
-              <span className="preset-badge">{preset.badge}</span>
+              <span className="preset-badge font-mono">{preset.badge}</span>
               <span className="preset-name">{preset.name}</span>
-              <Sparkles size={12} className={isSelected ? 'text-emerald' : 'muted'} />
+              <Sparkles size={11} className={isSelected ? 'text-emerald' : 'muted'} />
             </button>
           );
         })}
