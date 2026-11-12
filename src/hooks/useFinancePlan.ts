@@ -14,6 +14,7 @@ import {
   setActiveAccountId,
   createNewAccount,
   removeAccount,
+  loadOrCreateDemoAccount,
 } from '../lib/accountStorage';
 
 export function useFinancePlan() {
@@ -81,6 +82,15 @@ export function useFinancePlan() {
       setStatusMessage(`Switched to "${target.name}".`);
     }
   }, [accounts]);
+
+  const launchDemoVault = useCallback(() => {
+    const demo = loadOrCreateDemoAccount();
+    setAccounts(loadAllAccounts());
+    setActiveIdState(demo.id);
+    setActiveAccountId(demo.id);
+    setStatusMessage('Loaded Interactive Demo Vault (pre-configured Indian tech professional profile).');
+    return demo;
+  }, []);
 
   const createVaultAndSwitch = useCallback(
     (name: string, initialPlan: FinancePlan, avatarColor: AccountAvatarColor = 'quasar') => {
@@ -177,6 +187,7 @@ export function useFinancePlan() {
     accounts,
     activeAccount,
     switchAccount,
+    launchDemoVault,
     createVaultAndSwitch,
     deleteVault,
     renameActiveVault,

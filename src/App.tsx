@@ -15,6 +15,10 @@ import {
   FolderKanban,
   Printer,
   Sparkles,
+  Smartphone,
+  Monitor,
+  SlidersHorizontal,
+  X,
 } from 'lucide-react';
 import type { FinancePlan, ViewPeriod } from './types/finance';
 import {
@@ -53,6 +57,7 @@ export function App() {
     accounts,
     activeAccount,
     switchAccount,
+    launchDemoVault,
     createVaultAndSwitch,
     deleteVault,
     statusMessage,
@@ -65,6 +70,13 @@ export function App() {
   const [horizonMonths, setHorizonMonths] = useState<number>(24);
   const [privacyMode, setPrivacyMode] = useState<boolean>(false);
   const [showSandbox, setShowSandbox] = useState<boolean>(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const [layoutMode, setLayoutMode] = useState<'mobile' | 'desktop'>(() => {
+    const saved = localStorage.getItem('psfi_layout_mode');
+    if (saved === 'mobile' || saved === 'desktop') return saved;
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) return 'mobile';
+    return 'desktop';
+  });
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     const saved = localStorage.getItem('psfi_theme');
     if (saved === 'light' || saved === 'dark') return saved;
@@ -80,6 +92,13 @@ export function App() {
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
+  const toggleLayoutMode = () => {
+    const next = layoutMode === 'mobile' ? 'desktop' : 'mobile';
+    setLayoutMode(next);
+    localStorage.setItem('psfi_layout_mode', next);
+    setStatusMessage(`Display density switched to ${next.toUpperCase()} VIEW.`);
   };
 
   const summary = useMemo(() => calculateSummary(plan), [plan]);
@@ -135,6 +154,10 @@ export function App() {
         accounts={accounts}
         activeAccount={activeAccount}
         onContinue={() => setAppPhase('dashboard')}
+        onLaunchDemo={() => {
+          launchDemoVault();
+          setAppPhase('dashboard');
+        }}
         onSelectAccount={(id) => {
           switchAccount(id);
           setAppPhase('dashboard');
@@ -152,9 +175,9 @@ export function App() {
 
   // Phase 3: Main Dashboard
   return (
-    <div className={`app-shell ${privacyMode ? 'privacy-masked' : ''}`}>
+    <div className={`app-shell layout-${layoutMode} ${privacyMode ? 'privacy-masked' : ''}`}>
       {/* Floating Pill Dock Navbar */}
-      <header className="navbar-dock">
+      <header className={`navbar-dock ${mobileMenuOpen ? 'dock-expanded' : ''}`}>
         <div className="brand-cluster">
           <div className="wordmark" onClick={() => setAppPhase('gateway')} style={{ cursor: 'pointer' }} title="Return to Gateway">
             <span className="wm-p">p</span>
@@ -176,24 +199,18 @@ export function App() {
           </button>
         </div>
 
-        <div className="dock-actions">
-          {/* Period Toggle */}
-          <div className="pill-segmented" role="group" aria-label="View period">
-            <button
-              type="button"
-              className={period === 'monthly' ? 'pill-active' : ''}
-              onClick={() => setPeriod('monthly')}
-            >
-              monthly
-            </button>
-            <button
-              type="button"
-              className={period === 'annual' ? 'pill-active' : ''}
-              onClick={() => setPeriod('annual')}
-            >
-              annual
-            </button>
-          </div>
+        {/* Core Controls Strip (Always accessible on mobile & desktop) */}
+        <div className="dock-core-controls">
+          {/* Mobile vs Desktop View Density Switcher */}
+          <button
+            type="button"
+            className={`icon-pill pill-density-toggle ${layoutMode === 'mobile' ? 'mode-mobile-active' : 'mode-desktop-active'}`}
+            onClick={toggleLayoutMode}
+            title={layoutMode === 'mobile' ? 'Mobile Touch View active. Tap to switch to Desktop Power View' : 'Desktop View active. Tap to switch to Mobile Touch View'}
+          >
+            {layoutMode === 'mobile' ? <Smartphone size={14} className="text-nebula" /> : <Monitor size={14} className="text-pulsar" />}
+            <span className="density-label font-mono">{layoutMode}</span>
+          </button>
 
           {/* Privacy Mask Toggle */}
           <button
@@ -205,13 +222,55 @@ export function App() {
             {privacyMode ? <EyeOff size={14} className="text-corona" /> : <Eye size={14} />}
           </button>
 
+          {/* Theme Toggle */}
+          <button
+            type="button"
+            className="icon-pill"
+            onClick={toggleTheme}
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          >
+            {theme === 'dark' ? <Sun size={14} className="text-solstice" /> : <Moon size={14} className="text-pulsar" />}
+          </button>
+
+          {/* Mobile Drawer Toggle (Only rendered on small screens) */}
+          <button
+            type="button"
+            className={`icon-pill mobile-drawer-btn ${mobileMenuOpen ? 'pill-active-mode' : ''}`}
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            title="Toggle more tools & actions"
+            aria-label="Toggle actions drawer"
+          >
+            {mobileMenuOpen ? <X size={14} /> : <SlidersHorizontal size={14} />}
+          </button>
+        </div>
+
+        {/* Collapsible Action Pills (Inline on desktop, clean drawer on mobile) */}
+        <div className={`dock-actions ${mobileMenuOpen ? 'actions-drawer-open' : ''}`}>
+          {/* Period Toggle */}
+          <div className="pill-segmented" role="group" aria-label="View period">
+            <button
+              type="button"
+              className={period === 'monthly' ? 'pill-active' : ''}
+              onClick={() => { setPeriod('monthly'); setMobileMenuOpen(false); }}
+            >
+              monthly
+            </button>
+            <button
+              type="button"
+              className={period === 'annual' ? 'pill-active' : ''}
+              onClick={() => { setPeriod('annual'); setMobileMenuOpen(false); }}
+            >
+              annual
+            </button>
+          </div>
+
           {/* Baseline Button */}
           {baseline ? (
-            <button type="button" className="action-pill pill-amber" onClick={clearBaseline}>
+            <button type="button" className="action-pill pill-amber" onClick={() => { clearBaseline(); setMobileMenuOpen(false); }}>
               <PinOff size={13} /> clear baseline
             </button>
           ) : (
-            <button type="button" className="action-pill" onClick={pinBaseline}>
+            <button type="button" className="action-pill" onClick={() => { pinBaseline(); setMobileMenuOpen(false); }}>
               <Pin size={13} /> pin baseline
             </button>
           )}
@@ -220,14 +279,14 @@ export function App() {
           <button
             type="button"
             className="action-pill"
-            onClick={() => setShowSandbox(true)}
+            onClick={() => { setShowSandbox(true); setMobileMenuOpen(false); }}
             title="Open What-If Scenario Sandbox"
           >
             <Sparkles size={13} className="text-quasar" /> sandbox
           </button>
 
           {/* File Operations */}
-          <button type="button" className="action-pill" onClick={() => fileInputRef.current?.click()}>
+          <button type="button" className="action-pill" onClick={() => { fileInputRef.current?.click(); setMobileMenuOpen(false); }}>
             <Upload size={13} /> import
           </button>
           <input
@@ -238,10 +297,10 @@ export function App() {
             hidden
           />
 
-          <button type="button" className="action-pill" onClick={exportJSON}>
+          <button type="button" className="action-pill" onClick={() => { exportJSON(); setMobileMenuOpen(false); }}>
             <Download size={13} /> json
           </button>
-          <button type="button" className="action-pill" onClick={() => exportCSV(horizonMonths)}>
+          <button type="button" className="action-pill" onClick={() => { exportCSV(horizonMonths); setMobileMenuOpen(false); }}>
             <FileSpreadsheet size={13} /> csv
           </button>
 
@@ -249,24 +308,29 @@ export function App() {
           <button
             type="button"
             className="action-pill"
-            onClick={() => window.print()}
+            onClick={() => { setMobileMenuOpen(false); window.print(); }}
             title="Print executive financial summary"
           >
             <Printer size={13} /> print
           </button>
 
-          <button type="button" className="icon-pill" onClick={resetToDefaults} title="Reset to defaults">
-            <RotateCcw size={13} />
+          {/* Load Demo Data Action */}
+          <button
+            type="button"
+            className="action-pill pill-demo"
+            onClick={() => { launchDemoVault(); setMobileMenuOpen(false); }}
+            title="Load realistic Indian tech professional demo vault"
+          >
+            <Sparkles size={13} className="text-solstice" /> demo vault
           </button>
 
-          {/* Theme Toggle */}
           <button
             type="button"
             className="icon-pill"
-            onClick={toggleTheme}
-            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            onClick={() => { resetToDefaults(); setMobileMenuOpen(false); }}
+            title="Reset active vault to zeroes/defaults"
           >
-            {theme === 'dark' ? <Sun size={14} className="text-solstice" /> : <Moon size={14} className="text-pulsar" />}
+            <RotateCcw size={13} />
           </button>
         </div>
       </header>

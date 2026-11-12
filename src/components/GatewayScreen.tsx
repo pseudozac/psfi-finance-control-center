@@ -16,6 +16,7 @@ interface GatewayScreenProps {
   accounts: UserAccount[];
   activeAccount: UserAccount;
   onContinue: () => void;
+  onLaunchDemo: () => void;
   onSelectAccount: (id: string) => void;
   onCreateAccount: (name: string, plan: FinancePlan, color: AccountAvatarColor) => void;
   onDeleteAccount: (id: string) => void;
@@ -35,6 +36,7 @@ export const GatewayScreen: React.FC<GatewayScreenProps> = ({
   accounts,
   activeAccount,
   onContinue,
+  onLaunchDemo,
   onSelectAccount,
   onCreateAccount,
   onDeleteAccount,
@@ -110,6 +112,28 @@ export const GatewayScreen: React.FC<GatewayScreenProps> = ({
         <p className="gateway-sub">
           Continue with your active persistent vault or register a new financial profile from scratch.
         </p>
+      </div>
+
+      {/* Interactive Demo Vault Quick-Action Banner */}
+      <div className="demo-vault-banner">
+        <div className="demo-banner-content">
+          <div className="demo-badge-row">
+            <span className="dot dot-solstice" />
+            <span className="font-mono text-xs font-bold text-solstice uppercase">First Time or Testing?</span>
+          </div>
+          <p className="demo-banner-text">
+            Test-drive all features (FIRE milestone countdown, 3-tier survival stress test, and FY 2024–25 tax engine) with a realistic pre-loaded Indian tech professional profile.
+          </p>
+        </div>
+        <button
+          type="button"
+          className="demo-launch-btn font-mono"
+          onClick={onLaunchDemo}
+        >
+          <Sparkles size={14} className="text-solstice" />
+          <span>Launch Interactive Demo</span>
+          <ArrowRight size={14} />
+        </button>
       </div>
 
       {/* Choice Grid */}

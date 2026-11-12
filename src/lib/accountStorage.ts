@@ -1,6 +1,6 @@
 import type { UserAccount, AccountAvatarColor } from '../types/account';
 import type { FinancePlan } from '../types/finance';
-import { SCRATCH_PLAN, validateImportedPlan } from './finance';
+import { DEFAULT_PLAN, SCRATCH_PLAN, validateImportedPlan } from './finance';
 
 const STORAGE_KEY_ACCOUNTS = 'psfi_accounts_v1';
 const STORAGE_KEY_ACTIVE = 'psfi_active_account_id';
@@ -97,6 +97,28 @@ export function setActiveAccountId(id: string): void {
   } catch {
     // Ignore
   }
+}
+
+export function loadOrCreateDemoAccount(): UserAccount {
+  const accounts = loadAllAccounts();
+  const existing = accounts.find((a) => a.id === 'vault_demo');
+  if (existing) {
+    setActiveAccountId(existing.id);
+    return existing;
+  }
+  const demoAccount: UserAccount = {
+    id: 'vault_demo',
+    name: 'Interactive Demo Vault',
+    avatarColor: 'solstice',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    plan: structuredClone(DEFAULT_PLAN),
+    baseline: null,
+  };
+  const updated = [...accounts, demoAccount];
+  saveAllAccounts(updated);
+  setActiveAccountId(demoAccount.id);
+  return demoAccount;
 }
 
 export function createNewAccount(
