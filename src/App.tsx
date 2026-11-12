@@ -19,6 +19,7 @@ import {
   Monitor,
   SlidersHorizontal,
   X,
+  Compass,
 } from 'lucide-react';
 import type { FinancePlan, ViewPeriod } from './types/finance';
 import {
@@ -40,6 +41,7 @@ import { IndiaTaxAndDebtPanel } from './components/IndiaTaxAndDebtPanel';
 import { FireMilestoneTracker } from './components/FireMilestoneTracker';
 import { EmergencyStressTestWidget } from './components/EmergencyStressTestWidget';
 import { WhatIfSandboxModal } from './components/WhatIfSandboxModal';
+import { GuidedTourModal } from './components/GuidedTourModal';
 
 type AppPhase = 'loading' | 'gateway' | 'dashboard';
 
@@ -70,6 +72,7 @@ export function App() {
   const [horizonMonths, setHorizonMonths] = useState<number>(24);
   const [privacyMode, setPrivacyMode] = useState<boolean>(false);
   const [showSandbox, setShowSandbox] = useState<boolean>(false);
+  const [showTour, setShowTour] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [layoutMode, setLayoutMode] = useState<'mobile' | 'desktop'>(() => {
     const saved = localStorage.getItem('psfi_layout_mode');
@@ -157,6 +160,7 @@ export function App() {
         onLaunchDemo={() => {
           launchDemoVault();
           setAppPhase('dashboard');
+          setShowTour(true);
         }}
         onSelectAccount={(id) => {
           switchAccount(id);
@@ -177,7 +181,7 @@ export function App() {
   return (
     <div className={`app-shell layout-${layoutMode} ${privacyMode ? 'privacy-masked' : ''}`}>
       {/* Floating Pill Dock Navbar */}
-      <header className={`navbar-dock ${mobileMenuOpen ? 'dock-expanded' : ''}`}>
+      <header className={`navbar-dock ${mobileMenuOpen ? 'dock-expanded' : ''}`} id="tour-dock">
         <div className="brand-cluster">
           <div className="wordmark" onClick={() => setAppPhase('gateway')} style={{ cursor: 'pointer' }} title="Return to Gateway">
             <span className="wm-p">p</span>
@@ -201,6 +205,17 @@ export function App() {
 
         {/* Core Controls Strip (Always accessible on mobile & desktop) */}
         <div className="dock-core-controls">
+          {/* Interactive Guided Tour */}
+          <button
+            type="button"
+            className="icon-pill pill-tour-icon"
+            onClick={() => setShowTour(true)}
+            title="Start Interactive Guided Tour"
+            aria-label="Start interactive tour"
+          >
+            <Compass size={14} className="text-quasar" />
+          </button>
+
           {/* Mobile vs Desktop View Density Switcher */}
           <button
             type="button"
@@ -246,6 +261,16 @@ export function App() {
 
         {/* Collapsible Action Pills (Inline on desktop, clean drawer on mobile) */}
         <div className={`dock-actions ${mobileMenuOpen ? 'actions-drawer-open' : ''}`}>
+          {/* Interactive Guided Tour */}
+          <button
+            type="button"
+            className="action-pill pill-tour"
+            onClick={() => { setShowTour(true); setMobileMenuOpen(false); }}
+            title="Take a 45-second interactive tour of PsFi"
+          >
+            <Compass size={13} className="text-quasar" /> tour
+          </button>
+
           {/* Period Toggle */}
           <div className="pill-segmented" role="group" aria-label="View period">
             <button
@@ -370,11 +395,11 @@ export function App() {
         {/* 50/30/20 Budget Health Audit */}
         <BudgetHealthWidget analysis={budgetRule} />
 
-        {/* Emergency Runway Survival Stress Test */}
-        <EmergencyStressTestWidget plan={plan} />
-
-        {/* FIRE & Wealth Milestone Tracker */}
-        <FireMilestoneTracker plan={plan} />
+        {/* Emergency Runway Survival Stress Test & FIRE Milestones */}
+        <div id="tour-survival" className="tour-survival-block">
+          <EmergencyStressTestWidget plan={plan} />
+          <FireMilestoneTracker plan={plan} />
+        </div>
 
         {/* Cashflow Inflow & Outflow Mix */}
         <IncomeExpensePanel plan={plan} period={period} onChange={setPlan} />
@@ -411,6 +436,13 @@ export function App() {
         />
       )}
 
+      {/* Interactive Guided Spotlight Tour */}
+      <GuidedTourModal
+        isOpen={showTour}
+        onClose={() => setShowTour(false)}
+        onComplete={() => setStatusMessage('Tour completed! Drag sliders or explore the What-If Sandbox.')}
+      />
+
       {/* Minimalist Footer */}
       <footer className="footer-capsule">
         <div className="flex-align gap-2">
@@ -419,6 +451,14 @@ export function App() {
           <span className="muted text-xs">· active vault: <strong>{activeAccount.name}</strong> · zero server telemetry · inr (₹)</span>
         </div>
         <div className="flex-align gap-3 muted text-xs font-mono">
+          <button
+            type="button"
+            className="link-btn font-mono"
+            onClick={() => setShowTour(true)}
+          >
+            take tour
+          </button>
+          <span>·</span>
           <button
             type="button"
             className="link-btn font-mono"

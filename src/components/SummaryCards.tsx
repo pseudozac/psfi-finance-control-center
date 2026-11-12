@@ -15,7 +15,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, debtPayoff,
   const isSurplusPositive = summary.monthlySurplus >= 0;
 
   return (
-    <section className="summary-grid" aria-label="Key Financial Metrics">
+    <section className="summary-grid" id="tour-vitals" aria-label="Key Financial Metrics">
       {/* 1. Cash Surplus */}
       <div className="hipuku-kpi-card card-nebula">
         <div className="kpi-top">

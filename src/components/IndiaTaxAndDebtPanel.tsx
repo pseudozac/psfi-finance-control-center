@@ -28,7 +28,7 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
   const hasDebt = plan.debt.cardBalance > 0;
 
   return (
-    <div className="two-col-grid">
+    <div className="two-col-grid" id="tour-tax">
       {/* 1. Debt Payoff & Amortization */}
       <section className="hipuku-card flex-col justify-between">
         <div>

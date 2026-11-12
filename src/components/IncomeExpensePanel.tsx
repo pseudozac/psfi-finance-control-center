@@ -133,7 +133,7 @@ export const IncomeExpensePanel: React.FC<IncomeExpensePanelProps> = ({ plan, pe
   ].filter((d) => d.value > 0);
 
   return (
-    <div className="two-col-grid">
+    <div className="two-col-grid" id="tour-cashflows">
       {/* Left Column: Sliders */}
       <section className="hipuku-card">
         <div className="section-head mb-2">
