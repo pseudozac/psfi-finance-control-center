@@ -21,6 +21,8 @@ import {
   Sliders,
   TrendingUp,
   ChevronDown,
+  QrCode,
+  Share2,
 } from 'lucide-react';
 import type { FinancePlan, ViewPeriod } from './types/finance';
 import {
@@ -44,6 +46,8 @@ import { EmergencyStressTestWidget } from './components/EmergencyStressTestWidge
 import { WhatIfSandboxModal } from './components/WhatIfSandboxModal';
 import { GuidedTourModal } from './components/GuidedTourModal';
 import { WealthTerminal } from './components/WealthTerminal';
+import { SocialShareModal } from './components/SocialShareModal';
+import { QRVaultSyncModal } from './components/QRVaultSyncModal';
 
 type AppPhase = 'loading' | 'gateway' | 'dashboard';
 
@@ -76,6 +80,9 @@ export function App() {
   const [privacyMode, setPrivacyMode] = useState<boolean>(false);
   const [showSandbox, setShowSandbox] = useState<boolean>(false);
   const [showTour, setShowTour] = useState<boolean>(false);
+  const [tourInitialStep, setTourInitialStep] = useState<number>(0);
+  const [showShareModal, setShowShareModal] = useState<boolean>(false);
+  const [showQRModal, setShowQRModal] = useState<boolean>(false);
   const [toolsMenuOpen, setToolsMenuOpen] = useState<boolean>(false);
   const toolsDropdownRef = useRef<HTMLDivElement>(null);
   const [layoutMode, setLayoutMode] = useState<'mobile' | 'desktop'>(() => {
@@ -376,6 +383,30 @@ export function App() {
                   </div>
                 </button>
 
+                <button
+                  type="button"
+                  className="tools-menu-item"
+                  onClick={() => { setShowShareModal(true); setToolsMenuOpen(false); }}
+                >
+                  <Share2 size={13} className="text-pulsar" />
+                  <div>
+                    <span className="item-title">Share Health Card</span>
+                    <span className="item-sub">Generate anonymized social scorecard</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="tools-menu-item"
+                  onClick={() => { setShowQRModal(true); setToolsMenuOpen(false); }}
+                >
+                  <QrCode size={13} className="text-quasar" />
+                  <div>
+                    <span className="item-title">Cross-Device QR Beam</span>
+                    <span className="item-sub">P2P scan & sync without cloud</span>
+                  </div>
+                </button>
+
                 <div className="tools-menu-divider" />
 
                 <button
@@ -470,6 +501,10 @@ export function App() {
           plan={plan}
           summary={summary}
           onReturnToDashboard={() => setActiveView('control')}
+          onLaunchTour={(stepIdx) => {
+            setTourInitialStep(stepIdx ?? 4);
+            setShowTour(true);
+          }}
         />
       ) : (
         /* Main Stack */
@@ -535,8 +570,42 @@ export function App() {
       {/* Interactive Guided Spotlight Tour */}
       <GuidedTourModal
         isOpen={showTour}
-        onClose={() => setShowTour(false)}
-        onComplete={() => setStatusMessage('Tour completed! Drag sliders or explore the What-If Sandbox.')}
+        initialStepIndex={tourInitialStep}
+        activeView={activeView}
+        onViewChange={(v) => setActiveView(v)}
+        onClose={() => {
+          setShowTour(false);
+          setTourInitialStep(0);
+        }}
+        onComplete={() => {
+          setShowTour(false);
+          setTourInitialStep(0);
+          setStatusMessage('Master Guided Tour completed! You now have full tactical control.');
+        }}
+      />
+
+      {/* Shareable Financial Health Card Modal */}
+      <SocialShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        plan={plan}
+        summary={summary}
+        budgetRule={budgetRule}
+        taxComparison={taxComparison}
+        debtPayoff={debtPayoff}
+        accountName={activeAccount.name}
+      />
+
+      {/* Cross-Device QR Vault Beam Modal */}
+      <QRVaultSyncModal
+        isOpen={showQRModal}
+        onClose={() => setShowQRModal(false)}
+        plan={plan}
+        activeAccountName={activeAccount.name}
+        onImportPlan={(importedPlan, vaultName) => {
+          setPlan(importedPlan);
+          setStatusMessage(`Beamed vault successfully imported: ${vaultName || 'Imported Vault'}`);
+        }}
       />
 
       {/* Minimalist Footer */}
