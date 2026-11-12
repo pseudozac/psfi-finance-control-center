@@ -1,59 +1,125 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ExportEnvelope, FinancePlan } from '../types/finance';
-import { DEFAULT_PLAN, calculateProjections, planToCSV, validateImportedPlan } from '../lib/finance';
-
-const STORAGE_KEY = 'psfi_finance_plan_v2';
-const BASELINE_KEY = 'psfi_finance_baseline_v2';
-
-function loadStoredPlan(key: string): FinancePlan | null {
-  try {
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return null;
-    return validateImportedPlan(JSON.parse(raw));
-  } catch {
-    return null;
-  }
-}
+import type { UserAccount, AccountAvatarColor } from '../types/account';
+import {
+  DEFAULT_PLAN,
+  calculateProjections,
+  planToCSV,
+  validateImportedPlan,
+} from '../lib/finance';
+import {
+  loadAllAccounts,
+  saveAllAccounts,
+  getActiveAccountId,
+  setActiveAccountId,
+  createNewAccount,
+  removeAccount,
+} from '../lib/accountStorage';
 
 export function useFinancePlan() {
-  const [plan, setPlan] = useState<FinancePlan>(() => loadStoredPlan(STORAGE_KEY) ?? DEFAULT_PLAN);
-  const [baseline, setBaseline] = useState<FinancePlan | null>(() => loadStoredPlan(BASELINE_KEY));
+  const [accounts, setAccounts] = useState<UserAccount[]>(() => loadAllAccounts());
+  const [activeId, setActiveIdState] = useState<string>(() => getActiveAccountId());
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(plan));
-    } catch {
-      // Ignore storage quota errors in private browsing
-    }
-  }, [plan]);
+  // Current active account
+  const activeAccount = accounts.find((a) => a.id === activeId) ?? accounts[0];
 
+  const plan = activeAccount?.plan ?? DEFAULT_PLAN;
+  const baseline = activeAccount?.baseline ?? null;
+
+  // Sync active account whenever accounts or activeId change
   useEffect(() => {
-    try {
-      if (baseline) {
-        window.localStorage.setItem(BASELINE_KEY, JSON.stringify(baseline));
-      } else {
-        window.localStorage.removeItem(BASELINE_KEY);
-      }
-    } catch {
-      // Ignore storage quota errors
-    }
-  }, [baseline]);
+    saveAllAccounts(accounts);
+  }, [accounts]);
+
+  const setPlan = useCallback(
+    (nextPlan: FinancePlan) => {
+      setAccounts((prev) =>
+        prev.map((acc) =>
+          acc.id === activeId
+            ? { ...acc, plan: nextPlan, updatedAt: new Date().toISOString() }
+            : acc
+        )
+      );
+    },
+    [activeId]
+  );
+
+  const setBaseline = useCallback(
+    (nextBaseline: FinancePlan | null) => {
+      setAccounts((prev) =>
+        prev.map((acc) =>
+          acc.id === activeId
+            ? { ...acc, baseline: nextBaseline, updatedAt: new Date().toISOString() }
+            : acc
+        )
+      );
+    },
+    [activeId]
+  );
 
   const pinBaseline = useCallback(() => {
     setBaseline(structuredClone(plan));
-    setStatusMessage('Pinned current plan as Baseline for What-If comparison.');
-  }, [plan]);
+    setStatusMessage('Pinned current plan as Baseline for comparison.');
+  }, [plan, setBaseline]);
 
   const clearBaseline = useCallback(() => {
     setBaseline(null);
     setStatusMessage('Cleared Baseline comparison.');
-  }, []);
+  }, [setBaseline]);
 
   const resetToDefaults = useCallback(() => {
     setPlan(DEFAULT_PLAN);
-    setStatusMessage('Reset plan to default values.');
-  }, []);
+    setStatusMessage('Reset vault to default values.');
+  }, [setPlan]);
+
+  const switchAccount = useCallback((id: string) => {
+    setActiveIdState(id);
+    setActiveAccountId(id);
+    const target = accounts.find((a) => a.id === id);
+    if (target) {
+      setStatusMessage(`Switched to "${target.name}".`);
+    }
+  }, [accounts]);
+
+  const createVaultAndSwitch = useCallback(
+    (name: string, initialPlan: FinancePlan, avatarColor: AccountAvatarColor = 'quasar') => {
+      const created = createNewAccount(name, initialPlan, avatarColor);
+      setAccounts(loadAllAccounts());
+      setActiveIdState(created.id);
+      setActiveAccountId(created.id);
+      setStatusMessage(`Created and opened new vault "${created.name}".`);
+      return created;
+    },
+    []
+  );
+
+  const deleteVault = useCallback(
+    (id: string) => {
+      const remaining = removeAccount(id);
+      setAccounts(remaining);
+      const newActive = getActiveAccountId();
+      setActiveIdState(newActive);
+      setStatusMessage('Vault deleted.');
+    },
+    []
+  );
+
+  const renameActiveVault = useCallback(
+    (newName: string) => {
+      const trimmed = newName.trim();
+      if (!trimmed) return;
+      setAccounts((prev) =>
+        prev.map((acc) =>
+          acc.id === activeId
+            ? { ...acc, name: trimmed, updatedAt: new Date().toISOString() }
+            : acc
+        )
+      );
+      setStatusMessage(`Renamed vault to "${trimmed}".`);
+    },
+    [activeId]
+  );
 
   const exportJSON = useCallback(() => {
     const payload: ExportEnvelope = {
@@ -65,11 +131,11 @@ export function useFinancePlan() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `psfi-plan-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `psfi-${activeAccount.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    setStatusMessage('Exported JSON plan snapshot.');
-  }, [plan]);
+    setStatusMessage('Exported JSON vault snapshot.');
+  }, [plan, activeAccount.name]);
 
   const exportCSV = useCallback(
     (months: number) => {
@@ -79,21 +145,24 @@ export function useFinancePlan() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `psfi-projections-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.download = `psfi-${activeAccount.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-projections-${new Date().toISOString().slice(0, 10)}.csv`;
       a.click();
       URL.revokeObjectURL(url);
       setStatusMessage('Exported CSV summary & projections.');
     },
-    [plan, baseline]
+    [plan, baseline, activeAccount.name]
   );
 
-  const importJSON = useCallback(async (file: File) => {
-    const text = await file.text();
-    const parsed = JSON.parse(text);
-    const validated = validateImportedPlan(parsed);
-    setPlan(validated);
-    setStatusMessage(`Imported plan from ${file.name}.`);
-  }, []);
+  const importJSON = useCallback(
+    async (file: File) => {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const validated = validateImportedPlan(parsed);
+      setPlan(validated);
+      setStatusMessage(`Imported plan into "${activeAccount.name}".`);
+    },
+    [setPlan, activeAccount.name]
+  );
 
   return {
     plan,
@@ -105,6 +174,12 @@ export function useFinancePlan() {
     exportJSON,
     exportCSV,
     importJSON,
+    accounts,
+    activeAccount,
+    switchAccount,
+    createVaultAndSwitch,
+    deleteVault,
+    renameActiveVault,
     statusMessage,
     setStatusMessage,
   };

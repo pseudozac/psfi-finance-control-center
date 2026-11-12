@@ -42,6 +42,40 @@ export const DEFAULT_PLAN: FinancePlan = {
   },
 };
 
+export const SCRATCH_PLAN: FinancePlan = {
+  schemaVersion: 2,
+  income: {
+    salary: 0,
+    freelance: 0,
+    other: 0,
+  },
+  expenses: {
+    housing: 0,
+    groceries: 0,
+    utilities: 0,
+    transport: 0,
+    lifestyle: 0,
+    insurance: 0,
+  },
+  savings: {
+    emergencyFundBalance: 0,
+    monthlySavings: 0,
+    monthlySip: 0,
+    stepUpSipPercent: 10,
+    expectedReturnPercent: 12,
+    inflationPercent: 6,
+  },
+  debt: {
+    cardBalance: 0,
+    aprPercent: 18,
+    monthlyPayment: 0,
+  },
+  tax: {
+    deductions80C: 0,
+    deductions80D: 0,
+  },
+};
+
 const inrFormatter = new Intl.NumberFormat('en-IN', {
   style: 'currency',
   currency: 'INR',

@@ -10,6 +10,9 @@ import {
   Sun,
   ShieldCheck,
   CheckCircle2,
+  Eye,
+  EyeOff,
+  FolderKanban,
 } from 'lucide-react';
 import type { FinancePlan, ViewPeriod } from './types/finance';
 import {
@@ -20,12 +23,16 @@ import {
   estimateIndianIncomeTax,
 } from './lib/finance';
 import { useFinancePlan } from './hooks/useFinancePlan';
+import { IntroLoader } from './components/IntroLoader';
+import { GatewayScreen } from './components/GatewayScreen';
 import { SummaryCards } from './components/SummaryCards';
 import { BudgetHealthWidget } from './components/BudgetHealthWidget';
 import { PersonaPresetBar } from './components/PersonaPresetBar';
 import { IncomeExpensePanel } from './components/IncomeExpensePanel';
 import { ProjectionSection } from './components/ProjectionSection';
 import { IndiaTaxAndDebtPanel } from './components/IndiaTaxAndDebtPanel';
+
+type AppPhase = 'loading' | 'gateway' | 'dashboard';
 
 export function App() {
   const {
@@ -38,12 +45,20 @@ export function App() {
     exportJSON,
     exportCSV,
     importJSON,
+    accounts,
+    activeAccount,
+    switchAccount,
+    createVaultAndSwitch,
+    deleteVault,
     statusMessage,
     setStatusMessage,
   } = useFinancePlan();
 
+  // App phase control: loading -> gateway -> dashboard
+  const [appPhase, setAppPhase] = useState<AppPhase>('loading');
   const [period, setPeriod] = useState<ViewPeriod>('monthly');
   const [horizonMonths, setHorizonMonths] = useState<number>(24);
+  const [privacyMode, setPrivacyMode] = useState<boolean>(false);
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     const saved = localStorage.getItem('psfi_theme');
     if (saved === 'light' || saved === 'dark') return saved;
@@ -94,21 +109,57 @@ export function App() {
     }
   };
 
+  // Phase 1: Intro Loader
+  if (appPhase === 'loading') {
+    return <IntroLoader onFinish={() => setAppPhase('gateway')} />;
+  }
+
+  // Phase 2: Gateway Choice Screen ("Start" vs "Continue")
+  if (appPhase === 'gateway') {
+    return (
+      <GatewayScreen
+        accounts={accounts}
+        activeAccount={activeAccount}
+        onContinue={() => setAppPhase('dashboard')}
+        onSelectAccount={(id) => {
+          switchAccount(id);
+          setAppPhase('dashboard');
+        }}
+        onCreateAccount={(name, initialPlan, color) => {
+          createVaultAndSwitch(name, initialPlan, color);
+          setAppPhase('dashboard');
+        }}
+        onDeleteAccount={(id) => {
+          deleteVault(id);
+        }}
+      />
+    );
+  }
+
+  // Phase 3: Main Dashboard
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${privacyMode ? 'privacy-masked' : ''}`}>
       {/* Floating Pill Dock Navbar */}
       <header className="navbar-dock">
         <div className="brand-cluster">
-          <div className="wordmark">
+          <div className="wordmark" onClick={() => setAppPhase('gateway')} style={{ cursor: 'pointer' }} title="Return to Gateway">
             <span className="wm-p">p</span>
             <span className="wm-s">s</span>
             <span className="wm-f">f</span>
             <span className="wm-i">i</span>
           </div>
-          <div className="status-pill">
-            <span className="status-dot" />
-            <span>local vault</span>
-          </div>
+
+          {/* Active Vault Switcher Pill */}
+          <button
+            type="button"
+            className="action-pill pill-vault"
+            onClick={() => setAppPhase('gateway')}
+            title="Switch or manage vaults"
+          >
+            <span className={`status-dot dot-${activeAccount.avatarColor || 'nebula'}`} />
+            <span className="vault-pill-name">{activeAccount.name}</span>
+            <FolderKanban size={12} className="text-muted" />
+          </button>
         </div>
 
         <div className="dock-actions">
@@ -129,6 +180,16 @@ export function App() {
               annual
             </button>
           </div>
+
+          {/* Privacy Mask Toggle */}
+          <button
+            type="button"
+            className={`icon-pill ${privacyMode ? 'pill-active-mode' : ''}`}
+            onClick={() => setPrivacyMode(!privacyMode)}
+            title={privacyMode ? 'Disable privacy masking' : 'Enable privacy mask (blur sensitive numbers)'}
+          >
+            {privacyMode ? <EyeOff size={14} className="text-corona" /> : <Eye size={14} />}
+          </button>
 
           {/* Baseline Button */}
           {baseline ? (
@@ -237,10 +298,18 @@ export function App() {
         <div className="flex-align gap-2">
           <ShieldCheck size={14} className="text-nebula" />
           <span className="font-semibold text-sm">psfi</span>
-          <span className="muted text-xs">· client-side financial laboratory · zero server telemetry · inr (₹)</span>
+          <span className="muted text-xs">· active vault: <strong>{activeAccount.name}</strong> · zero server telemetry · inr (₹)</span>
         </div>
-        <div className="muted text-xs font-mono">
-          <span>built with react 18 · vite 6 · recharts · vitest</span>
+        <div className="flex-align gap-3 muted text-xs font-mono">
+          <button
+            type="button"
+            className="link-btn font-mono"
+            onClick={() => setAppPhase('gateway')}
+          >
+            switch vault
+          </button>
+          <span>·</span>
+          <span>react 18 · vite 6 · recharts · local storage</span>
         </div>
       </footer>
     </div>

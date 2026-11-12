@@ -1238,3 +1238,558 @@ body {
     border-radius: var(--radius-xl);
   }
 }
+
+
+/* --------------------------------------------------------------------------
+   17. Hipuku Intro Loader Screen
+   -------------------------------------------------------------------------- */
+.intro-loader-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--surface-page);
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 36px 36px;
+  cursor: pointer;
+  transition: opacity 0.3s var(--ease-smooth), transform 0.3s var(--ease-smooth);
+}
+
+.intro-loader-overlay.loader-fade-out {
+  opacity: 0;
+  transform: scale(0.98);
+  pointer-events: none;
+}
+
+.loader-content {
+  text-align: center;
+  max-width: 360px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.loader-wordmark {
+  display: flex;
+  gap: 4px;
+  font-size: 52px;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  margin-bottom: 4px;
+}
+
+.loader-wordmark .wm-letter {
+  display: inline-block;
+  animation: letterBounce 1.4s ease-in-out infinite;
+}
+
+.loader-wordmark .wm-p { color: var(--colour-quasar); animation-delay: 0s; }
+.loader-wordmark .wm-s { color: var(--colour-corona); animation-delay: 0.12s; }
+.loader-wordmark .wm-f { color: var(--colour-solstice); animation-delay: 0.24s; }
+.loader-wordmark .wm-i { color: var(--colour-nebula); animation-delay: 0.36s; }
+
+@keyframes letterBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.loader-brand-title {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--ink-secondary);
+  text-transform: lowercase;
+}
+
+.loader-track {
+  width: 100%;
+  height: 3px;
+  background: var(--surface-overlay);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin: 8px 0;
+}
+
+.loader-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--colour-quasar), var(--colour-nebula));
+  border-radius: var(--radius-full);
+  transition: width 0.08s ease-out;
+}
+
+.loader-status {
+  font-size: 11px;
+  color: var(--ink-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 4px;
+}
+
+.status-cursor {
+  color: var(--colour-quasar);
+  margin-right: 4px;
+}
+
+.loader-skip-hint {
+  font-size: 10px;
+  color: var(--ink-muted);
+  opacity: 0.7;
+  margin-top: 12px;
+}
+
+/* --------------------------------------------------------------------------
+   18. Gateway Choice Screen ("Start" vs "Continue")
+   -------------------------------------------------------------------------- */
+.gateway-shell {
+  max-width: 1080px;
+  margin: 40px auto 80px;
+  padding: 0 20px;
+  animation: fadeIn 0.4s var(--ease-smooth);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.gateway-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.gateway-brand {
+  display: inline-flex;
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  margin-bottom: 12px;
+}
+
+.gateway-brand span {
+  display: inline-block;
+}
+
+.gateway-headline {
+  font-size: clamp(26px, 4vw, 38px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  margin: 0 0 10px;
+  color: var(--ink-primary);
+}
+
+.gateway-sub {
+  font-size: 14px;
+  color: var(--ink-secondary);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.gateway-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.gateway-card {
+  background: var(--surface-raised);
+  border: var(--hair) solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.25s var(--ease-smooth);
+}
+
+.gateway-card:hover {
+  border-color: var(--border-medium);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+  transform: translateY(-2px);
+}
+
+.card-continue:hover {
+  border-color: rgba(94, 196, 145, 0.4);
+}
+
+.card-start:hover {
+  border-color: rgba(191, 159, 241, 0.4);
+}
+
+.card-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.timestamp-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--ink-muted);
+}
+
+.vault-profile-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.vault-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.avatar-quasar { background: var(--colour-quasar-subtle); color: var(--colour-quasar); border: 2px solid var(--colour-quasar); }
+.avatar-corona { background: var(--colour-corona-subtle); color: var(--colour-corona); border: 2px solid var(--colour-corona); }
+.avatar-solstice { background: var(--colour-solstice-subtle); color: var(--colour-solstice); border: 2px solid var(--colour-solstice); }
+.avatar-nebula { background: var(--colour-nebula-subtle); color: var(--colour-nebula); border: 2px solid var(--colour-nebula); }
+.avatar-pulsar { background: var(--colour-pulsar-subtle); color: var(--colour-pulsar); border: 2px solid var(--colour-pulsar); }
+
+.vault-name {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 2px;
+  color: var(--ink-primary);
+}
+
+.gateway-snapshot-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.snapshot-pod {
+  background: var(--surface-overlay);
+  border: var(--hair) solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.snap-label {
+  font-size: 11px;
+  color: var(--ink-muted);
+  margin-bottom: 2px;
+}
+
+.snap-val {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.gateway-btn {
+  width: 100%;
+  padding: 13px 20px;
+  border-radius: var(--radius-full);
+  border: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s var(--ease-smooth);
+}
+
+.btn-continue {
+  background: var(--colour-nebula);
+  color: #0d0e12;
+}
+
+.btn-continue:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(94, 196, 145, 0.3);
+}
+
+.btn-start {
+  background: var(--colour-quasar);
+  color: #0d0e12;
+  margin-top: 8px;
+}
+
+.btn-start:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(191, 159, 241, 0.3);
+}
+
+.other-vaults-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: var(--hair) solid var(--border-subtle);
+}
+
+.other-vaults-title {
+  display: block;
+  color: var(--ink-muted);
+  margin-bottom: 8px;
+}
+
+.other-vaults-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.vault-item-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: var(--surface-overlay);
+  border: var(--hair) solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-smooth);
+}
+
+.vault-item-pill:hover {
+  border-color: var(--border-medium);
+  background: var(--surface-raised);
+}
+
+.vault-item-pill.active-pill {
+  border-color: var(--colour-nebula);
+  background: var(--colour-nebula-subtle);
+}
+
+.delete-vault-btn {
+  background: transparent;
+  border: none;
+  color: var(--ink-muted);
+  padding: 0 0 0 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+
+.delete-vault-btn:hover {
+  color: var(--colour-flare);
+}
+
+/* Card Start Form */
+.start-lead {
+  margin-bottom: 16px;
+}
+
+.start-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.start-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  color: var(--ink-secondary);
+}
+
+.hipuku-input {
+  background: var(--surface-overlay);
+  border: var(--hair) solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  color: var(--ink-primary);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s var(--ease-smooth);
+}
+
+.hipuku-input:focus {
+  border-color: var(--colour-quasar);
+}
+
+.start-mode-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mode-option-btn {
+  background: var(--surface-overlay);
+  border: var(--hair) solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  text-align: left;
+  cursor: pointer;
+  color: var(--ink-primary);
+  transition: all 0.2s var(--ease-smooth);
+}
+
+.mode-option-btn:hover {
+  border-color: var(--border-medium);
+}
+
+.mode-option-btn.active-mode {
+  border-color: var(--colour-quasar);
+  background: var(--colour-quasar-subtle);
+}
+
+.mode-btn-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+
+.mode-btn-desc {
+  display: block;
+  font-size: 11px;
+  color: var(--ink-secondary);
+  padding-left: 14px;
+}
+
+.guided-box {
+  background: var(--surface-overlay);
+  border: var(--hair) solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.guided-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.guided-input {
+  background: var(--surface-raised);
+  border: var(--hair) solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  color: var(--ink-primary);
+  font-size: 12px;
+  outline: none;
+}
+
+.guided-input:focus {
+  border-color: var(--colour-quasar);
+}
+
+.color-picker-row {
+  display: flex;
+  gap: 10px;
+}
+
+.color-choice-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s var(--ease-bounce), border-color 0.15s;
+}
+
+.color-choice-btn:hover {
+  transform: scale(1.15);
+}
+
+.color-choice-btn.active-color {
+  border-color: #ffffff;
+  transform: scale(1.2);
+}
+
+.gateway-footer {
+  margin-top: 36px;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+}
+
+/* --------------------------------------------------------------------------
+   19. Privacy Mask & Vault Navbar Pill
+   -------------------------------------------------------------------------- */
+.privacy-masked .font-mono:not(button):not(input):not(.unit-prefix):not(.unit-suffix),
+.privacy-masked .kpi-val,
+.privacy-masked .telemetry-val,
+.privacy-masked .tax-amount,
+.privacy-masked .pod-value,
+.privacy-masked .cat-num {
+  filter: blur(6px);
+  user-select: none;
+  transition: filter 0.2s var(--ease-smooth);
+}
+
+.privacy-masked .number-input {
+  color: transparent !important;
+  text-shadow: 0 0 6px var(--ink-primary);
+}
+
+.pill-active-mode {
+  background: var(--colour-corona-subtle) !important;
+  border-color: var(--colour-corona) !important;
+}
+
+.pill-vault {
+  background: var(--surface-overlay);
+  border-color: var(--border-subtle);
+  color: var(--ink-primary);
+  font-weight: 600;
+  gap: 7px;
+}
+
+.pill-vault:hover {
+  border-color: var(--border-hover);
+}
+
+.vault-pill-name {
+  font-size: 12px;
+}
+
+.link-btn {
+  background: transparent;
+  border: none;
+  color: var(--colour-quasar);
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  font-size: inherit;
+}
+
+.link-btn:hover {
+  color: var(--colour-nebula);
+}
+
+@media (max-width: 800px) {
+  .gateway-grid {
+    grid-template-columns: 1fr;
+  }
+}
