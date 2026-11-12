@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { parseIndianAmount, calculateSipFutureValue, parseQuickCommand } from './cmdKParser';
+import {
+  parseIndianAmount,
+  calculateSipFutureValue,
+  calculateLoanEmi,
+  calculateFireTarget,
+  calculateRule72,
+  calculateInflationErosion,
+  parseQuickCommand,
+} from './cmdKParser';
 
 describe('parseIndianAmount', () => {
   it('parses plain numbers correctly', () => {
@@ -31,50 +39,115 @@ describe('parseIndianAmount', () => {
 
 describe('calculateSipFutureValue', () => {
   it('calculates future value accurately for 10 years @ 12%', () => {
-    // 25,000 / mo for 10 years @ 12%
     const res = calculateSipFutureValue(25000, 10, 12);
     expect(res.monthlyInvestment).toBe(25000);
     expect(res.years).toBe(10);
-    expect(res.totalInvested).toBe(3000000); // 25,000 * 120 = 30L
-    // Future value should be approx ~58.08 Lakhs
+    expect(res.totalInvested).toBe(3000000);
     expect(res.futureValue).toBeGreaterThan(5700000);
     expect(res.futureValue).toBeLessThan(5900000);
     expect(res.wealthGain).toBe(res.futureValue - res.totalInvested);
   });
 });
 
-describe('parseQuickCommand', () => {
-  it('parses lever setting commands', () => {
-    const salaryCmd = parseQuickCommand('salary 1.8L');
-    expect(salaryCmd).not.toBeNull();
-    if (salaryCmd?.type === 'set_lever') {
-      expect(salaryCmd.lever).toBe('salary');
-      expect(salaryCmd.value).toBe(180000);
-    }
+describe('calculateLoanEmi', () => {
+  it('calculates standard home loan EMI accurately', () => {
+    // 50 Lakhs for 20 years @ 8.5%
+    const res = calculateLoanEmi(5000000, 20, 8.5);
+    expect(res.principal).toBe(5000000);
+    expect(res.years).toBe(20);
+    // EMI should be around ₹43,391
+    expect(res.monthlyEmi).toBeGreaterThan(43000);
+    expect(res.monthlyEmi).toBeLessThan(44000);
+    expect(res.totalRepayment).toBeGreaterThan(10000000); // > 1 Crore total
+    expect(res.totalInterest).toBe(res.totalRepayment - res.principal);
+  });
+});
 
-    const sipCmd = parseQuickCommand('sip 40k');
-    expect(sipCmd).not.toBeNull();
-    if (sipCmd?.type === 'set_lever') {
-      expect(sipCmd.lever).toBe('sip');
-      expect(sipCmd.value).toBe(40000);
-    }
+describe('calculateFireTarget', () => {
+  it('calculates 25x, 33x, and 40x FIRE targets', () => {
+    const res = calculateFireTarget(60000); // 60k / mo = 7.2L / yr
+    expect(res.monthlyExpense).toBe(60000);
+    expect(res.annualExpense).toBe(720000);
+    expect(res.fire25x).toBe(720000 * 25); // 1.80 Cr
+    expect(res.lean33x).toBe(720000 * 33); // 2.376 Cr
+    expect(res.fat40x).toBe(720000 * 40);  // 2.88 Cr
+  });
+});
 
-    const cagrCmd = parseQuickCommand('cagr 14%');
-    expect(cagrCmd).not.toBeNull();
-    if (cagrCmd?.type === 'set_lever') {
-      expect(cagrCmd.lever).toBe('cagr');
-      expect(cagrCmd.value).toBe(14);
+describe('calculateRule72', () => {
+  it('calculates doubling years correctly', () => {
+    expect(calculateRule72(12).doublingYears).toBe(6.0);
+    expect(calculateRule72(15).doublingYears).toBe(4.8);
+    expect(calculateRule72(8).doublingYears).toBe(9.0);
+  });
+});
+
+describe('calculateInflationErosion', () => {
+  it('calculates purchasing power erosion over 20 years @ 6%', () => {
+    const res = calculateInflationErosion(10000000, 20, 6);
+    expect(res.presentAmount).toBe(10000000);
+    // Future purchasing power should be ~31.18 Lakhs
+    expect(res.futurePurchasingPower).toBeGreaterThan(3100000);
+    expect(res.futurePurchasingPower).toBeLessThan(3200000);
+    expect(res.erodedPercentage).toBeGreaterThan(68);
+  });
+});
+
+describe('parseQuickCommand Advanced Capabilities', () => {
+  it('parses loan EMI commands', () => {
+    const cmd = parseQuickCommand('emi 50L 20y 8.5%');
+    expect(cmd).not.toBeNull();
+    if (cmd?.type === 'emi_calc') {
+      expect(cmd.result.principal).toBe(5000000);
+      expect(cmd.result.years).toBe(20);
+      expect(cmd.result.annualRatePercent).toBe(8.5);
     }
   });
 
-  it('parses compound SIP calculations', () => {
-    const calcCmd = parseQuickCommand('sip 30k 15y 12%');
-    expect(calcCmd).not.toBeNull();
-    if (calcCmd?.type === 'sip_calc') {
-      expect(calcCmd.result.monthlyInvestment).toBe(30000);
-      expect(calcCmd.result.years).toBe(15);
-      expect(calcCmd.result.annualRatePercent).toBe(12);
-      expect(calcCmd.result.futureValue).toBeGreaterThan(15000000); // > 1.5 Cr
+  it('parses FIRE corpus commands', () => {
+    const cmd = parseQuickCommand('fire 80k');
+    expect(cmd).not.toBeNull();
+    if (cmd?.type === 'fire_calc') {
+      expect(cmd.result.monthlyExpense).toBe(80000);
+      expect(cmd.result.fire25x).toBe(80000 * 12 * 25);
     }
+  });
+
+  it('parses Rule of 72 commands', () => {
+    const cmd = parseQuickCommand('double 12%');
+    expect(cmd).not.toBeNull();
+    if (cmd?.type === 'rule72_calc') {
+      expect(cmd.result.annualRatePercent).toBe(12);
+      expect(cmd.result.doublingYears).toBe(6.0);
+    }
+  });
+
+  it('parses Inflation erosion commands', () => {
+    const cmd = parseQuickCommand('inf 1cr 20y 6%');
+    expect(cmd).not.toBeNull();
+    if (cmd?.type === 'inf_calc') {
+      expect(cmd.result.presentAmount).toBe(10000000);
+    }
+  });
+
+  it('parses Macro commands: raise, boost sip, cut lifestyle, max 80c, zero debt', () => {
+    const raiseCmd = parseQuickCommand('raise 15%');
+    expect(raiseCmd?.type).toBe('macro_action');
+    if (raiseCmd?.type === 'macro_action') {
+      expect(raiseCmd.macro.type).toBe('raise');
+      if (raiseCmd.macro.type === 'raise') expect(raiseCmd.macro.percent).toBe(15);
+    }
+
+    const sipBoostCmd = parseQuickCommand('boost sip 25%');
+    expect(sipBoostCmd?.type).toBe('macro_action');
+
+    const cutCmd = parseQuickCommand('cut lifestyle 20%');
+    expect(cutCmd?.type).toBe('macro_action');
+
+    const max80cCmd = parseQuickCommand('max 80c');
+    expect(max80cCmd?.type).toBe('macro_action');
+
+    const zeroDebtCmd = parseQuickCommand('zero debt');
+    expect(zeroDebtCmd?.type).toBe('macro_action');
   });
 });

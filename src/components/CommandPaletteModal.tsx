@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   Terminal,
   Search,
@@ -28,10 +28,22 @@ import {
   ArrowRight,
   Calculator,
   CornerDownLeft,
+  Percent,
+  Zap,
+  History,
+  Coins,
 } from 'lucide-react';
 import { PLAN_PRESETS, formatINR } from '../lib/finance';
 import type { FinancePlan } from '../types/finance';
-import { parseQuickCommand, type SipCalculationResult } from '../lib/cmdKParser';
+import {
+  parseQuickCommand,
+  type SipCalculationResult,
+  type EmiCalculationResult,
+  type FireTargetResult,
+  type Rule72Result,
+  type InflationErosionResult,
+  type MacroActionType,
+} from '../lib/cmdKParser';
 
 interface CommandPaletteModalProps {
   isOpen: boolean;
@@ -62,22 +74,49 @@ interface CommandPaletteModalProps {
   onLoadDemo: () => void;
 }
 
+export type PaletteCategory = 'all' | 'calc' | 'macro' | 'presets' | 'tools';
+
 interface PaletteAction {
   id: string;
-  category: 'Levers' | 'Calculator' | 'Navigation' | 'Archetypes' | 'Tools' | 'Preferences' | 'Data';
+  category: 'Levers' | 'Calculator' | 'Macros' | 'Navigation' | 'Archetypes' | 'Tools' | 'Preferences' | 'Data';
   title: string;
   subtitle?: string;
   keywords: string;
   icon: React.ReactNode;
   badge?: string;
-  calcResult?: SipCalculationResult;
+  calcResult?: SipCalculationResult | EmiCalculationResult | FireTargetResult | Rule72Result | InflationErosionResult;
   execute: () => void;
+}
+
+const STORAGE_KEY_HISTORY = 'psfi_cmdk_history';
+
+function loadCommandHistory(): string[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_HISTORY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCommandToHistory(cmd: string) {
+  try {
+    const clean = cmd.trim();
+    if (!clean) return;
+    const history = loadCommandHistory().filter((h) => h.toLowerCase() !== clean.toLowerCase());
+    history.unshift(clean);
+    localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(history.slice(0, 10)));
+  } catch {
+    // Ignore storage issues
+  }
 }
 
 // Retro sci-fi Web Audio synthesizer
 function playTerminalAudio(type: 'open' | 'click' | 'exec') {
   try {
-    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const AudioContextClass =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (!AudioContextClass) return;
     const ctx = new AudioContextClass();
 
@@ -152,7 +191,9 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   onLoadDemo,
 }) => {
   const [query, setQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<PaletteCategory>('all');
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [history, setHistory] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -161,73 +202,246 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
     if (isOpen) {
       playTerminalAudio('open');
       setQuery('');
+      setActiveTab('all');
       setSelectedIndex(0);
+      setHistory(loadCommandHistory());
       setTimeout(() => inputRef.current?.focus(), 40);
     }
   }, [isOpen]);
+
+  // Execute macro logic
+  const handleExecuteMacro = useCallback(
+    (macro: MacroActionType) => {
+      if (macro.type === 'raise') {
+        onUpdatePlan((prev) => {
+          const currentSalary = prev.income.salary;
+          const newSalary = macro.percent
+            ? Math.round(currentSalary * (1 + macro.percent / 100))
+            : currentSalary + (macro.amount || 0);
+          return {
+            ...prev,
+            income: { ...prev.income, salary: newSalary },
+          };
+        }, macro.label);
+      } else if (macro.type === 'boost_sip') {
+        onUpdatePlan((prev) => {
+          const currentSip = prev.savings.monthlySip;
+          const newSip = macro.percent
+            ? Math.round(currentSip * (1 + macro.percent / 100))
+            : currentSip + (macro.amount || 0);
+          return {
+            ...prev,
+            savings: { ...prev.savings, monthlySip: newSip },
+          };
+        }, macro.label);
+      } else if (macro.type === 'cut_lifestyle') {
+        onUpdatePlan((prev) => {
+          const currentLifestyle = prev.expenses.lifestyle;
+          const newLifestyle = macro.percent
+            ? Math.max(0, Math.round(currentLifestyle * (1 - macro.percent / 100)))
+            : Math.max(0, currentLifestyle - (macro.amount || 0));
+          return {
+            ...prev,
+            expenses: { ...prev.expenses, lifestyle: newLifestyle },
+          };
+        }, macro.label);
+      } else if (macro.type === 'max_80c') {
+        onUpdatePlan(
+          (prev) => ({
+            ...prev,
+            tax: { ...prev.tax, deductions80C: 150000 },
+          }),
+          'Maximized Section 80C deductions to ₹1,50,000 / yr'
+        );
+      } else if (macro.type === 'max_nps') {
+        onUpdatePlan(
+          (prev) => ({
+            ...prev,
+            tax: { ...prev.tax, deductionsNPS: 50000 },
+          }),
+          'Maximized Section 80CCD(1B) NPS deductions to ₹50,000 / yr'
+        );
+      } else if (macro.type === 'zero_debt') {
+        onUpdatePlan(
+          (prev) => ({
+            ...prev,
+            debt: { ...prev.debt, cardBalance: 0 },
+          }),
+          'Cleared all revolving credit card balance to zero'
+        );
+      }
+    },
+    [onUpdatePlan]
+  );
 
   // Construct dynamic action database
   const actions = useMemo<PaletteAction[]>(() => {
     const list: PaletteAction[] = [];
 
-    // 1. Check if user typed a dynamic lever or SIP calculation
+    // Check query intelligence parser
     const parsed = parseQuickCommand(query);
 
-    if (parsed?.type === 'sip_calc') {
-      const { monthlyInvestment, years, annualRatePercent, totalInvested, futureValue, wealthGain } = parsed.result;
-      list.push({
-        id: 'calc_sip_apply',
-        category: 'Calculator',
-        title: `SIP: ${formatINR(monthlyInvestment)}/mo × ${years}y @ ${annualRatePercent}%`,
-        subtitle: `Invested: ${formatINR(totalInvested)} → Est. Wealth: ${formatINR(futureValue)} (Gain: +${formatINR(wealthGain)})`,
-        keywords: 'sip calc compound interest future value returns',
-        icon: <Calculator size={15} className="text-solstice" />,
-        badge: 'Apply to Vault',
-        calcResult: parsed.result,
-        execute: () => {
-          onUpdatePlan((prev) => ({
-            ...prev,
-            savings: {
-              ...prev.savings,
-              monthlySip: monthlyInvestment,
-              expectedReturnPercent: annualRatePercent,
-            },
-          }), `Applied SIP lever: ${formatINR(monthlyInvestment)}/mo @ ${annualRatePercent}%`);
-        },
-      });
-    } else if (parsed?.type === 'set_lever') {
-      const { lever, value, label } = parsed;
-      list.push({
-        id: `lever_${lever}`,
-        category: 'Levers',
-        title: label,
-        subtitle: `Instantly update ${lever} in your active balance sheet`,
-        keywords: `${lever} set update change lever`,
-        icon: <Sliders size={15} className="text-quasar" />,
-        badge: 'Execute Lever',
-        execute: () => {
-          onUpdatePlan((prev) => {
-            const next = { ...prev };
-            if (lever === 'salary') next.income = { ...next.income, salary: value };
-            else if (lever === 'freelance') next.income = { ...next.income, freelance: value };
-            else if (lever === 'sip') next.savings = { ...next.savings, monthlySip: value };
-            else if (lever === 'rent') {
-              next.expenses = { ...next.expenses, housing: value };
-              next.tax = { ...next.tax, rentPaidMonthly: value };
-            }
-            else if (lever === 'groceries') next.expenses = { ...next.expenses, groceries: value };
-            else if (lever === 'utilities') next.expenses = { ...next.expenses, utilities: value };
-            else if (lever === 'lifestyle') next.expenses = { ...next.expenses, lifestyle: value };
-            else if (lever === 'cagr') next.savings = { ...next.savings, expectedReturnPercent: value };
-            else if (lever === 'stepup') next.savings = { ...next.savings, stepUpSipPercent: value };
-            else if (lever === 'inflation') next.savings = { ...next.savings, inflationPercent: value };
-            return next;
-          }, label);
-        },
-      });
+    if (parsed) {
+      if (parsed.type === 'sip_calc') {
+        const { monthlyInvestment, years, annualRatePercent, totalInvested, futureValue, wealthGain } = parsed.result;
+        list.push({
+          id: 'calc_sip_apply',
+          category: 'Calculator',
+          title: `SIP: ${formatINR(monthlyInvestment)}/mo × ${years}y @ ${annualRatePercent}%`,
+          subtitle: `Invested: ${formatINR(totalInvested)} → Est. Wealth: ${formatINR(futureValue)} (Gain: +${formatINR(wealthGain)})`,
+          keywords: 'sip calc compound interest future value returns',
+          icon: <Calculator size={15} className="text-solstice" />,
+          badge: 'Apply to Vault',
+          calcResult: parsed.result,
+          execute: () => {
+            onUpdatePlan((prev) => ({
+              ...prev,
+              savings: {
+                ...prev.savings,
+                monthlySip: monthlyInvestment,
+                expectedReturnPercent: annualRatePercent,
+              },
+            }), `Applied SIP lever: ${formatINR(monthlyInvestment)}/mo @ ${annualRatePercent}%`);
+          },
+        });
+      } else if (parsed.type === 'emi_calc') {
+        const { principal, years, annualRatePercent, monthlyEmi, totalInterest, totalRepayment } = parsed.result;
+        list.push({
+          id: 'calc_emi_apply',
+          category: 'Calculator',
+          title: `Loan EMI: ${formatINR(monthlyEmi)}/mo (${years}y @ ${annualRatePercent}%)`,
+          subtitle: `Principal: ${formatINR(principal)} · Total Interest: ${formatINR(totalInterest)} · Repayment: ${formatINR(totalRepayment)}`,
+          keywords: 'emi loan mortgage home interest debt',
+          icon: <Coins size={15} className="text-corona" />,
+          badge: 'Apply Housing EMI',
+          calcResult: parsed.result,
+          execute: () => {
+            onUpdatePlan((prev) => ({
+              ...prev,
+              expenses: { ...prev.expenses, housing: monthlyEmi },
+              tax: { ...prev.tax, rentPaidMonthly: monthlyEmi },
+            }), `Updated Housing EMI to ${formatINR(monthlyEmi)}/mo`);
+          },
+        });
+      } else if (parsed.type === 'fire_calc') {
+        const { monthlyExpense, annualExpense, fire25x, lean33x, fat40x } = parsed.result;
+        list.push({
+          id: 'calc_fire_result',
+          category: 'Calculator',
+          title: `FIRE Corpus for ${formatINR(monthlyExpense)}/mo: 25x = ${formatINR(fire25x)}`,
+          subtitle: `Annual: ${formatINR(annualExpense)} | 25x (4% SWR): ${formatINR(fire25x)} · 33x Lean: ${formatINR(lean33x)} · 40x Fat: ${formatINR(fat40x)}`,
+          keywords: 'fire corpus retirement target financial independence',
+          icon: <Flame size={15} className="text-solstice" />,
+          badge: 'Actuarial Target',
+          calcResult: parsed.result,
+          execute: () => {
+            onViewChange('control');
+          },
+        });
+      } else if (parsed.type === 'rule72_calc') {
+        const { annualRatePercent, doublingYears } = parsed.result;
+        list.push({
+          id: 'calc_rule72_result',
+          category: 'Calculator',
+          title: `Rule of 72: Money doubles in ${doublingYears} years @ ${annualRatePercent}% CAGR`,
+          subtitle: `Exponential wealth velocity metric for compounding investment portfolios`,
+          keywords: 'rule72 double doubling time compound velocity',
+          icon: <Percent size={15} className="text-quasar" />,
+          badge: 'Compounding Law',
+          calcResult: parsed.result,
+          execute: () => {},
+        });
+      } else if (parsed.type === 'inf_calc') {
+        const { presentAmount, years, inflationPercent, futurePurchasingPower, erodedPercentage } = parsed.result;
+        list.push({
+          id: 'calc_inf_result',
+          category: 'Calculator',
+          title: `Inflation Erosion: ${formatINR(presentAmount)} in ${years}y @ ${inflationPercent}% = ${formatINR(futurePurchasingPower)} today`,
+          subtitle: `Purchasing power reduced by -${erodedPercentage}% due to cumulative currency inflation`,
+          keywords: 'inflation erosion purchasing power real value',
+          icon: <ShieldAlert size={15} className="text-corona" />,
+          badge: 'Purchasing Power',
+          calcResult: parsed.result,
+          execute: () => {},
+        });
+      } else if (parsed.type === 'macro_action') {
+        list.push({
+          id: `macro_${parsed.macro.type}`,
+          category: 'Macros',
+          title: parsed.macro.label,
+          subtitle: 'Execute instant multi-variable scenario macro across your balance sheet',
+          keywords: `macro ${parsed.macro.type} raise boost cut 80c nps debt`,
+          icon: <Zap size={15} className="text-solstice" />,
+          badge: 'Run Macro',
+          execute: () => handleExecuteMacro(parsed.macro),
+        });
+      } else if (parsed.type === 'set_lever') {
+        const { lever, value, label } = parsed;
+        list.push({
+          id: `lever_${lever}`,
+          category: 'Levers',
+          title: label,
+          subtitle: `Instantly update ${lever} in your active balance sheet`,
+          keywords: `${lever} set update change lever`,
+          icon: <Sliders size={15} className="text-quasar" />,
+          badge: 'Execute Lever',
+          execute: () => {
+            onUpdatePlan((prev) => {
+              const next = { ...prev };
+              if (lever === 'salary') next.income = { ...next.income, salary: value };
+              else if (lever === 'freelance') next.income = { ...next.income, freelance: value };
+              else if (lever === 'sip') next.savings = { ...next.savings, monthlySip: value };
+              else if (lever === 'rent') {
+                next.expenses = { ...next.expenses, housing: value };
+                next.tax = { ...next.tax, rentPaidMonthly: value };
+              } else if (lever === 'groceries') next.expenses = { ...next.expenses, groceries: value };
+              else if (lever === 'utilities') next.expenses = { ...next.expenses, utilities: value };
+              else if (lever === 'lifestyle') next.expenses = { ...next.expenses, lifestyle: value };
+              else if (lever === 'cagr') next.savings = { ...next.savings, expectedReturnPercent: value };
+              else if (lever === 'stepup') next.savings = { ...next.savings, stepUpSipPercent: value };
+              else if (lever === 'inflation') next.savings = { ...next.savings, inflationPercent: value };
+              return next;
+            }, label);
+          },
+        });
+      }
     }
 
-    // 2. Navigation Actions
+    // Default Macros when no query typed
+    list.push({
+      id: 'macro_max_80c',
+      category: 'Macros',
+      title: 'Maximize Section 80C Deductions (₹1.5 Lakhs)',
+      subtitle: 'Set ELSS, EPF, and PPF tax deductions to statutory maximum ₹1,50,000 / yr',
+      keywords: '80c tax maximize elss ppf epf deduction',
+      icon: <Zap size={15} className="text-solstice" />,
+      badge: 'Macro',
+      execute: () => handleExecuteMacro({ type: 'max_80c', label: 'Maximized 80C to ₹1,50,000' }),
+    });
+
+    list.push({
+      id: 'macro_max_nps',
+      category: 'Macros',
+      title: 'Maximize NPS 80CCD(1B) Deductions (₹50,000)',
+      subtitle: 'Add ₹50,000 Tier-1 National Pension System deduction for Old Tax Regime',
+      keywords: 'nps 80ccd 80ccd1b pension deduction tax',
+      icon: <Zap size={15} className="text-quasar" />,
+      badge: 'Macro',
+      execute: () => handleExecuteMacro({ type: 'max_nps', label: 'Maximized NPS to ₹50,000' }),
+    });
+
+    list.push({
+      id: 'macro_zero_debt',
+      category: 'Macros',
+      title: 'Zero Out Revolving Credit Card Debt',
+      subtitle: 'Instantly clear high-interest card balance to restore full positive cashflow',
+      keywords: 'zero debt clear debt pay credit card payoff',
+      icon: <Zap size={15} className="text-nebula" />,
+      badge: 'Macro',
+      execute: () => handleExecuteMacro({ type: 'zero_debt', label: 'Cleared credit card debt to ₹0' }),
+    });
+
+    // Navigation Actions
     list.push({
       id: 'nav_control',
       category: 'Navigation',
@@ -261,7 +475,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       execute: () => onOpenTour(),
     });
 
-    // 3. Archetype Models
+    // Archetype Models
     PLAN_PRESETS.forEach((preset) => {
       const isCurrent =
         preset.plan.income.salary === currentPlan.income.salary &&
@@ -286,7 +500,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       });
     });
 
-    // 4. Tools & Scenarios
+    // Tools & Scenarios
     list.push({
       id: 'tool_share',
       category: 'Tools',
@@ -331,7 +545,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       execute: () => onToggleBaseline(),
     });
 
-    // 5. Preferences & Toggles
+    // Preferences & Toggles
     list.push({
       id: 'pref_privacy',
       category: 'Preferences',
@@ -376,7 +590,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       execute: () => onToggleTheme(),
     });
 
-    // 6. Data & Backups
+    // Data & Backups
     list.push({
       id: 'data_json',
       category: 'Data',
@@ -459,23 +673,44 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
     onLoadDemo,
     onResetDefaults,
     onUpdatePlan,
+    handleExecuteMacro,
   ]);
 
-  // Filter actions based on search query
+  // Filter actions based on search query and category tab
   const filteredActions = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return actions;
+    let result = actions;
 
-    // Direct parser matches already placed at top of actions array
-    return actions.filter((action) => {
-      if (action.category === 'Levers' || action.category === 'Calculator') return true;
+    // Filter by tab
+    if (activeTab === 'calc') {
+      result = result.filter((a) => a.category === 'Calculator');
+    } else if (activeTab === 'macro') {
+      result = result.filter((a) => a.category === 'Macros' || a.category === 'Levers');
+    } else if (activeTab === 'presets') {
+      result = result.filter((a) => a.category === 'Archetypes');
+    } else if (activeTab === 'tools') {
+      result = result.filter(
+        (a) => a.category === 'Tools' || a.category === 'Navigation' || a.category === 'Data' || a.category === 'Preferences'
+      );
+    }
+
+    const q = query.trim().toLowerCase();
+    if (!q) return result;
+
+    return result.filter((action) => {
+      if (
+        action.category === 'Levers' ||
+        action.category === 'Calculator' ||
+        action.category === 'Macros'
+      ) {
+        return true;
+      }
       return (
         action.title.toLowerCase().includes(q) ||
         (action.subtitle && action.subtitle.toLowerCase().includes(q)) ||
         action.keywords.toLowerCase().includes(q)
       );
     });
-  }, [actions, query]);
+  }, [actions, query, activeTab]);
 
   // Handle keyboard navigation inside palette
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -485,13 +720,24 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       setSelectedIndex((prev) => (prev + 1) % Math.max(1, filteredActions.length));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
+      if (!query && selectedIndex === 0 && history.length > 0) {
+        setQuery(history[0]);
+        return;
+      }
       playTerminalAudio('click');
       setSelectedIndex((prev) => (prev - 1 + filteredActions.length) % Math.max(1, filteredActions.length));
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      const tabs: PaletteCategory[] = ['all', 'calc', 'macro', 'presets', 'tools'];
+      const nextIdx = (tabs.indexOf(activeTab) + 1) % tabs.length;
+      setActiveTab(tabs[nextIdx]);
+      setSelectedIndex(0);
     } else if (e.key === 'Enter') {
       e.preventDefault();
       const selected = filteredActions[selectedIndex];
       if (selected) {
         playTerminalAudio('exec');
+        if (query.trim()) saveCommandToHistory(query.trim());
         selected.execute();
         onClose();
       }
@@ -534,7 +780,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
             ref={inputRef}
             type="text"
             className="palette-input font-mono"
-            placeholder="Type a command, scenario or math (e.g. 'fire', 'sip 30k 12%', 'salary 2L', 'tour')..."
+            placeholder="Type command, math or macro e.g. 'fire 60k', 'emi 40L 15y', 'raise 15%', 'double 12%'..."
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -548,6 +794,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
               className="palette-clear-btn"
               onClick={() => {
                 setQuery('');
+                setSelectedIndex(0);
                 inputRef.current?.focus();
               }}
               aria-label="Clear input"
@@ -559,6 +806,88 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
           )}
         </div>
 
+        {/* Filter Tabs Bar */}
+        <div className="palette-tabs-bar font-mono text-[11px]">
+          <button
+            type="button"
+            className={`palette-tab-btn ${activeTab === 'all' ? 'tab-btn-active' : ''}`}
+            onClick={() => {
+              setActiveTab('all');
+              setSelectedIndex(0);
+            }}
+          >
+            All Commands
+          </button>
+          <button
+            type="button"
+            className={`palette-tab-btn ${activeTab === 'calc' ? 'tab-btn-active' : ''}`}
+            onClick={() => {
+              setActiveTab('calc');
+              setSelectedIndex(0);
+            }}
+          >
+            <Calculator size={11} className="inline mr-1 text-solstice" />
+            Calculators
+          </button>
+          <button
+            type="button"
+            className={`palette-tab-btn ${activeTab === 'macro' ? 'tab-btn-active' : ''}`}
+            onClick={() => {
+              setActiveTab('macro');
+              setSelectedIndex(0);
+            }}
+          >
+            <Zap size={11} className="inline mr-1 text-quasar" />
+            Macros & Levers
+          </button>
+          <button
+            type="button"
+            className={`palette-tab-btn ${activeTab === 'presets' ? 'tab-btn-active' : ''}`}
+            onClick={() => {
+              setActiveTab('presets');
+              setSelectedIndex(0);
+            }}
+          >
+            <Sparkles size={11} className="inline mr-1 text-pulsar" />
+            Archetypes
+          </button>
+          <button
+            type="button"
+            className={`palette-tab-btn ${activeTab === 'tools' ? 'tab-btn-active' : ''}`}
+            onClick={() => {
+              setActiveTab('tools');
+              setSelectedIndex(0);
+            }}
+          >
+            Tools & Views
+          </button>
+        </div>
+
+        {/* Recent History Quick-Chips (Shown when input is empty and history exists) */}
+        {!query && history.length > 0 && (
+          <div className="palette-history-strip font-mono text-[11px]">
+            <div className="flex-align gap-1 text-muted text-[10px]">
+              <History size={11} />
+              <span>RECENT:</span>
+            </div>
+            <div className="palette-history-chips">
+              {history.slice(0, 4).map((h) => (
+                <button
+                  key={h}
+                  type="button"
+                  className="palette-chip-btn"
+                  onClick={() => {
+                    setQuery(h);
+                    inputRef.current?.focus();
+                  }}
+                >
+                  {h}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Results List */}
         <div className="palette-list" ref={listRef}>
           {filteredActions.length === 0 ? (
@@ -566,7 +895,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
               <Search size={24} className="text-muted opacity-40 mb-2" />
               <p className="text-sm text-primary m-0">No matching terminal commands found</p>
               <p className="text-xs text-muted m-0 mt-1">
-                Try typing <code>salary 1.5L</code>, <code>sip 40k 15y 12%</code>, <code>fire</code>, or <code>tour</code>
+                Try typing <code>fire 60k</code>, <code>emi 40L 15y 8.5%</code>, <code>raise 15%</code>, <code>double 12%</code>, or <code>zero debt</code>
               </p>
             </div>
           ) : (
@@ -578,6 +907,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
                   className={`palette-item ${isSelected ? 'palette-item-selected' : ''}`}
                   onClick={() => {
                     playTerminalAudio('exec');
+                    if (query.trim()) saveCommandToHistory(query.trim());
                     action.execute();
                     onClose();
                   }}
@@ -619,11 +949,12 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         <div className="palette-footer flex-between items-center font-mono text-[11px] text-muted">
           <div className="flex-align gap-3">
             <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+            <span><kbd>tab</kbd> categories</span>
             <span><kbd>↵</kbd> execute</span>
             <span><kbd>esc</kbd> dismiss</span>
           </div>
           <span className="text-[10px] text-muted opacity-60">
-            psfi terminal omnibar · client-side
+            psfi omnibar intelligence · client-side
           </span>
         </div>
       </div>
