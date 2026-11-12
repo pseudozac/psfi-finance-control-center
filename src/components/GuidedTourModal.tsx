@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Compass,
   ArrowRight,
@@ -87,28 +87,81 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({ isOpen, onClos
 
   const step = TOUR_STEPS[currentStepIndex];
 
-  // Update target spotlight bounding box and scroll into view
-  const updateSpotlight = useCallback(() => {
-    if (!isOpen) return;
-    const el = document.getElementById(step.targetId);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      // Short delay to allow smooth scroll to finish before calculating final rect
-      const timeout = setTimeout(() => {
-        const rect = el.getBoundingClientRect();
-        setTargetRect(rect);
-      }, 350);
-      return () => clearTimeout(timeout);
-    } else {
-      setTargetRect(null);
-    }
-  }, [isOpen, step.targetId]);
-
+  // Precision tracking with requestAnimationFrame and continuous scroll/resize sync
   useEffect(() => {
-    updateSpotlight();
-    window.addEventListener('resize', updateSpotlight);
-    return () => window.removeEventListener('resize', updateSpotlight);
-  }, [updateSpotlight]);
+    if (!isOpen) {
+      setTargetRect(null);
+      return;
+    }
+
+    const el = document.getElementById(step.targetId);
+    if (!el) {
+      setTargetRect(null);
+      return;
+    }
+
+    // 1. Initial measurement
+    setTargetRect(el.getBoundingClientRect());
+
+    // 2. Computed smooth scroll to bring target into the optimal viewport window
+    if (step.targetId === 'tour-dock') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      const navOffset = 80; // top floating dock clearance
+      const cardReservedHeight = 240; // floating tour card clearance at bottom
+      const rect = el.getBoundingClientRect();
+      const currentScrollY = window.scrollY || window.pageYOffset;
+      const elementAbsoluteTop = currentScrollY + rect.top;
+      const viewportHeight = window.innerHeight;
+      const availableHeight = viewportHeight - navOffset - cardReservedHeight;
+
+      // Position element in upper-middle viewable area
+      const idealOffset = Math.max(16, (availableHeight - rect.height) / 2);
+      const targetScrollY = Math.max(0, elementAbsoluteTop - navOffset - idealOffset);
+
+      window.scrollTo({
+        top: targetScrollY,
+        behavior: 'smooth',
+      });
+    }
+
+    // 3. Continuous frame-by-frame tracking while smooth scrolling is active (up to 950ms)
+    let isTracking = true;
+    let rafId: number;
+    const startTime = performance.now();
+    const TRACK_DURATION = 950;
+
+    const track = (currentTime: number) => {
+      if (!isTracking) return;
+      const currentEl = document.getElementById(step.targetId);
+      if (currentEl) {
+        setTargetRect(currentEl.getBoundingClientRect());
+      }
+      if (currentTime - startTime < TRACK_DURATION) {
+        rafId = requestAnimationFrame(track);
+      }
+    };
+
+    rafId = requestAnimationFrame(track);
+
+    // 4. Synchronize with manual user scroll and window resizing
+    const onScrollOrResize = () => {
+      const currentEl = document.getElementById(step.targetId);
+      if (currentEl) {
+        setTargetRect(currentEl.getBoundingClientRect());
+      }
+    };
+
+    window.addEventListener('scroll', onScrollOrResize, { passive: true });
+    window.addEventListener('resize', onScrollOrResize, { passive: true });
+
+    return () => {
+      isTracking = false;
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('scroll', onScrollOrResize);
+      window.removeEventListener('resize', onScrollOrResize);
+    };
+  }, [isOpen, currentStepIndex, step.targetId]);
 
   // Keyboard navigation: ArrowLeft, ArrowRight, Escape
   useEffect(() => {
@@ -161,10 +214,10 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({ isOpen, onClos
         <div
           className="tour-spotlight-box"
           style={{
-            top: `${Math.max(0, targetRect.top - 8)}px`,
-            left: `${Math.max(0, targetRect.left - 8)}px`,
-            width: `${targetRect.width + 16}px`,
-            height: `${targetRect.height + 16}px`,
+            top: `${Math.round(targetRect.top - 8)}px`,
+            left: `${Math.round(targetRect.left - 8)}px`,
+            width: `${Math.round(targetRect.width + 16)}px`,
+            height: `${Math.round(targetRect.height + 16)}px`,
           }}
         />
       )}

@@ -392,6 +392,9 @@ export function App() {
         {/* Key Vitals Telemetry */}
         <SummaryCards summary={summary} debtPayoff={debtPayoff} period={period} />
 
+        {/* Cashflow Inflow & Outflow Mix */}
+        <IncomeExpensePanel plan={plan} period={period} onChange={setPlan} />
+
         {/* 50/30/20 Budget Health Audit */}
         <BudgetHealthWidget analysis={budgetRule} />
 
@@ -400,9 +403,6 @@ export function App() {
           <EmergencyStressTestWidget plan={plan} />
           <FireMilestoneTracker plan={plan} />
         </div>
-
-        {/* Cashflow Inflow & Outflow Mix */}
-        <IncomeExpensePanel plan={plan} period={period} onChange={setPlan} />
 
         {/* Forward Wealth Curve */}
         <ProjectionSection
