@@ -123,20 +123,27 @@ export function App() {
     localStorage.setItem('psfi_theme', theme);
   }, [theme]);
 
-  // Click outside to close tools dropdown
+  // Click outside or press Escape to close tools dropdown
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
       if (toolsDropdownRef.current && !toolsDropdownRef.current.contains(e.target as Node)) {
         setToolsMenuOpen(false);
       }
     };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setToolsMenuOpen(false);
+      }
+    };
     if (toolsMenuOpen) {
       document.addEventListener('mousedown', handleOutsideClick);
       document.addEventListener('touchstart', handleOutsideClick);
+      window.addEventListener('keydown', handleKeyDown);
     }
     return () => {
       document.removeEventListener('mousedown', handleOutsideClick);
       document.removeEventListener('touchstart', handleOutsideClick);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [toolsMenuOpen]);
 
@@ -400,7 +407,13 @@ export function App() {
             </button>
 
             {toolsMenuOpen && (
-              <div className="tools-dropdown-menu" role="menu">
+              <>
+                <div
+                  className="tools-dropdown-backdrop"
+                  onClick={() => setToolsMenuOpen(false)}
+                  aria-hidden="true"
+                />
+                <div className="tools-dropdown-menu" role="menu">
                 <div className="tools-mega-grid">
                   {/* COLUMN 1: ACTUARIAL ENGINES & STRESS-TESTS */}
                   <div className="tools-category-column">
@@ -487,9 +500,9 @@ export function App() {
                     >
                       <FileSpreadsheet size={13} className="text-emerald-400" />
                       <div>
-                        <span className="item-title flex items-center justify-between">
+                        <span className="item-title">
                           <span>Excel Camouflage</span>
-                          <span className="font-mono text-[9px] px-1 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">Alt+X</span>
+                          <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-800/80 shrink-0 ml-auto">Alt+X</span>
                         </span>
                         <span className="item-sub">Panic logistics spreadsheet disguise</span>
                       </div>
@@ -626,7 +639,8 @@ export function App() {
                   <span>🔒 Panic Disguise: <strong>Alt + X</strong></span>
                 </div>
               </div>
-            )}
+            </>
+          )}
           </div>
 
           {/* Quick Utility Icon Group */}

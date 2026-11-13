@@ -375,16 +375,20 @@ body {
 }
 
 .tools-dropdown-wrapper {
-  position: relative;
+  position: static;
   flex-shrink: 0;
+}
+
+.tools-dropdown-backdrop {
+  display: none;
 }
 
 .tools-dropdown-menu {
   position: absolute;
   top: calc(100% + 8px);
-  right: 0;
-  width: 760px;
-  max-width: min(780px, calc(100vw - 24px));
+  right: 14px;
+  width: 740px;
+  max-width: calc(100% - 28px);
   box-sizing: border-box;
   background: rgba(14, 17, 24, 0.97);
   backdrop-filter: blur(28px);
@@ -406,15 +410,46 @@ body {
   gap: 12px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .tools-dropdown-menu {
-    width: min(340px, calc(100vw - 20px));
-    max-height: 80vh;
+    width: min(600px, calc(100% - 24px));
+    right: 12px;
+  }
+  .tools-mega-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .tools-dropdown-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 999;
+  }
+  .tools-dropdown-menu {
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-width: calc(100% - 16px);
+    max-height: calc(85vh - 60px);
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px;
+    z-index: 1000;
   }
   .tools-mega-grid {
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: 12px;
+  }
+  .tools-mega-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
   }
 }
 
@@ -467,12 +502,23 @@ body {
   flex-shrink: 0;
 }
 
+.tools-menu-item div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
 .tools-menu-item .item-title {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   font-size: 11.5px;
   font-weight: 600;
   color: var(--ink-primary);
   line-height: 1.3;
+  width: 100%;
 }
 
 .tools-menu-item .item-sub {
@@ -1802,6 +1848,18 @@ body {
 }
 .layout-mobile .milestones-grid {
   grid-template-columns: 1fr;
+}
+.layout-mobile .tools-dropdown-menu {
+  left: 8px !important;
+  right: 8px !important;
+  width: auto !important;
+  max-width: calc(100% - 16px) !important;
+  max-height: calc(85vh - 60px) !important;
+  overflow-y: auto !important;
+}
+.layout-mobile .tools-mega-grid {
+  grid-template-columns: 1fr !important;
+  gap: 12px !important;
 }
 
 .layout-desktop .main-stack {
