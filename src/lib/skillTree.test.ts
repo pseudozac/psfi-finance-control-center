@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateSkillTree } from './skillTree';
+import { calculateSkillTree, generateCurvedPath } from './skillTree';
 import { calculateSummary, DEFAULT_PLAN } from './finance';
 import type { FinancePlan } from '../types/finance';
 
@@ -111,5 +111,11 @@ describe('Sovereign Skill Tree Actuarial Engine', () => {
       expect(node.suggestedAction).toBeDefined();
       expect(node.suggestedAction?.field).toBeDefined();
     });
+  });
+
+  it('generates smooth cubic Bezier conduit paths between node coordinates', () => {
+    const path = generateCurvedPath(640, 680, 390, 570);
+    expect(path).toMatch(/^M 640 680 C /);
+    expect(path).toContain('390 570');
   });
 });

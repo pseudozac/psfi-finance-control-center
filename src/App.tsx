@@ -406,200 +406,230 @@ export function App() {
 
             {toolsMenuOpen && (
               <div className="tools-dropdown-menu" role="menu">
-                <button
-                  type="button"
-                  className="tools-menu-item"
-                  onClick={() => { setShowStatementParser(true); setToolsMenuOpen(false); }}
-                >
-                  <FileText size={13} className="text-nebula" />
-                  <div>
-                    <span className="item-title">Ingest Statements</span>
-                    <span className="item-sub">CAS, Bank, Cards & Payslips (100% Private)</span>
+                <div className="tools-mega-grid">
+                  {/* COLUMN 1: ACTUARIAL ENGINES & STRESS-TESTS */}
+                  <div className="tools-category-column">
+                    <div className="tools-category-header text-nebula">
+                      <Sparkles size={11} className="text-nebula" />
+                      <span>Actuarial & Simulations</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="tools-menu-item"
+                      onClick={() => { setShowStatementParser(true); setToolsMenuOpen(false); }}
+                    >
+                      <FileText size={13} className="text-nebula" />
+                      <div>
+                        <span className="item-title">Ingest Statements</span>
+                        <span className="item-sub">CAS, Bank, Cards & Payslips</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="tools-menu-item"
+                      onClick={() => { setShowSkillTree(true); setToolsMenuOpen(false); }}
+                    >
+                      <Crown size={13} className="text-solstice" />
+                      <div>
+                        <span className="item-title">Sovereign Skill Tree</span>
+                        <span className="item-sub">RPG financial independence constellation</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="tools-menu-item"
+                      onClick={() => { setShowMonteCarlo(true); setToolsMenuOpen(false); }}
+                    >
+                      <Activity size={13} className="text-cyan-400" />
+                      <div>
+                        <span className="item-title">Reverse Monte Carlo</span>
+                        <span className="item-sub">10,000 black swan simulations</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="tools-menu-item"
+                      onClick={() => { setShowSandbox(true); setToolsMenuOpen(false); }}
+                    >
+                      <Sparkles size={13} className="text-quasar" />
+                      <div>
+                        <span className="item-title">What-If Sandbox</span>
+                        <span className="item-sub">Simulate raises, bonuses & inflation</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="tools-menu-item"
+                      onClick={() => {
+                        if (baseline) clearBaseline(); else pinBaseline();
+                        setToolsMenuOpen(false);
+                      }}
+                    >
+                      {baseline ? <PinOff size={13} className="text-solstice" /> : <Pin size={13} />}
+                      <div>
+                        <span className="item-title">{baseline ? 'Clear Baseline' : 'Pin Baseline'}</span>
+                        <span className="item-sub">{baseline ? 'Remove delta snapshot' : 'Snapshot figures for variance'}</span>
+                      </div>
+                    </button>
                   </div>
-                </button>
 
-                <button
-                  type="button"
-                  className="tools-menu-item"
-                  onClick={() => { setShowSkillTree(true); setToolsMenuOpen(false); }}
-                >
-                  <Crown size={13} className="text-solstice" />
-                  <div>
-                    <span className="item-title">Sovereign Skill Tree</span>
-                    <span className="item-sub">Gamified RPG financial independence milestones</span>
+                  {/* COLUMN 2: PRIVACY & SOVEREIGN CLOAKING */}
+                  <div className="tools-category-column">
+                    <div className="tools-category-header text-corona">
+                      <ShieldCheck size={11} className="text-corona" />
+                      <span>Privacy & Sovereign Defense</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="tools-menu-item"
+                      onClick={() => { setShowCamouflage(true); setToolsMenuOpen(false); }}
+                    >
+                      <FileSpreadsheet size={13} className="text-emerald-400" />
+                      <div>
+                        <span className="item-title flex items-center justify-between">
+                          <span>Excel Camouflage</span>
+                          <span className="font-mono text-[9px] px-1 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">Esc Esc</span>
+                        </span>
+                        <span className="item-sub">Panic logistics spreadsheet disguise</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="tools-menu-item"
+                      onClick={() => { setShowSteganography(true); setToolsMenuOpen(false); }}
+                    >
+                      <ImageIcon size={13} className="text-purple-400" />
+                      <div>
+                        <span className="item-title">Steganographic PNG</span>
+                        <span className="item-sub">Hide encrypted vault inside wallpaper</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      id="tour-vault-sync"
+                      className="tools-menu-item"
+                      onClick={() => { setShowQRModal(true); setToolsMenuOpen(false); }}
+                    >
+                      <QrCode size={13} className="text-quasar" />
+                      <div>
+                        <span className="item-title">Cross-Device QR Beam</span>
+                        <span className="item-sub">P2P zero-cloud offline sync</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="tools-menu-item"
+                      onClick={() => { setShowShareModal(true); setToolsMenuOpen(false); }}
+                    >
+                      <Share2 size={13} className="text-pulsar" />
+                      <div>
+                        <span className="item-title">Share Health Card</span>
+                        <span className="item-sub">Anonymized 16:9 / 1:1 scorecard</span>
+                      </div>
+                    </button>
                   </div>
-                </button>
 
-                <button
-                  type="button"
-                  className="tools-menu-item"
-                  onClick={() => { setShowMonteCarlo(true); setToolsMenuOpen(false); }}
-                >
-                  <Activity size={13} className="text-cyan-400" />
-                  <div>
-                    <span className="item-title">Reverse Monte Carlo FIRE</span>
-                    <span className="item-sub">10,000 simulations testing Indian market black swans</span>
+                  {/* COLUMN 3: DATA LEDGERS & ARCHIVES */}
+                  <div className="tools-category-column">
+                    <div className="tools-category-header text-solstice">
+                      <Download size={11} className="text-solstice" />
+                      <span>Ledgers & System</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="tools-menu-item"
+                      onClick={() => { fileInputRef.current?.click(); setToolsMenuOpen(false); }}
+                    >
+                      <Upload size={13} className="text-muted" />
+                      <div>
+                        <span className="item-title">Import JSON</span>
+                        <span className="item-sub">Load vault backup file</span>
+                      </div>
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="application/json,.json"
+                      onChange={handleFileImport}
+                      hidden
+                    />
+
+                    <button
+                      type="button"
+                      className="tools-menu-item"
+                      onClick={() => { exportJSON(); setToolsMenuOpen(false); }}
+                    >
+                      <Download size={13} className="text-muted" />
+                      <div>
+                        <span className="item-title">Export JSON</span>
+                        <span className="item-sub">Download offline vault state</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="tools-menu-item"
+                      onClick={() => { exportCSV(horizonMonths); setToolsMenuOpen(false); }}
+                    >
+                      <FileSpreadsheet size={13} className="text-muted" />
+                      <div>
+                        <span className="item-title">Export CSV</span>
+                        <span className="item-sub">Spreadsheet projections matrix</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="tools-menu-item"
+                      onClick={() => { setToolsMenuOpen(false); window.print(); }}
+                    >
+                      <Printer size={13} className="text-muted" />
+                      <div>
+                        <span className="item-title">Print Executive PDF</span>
+                        <span className="item-sub">1-page formatted report</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="tools-menu-item"
+                      onClick={() => { launchDemoVault(); setToolsMenuOpen(false); }}
+                    >
+                      <Sparkles size={13} className="text-solstice" />
+                      <div>
+                        <span className="item-title">Load Demo Vault</span>
+                        <span className="item-sub">Seeded Tech Lead portfolio</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="tools-menu-item item-danger"
+                      onClick={() => { resetToDefaults(); setToolsMenuOpen(false); }}
+                    >
+                      <RotateCcw size={13} />
+                      <div>
+                        <span className="item-title">Reset to Defaults</span>
+                        <span className="item-sub">Clear plan to zeroed slate</span>
+                      </div>
+                    </button>
                   </div>
-                </button>
+                </div>
 
-                <button
-                  type="button"
-                  className="tools-menu-item"
-                  onClick={() => { setShowCamouflage(true); setToolsMenuOpen(false); }}
-                >
-                  <FileSpreadsheet size={13} className="text-emerald-400" />
-                  <div>
-                    <span className="item-title">Excel Camouflage</span>
-                    <span className="item-sub">Instant panic spreadsheet disguise [Esc Esc]</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className="tools-menu-item"
-                  onClick={() => { setShowSteganography(true); setToolsMenuOpen(false); }}
-                >
-                  <ImageIcon size={13} className="text-purple-400" />
-                  <div>
-                    <span className="item-title">Steganographic PNG Vault</span>
-                    <span className="item-sub">Hide encrypted vault inside wallpaper PNG pixels</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className="tools-menu-item"
-                  onClick={() => { setShowSandbox(true); setToolsMenuOpen(false); }}
-                >
-                  <Sparkles size={13} className="text-quasar" />
-                  <div>
-                    <span className="item-title">What-If Sandbox</span>
-                    <span className="item-sub">Simulate raises, bonuses & inflation</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className="tools-menu-item"
-                  onClick={() => {
-                    if (baseline) clearBaseline(); else pinBaseline();
-                    setToolsMenuOpen(false);
-                  }}
-                >
-                  {baseline ? <PinOff size={13} className="text-solstice" /> : <Pin size={13} />}
-                  <div>
-                    <span className="item-title">{baseline ? 'Clear Baseline' : 'Pin Baseline'}</span>
-                    <span className="item-sub">{baseline ? 'Remove comparison snapshot' : 'Snapshot current figures for deltas'}</span>
-                  </div>
-                </button>
-
-                <div className="tools-menu-divider" />
-
-                <button
-                  type="button"
-                  className="tools-menu-item"
-                  onClick={() => { fileInputRef.current?.click(); setToolsMenuOpen(false); }}
-                >
-                  <Upload size={13} className="text-muted" />
-                  <div>
-                    <span className="item-title">Import JSON</span>
-                    <span className="item-sub">Load vault backup file</span>
-                  </div>
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="application/json,.json"
-                  onChange={handleFileImport}
-                  hidden
-                />
-
-                <button
-                  type="button"
-                  className="tools-menu-item"
-                  onClick={() => { exportJSON(); setToolsMenuOpen(false); }}
-                >
-                  <Download size={13} className="text-muted" />
-                  <div>
-                    <span className="item-title">Export JSON</span>
-                    <span className="item-sub">Download vault state</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className="tools-menu-item"
-                  onClick={() => { exportCSV(horizonMonths); setToolsMenuOpen(false); }}
-                >
-                  <FileSpreadsheet size={13} className="text-muted" />
-                  <div>
-                    <span className="item-title">Export CSV</span>
-                    <span className="item-sub">Spreadsheet projections matrix</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className="tools-menu-item"
-                  onClick={() => { setToolsMenuOpen(false); window.print(); }}
-                >
-                  <Printer size={13} className="text-muted" />
-                  <div>
-                    <span className="item-title">Print Executive Statement</span>
-                    <span className="item-sub">1-page formatted PDF report</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className="tools-menu-item"
-                  onClick={() => { setShowShareModal(true); setToolsMenuOpen(false); }}
-                >
-                  <Share2 size={13} className="text-pulsar" />
-                  <div>
-                    <span className="item-title">Share Health Card</span>
-                    <span className="item-sub">Generate anonymized social scorecard</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  id="tour-vault-sync"
-                  className="tools-menu-item"
-                  onClick={() => { setShowQRModal(true); setToolsMenuOpen(false); }}
-                >
-                  <QrCode size={13} className="text-quasar" />
-                  <div>
-                    <span className="item-title">Cross-Device QR Beam</span>
-                    <span className="item-sub">P2P scan & sync without cloud</span>
-                  </div>
-                </button>
-
-                <div className="tools-menu-divider" />
-
-                <button
-                  type="button"
-                  className="tools-menu-item"
-                  onClick={() => { launchDemoVault(); setToolsMenuOpen(false); }}
-                >
-                  <Sparkles size={13} className="text-solstice" />
-                  <div>
-                    <span className="item-title">Load Demo Vault</span>
-                    <span className="item-sub">Seeded Indian tech profile</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className="tools-menu-item item-danger"
-                  onClick={() => { resetToDefaults(); setToolsMenuOpen(false); }}
-                >
-                  <RotateCcw size={13} />
-                  <div>
-                    <span className="item-title">Reset to Defaults</span>
-                    <span className="item-sub">Clear plan to zeroed slate</span>
-                  </div>
-                </button>
+                <div className="tools-mega-footer">
+                  <span>⚡ Quick dispatch: Press <strong>⌘K</strong> or <strong>/</strong> anywhere</span>
+                  <span>🔒 Panic Disguise: <strong>Double-tap Esc</strong></span>
+                </div>
               </div>
             )}
           </div>
