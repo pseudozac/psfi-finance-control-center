@@ -607,13 +607,13 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                 {/* What-If Simulation Trigger */}
                 {activeNode.suggestedAction && (
                   <div className="p-2.5 rounded-lg bg-quasar/10 border border-quasar/30 mt-1">
-                    <div className="flex-between items-center mb-1.5">
-                      <span className="text-[11px] font-mono font-semibold text-quasar flex-align gap-1">
-                        <Sliders size={12} /> What-If Balance Sheet Lever
+                    <div className="flex-between items-center mb-1.5 flex-wrap gap-1">
+                      <span className="text-[11px] font-mono font-semibold text-quasar flex-align gap-1.5">
+                        <Sliders size={12} className="shrink-0" /> Balance Sheet Lever
                       </span>
                       {activeNode.status === 'mastered' ? (
-                        <span className="text-[10px] font-mono text-nebula flex-align gap-0.5">
-                          <CheckCircle2 size={10} /> Already Met
+                        <span className="text-[10px] font-mono text-nebula flex-align gap-0.5 shrink-0">
+                          <CheckCircle2 size={10} /> Met
                         </span>
                       ) : null}
                     </div>
@@ -629,15 +629,17 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                       className="w-full py-1.5 px-2.5 rounded-md bg-quasar/20 hover:bg-quasar/30 border border-quasar/40 text-quasar font-mono text-xs font-semibold flex-center gap-1.5 transition-colors"
                       onClick={() => handleSimulateUnlock(activeNode)}
                     >
-                      <Zap size={12} /> Simulate Unlocking This Milestone
+                      <Zap size={12} /> Simulate Unlocking Milestone
                     </button>
                   </div>
                 )}
               </div>
 
-              <div className="drawer-footer pt-2.5 border-t border-subtle flex-between items-center text-xs font-mono text-muted">
+              <div className="drawer-footer pt-2.5 border-t border-subtle flex-between items-center text-xs font-mono text-muted flex-wrap gap-1">
                 <span>Status: <strong className="text-primary uppercase">{activeNode.status}</strong></span>
-                <span>Next Rank: <strong className="text-quasar">{treeState.nextRank}</strong></span>
+                <span className="truncate max-w-[170px]" title={treeState.nextRank}>
+                  Next: <strong className="text-quasar">{treeState.nextRank}</strong>
+                </span>
               </div>
             </div>
           </div>

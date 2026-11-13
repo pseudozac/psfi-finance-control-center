@@ -5344,7 +5344,7 @@ body {
    Sovereign Wealth RPG Skill Tree Modal
    ========================================================================== */
 .skill-tree-modal {
-  max-width: 980px;
+  max-width: 1040px;
   width: 95vw;
   max-height: 92vh;
   display: flex;
@@ -5374,7 +5374,7 @@ body {
 
 .skill-tree-layout-grid {
   display: grid;
-  grid-template-columns: 1.25fr 0.75fr;
+  grid-template-columns: 1.12fr 0.88fr;
   gap: 16px;
   overflow: hidden;
   flex: 1;
