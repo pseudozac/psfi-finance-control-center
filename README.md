@@ -4,143 +4,173 @@
 [![React](https://img.shields.io/badge/React-18.3-61dafb.svg?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178c6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.0-646cff.svg?logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Tests](https://img.shields.io/badge/Vitest-100%25%20Passed-5ec491.svg?logo=vitest&logoColor=white)](https://vitest.dev/)
-[![Offline PWA](https://img.shields.io/badge/PWA-100%25%20Offline%20Ready-f78d2c.svg)](https://pseudo-fi.vercel.app/)
-[![Privacy](https://img.shields.io/badge/Privacy-100%25%20Client--Side%20Enclave-bf9ff1.svg)](#security--privacy-architecture)
+[![Tests](https://img.shields.io/badge/Vitest-53%2F53%20Passed-5ec491.svg?logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Offline PWA](https://img.shields.io/badge/PWA-v5.8%20Offline%20Ready-f78d2c.svg)](https://pseudo-fi.vercel.app/)
+[![Privacy](https://img.shields.io/badge/Privacy-100%25%20Client--Side%20Enclave-bf9ff1.svg)](#-security--privacy-architecture)
 
 **Live Production Deployment:** [https://pseudo-fi.vercel.app/](https://pseudo-fi.vercel.app/)
 
-**PsFi** is an offline-first, client-side personal finance control center engineered specifically for the Indian financial ecosystem (INR ₹). Built with a bespoke tactile editorial aesthetic, PsFi empowers individuals to model monthly cashflows, stress-test emergency runways, track FIRE milestones, project step-up SIP wealth curves, and compare FY 2024–25 tax regimes—with **100% client-side privacy** and zero cloud leakage.
+**PsFi** is an offline-first, client-side personal finance control center engineered specifically for the Indian financial ecosystem (INR ₹). Built with a bespoke tactile editorial aesthetic, PsFi empowers individuals to model monthly cashflows, stress-test emergency runways, track FIRE milestones, project step-up SIP wealth curves, audit Indian tax regimes, and advance through gamified financial independence progression—with **100% client-side privacy** and zero cloud data leakage.
 
 ---
 
-## ⚡ Quick Links & Navigation
+## ⚡ Navigation
 
 - [Live Application](https://pseudo-fi.vercel.app/)
-- [Key Features & Capabilities](#key-features--capabilities)
-- [Security & Privacy Architecture](#security--privacy-architecture)
-- [Tactile Editorial Design System](#tactile-editorial-design-system)
-- [Mobile Browser & Density Views](#mobile-browser--density-views)
-- [Interactive Demo Mode](#interactive-demo-mode)
-- [Local Development & Testing](#local-development--testing)
-- [License](#license)
+- [Key Features & Engines](#-key-features--engines)
+  - [1. Sovereign Wealth RPG Constellation (Macro Progression)](#1-sovereign-wealth-rpg-constellation-macro-progression)
+  - [2. Local Impulse Shield & Dynamic Daily Burn Pocket (Micro Armor)](#2-local-impulse-shield--dynamic-daily-burn-pocket-micro-armor)
+  - [3. Multi-Mode Corporate Camouflage (Alt+X Panic Disguise)](#3-multi-mode-corporate-camouflage-altx-panic-disguise)
+  - [4. Private Statement Ingestion Engine (CAS, Bank, Cards, Payslips)](#4-private-statement-ingestion-engine)
+  - [5. Tactile Cockpit & Multi-Vault Workspace](#5-tactile-cockpit--multi-vault-workspace)
+  - [6. Wealth Terminal & Market Valuation Engine](#6-wealth-terminal--market-valuation-engine)
+  - [7. Emergency Runway 3-Tier Survival Stress Test](#7-emergency-runway-3-tier-survival-stress-test)
+  - [8. FIRE & Wealth Milestone Countdown Engine](#8-fire--wealth-milestone-countdown-engine)
+  - [9. Indian Income Tax Engine (FY 2024–25 Union Budget)](#9-indian-income-tax-engine-fy-202425-union-budget)
+  - [10. Cross-Device QR Beam & Steganographic PNG Encryption](#10-cross-device-qr-beam--steganographic-png-encryption)
+  - [11. Terminal Command Omnibar (⌘K / Ctrl+K / /)](#11-terminal-command-omnibar-k--ctrlk--)
+  - [12. Reverse Monte Carlo Black Swan Simulator & What-If Sandbox](#12-reverse-monte-carlo-black-swan-simulator--what-if-sandbox)
+  - [13. Interactive Holographic Guided Tour](#13-interactive-holographic-guided-tour)
+- [Security & Privacy Architecture](#-security--privacy-architecture)
+- [Tactile Editorial Design System](#-tactile-editorial-design-system)
+- [Responsive Multi-Device Engineering](#-responsive-multi-device-engineering)
+- [Local Development & Testing](#-local-development--testing)
+- [Architecture & Changelog](#-documentation-links)
+- [License](#-license)
 
 ---
 
-## 🚀 Key Features & Capabilities
+## 🚀 Key Features & Engines
 
-### 1. Multi-Vault Architecture & Zero-Slate Initializer
-- **True Clean Slate (₹0):** Every new Primary Vault initializes cleanly with zeroes, allowing you to build your financial plan from the ground up without dummy numbers polluting your ledger.
-- **Multiple Named Vaults:** Manage isolated ledgers for Personal Finances, Freelance Invoicing, Emergency Funds, or Side Ventures.
-- **Persistent Local Storage:** All accounts, baselines, and custom expense lines are persisted automatically in browser `localStorage`.
-- **Active Vault Dock Pill:** Fast 1-click switching and deletion between vaults with color-coded avatar tokens.
+### 1. Sovereign Wealth RPG Constellation (Macro Progression)
+A gamified, actuarially-backed tech-tree progression modeled after high-fantasy star charts and skill trees:
+- **Three Strategic Wings:**
+  - **Defensive Citadel:** Debt elimination, 3-month liquidity core, term insurance shield, comprehensive health armor, and 6-month iron fortress.
+  - **Compounding Velocity:** 50/30/20 budget equilibrium, 20% compounding engine, 10% step-up escalation, tax regime arbitrage, and direct mutual fund optimization.
+  - **Sovereign Autonomy:** Coast FIRE liberation, lean independence, full standard FIRE, Fat FIRE prosperity, and generational dynasty.
+- **Dual-Pane Astrolabe Layout:**
+  - **Left Docked Thaumaturgy Dossier (330px):** Inspects selected node requirements, mathematical formulas, Indian actuarial laws, and 1-click sandbox simulation.
+  - **Celestial Star-Chart Canvas (1440 × 820):** 100% unobstructed SVG starfield featuring dynamic branch glow, constellation lines, mastery orbs, and theater mode toggle.
+- **Actuarial Matrix & Character Perks:** Switch between visual star charts and luxury dark obsidian matrix cards (`#101423`) with live progress percentages.
 
-### 2. FIRE & Wealth Milestone Countdown Engine
-- **Milestone Countdown Cards:** Live progress and ETA countdowns for classic Indian wealth markers:
-  - ₹10 Lakh (First Serious Milestone)
-  - ₹25 Lakh (Quarter-Crore Growth Anchor)
-  - ₹50 Lakh (Half-Crore Stability Anchor)
-  - ₹1.0 Crore (Crorepati Milestone)
-  - ₹2.5 Crore (Quarter-Decacrore Independence)
-- **25× Annual Expense FIRE Target:** Calculates your exact Financial Independence number based on current living expenses, displaying current coverage % and remaining capital deficit.
+### 2. Local Impulse Shield & Dynamic Daily Burn Pocket (Micro Armor)
+Contextual spending protection designed to prevent discretionary purchases from disrupting disciplined monthly SIPs:
+- **Dynamic Safe Daily Allowance:** Automatically recalibrates remaining daily burn allowance based on committed monthly overhead and remaining days.
+- **Emergency Impulse Armor:** Live simulation of discretionary spending penalties showing immediate lost compounding opportunity cost over 10–25 years.
+- **Weekend Shock Absorber:** Dedicated smoothing buffers to cushion weekend dining and entertainment spikes without depleting savings.
 
-### 3. Emergency Runway 3-Tier Survival Stress Test
-- **Tier 1 (Barebones Survival):** Essential housing and utilities only. Calculates maximum survival runway if catastrophic job loss occurs.
+### 3. Multi-Mode Corporate Camouflage (Alt+X Panic Disguise)
+Instant full-screen operational disguise system for using personal finance tools in corporate or public environments:
+- **Dedicated Shortcut:** Instant toggle via `Alt+X` or the top Tools menu.
+- **4 Authentic Professional Themes:**
+  1. **Microsoft Excel 365 Light:** Classic Office green header, authentic ribbon tabs, formula bar (`=SUMIFS(...)`), active cell outlines, sheet tabs, and ready status bar.
+  2. **Microsoft Excel 365 Dark Office:** Luxury dark gray/black corporate UI matching Office 365 Dark Mode.
+  3. **Google Sheets Web UI:** Authentic material design tabs, toolbar controls, formula input, and green share button.
+  4. **AWS CloudWatch APM Dashboard:** Dark DevOps infrastructure monitor displaying synthetic latency histograms, CPU utilization curves, and fleet yield metrics.
+- **Escape Triggers:** Press `Alt+X`, `Escape`, or click the top-right exit pill to immediately return to the cockpit.
+
+### 4. Private Statement Ingestion Engine
+100% client-side, zero-cloud financial document parser powered by in-memory `pdfjs-dist`:
+- **Supported Statements:**
+  - **CAMS & KFintech Mutual Fund CAS:** Extracts ISINs, folio numbers, units, NAV, scheme types, and current valuation.
+  - **Bank Account Statements (HDFC, ICICI, SBI, Axis):** Parses transaction debits, credits, recurring EMI deductions, and closing balances.
+  - **Credit Card Statements:** Analyzes minimum amount due, finance charges, total spends, and billing cycles.
+  - **Salary Payslips:** Deconstructs Basic Salary, HRA, Special Allowance, Provident Fund (EPF), and Professional Tax.
+- **Privacy Enclave:** Files are processed purely in ephemeral browser RAM. No bytes are sent over the network or stored in external databases.
+
+### 5. Tactile Cockpit & Multi-Vault Workspace
+- **Symmetrically Balanced Cockpit Grid:** Left column anchors cashflow inputs, emergency stress-testing, and FIRE countdowns; right column hosts budget health audits, spending armor, and tax/debt panels.
+- **Full-Width Projection Section:** Dedicated 30-year compounding wealth curves, annual surplus breakdowns, and inflation-adjusted milestone visualizers spanning 100% container width.
+- **Multi-Vault Architecture:** Isolate ledgers for Personal Finances, Freelance Invoicing, Family Pools, or Venture Planning with color-coded vault tokens.
+- **True Clean Slate (₹0):** Start fresh with zero dummy figures or load the pre-calibrated Tech Lead demo profile with one click.
+
+### 6. Wealth Terminal & Market Valuation Engine
+- Seamlessly toggle between the **Tactile Control Center** and the **Wealth Terminal** via the floating dock switcher.
+- Real-time P&L monitors, asset allocation donut charts, equity-to-debt ratios, and tactical rebalancing suggestions.
+
+### 7. Emergency Runway 3-Tier Survival Stress Test
+- **Tier 1 (Barebones Survival):** Essential housing and utilities only. Calculates maximum survival runway if catastrophic income loss occurs.
 - **Tier 2 (Standard Lean Living):** Housing, groceries, utilities, and transport.
 - **Tier 3 (Full Lifestyle Runway):** Uncompromised current lifestyle including discretionary wants and subscriptions.
 - **Visual Runway Gauge:** Color-coded status badges (Danger `<3mo`, Caution `3-6mo`, Healthy `6-12mo`, Fortress `>12mo`).
 
-### 4. "What-If" Crisis & Opportunity Sandbox
-- **Modal Scenario Simulator:** Safely test hypothetical real-world shocks without altering your permanent vault:
-  - Career advancement: +10% to +50% salary hike.
-  - Rent / Relocation inflation: +10% to +40% housing spike.
-  - New Loan EMI: ₹5,000 to ₹35,000 monthly debt commitment.
-  - Market CAGR returns: 6% conservative debt to 16% aggressive equity.
-- **Real-Time Delta Telemetry:** Instant comparison cards showing monthly cashflow delta, annual surplus delta, and projected wealth shifts.
-- **1-Click Commit:** Apply simulated scenario directly into your active vault or discard with one click.
+### 8. FIRE & Wealth Milestone Countdown Engine
+- Live progress and compounding timeline projections for major Indian Rupee milestones:
+  - ₹10 Lakh (First Serious Milestone)
+  - ₹25 Lakh (Quarter-Crore Growth Anchor)
+  - ₹50 Lakh (Half-Crore Stability Anchor)
+  - ₹1.0 Crore (The Landmark Crorepati Marker)
+  - ₹2.5 Crore (Quarter-Decacrore Independence)
+- **25× Annual Expense Target:** Computes your personalized Financial Independence number, tracking current coverage percentage and capital shortfall.
 
-### 5. Indian Income Tax Engine (FY 2024–25 Union Budget)
+### 9. Indian Income Tax Engine (FY 2024–25 Union Budget)
 - **Side-by-Side Old vs. New Regime Comparison:**
-  - Automated calculation of Old vs New Tax Regimes for FY 2024–25.
   - Standard deduction applied (₹75,000 under New Regime, ₹50,000 under Old Regime).
-  - Section 87A tax rebate engine (Zero tax up to ₹7.75 Lakhs taxable income under New Regime).
-  - **Section 80CCD(1B) NPS Lever:** Dedicated tax deduction slider up to ₹50,000 exclusively under the Old Regime.
-  - **House Rent Allowance (HRA) Exemption Calculator:** Computes minimum of:
-    1. Actual HRA received.
-    2. 50% of Basic Salary (Metro cities: Mumbai, Delhi, Kolkata, Chennai) or 40% (Non-Metro).
-    3. Rent paid in excess of 10% of Basic Salary.
+  - Section 87A rebate engine (Zero tax up to ₹7.75 Lakhs under New Regime).
+  - Section 80CCD(1B) NPS dedicated deduction up to ₹50,000 under Old Regime.
+  - Section 80C (₹1.5L) and Section 80D (Health Insurance) tax levers.
+  - **HRA Exemption Calculator:** Computes statutory minimums across Metro (50%) and Non-Metro (40%) cities.
 
-### 6. Dynamic Outflow Custom Categories
-- Add arbitrary custom outflow categories (e.g., "Parent Support", "Pet Care", "Gym & Fitness", "SaaS Subscriptions") with custom names and rupee allocations.
-- Real-time updates to 50/30/20 budget allocations and expense breakdown charts.
+### 10. Cross-Device QR Beam & Steganographic PNG Encryption
+- **Cross-Device QR Beam:** Near-field peer-to-peer visual data synchronization. Generates high-density animated QR codes to transfer encrypted vaults directly between laptops and mobile phones without server mediation.
+- **Steganographic PNG Disguise:** Hides your AES-256 encrypted vault backup inside the pixel canvas of a standard desktop wallpaper image using LSB (Least Significant Bit) steganography.
 
-### 7. Executive 1-Page Printable Statement (`@media print`)
-- Formatted specifically for A4 / Letter paper.
-- Strips floating docks, interactive sliders, and background patterns.
-- Formats clean monochrome financial summary suitable for bank loan applications, visa financial proof, or personal archiving.
-- Accessible via the **Print** button in the dock or `Ctrl+P` / `Cmd+P`.
+### 11. Terminal Command Omnibar (`⌘K` / `Ctrl+K` / `/`)
+- Global keyboard-driven command palette for lightning-fast navigation.
+- Jump between vaults, toggle privacy masks, trigger simulations, parse math expressions (`25000 * 12 * 1.12`), and switch archetypes without touching the mouse.
 
-### 8. Privacy Masking Mode
-- Click the **Eye icon** in the dock to frosted-blur all rupee figures, salaries, and net worth values.
-- Enables safe usage in public cafes, co-working spaces, and open-plan offices without revealing sensitive numbers to passersby.
+### 12. Reverse Monte Carlo Black Swan Simulator & What-If Sandbox
+- **Reverse Monte Carlo:** Runs 1,000 to 10,000 stochastic market drawdowns, inflation spikes, and Sequence of Returns Risk (SRR) audits to calculate the mathematical probability of portfolio survival.
+- **What-If Sandbox:** Non-destructive testing environment to preview salary increments (+10% to +50%), relocation rent spikes, and new loan EMIs with live delta variance snapshots.
+
+### 13. Interactive Holographic Guided Tour
+- 8-step interactive tour featuring precision spotlight cutouts, holographic corner brackets, contextual audio cues, step jumping (keys `1`–`8`), sound mute toggle (`M`), and a virtual instructor cursor.
 
 ---
 
 ## 🔒 Security & Privacy Architecture
 
-PsFi was intentionally engineered to eliminate the security and privacy risks common to modern financial applications:
+PsFi operates on a strict **Zero-Server, Client-Side Enclave** privacy paradigm:
 
 | Threat Vector | Cloud Banking Apps / Mint / YNAB | PsFi Architecture |
 | :--- | :--- | :--- |
-| **Server-Side Data Breaches** | High risk (stored in remote SQL/NoSQL DBs) | **Zero Risk:** No server database exists. |
-| **Telemetry / Spyware** | Mixpanel, Google Analytics, Datadog tracking | **Zero Telemetry:** Zero analytics or tracker scripts. |
-| **Credential Phishing** | Net banking password scraping | **Zero Credentials:** PsFi never asks for bank credentials or OTPs. |
-| **Network Sniffing** | REST/GraphQL APIs over the wire | **Zero API Transmission:** All data remains inside your browser. |
-| **Offline Vulnerability** | Fails when offline or network drops | **100% Offline Capable:** Runs without internet via PWA Service Worker. |
+| **Server-Side Data Breaches** | High risk (stored in remote SQL/NoSQL databases) | **Zero Risk:** No server database exists. |
+| **Telemetry & Spyware** | Mixpanel, Google Analytics, Datadog tracking | **Zero Telemetry:** Zero tracking scripts or analytics beacons. |
+| **Credential Phishing** | Net banking login & password scraping | **Zero Credentials:** Never asks for credentials, OTPs, or API keys. |
+| **Network Interception** | REST/GraphQL payloads in transit | **Zero Network Data:** Zero financial data leaves the local device. |
+| **Offline Reliability** | Fails when offline or network drops | **100% Offline Capable:** Runs anywhere via PWA Service Worker. |
 
-> **Privacy Guarantee:** Your financial data is saved solely in your local browser storage (`window.localStorage`). It is never uploaded, transmitted, or synchronized to any external server or third-party service.
+> **Privacy Guarantee:** All financial records, vault data, and imported statements are stored exclusively inside your browser's local sandbox (`window.localStorage`). Data is never uploaded, transmitted, or synchronized to external clouds.
 
 ---
 
 ## 🎨 Tactile Editorial Design System
 
-PsFi implements a bespoke **Tactile Editorial Design System**, featuring:
-- **Dark Void Canvas:** `#0d0e12` deep slate canvas with blueprint hairline grid overlay.
+PsFi implements a bespoke **Tactile Editorial Design System**:
+- **Dark Void Canvas:** `#080b15` deep obsidian canvas with hairline grid blueprint styling.
 - **Cosmic Chroma Hierarchy:**
-  - `Quasar` (`#bf9ff1` lilac) for equity, savings, and investments.
-  - `Nebula` (`#5ec491` mint green) for cash inflow, surplus, and positive deltas.
-  - `Solstice` (`#f78d2c` golden amber) for essential needs and warnings.
-  - `Corona` (`#f28bad` coral pink) for lifestyle wants and tax optimizations.
-  - `Pulsar` (`#7193ed` sky periwinkle) for debt and tax metrics.
-- **Micro-Interactions & Playful Wordmarks:** Staggered letter bouncing on `psfi` logo and animated background money tokens.
-- **Light Studio Mode:** Built-in clean light theme toggle with full high-contrast accessibility.
+  - `Quasar` (`#bf9ff1` lilac): Compounding investments, step-up SIPs, and omnibar accents.
+  - `Nebula` (`#5ec491` mint green): Positive cash inflows, surplus metrics, and active states.
+  - `Solstice` (`#f78d2c` golden amber): Essential needs, milestones, and warning thresholds.
+  - `Corona` (`#e56b6f` coral red): Discretionary spending, debt balances, and emergency alerts.
+  - `Pulsar` (`#7193ed` periwinkle): Tax optimizations and system telemetry.
+- **Typography:** Premium dual-typeface pairing of `Parkinsans` and `Plus Jakarta Sans` for editorial clarity, backed by `JetBrains Mono` for financial figures and tabular data.
 
 ---
 
-## 📱 Mobile Browser & Density Views
+## 📱 Responsive Multi-Device Engineering
 
-PsFi is fully responsive across all screen sizes (from 320px mobile viewports to 4K ultrawide monitors):
-
-- **Mobile Touch Density:** Compact single-column card stacking, thumb-friendly slider controls, zero horizontal wiggling or body overflow.
-- **Desktop Power View:** Multi-column comparison grids and dense telemetry capsules.
-- **Interactive View Density Toggle:** Tap the **Smartphone / Monitor** icon in the dock to switch between Mobile Touch View and Desktop Power View at any time on any device.
-- **Collapsible Action Strip:** On mobile screens, secondary tools (Import, Export, Print, Sandbox, Reset) are tucked into an elegant slide-out drawer, keeping the navbar clean and compact (~48px height).
-
----
-
-## ⚡ Interactive Demo Mode
-
-Want to test PsFi without typing numbers from scratch?
-1. Open the [PsFi Gateway](https://pseudo-fi.vercel.app/).
-2. Click **"Launch Interactive Demo Vault"** in the top banner.
-3. You will immediately be dropped into a pre-configured, realistic profile of an Indian tech professional (₹1.25L monthly take-home salary, ₹25k mutual fund SIP, ₹28k rent, ₹15L existing net worth, 80C/80D/NPS deductions).
-4. You can also load the demo anytime from inside the dashboard via the **"demo vault"** action button in the dock menu.
+PsFi is engineered for seamless cross-platform performance across all screen geometries:
+- **Desktop (1440px+)**: Dual-column cockpit with 3-column tools mega-menu and high-density telemetry.
+- **Tablet (768px–1024px)**: Fluid 2-column layout with smart-anchored menus and touch-optimized controls.
+- **Mobile (320px–768px)**: Centered 1-column responsive sheets with 8px edge margins, dimmed background backdrops, full touch targets (≥44px), and zero horizontal overflow.
+- **Density Toggle:** Tap the **Monitor / Smartphone** icon in the dock to switch between Desktop Power View and Mobile Touch View on any device.
 
 ---
 
 ## 🛠️ Local Development & Testing
 
-PsFi requires **Node.js 18+** and npm:
+PsFi requires **Node.js 18+** and **npm**:
 
 ```bash
 # 1. Clone the repository
@@ -150,18 +180,25 @@ cd psfi-finance-control-center
 # 2. Install dependencies
 npm install
 
-# 3. Run unit tests
+# 3. Run full Vitest test suite (53/53 tests across 8 suites)
 npm test
 
-# 4. Start local development server (with HMR)
+# 4. Start local development server with HMR
 npm run dev
 
-# 5. Build for production (TypeScript check + Vite bundle)
+# 5. Type-check and build production bundle
 npm run build
 
 # 6. Preview production build locally
 npm run preview
 ```
+
+---
+
+## 📚 Documentation Links
+
+- **System Architecture & Cryptography:** [ARCHITECTURE.md](ARCHITECTURE.md)
+- **Release History & Versioning:** [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
@@ -180,4 +217,5 @@ copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 ...
 ```
+
 Feel free to fork, customize, and self-host for your personal financial independence journey.
