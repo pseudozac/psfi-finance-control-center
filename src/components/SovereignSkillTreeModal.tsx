@@ -234,60 +234,56 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
       <div
         className={`modal-card skill-tree-modal ${isTheaterMode ? 'skill-tree-theater-mode' : ''}`}
         onClick={(e) => e.stopPropagation()}
-        style={{
-          maxWidth: isTheaterMode ? '99vw' : '1420px',
-          width: isTheaterMode ? '99vw' : '96vw',
-          maxHeight: isTheaterMode ? '98vh' : '94vh',
-          padding: '18px 22px',
-        }}
       >
         {/* 1. TOP HEADER & RPG RANK BANNER */}
-        <div className="flex items-center justify-between gap-3 w-full pb-2 border-b border-subtle">
-          <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div className="w-10 h-10 rounded-xl bg-solstice/15 border border-solstice/40 flex items-center justify-center shrink-0 text-solstice shadow-lg shadow-solstice/10">
+        <div className="skill-tree-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+            <div className="skill-tree-crown-box">
               <Crown size={22} />
             </div>
 
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <h3 className="modal-title font-bold text-base sm:text-lg m-0 text-primary">
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <h3 className="modal-title" style={{ margin: 0, fontWeight: 700, fontSize: '17px', color: '#f2f3f7' }}>
                   Sovereign Wealth RPG Constellation
                 </h3>
-                <span className="skill-rank-badge font-mono text-[11px] px-3 py-0.5 rounded-full font-bold">
+                <span className="skill-rank-badge">
                   {treeState.currentRank}
                 </span>
                 {simulatedPlan && (
-                  <span className="font-mono text-[10px] bg-quasar/20 text-quasar px-2 py-0.5 rounded border border-quasar/40 animate-pulse">
+                  <span style={{ fontFamily: 'monospace', fontSize: '10px', background: 'rgba(191, 159, 241, 0.2)', color: 'var(--colour-quasar)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(191, 159, 241, 0.4)' }}>
                     🧪 What-If Active (+{treeState.overallMasteryPercent - realTreeState.overallMasteryPercent}%)
                   </span>
                 )}
               </div>
 
-              <div className="flex items-center gap-4 text-xs text-muted mt-1 font-mono">
-                <span>Mastered: <strong className="text-nebula">{treeState.unlockedCount}</strong> / 15 ({treeState.overallMasteryPercent}%)</span>
+              <div className="skill-tree-stats-row">
+                <span>Mastered: <strong style={{ color: 'var(--colour-nebula)' }}>{treeState.unlockedCount}</strong> / 15 ({treeState.overallMasteryPercent}%)</span>
                 <span>·</span>
-                <span>Moat: <strong className="text-primary">{treeState.tier1MasteredCount}/5</strong></span>
+                <span>Moat: <strong style={{ color: '#f2f3f7' }}>{treeState.tier1MasteredCount}/5</strong></span>
                 <span>·</span>
-                <span>Velocity: <strong className="text-primary">{treeState.tier2MasteredCount}/5</strong></span>
+                <span>Velocity: <strong style={{ color: '#f2f3f7' }}>{treeState.tier2MasteredCount}/5</strong></span>
                 <span>·</span>
-                <span>Autonomy: <strong className="text-primary">{treeState.tier3MasteredCount}/5</strong></span>
+                <span>Autonomy: <strong style={{ color: '#f2f3f7' }}>{treeState.tier3MasteredCount}/5</strong></span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0 ml-auto">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, marginLeft: 'auto' }}>
             <button
               type="button"
-              className={`action-pill font-mono text-xs flex items-center gap-1.5 py-1 px-3 ${isTheaterMode ? 'pill-active-mode' : ''}`}
+              className={`action-pill font-mono text-xs ${isTheaterMode ? 'pill-active-mode' : ''}`}
               onClick={() => setIsTheaterMode(!isTheaterMode)}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px' }}
               title={isTheaterMode ? "Exit Fullscreen Theater Mode" : "Expand Fullscreen Theater Mode"}
             >
               {isTheaterMode ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
-              <span className="hidden sm:inline">{isTheaterMode ? 'Restore View' : 'Theater Mode'}</span>
+              <span>{isTheaterMode ? 'Restore View' : 'Theater Mode'}</span>
             </button>
             <button
               type="button"
-              className="icon-pill shrink-0 p-1.5 rounded-lg hover:bg-white/10 text-muted hover:text-primary transition-colors"
+              className="icon-pill"
+              style={{ padding: '6px', borderRadius: '8px', color: 'var(--ink-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}
               onClick={onClose}
               title="Close (Esc)"
             >
@@ -297,7 +293,7 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
         </div>
 
         {/* 2. PROGRESSION & NAVIGATION BAR */}
-        <div className="flex items-center justify-between gap-3 my-2.5 flex-wrap">
+        <div className="skill-tree-nav-bar">
           {/* Mode Switcher Tabs */}
           <div className="pill-segmented flex gap-1 text-xs font-mono">
             <button
@@ -337,34 +333,38 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
 
           {/* Constellation Branch Filters */}
           {viewMode === 'visual_tree' && (
-            <div className="flex items-center gap-1 text-xs font-mono flex-wrap">
-              <span className="text-[11px] text-muted flex items-center gap-1 mr-1">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '11px', color: 'var(--ink-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginRight: '4px' }}>
                 <Filter size={11} /> Filter:
               </span>
               <button
                 type="button"
-                className={`action-pill text-[10.5px] py-0.5 px-2.5 ${selectedTier === 'all' ? 'pill-active' : ''}`}
+                className={`action-pill text-xs ${selectedTier === 'all' ? 'pill-active' : ''}`}
+                style={{ padding: '2px 10px', fontSize: '11px' }}
                 onClick={() => setSelectedTier('all')}
               >
                 All Constellations (15)
               </button>
               <button
                 type="button"
-                className={`action-pill text-[10.5px] py-0.5 px-2.5 ${selectedTier === 'tier1_survival' ? 'pill-active' : ''}`}
+                className={`action-pill text-xs ${selectedTier === 'tier1_survival' ? 'pill-active' : ''}`}
+                style={{ padding: '2px 10px', fontSize: '11px' }}
                 onClick={() => setSelectedTier('tier1_survival')}
               >
                 🛡️ Citadel ({treeState.tier1MasteredCount}/5)
               </button>
               <button
                 type="button"
-                className={`action-pill text-[10.5px] py-0.5 px-2.5 ${selectedTier === 'tier2_velocity' ? 'pill-active' : ''}`}
+                className={`action-pill text-xs ${selectedTier === 'tier2_velocity' ? 'pill-active' : ''}`}
+                style={{ padding: '2px 10px', fontSize: '11px' }}
                 onClick={() => setSelectedTier('tier2_velocity')}
               >
                 ⚡ Velocity ({treeState.tier2MasteredCount}/5)
               </button>
               <button
                 type="button"
-                className={`action-pill text-[10.5px] py-0.5 px-2.5 ${selectedTier === 'tier3_autonomy' ? 'pill-active' : ''}`}
+                className={`action-pill text-xs ${selectedTier === 'tier3_autonomy' ? 'pill-active' : ''}`}
+                style={{ padding: '2px 10px', fontSize: '11px' }}
                 onClick={() => setSelectedTier('tier3_autonomy')}
               >
                 👑 Autonomy ({treeState.tier3MasteredCount}/5)
@@ -374,10 +374,11 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
 
           {/* Quick Simulation Levers */}
           {simulatedPlan && (
-            <div className="flex items-center gap-2 ml-auto">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
               <button
                 type="button"
-                className="action-pill font-mono text-xs flex items-center gap-1 text-flare py-1 px-2.5"
+                className="action-pill font-mono text-xs"
+                style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--colour-flare)', padding: '4px 10px' }}
                 onClick={handleResetSimulation}
                 title="Reset simulation back to live plan"
               >
@@ -386,7 +387,8 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
               {onApplySimulatedPlan && (
                 <button
                   type="button"
-                  className="action-pill font-mono text-xs flex items-center gap-1 bg-nebula/20 text-nebula border-nebula/40 py-1 px-2.5"
+                  className="action-pill font-mono text-xs"
+                  style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(94, 196, 145, 0.2)', color: 'var(--colour-nebula)', borderColor: 'rgba(94, 196, 145, 0.4)', padding: '4px 10px' }}
                   onClick={handleCommitSimulation}
                   title="Permanently apply simulated milestone to live plan"
                 >
@@ -397,124 +399,116 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
           )}
         </div>
 
-        {/* 3. VIEW MODE 1: VISUAL CELESTIAL STAR-CHART (100% FULL-WIDTH MAJESTY) */}
+        {/* 3. VIEW MODE 1: VISUAL CELESTIAL STAR-CHART */}
         {viewMode === 'visual_tree' && (
-          <div className="relative w-full flex-1 min-h-[580px] max-h-[76vh] overflow-hidden rounded-2xl border border-subtle bg-[#060913] flex flex-col justify-center items-center shadow-inner">
-            {/* FLOATING THAUMATURGY-STYLE GLASS HUD INSPECTOR CARD */}
-            <div
-              className={`absolute top-4 right-4 z-40 transition-all duration-300 rounded-2xl border border-subtle bg-[#0b0f1c]/90 backdrop-blur-xl shadow-2xl ${
-                isDossierCollapsed ? 'w-auto p-2' : 'w-80 sm:w-96 p-4 max-h-[85%] overflow-y-auto'
-              }`}
-              style={{
-                boxShadow: '0 20px 50px rgba(0, 0, 0, 0.8), 0 0 20px rgba(191, 159, 241, 0.15)',
-              }}
-            >
+          <div className="skill-tree-viewport">
+            {/* FLOATING THAUMATURGY GLASS HUD INSPECTOR */}
+            <div className={`skill-tree-hud ${isDossierCollapsed ? 'collapsed' : ''}`}>
               {isDossierCollapsed ? (
                 <button
                   type="button"
                   onClick={() => setIsDossierCollapsed(false)}
-                  className="flex items-center gap-2 text-xs font-mono font-semibold text-primary hover:text-white px-2 py-1"
+                  style={{ background: 'none', border: 'none', color: '#f2f3f7', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'monospace', fontSize: '11.5px', fontWeight: 600, padding: 0 }}
                 >
-                  <div className="w-5 h-5 rounded-full bg-solstice/20 text-solstice flex items-center justify-center">
+                  <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'rgba(247, 141, 44, 0.2)', color: '#f78d2c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <ChevronRight size={13} />
                   </div>
-                  <span>Inspect: {activeNode.shortLabel || activeNode.title}</span>
+                  <span>✦ Inspect: {activeNode.shortLabel || activeNode.title}</span>
                 </button>
               ) : (
-                <div className="space-y-3">
+                <div>
                   {/* Card Header */}
-                  <div className="flex items-center justify-between pb-2 border-b border-subtle">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-9 h-9 rounded-xl bg-purple-900/30 border border-purple-500/40 flex items-center justify-center shrink-0">
+                  <div className="skill-tree-hud-head">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                      <div className="skill-tree-hud-icon">
                         {ICON_MAP[activeNode.iconName] || <Award size={18} />}
                       </div>
-                      <div className="min-w-0">
-                        <span className="text-[9.5px] font-mono text-muted uppercase tracking-wider block">
+                      <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                        <span style={{ fontSize: '9.5px', fontFamily: 'monospace', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block' }}>
                           {activeNode.badge} · {activeNode.tier.replace('tier', 'TIER ').replace('_', ' ').toUpperCase()}
                         </span>
-                        <h4 className="font-bold text-xs sm:text-sm text-primary m-0 truncate">
+                        <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#f2f3f7', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {activeNode.title}
                         </h4>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1 shrink-0 ml-2">
-                      <button
-                        type="button"
-                        onClick={() => setIsDossierCollapsed(true)}
-                        className="p-1 rounded text-muted hover:text-primary hover:bg-white/10"
-                        title="Minimize Inspector"
-                      >
-                        <ChevronDown size={14} />
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsDossierCollapsed(true)}
+                      className="icon-pill"
+                      style={{ padding: '4px', borderRadius: '6px', color: 'var(--ink-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                      title="Minimize Inspector"
+                    >
+                      <ChevronDown size={14} />
+                    </button>
                   </div>
 
                   {/* Status Banner */}
-                  <div className="flex items-center justify-between">
-                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                      activeNode.status === 'mastered'
-                        ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/40'
-                        : activeNode.status === 'in_progress'
-                        ? 'bg-purple-950/80 text-purple-300 border border-purple-500/40'
-                        : 'bg-slate-900 text-muted border border-slate-700'
-                    }`}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '8px 0' }}>
+                    <span style={{
+                      fontSize: '10px',
+                      fontFamily: 'monospace',
+                      fontWeight: 700,
+                      padding: '2px 8px',
+                      borderRadius: '9999px',
+                      textTransform: 'uppercase',
+                      background: activeNode.status === 'mastered' ? 'rgba(16, 185, 129, 0.2)' : activeNode.status === 'in_progress' ? 'rgba(168, 85, 247, 0.2)' : 'rgba(255, 255, 255, 0.06)',
+                      color: activeNode.status === 'mastered' ? '#34d399' : activeNode.status === 'in_progress' ? '#c084fc' : 'var(--ink-muted)',
+                      border: `1px solid ${activeNode.status === 'mastered' ? 'rgba(16, 185, 129, 0.4)' : activeNode.status === 'in_progress' ? 'rgba(168, 85, 247, 0.4)' : 'rgba(255, 255, 255, 0.1)'}`,
+                    }}>
                       {activeNode.status === 'mastered' ? '✓ Mastered' : activeNode.status === 'in_progress' ? `In Flight (${activeNode.progressPercent}%)` : '🔒 Locked'}
                     </span>
-
-                    <span className="font-mono text-xs font-semibold text-primary">
+                    <span style={{ fontFamily: 'monospace', fontSize: '11px', fontWeight: 600, color: '#f2f3f7' }}>
                       {activeNode.currentMetricLabel}
                     </span>
                   </div>
 
                   {/* Tactile Description */}
-                  <p className="text-xs text-primary leading-relaxed m-0">
+                  <p style={{ margin: '8px 0', fontSize: '11.5px', color: 'var(--ink-secondary)', lineHeight: 1.5 }}>
                     {activeNode.description}
                   </p>
 
                   {/* Actuarial Financial Law Quote */}
-                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-subtle">
-                    <div className="flex items-center gap-1.5 mb-1 text-solstice font-mono text-[10.5px] font-semibold">
+                  <div className="skill-tree-hud-law">
+                    <div className="skill-tree-hud-law-title">
                       <Info size={12} />
                       <span>Actuarial Financial Law</span>
                     </div>
-                    <p className="text-[11px] text-muted leading-relaxed m-0 italic">
-                      &quot;{activeNode.actuarialPrinciple}&quot;
-                    </p>
+                    &quot;{activeNode.actuarialPrinciple}&quot;
                   </div>
 
                   {/* Progress Bar & Gap */}
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between font-mono text-[10px] text-muted">
-                      <span>Target: <strong className="text-primary">{activeNode.targetMetricLabel}</strong></span>
-                      <span className="font-bold text-primary">{activeNode.progressPercent}%</span>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '10px', color: 'var(--ink-muted)' }}>
+                      <span>Target: <strong style={{ color: '#f2f3f7' }}>{activeNode.targetMetricLabel}</strong></span>
+                      <span style={{ fontWeight: 700, color: '#f2f3f7' }}>{activeNode.progressPercent}%</span>
                     </div>
-                    <div className="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden border border-subtle">
+                    <div className="skill-tree-hud-progress-bar">
                       <div
-                        className={`h-full transition-all duration-500 ${
-                          activeNode.status === 'mastered'
-                            ? 'bg-emerald-500'
-                            : 'bg-gradient-to-r from-purple-500 to-cyan-500'
-                        }`}
-                        style={{ width: `${activeNode.progressPercent}%` }}
+                        className="skill-tree-hud-progress-fill"
+                        style={{
+                          width: `${activeNode.progressPercent}%`,
+                          background: activeNode.status === 'mastered' ? '#10b981' : 'linear-gradient(90deg, #a855f7, #06b6d4)',
+                        }}
                       />
                     </div>
                   </div>
 
                   {activeNode.gapRupeesOrMonths && (
-                    <div className="p-2 rounded-lg bg-corona/10 border border-corona/30 flex items-center justify-between font-mono text-xs">
-                      <span className="text-corona font-semibold">Required:</span>
-                      <span className="text-corona font-bold">{activeNode.gapRupeesOrMonths}</span>
+                    <div className="skill-tree-hud-gap">
+                      <span style={{ fontWeight: 600 }}>Required:</span>
+                      <span style={{ fontWeight: 700 }}>{activeNode.gapRupeesOrMonths}</span>
                     </div>
                   )}
 
                   {/* Interactive What-If Simulation Button */}
                   {activeNode.suggestedAction && (
-                    <div className="pt-1">
+                    <div style={{ marginTop: '10px' }}>
                       <button
                         type="button"
                         onClick={() => handleSimulateUnlock(activeNode)}
-                        className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-mono text-xs font-semibold flex items-center justify-center gap-2 shadow-lg transition-transform active:scale-95"
+                        className="skill-tree-hud-sim-btn"
                       >
                         <Sparkles size={13} />
                         <span>Simulate This Milestone</span>
@@ -527,9 +521,8 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
 
             {/* FULL SVG ASTROLABE STAR-CHART CANVAS */}
             <svg
-              viewBox="0 0 1280 760"
-              className="w-full h-full select-none block"
-              style={{ maxHeight: isTheaterMode ? '82vh' : '640px' }}
+              viewBox="0 0 1360 760"
+              className="skill-tree-svg"
             >
               <defs>
                 {/* Blueprint Grid */}
@@ -546,39 +539,39 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
               </defs>
 
               {/* Background Grid */}
-              <rect width="1280" height="760" fill="url(#celestial-grid)" />
+              <rect width="1360" height="760" fill="url(#celestial-grid)" />
 
-              {/* Concentric Astrolabe Background Rings (Jedi Fallen Order / PoE style) */}
-              <circle cx="640" cy="720" r="180" fill="none" stroke="rgba(255, 255, 255, 0.035)" strokeDasharray="4 8" />
-              <circle cx="640" cy="720" r="340" fill="none" stroke="rgba(255, 255, 255, 0.035)" strokeDasharray="4 8" />
-              <circle cx="640" cy="720" r="500" fill="none" stroke="rgba(255, 255, 255, 0.03)" strokeDasharray="4 8" />
-              <circle cx="640" cy="720" r="660" fill="none" stroke="rgba(255, 255, 255, 0.025)" strokeDasharray="4 8" />
-              <circle cx="640" cy="720" r="820" fill="none" stroke="rgba(255, 255, 255, 0.02)" strokeDasharray="4 8" />
+              {/* Concentric Astrolabe Background Rings */}
+              <circle cx="620" cy="720" r="180" fill="none" stroke="rgba(255, 255, 255, 0.04)" strokeDasharray="4 8" />
+              <circle cx="620" cy="720" r="340" fill="none" stroke="rgba(255, 255, 255, 0.04)" strokeDasharray="4 8" />
+              <circle cx="620" cy="720" r="500" fill="none" stroke="rgba(255, 255, 255, 0.035)" strokeDasharray="4 8" />
+              <circle cx="620" cy="720" r="660" fill="none" stroke="rgba(255, 255, 255, 0.03)" strokeDasharray="4 8" />
+              <circle cx="620" cy="720" r="820" fill="none" stroke="rgba(255, 255, 255, 0.025)" strokeDasharray="4 8" />
 
               {/* Faint Astrolabe Radial Ray Lines */}
-              <line x1="640" y1="720" x2="200" y2="100" stroke="rgba(255, 255, 255, 0.015)" strokeDasharray="2 6" />
-              <line x1="640" y1="720" x2="400" y2="40" stroke="rgba(255, 255, 255, 0.015)" strokeDasharray="2 6" />
-              <line x1="640" y1="720" x2="640" y2="20" stroke="rgba(255, 255, 255, 0.02)" strokeDasharray="2 6" />
-              <line x1="640" y1="720" x2="880" y2="40" stroke="rgba(255, 255, 255, 0.015)" strokeDasharray="2 6" />
-              <line x1="640" y1="720" x2="1080" y2="100" stroke="rgba(255, 255, 255, 0.015)" strokeDasharray="2 6" />
+              <line x1="620" y1="720" x2="180" y2="80" stroke="rgba(255, 255, 255, 0.02)" strokeDasharray="2 6" />
+              <line x1="620" y1="720" x2="380" y2="40" stroke="rgba(255, 255, 255, 0.02)" strokeDasharray="2 6" />
+              <line x1="620" y1="720" x2="620" y2="20" stroke="rgba(255, 255, 255, 0.025)" strokeDasharray="2 6" />
+              <line x1="620" y1="720" x2="860" y2="40" stroke="rgba(255, 255, 255, 0.02)" strokeDasharray="2 6" />
+              <line x1="620" y1="720" x2="1050" y2="80" stroke="rgba(255, 255, 255, 0.02)" strokeDasharray="2 6" />
 
               {/* Three Wing Constellation Headers */}
-              <g transform="translate(180, 50)">
-                <rect x="-10" y="-16" width="220" height="30" rx="15" fill="rgba(16, 185, 129, 0.08)" stroke="rgba(16, 185, 129, 0.25)" />
+              <g transform="translate(170, 50)">
+                <rect x="-10" y="-16" width="220" height="30" rx="15" fill="rgba(16, 185, 129, 0.1)" stroke="rgba(16, 185, 129, 0.3)" />
                 <text x="100" y="4" textAnchor="middle" fill="#10b981" fontSize="11" fontFamily="monospace" fontWeight="bold" letterSpacing="0.08em">
                   🛡️ DEFENSIVE CITADEL
                 </text>
               </g>
 
-              <g transform="translate(530, 50)">
-                <rect x="-10" y="-16" width="220" height="30" rx="15" fill="rgba(6, 182, 212, 0.08)" stroke="rgba(6, 182, 212, 0.25)" />
+              <g transform="translate(570, 50)">
+                <rect x="-10" y="-16" width="220" height="30" rx="15" fill="rgba(6, 182, 212, 0.1)" stroke="rgba(6, 182, 212, 0.3)" />
                 <text x="100" y="4" textAnchor="middle" fill="#06b6d4" fontSize="11" fontFamily="monospace" fontWeight="bold" letterSpacing="0.08em">
                   ⚡ COMPOUNDING VELOCITY
                 </text>
               </g>
 
-              <g transform="translate(930, 50)">
-                <rect x="-10" y="-16" width="220" height="30" rx="15" fill="rgba(245, 158, 11, 0.08)" stroke="rgba(245, 158, 11, 0.25)" />
+              <g transform="translate(880, 50)">
+                <rect x="-10" y="-16" width="220" height="30" rx="15" fill="rgba(245, 158, 11, 0.1)" stroke="rgba(245, 158, 11, 0.3)" />
                 <text x="100" y="4" textAnchor="middle" fill="#f59e0b" fontSize="11" fontFamily="monospace" fontWeight="bold" letterSpacing="0.08em">
                   👑 SOVEREIGN AUTONOMY
                 </text>
@@ -795,7 +788,7 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
 
         {/* 4. VIEW MODE 2: TABBED ACTUARIAL MATRIX GRID */}
         {viewMode === 'matrix' && (
-          <div className="flex-1 overflow-y-auto pt-2 space-y-3">
+          <div className="skill-matrix-container">
             <div className="pill-segmented flex flex-wrap gap-1 w-full" role="tablist">
               <button
                 type="button"
@@ -827,45 +820,36 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="skill-matrix-grid">
               {filteredNodes.map((node) => {
                 const isSelected = activeNode.id === node.id;
                 const isMastered = node.status === 'mastered';
-                const isInProgress = node.status === 'in_progress';
 
                 return (
                   <button
                     key={node.id}
                     type="button"
-                    className={`p-3.5 rounded-xl border text-left transition-all ${
-                      isSelected
-                        ? 'bg-purple-950/40 border-purple-500/80 ring-1 ring-purple-500/50'
-                        : isMastered
-                        ? 'bg-[#062817]/40 border-emerald-700/40 hover:bg-[#062817]/70'
-                        : isInProgress
-                        ? 'bg-slate-900/60 border-subtle hover:bg-slate-900/90'
-                        : 'bg-slate-950/40 border-subtle/50 opacity-60'
-                    }`}
+                    className={`skill-matrix-card ${isSelected ? 'selected' : ''} ${isMastered ? 'mastered' : ''}`}
                     onClick={() => {
                       setSelectedNodeId(node.id);
                       playChime(isMastered ? 660 : 440);
                     }}
                   >
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {ICON_MAP[node.iconName] || <Award size={16} />}
                       </div>
-                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-white/5 text-muted">
+                      <span style={{ fontSize: '10px', fontFamily: 'monospace', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', background: 'rgba(255,255,255,0.06)', color: 'var(--ink-muted)' }}>
                         {node.badge}
                       </span>
                     </div>
 
-                    <h4 className="font-bold text-xs text-primary mb-1 block truncate">{node.title}</h4>
-                    <p className="text-[11px] text-muted line-clamp-2 leading-relaxed mb-2">{node.description}</p>
+                    <h4 style={{ margin: '0 0 4px', fontSize: '13px', fontWeight: 700, color: '#f2f3f7' }}>{node.title}</h4>
+                    <p style={{ margin: '0 0 8px', fontSize: '11px', color: 'var(--ink-secondary)', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{node.description}</p>
 
-                    <div className="flex items-center justify-between font-mono text-[10.5px] pt-2 border-t border-subtle">
-                      <span className="text-secondary truncate pr-1">{node.currentMetricLabel}</span>
-                      <span className={`font-bold ${isMastered ? 'text-emerald-400' : 'text-purple-400'}`}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '10.5px', paddingTop: '8px', borderTop: '1px solid var(--border-subtle)' }}>
+                      <span style={{ color: 'var(--ink-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{node.currentMetricLabel}</span>
+                      <span style={{ fontWeight: 700, color: isMastered ? '#34d399' : '#c084fc' }}>
                         {isMastered ? '✓ Mastered' : `${node.progressPercent}%`}
                       </span>
                     </div>
@@ -878,14 +862,14 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
 
         {/* 5. VIEW MODE 3: RPG CHARACTER PERKS & LORE */}
         {viewMode === 'character_sheet' && (
-          <div className="flex-1 overflow-y-auto pt-3 space-y-4">
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/30 to-indigo-950/30 border border-purple-500/30 flex items-center justify-between flex-wrap gap-3">
+          <div className="skill-perks-container">
+            <div className="skill-perks-hero">
               <div>
-                <span className="text-[10px] font-mono uppercase tracking-wider text-purple-300 block">
+                <span style={{ fontSize: '10px', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#c084fc', display: 'block' }}>
                   Current Sovereign Title
                 </span>
-                <h3 className="text-xl font-bold text-white mt-0.5">{treeState.currentRank}</h3>
-                <p className="text-xs text-muted mt-1 max-w-xl">
+                <h3 style={{ margin: '4px 0 0', fontSize: '20px', fontWeight: 700, color: '#ffffff' }}>{treeState.currentRank}</h3>
+                <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--ink-secondary)', maxWidth: '600px', lineHeight: 1.5 }}>
                   {RANK_LORE_PERKS[treeState.currentRank]?.lore || 'Sovereign financial architect.'}
                 </p>
               </div>
@@ -893,22 +877,23 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
               <button
                 type="button"
                 onClick={handleCopyCharacterSheet}
-                className="action-pill font-mono text-xs flex items-center gap-1.5 py-2 px-3 bg-white/10 text-primary hover:text-white"
+                className="action-pill font-mono text-xs"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', background: 'rgba(255,255,255,0.1)', color: '#f2f3f7' }}
               >
-                {copiedSheet ? <Check size={13} className="text-nebula" /> : <Copy size={13} />}
+                {copiedSheet ? <Check size={13} style={{ color: 'var(--colour-nebula)' }} /> : <Copy size={13} />}
                 <span>{copiedSheet ? 'Scorecard Copied!' : 'Copy RPG Scorecard'}</span>
               </button>
             </div>
 
-            <div className="space-y-2">
-              <span className="text-xs font-mono uppercase tracking-wider text-muted block">
+            <div style={{ marginTop: '12px' }}>
+              <span style={{ fontSize: '11px', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)', display: 'block', marginBottom: '8px' }}>
                 Active Passive Perks Unlocked ({treeState.currentRankPerks.length})
               </span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="skill-perks-grid">
                 {treeState.currentRankPerks.map((perk, i) => (
-                  <div key={i} className="p-3 rounded-xl bg-slate-900/40 border border-subtle flex items-start gap-2.5">
-                    <CheckCircle2 size={16} className="text-nebula shrink-0 mt-0.5" />
-                    <span className="text-xs text-primary leading-relaxed">{perk}</span>
+                  <div key={i} className="skill-perk-item">
+                    <CheckCircle2 size={16} style={{ color: 'var(--colour-nebula)', flexShrink: 0, marginTop: '2px' }} />
+                    <span style={{ fontSize: '12px', color: '#f2f3f7', lineHeight: 1.5 }}>{perk}</span>
                   </div>
                 ))}
               </div>
