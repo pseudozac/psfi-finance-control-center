@@ -34,6 +34,8 @@ import {
   Coins,
   FileText,
   Crown,
+  Activity,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { PLAN_PRESETS, formatINR } from '../lib/finance';
 import type { FinancePlan } from '../types/finance';
@@ -71,6 +73,9 @@ interface CommandPaletteModalProps {
   onTogglePeriod: () => void;
   onOpenStatementParser?: () => void;
   onOpenSkillTree?: () => void;
+  onOpenCamouflage?: () => void;
+  onOpenSteganography?: () => void;
+  onOpenMonteCarlo?: () => void;
   onExportJSON: () => void;
   onExportCSV: () => void;
   onPrint: () => void;
@@ -190,6 +195,9 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   onTogglePeriod,
   onOpenStatementParser,
   onOpenSkillTree,
+  onOpenCamouflage,
+  onOpenSteganography,
+  onOpenMonteCarlo,
   onExportJSON,
   onExportCSV,
   onPrint,
@@ -530,6 +538,45 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         icon: <Crown size={15} className="text-solstice" />,
         badge: 'RPG Progression',
         execute: () => onOpenSkillTree(),
+      });
+    }
+
+    if (onOpenMonteCarlo) {
+      list.push({
+        id: 'tool_monte_carlo',
+        category: 'Tools',
+        title: 'Reverse Monte Carlo FIRE Stress-Testing',
+        subtitle: '10,000 stochastic lifespan simulations testing Indian 2008 Lehman, Covid & stagflation shocks',
+        keywords: 'monte carlo fire stress test sequence of returns srr black swan lehman crash covid inflation antifragile',
+        icon: <Activity size={15} className="text-cyan-400" />,
+        badge: '10,000 Sim',
+        execute: () => onOpenMonteCarlo(),
+      });
+    }
+
+    if (onOpenCamouflage) {
+      list.push({
+        id: 'tool_camouflage',
+        category: 'Tools',
+        title: 'Excel Corporate Camouflage [Esc Esc]',
+        subtitle: 'Panic stealth mode: swaps UI into a plausible Logistics Fleet spreadsheet',
+        keywords: 'camouflage disguise excel panic sheet spreadsheet hide stealth esc secret',
+        icon: <FileSpreadsheet size={15} className="text-emerald-400" />,
+        badge: 'Panic Esc',
+        execute: () => onOpenCamouflage(),
+      });
+    }
+
+    if (onOpenSteganography) {
+      list.push({
+        id: 'tool_steganography',
+        category: 'Tools',
+        title: 'Steganographic PNG Vault & Decoy',
+        subtitle: 'Embed encrypted portfolio into ordinary wallpaper PNG pixels with LSB cloaking',
+        keywords: 'steganography stego png wallpaper hide image pixels decoy duress privacy cloaking',
+        icon: <ImageIcon size={15} className="text-purple-400" />,
+        badge: 'Pixel Cloak',
+        execute: () => onOpenSteganography(),
       });
     }
 

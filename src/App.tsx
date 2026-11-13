@@ -26,6 +26,8 @@ import {
   Terminal,
   FileText,
   Crown,
+  Activity,
+  Image as ImageIcon,
 } from 'lucide-react';
 import type { FinancePlan, ViewPeriod } from './types/finance';
 import {
@@ -55,6 +57,9 @@ import { CommandPaletteModal } from './components/CommandPaletteModal';
 import { StatementParserModal } from './components/StatementParserModal';
 import { SovereignSkillTreeModal } from './components/SovereignSkillTreeModal';
 import { ImpulseShieldWidget } from './components/ImpulseShieldWidget';
+import { ExcelCamouflageOverlay } from './components/ExcelCamouflageOverlay';
+import { SteganographyModal } from './components/SteganographyModal';
+import { ReverseMonteCarloModal } from './components/ReverseMonteCarloModal';
 import { decodeVaultBeam } from './lib/vaultBeam';
 
 type AppPhase = 'loading' | 'gateway' | 'dashboard';
@@ -94,6 +99,9 @@ export function App() {
   const [showCmdK, setShowCmdK] = useState<boolean>(false);
   const [showStatementParser, setShowStatementParser] = useState<boolean>(false);
   const [showSkillTree, setShowSkillTree] = useState<boolean>(false);
+  const [showCamouflage, setShowCamouflage] = useState<boolean>(false);
+  const [showSteganography, setShowSteganography] = useState<boolean>(false);
+  const [showMonteCarlo, setShowMonteCarlo] = useState<boolean>(false);
   const [toolsMenuOpen, setToolsMenuOpen] = useState<boolean>(false);
   const toolsDropdownRef = useRef<HTMLDivElement>(null);
   const [layoutMode, setLayoutMode] = useState<'mobile' | 'desktop'>(() => {
@@ -153,14 +161,24 @@ export function App() {
     return () => window.removeEventListener('hashchange', handleHash);
   }, [setPlan, setStatusMessage]);
 
-  // Global hotkey listener for Cmd+K / Ctrl+K and '/'
+  // Global hotkey listener for Esc Esc (Camouflage) and Cmd+K / Ctrl+K
   useEffect(() => {
+    let lastEsc = 0;
     const handleKeyDown = (e: KeyboardEvent) => {
       const targetTag = (e.target as HTMLElement)?.tagName;
       const isInput =
         targetTag === 'INPUT' || targetTag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable;
 
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      if (e.key === 'Escape' && !isInput) {
+        const now = Date.now();
+        if (now - lastEsc < 450) {
+          setShowCamouflage((prev) => !prev);
+        }
+        lastEsc = now;
+      } else if (e.altKey && (e.key === 'x' || e.key === 'X')) {
+        e.preventDefault();
+        setShowCamouflage((prev) => !prev);
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setShowCmdK((prev) => !prev);
       } else if (e.key === '/' && !isInput) {
@@ -409,6 +427,42 @@ export function App() {
                   <div>
                     <span className="item-title">Sovereign Skill Tree</span>
                     <span className="item-sub">Gamified RPG financial independence milestones</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="tools-menu-item"
+                  onClick={() => { setShowMonteCarlo(true); setToolsMenuOpen(false); }}
+                >
+                  <Activity size={13} className="text-cyan-400" />
+                  <div>
+                    <span className="item-title">Reverse Monte Carlo FIRE</span>
+                    <span className="item-sub">10,000 simulations testing Indian market black swans</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="tools-menu-item"
+                  onClick={() => { setShowCamouflage(true); setToolsMenuOpen(false); }}
+                >
+                  <FileSpreadsheet size={13} className="text-emerald-400" />
+                  <div>
+                    <span className="item-title">Excel Camouflage</span>
+                    <span className="item-sub">Instant panic spreadsheet disguise [Esc Esc]</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="tools-menu-item"
+                  onClick={() => { setShowSteganography(true); setToolsMenuOpen(false); }}
+                >
+                  <ImageIcon size={13} className="text-purple-400" />
+                  <div>
+                    <span className="item-title">Steganographic PNG Vault</span>
+                    <span className="item-sub">Hide encrypted vault inside wallpaper PNG pixels</span>
                   </div>
                 </button>
 
@@ -763,6 +817,34 @@ export function App() {
         onLoadDemo={launchDemoVault}
         onOpenStatementParser={() => setShowStatementParser(true)}
         onOpenSkillTree={() => setShowSkillTree(true)}
+        onOpenCamouflage={() => setShowCamouflage(true)}
+        onOpenSteganography={() => setShowSteganography(true)}
+        onOpenMonteCarlo={() => setShowMonteCarlo(true)}
+      />
+
+      {/* Excel Corporate Camouflage Screen Overlay [Esc Esc] */}
+      <ExcelCamouflageOverlay
+        isOpen={showCamouflage}
+        onExit={() => setShowCamouflage(false)}
+      />
+
+      {/* Steganographic PNG Vault & Decoy Modal */}
+      <SteganographyModal
+        isOpen={showSteganography}
+        onClose={() => setShowSteganography(false)}
+        plan={plan}
+        onRestorePlan={(restored) => {
+          setPlan(restored);
+          setStatusMessage('Restored vault successfully from Steganographic PNG image.');
+        }}
+      />
+
+      {/* Reverse Monte Carlo FIRE Stress-Testing Modal */}
+      <ReverseMonteCarloModal
+        isOpen={showMonteCarlo}
+        onClose={() => setShowMonteCarlo(false)}
+        plan={plan}
+        summary={summary}
       />
 
       {/* Sovereign Wealth RPG Skill Tree Modal */}
