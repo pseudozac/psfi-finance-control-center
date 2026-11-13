@@ -148,6 +148,16 @@ export const ExcelCamouflageOverlay: React.FC<ExcelCamouflageOverlayProps> = ({
             <span className="aws-region-badge">ap-south-1 (Mumbai)</span>
           </div>
           <div className="aws-title-right">
+            <select
+              value={persona}
+              onChange={(e) => setPersona(e.target.value as DisguisePersona)}
+              className="excel-persona-select"
+              title="Switch Disguise Tool"
+            >
+              <option value="excel_365">Disguise: Microsoft Excel 365</option>
+              <option value="google_sheets">Disguise: Google Sheets</option>
+              <option value="aws_cloudwatch">Disguise: AWS CloudWatch APM</option>
+            </select>
             <button type="button" className="excel-stealth-pill" onClick={triggerExit} title="Exit Panic Camouflage">
               <span>● Telemetry Live [Alt+X]</span>
             </button>
@@ -178,6 +188,16 @@ export const ExcelCamouflageOverlay: React.FC<ExcelCamouflageOverlayProps> = ({
             </div>
           </div>
           <div className="excel-title-right">
+            <select
+              value={persona}
+              onChange={(e) => setPersona(e.target.value as DisguisePersona)}
+              className="excel-persona-select"
+              title="Switch Disguise Tool"
+            >
+              <option value="excel_365">Disguise: Microsoft Excel 365</option>
+              <option value="google_sheets">Disguise: Google Sheets</option>
+              <option value="aws_cloudwatch">Disguise: AWS CloudWatch APM</option>
+            </select>
             <button
               type="button"
               className="excel-stealth-pill"
