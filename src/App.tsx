@@ -767,6 +767,7 @@ export function App() {
         plan={plan}
         summary={summary}
         taxSavingsDelta={taxComparison.savings}
+        onApplySimulatedPlan={(updated) => setPlan(updated)}
       />
 
       {/* Zero-Server Private Statement & Document Ingestion Modal */}

@@ -94,4 +94,22 @@ describe('Sovereign Skill Tree Actuarial Engine', () => {
     expect(fireNode).toBeDefined();
     expect(fireNode?.progressPercent).toBeGreaterThan(0);
   });
+
+  it('provides constellation coordinates, suggested what-if actions, and rank perks', () => {
+    const summary = calculateSummary(DEFAULT_PLAN);
+    const tree = calculateSkillTree(DEFAULT_PLAN, summary);
+
+    expect(tree.currentRankPerks.length).toBeGreaterThan(0);
+    expect(tree.nextRankPerks.length).toBeGreaterThan(0);
+
+    // Verify all 15 nodes have valid constellation coordinates and suggested actions
+    tree.nodes.forEach((node) => {
+      expect(node.gridColumn).toBeGreaterThanOrEqual(1);
+      expect(node.gridColumn).toBeLessThanOrEqual(5);
+      expect(node.gridRow).toBeGreaterThanOrEqual(1);
+      expect(node.gridRow).toBeLessThanOrEqual(3);
+      expect(node.suggestedAction).toBeDefined();
+      expect(node.suggestedAction?.field).toBeDefined();
+    });
+  });
 });

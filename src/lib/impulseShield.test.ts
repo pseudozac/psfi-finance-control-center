@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateDailyBurn } from './impulseShield';
+import { calculateDailyBurn, createCoolingOffItem } from './impulseShield';
 import { calculateSummary, DEFAULT_PLAN } from './finance';
 import type { FinancePlan } from '../types/finance';
 
@@ -20,6 +20,7 @@ describe('Impulse Shield & Daily Burn Engine', () => {
     expect(burn.remainingBurnToday).toBe(burn.effectiveDailyBurnToday);
     expect(burn.isOverspentToday).toBe(0);
     expect(burn.isSipShieldActive).toBe(false);
+    expect(burn.hourlyEarningRate).toBeGreaterThan(0);
   });
 
   it('recalibrates future daily allowance when user overspends today', () => {
@@ -59,5 +60,23 @@ describe('Impulse Shield & Daily Burn Engine', () => {
 
     expect(burn.isSipShieldActive).toBe(true);
     expect(burn.sipProtectedAmount).toBe(25000);
+  });
+
+  it('computes 72-hour cooling-off metrics and 10-year Nifty 50 compound cost', () => {
+    const monthlyInflow = 160000; // Rs 1,000/hr work rate
+    const dailyBurn = 2000;
+    const gadgetPrice = 10000;
+
+    const item = createCoolingOffItem('AirPods Pro', gadgetPrice, monthlyInflow, dailyBurn);
+
+    expect(item.title).toBe('AirPods Pro');
+    expect(item.amount).toBe(10000);
+    expect(item.expiresAt).toBeGreaterThan(item.createdAt);
+    expect(item.expiresAt - item.createdAt).toBe(72 * 60 * 60 * 1000); // exactly 72 hours
+    expect(item.burnEquivalentDays).toBe(5); // 10,000 / 2,000 = 5 days
+    expect(item.workHoursEquivalent).toBe(10); // 10,000 / 1,000 = 10 hours
+    // 10,000 * (1.12)^10 = ~31,058
+    expect(item.tenYearOpportunityCost).toBeGreaterThan(30000);
+    expect(item.tenYearOpportunityCost).toBeLessThan(35000);
   });
 });

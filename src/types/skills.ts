@@ -18,6 +18,21 @@ export interface SkillNode {
   status: SkillStatus;
   gapRupeesOrMonths?: string;
   actionableStep: string;
+  // Kinetic Constellation layout coordinates (percentage 0-100)
+  gridColumn: number; // 1 to 5
+  gridRow: number; // 1 to 3
+  suggestedAction?: {
+    field: string;
+    targetValue: number;
+    description: string;
+  };
+}
+
+export interface RankPerk {
+  rankName: string;
+  tierRequired: number;
+  perks: string[];
+  lore: string;
 }
 
 export interface SkillTreeState {
@@ -27,6 +42,32 @@ export interface SkillTreeState {
   totalCount: number;
   currentRank: string;
   nextRank: string;
+  currentRankPerks: string[];
+  nextRankPerks: string[];
+  tier1MasteredCount: number;
+  tier2MasteredCount: number;
+  tier3MasteredCount: number;
+}
+
+export type SpendCategory = 'chai_quick' | 'dining_night' | 'retail_impulse' | 'other';
+
+export interface SpendLogEntry {
+  id: string;
+  category: SpendCategory;
+  title: string;
+  amount: number;
+  timestamp: number;
+}
+
+export interface CoolingOffItem {
+  id: string;
+  title: string;
+  amount: number;
+  createdAt: number;
+  expiresAt: number; // createdAt + 72 hours
+  burnEquivalentDays: number;
+  workHoursEquivalent: number;
+  tenYearOpportunityCost: number; // compounding in Nifty 50 at 12%
 }
 
 export interface DailyBurnState {
@@ -43,4 +84,8 @@ export interface DailyBurnState {
   isSipShieldActive: boolean; // True if spending exceeded, shield engages to protect SIP
   sipProtectedAmount: number;
   weekendModeActive: boolean;
+  disciplineStreakDays: number;
+  bankedSurplusRupees: number;
+  surplusDestination: 'weekend_pot' | 'bonus_sip';
+  hourlyEarningRate: number; // monthlyInflow / 160 hours
 }
