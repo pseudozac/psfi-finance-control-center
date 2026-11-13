@@ -1,5 +1,16 @@
 import React, { useState } from 'react';
-import { Shield, Lock, Unlock, CheckCircle, AlertTriangle, X } from 'lucide-react';
+import {
+  Shield,
+  Lock,
+  Unlock,
+  CheckCircle,
+  AlertTriangle,
+  X,
+  KeyRound,
+  ShieldCheck,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
 import type { UserAccount } from '../types/account';
 import { generatePinSalt, hashVaultPin, verifyVaultPin } from '../lib/vaultSecurity';
 import { setAccountPin, removeAccountPin } from '../lib/accountStorage';
@@ -25,6 +36,7 @@ export const VaultSecurityModal: React.FC<VaultSecurityModalProps> = ({
   const [currentPin, setCurrentPin] = useState('');
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
+  const [showPlainPin, setShowPlainPin] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -49,7 +61,7 @@ export const VaultSecurityModal: React.FC<VaultSecurityModalProps> = ({
       return;
     }
     if (newPin !== confirmPin) {
-      setError('PINs do not match.');
+      setError('PINs do not match. Please verify.');
       return;
     }
 
@@ -59,13 +71,13 @@ export const VaultSecurityModal: React.FC<VaultSecurityModalProps> = ({
       const hash = await hashVaultPin(newPin, salt);
       setAccountPin(activeAccount.id, hash, salt, 0);
       onUpdateAccount();
-      setSuccess('Vault PIN successfully configured! Vault is now secured.');
+      setSuccess('Vault secured! Master PIN is active.');
       setTimeout(() => {
         setMode('overview');
         resetForm();
-      }, 1200);
+      }, 1000);
     } catch {
-      setError('Failed to configure PIN encryption.');
+      setError('Cryptographic key generation failed.');
     } finally {
       setIsProcessing(false);
     }
@@ -93,7 +105,7 @@ export const VaultSecurityModal: React.FC<VaultSecurityModalProps> = ({
       setTimeout(() => {
         setMode('overview');
         resetForm();
-      }, 1200);
+      }, 1000);
     } catch {
       setError('Failed to remove PIN.');
     } finally {
@@ -102,47 +114,72 @@ export const VaultSecurityModal: React.FC<VaultSecurityModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="relative w-full max-w-md rounded-2xl border border-slate-800 bg-[#0f1422] p-6 shadow-2xl text-slate-100">
+    <div
+      className="modal-backdrop"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Vault Security & Master PIN Lock"
+    >
+      <div
+        className="modal-card vault-security-modal-card"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-800/80 mb-5">
-          <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-xl ${isProtected ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-slate-800 text-slate-400'}`}>
-              <Shield className="w-5 h-5" />
+        <div className="modal-header">
+          <div className="flex-align gap-2.5">
+            <div
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: 10,
+                background: isProtected ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.06)',
+                border: isProtected ? '1px solid rgba(245,158,11,0.35)' : '1px solid var(--border-subtle)',
+                color: isProtected ? 'var(--colour-solstice)' : 'var(--ink-muted)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {isProtected ? <ShieldCheck size={18} /> : <Shield size={18} />}
             </div>
             <div>
-              <h3 className="font-semibold text-white text-base">Vault Security & PIN Lock</h3>
-              <p className="text-xs text-slate-400">{activeAccount.name}</p>
+              <h3 className="modal-title font-semibold text-sm m-0">Vault Security &amp; PIN Lock</h3>
+              <span className="font-mono text-xs text-muted">
+                {activeAccount.name}
+              </span>
             </div>
           </div>
           <button
             type="button"
+            className="icon-pill"
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+            title="Close (Esc)"
           >
-            <X className="w-5 h-5" />
+            <X size={15} />
           </button>
         </div>
 
-        {/* Status Badge */}
-        <div className="mb-5 p-3.5 rounded-xl border border-slate-800 bg-slate-900/60 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+        {/* Security Status Card */}
+        <div className={`vault-security-status-card ${isProtected ? 'status-active' : ''}`}>
+          <div className="flex-align gap-2.5">
             {isProtected ? (
-              <Lock className="w-5 h-5 text-amber-400" />
+              <Lock size={16} className="text-solstice" />
             ) : (
-              <Unlock className="w-5 h-5 text-slate-400" />
+              <Unlock size={16} className="text-muted" />
             )}
             <div>
-              <div className="text-xs font-semibold text-white">
-                {isProtected ? 'PIN Lock Enabled' : 'No PIN Configured'}
+              <div className="font-semibold text-xs" style={{ color: isProtected ? '#fef3c7' : 'inherit' }}>
+                {isProtected ? '4-Digit Master PIN Enabled' : 'No PIN Configured'}
               </div>
-              <div className="text-[11px] text-slate-400">
+              <div className="font-mono text-xs text-muted" style={{ fontSize: 11 }}>
                 {isProtected
-                  ? 'Vault locks on refresh, tab switch, or manual lock.'
-                  : 'Anyone with access to this browser can inspect this vault.'}
+                  ? 'Guarded with SHA-256 salted client-side encryption.'
+                  : 'Open vault — anyone on this machine can view financial data.'}
               </div>
             </div>
           </div>
+
           {isProtected && (
             <button
               type="button"
@@ -150,35 +187,70 @@ export const VaultSecurityModal: React.FC<VaultSecurityModalProps> = ({
                 onClose();
                 onLockNow();
               }}
-              className="px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-xs font-medium transition-colors"
+              className="btn-secondary"
+              style={{
+                borderColor: 'rgba(245,158,11,0.4)',
+                color: 'var(--colour-solstice)',
+                padding: '4px 10px',
+                fontSize: 11,
+              }}
+              title="Lock immediately (Alt+L)"
             >
-              Lock Now
+              <Lock size={11} />
+              <span>Lock Now</span>
             </button>
           )}
         </div>
 
         {/* Notifications */}
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 shrink-0" />
+          <div
+            style={{
+              padding: '10px 14px',
+              borderRadius: 8,
+              background: 'rgba(239, 68, 68, 0.12)',
+              border: '1px solid rgba(239, 68, 68, 0.35)',
+              color: '#fca5a5',
+              fontSize: 12,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              marginBottom: 16,
+            }}
+          >
+            <AlertTriangle size={14} className="shrink-0" />
             <span>{error}</span>
           </div>
         )}
+
         {success && (
-          <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 shrink-0" />
+          <div
+            style={{
+              padding: '10px 14px',
+              borderRadius: 8,
+              background: 'rgba(16, 185, 129, 0.12)',
+              border: '1px solid rgba(16, 185, 129, 0.35)',
+              color: '#6ee7b7',
+              fontSize: 12,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              marginBottom: 16,
+            }}
+          >
+            <CheckCircle size={14} className="shrink-0" />
             <span>{success}</span>
           </div>
         )}
 
-        {/* View: Overview */}
+        {/* VIEW: OVERVIEW */}
         {mode === 'overview' && (
-          <div className="space-y-4">
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Master PIN locks protect your financial net worth, salary, investments, and projections against physical snoopers when leaving your device unattended.
+          <div>
+            <p className="text-xs text-muted leading-relaxed mb-4">
+              A 4-digit master PIN encrypts your on-screen balances, salary, and investments. PsFi will automatically prompt for this PIN on launch, refresh, or when you trigger <strong>Alt + L</strong>.
             </p>
 
-            <div className="pt-2 flex flex-col gap-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {!isProtected ? (
                 <button
                   type="button"
@@ -186,20 +258,27 @@ export const VaultSecurityModal: React.FC<VaultSecurityModalProps> = ({
                     resetForm();
                     setMode('set');
                   }}
-                  className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-sm transition-colors flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20"
+                  className="btn-primary"
+                  style={{
+                    width: '100%',
+                    justifyContent: 'center',
+                    padding: '10px 16px',
+                    fontSize: 12.5,
+                  }}
                 >
-                  <Lock className="w-4 h-4" />
+                  <Lock size={14} />
                   <span>Set 4-Digit Vault PIN</span>
                 </button>
               ) : (
-                <div className="flex gap-2">
+                <div style={{ display: 'flex', gap: 10 }}>
                   <button
                     type="button"
                     onClick={() => {
                       resetForm();
                       setMode('set');
                     }}
-                    className="flex-1 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-colors"
+                    className="btn-secondary flex-1"
+                    style={{ justifyContent: 'center', padding: '8px 12px' }}
                   >
                     Change PIN
                   </button>
@@ -209,9 +288,15 @@ export const VaultSecurityModal: React.FC<VaultSecurityModalProps> = ({
                       resetForm();
                       setMode('remove');
                     }}
-                    className="flex-1 py-2 px-3 rounded-xl bg-rose-950/40 hover:bg-rose-900/50 text-rose-300 text-xs font-medium border border-rose-800/40 transition-colors"
+                    className="btn-secondary flex-1"
+                    style={{
+                      justifyContent: 'center',
+                      padding: '8px 12px',
+                      color: 'var(--colour-corona)',
+                      borderColor: 'rgba(242, 139, 173, 0.35)',
+                    }}
                   >
-                    Remove PIN
+                    Remove Protection
                   </button>
                 </div>
               )}
@@ -219,45 +304,50 @@ export const VaultSecurityModal: React.FC<VaultSecurityModalProps> = ({
           </div>
         )}
 
-        {/* View: Set / Change PIN */}
+        {/* VIEW: SET / CHANGE PIN */}
         {mode === 'set' && (
-          <form onSubmit={handleSetNewPin} className="space-y-4">
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  New 4-Digit PIN
-                </label>
-                <input
-                  type="password"
-                  maxLength={4}
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={newPin}
-                  onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))}
-                  placeholder="••••"
-                  autoFocus
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-center text-xl tracking-[0.5em] font-mono text-white focus:outline-none focus:border-amber-500"
-                />
+          <form onSubmit={handleSetNewPin}>
+            <div className="vault-pin-input-group">
+              <div className="flex-between items-center">
+                <label className="text-xs font-semibold">Enter 4-Digit PIN</label>
+                <button
+                  type="button"
+                  onClick={() => setShowPlainPin(!showPlainPin)}
+                  className="text-xs text-muted flex-align gap-1 hover:text-white"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                >
+                  {showPlainPin ? <EyeOff size={11} /> : <Eye size={11} />}
+                  <span>{showPlainPin ? 'Hide' : 'Peek'}</span>
+                </button>
               </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Confirm 4-Digit PIN
-                </label>
-                <input
-                  type="password"
-                  maxLength={4}
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={confirmPin}
-                  onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ''))}
-                  placeholder="••••"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-center text-xl tracking-[0.5em] font-mono text-white focus:outline-none focus:border-amber-500"
-                />
-              </div>
+              <input
+                type={showPlainPin ? 'text' : 'password'}
+                maxLength={4}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={newPin}
+                onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))}
+                placeholder="••••"
+                autoFocus
+                className="vault-pin-input-field"
+              />
             </div>
 
-            <div className="flex gap-2 pt-2">
+            <div className="vault-pin-input-group">
+              <label className="text-xs font-semibold">Confirm 4-Digit PIN</label>
+              <input
+                type={showPlainPin ? 'text' : 'password'}
+                maxLength={4}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={confirmPin}
+                onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ''))}
+                placeholder="••••"
+                className="vault-pin-input-field"
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
               <button
                 type="button"
                 onClick={() => {
@@ -265,32 +355,32 @@ export const VaultSecurityModal: React.FC<VaultSecurityModalProps> = ({
                   resetForm();
                 }}
                 disabled={isProcessing}
-                className="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs font-medium transition-colors"
+                className="btn-secondary flex-1"
+                style={{ justifyContent: 'center' }}
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isProcessing || newPin.length !== 4 || confirmPin.length !== 4}
-                className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-semibold transition-colors disabled:opacity-50"
+                className="btn-primary flex-1"
+                style={{ justifyContent: 'center' }}
               >
-                {isProcessing ? 'Hashing...' : 'Save & Protect'}
+                {isProcessing ? 'Hashing...' : 'Save & Secure'}
               </button>
             </div>
           </form>
         )}
 
-        {/* View: Remove PIN */}
+        {/* VIEW: REMOVE PIN */}
         {mode === 'remove' && (
-          <form onSubmit={handleRemovePin} className="space-y-4">
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Enter your current 4-digit PIN to remove protection from this vault.
+          <form onSubmit={handleRemovePin}>
+            <p className="text-xs text-muted leading-relaxed mb-3">
+              Enter your current 4-digit PIN to disable lock protection on this vault.
             </p>
 
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">
-                Current PIN
-              </label>
+            <div className="vault-pin-input-group">
+              <label className="text-xs font-semibold">Current 4-Digit PIN</label>
               <input
                 type="password"
                 maxLength={4}
@@ -300,11 +390,11 @@ export const VaultSecurityModal: React.FC<VaultSecurityModalProps> = ({
                 onChange={(e) => setCurrentPin(e.target.value.replace(/\D/g, ''))}
                 placeholder="••••"
                 autoFocus
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-center text-xl tracking-[0.5em] font-mono text-white focus:outline-none focus:border-rose-500"
+                className="vault-pin-input-field"
               />
             </div>
 
-            <div className="flex gap-2 pt-2">
+            <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
               <button
                 type="button"
                 onClick={() => {
@@ -312,20 +402,46 @@ export const VaultSecurityModal: React.FC<VaultSecurityModalProps> = ({
                   resetForm();
                 }}
                 disabled={isProcessing}
-                className="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs font-medium transition-colors"
+                className="btn-secondary flex-1"
+                style={{ justifyContent: 'center' }}
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isProcessing || currentPin.length !== 4}
-                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition-colors disabled:opacity-50"
+                className="btn-secondary flex-1"
+                style={{
+                  justifyContent: 'center',
+                  background: 'rgba(239, 68, 68, 0.2)',
+                  borderColor: 'rgba(239, 68, 68, 0.5)',
+                  color: '#fca5a5',
+                }}
               >
-                {isProcessing ? 'Verifying...' : 'Confirm Remove'}
+                {isProcessing ? 'Verifying...' : 'Remove PIN'}
               </button>
             </div>
           </form>
         )}
+
+        {/* Footer Note */}
+        <div
+          style={{
+            marginTop: 20,
+            paddingTop: 12,
+            borderTop: '1px solid var(--border-subtle)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+            color: 'var(--ink-muted)',
+            fontSize: 10.5,
+            fontFamily: 'var(--font-mono)',
+          }}
+        >
+          <KeyRound size={11} />
+          <span>Zero-Cloud SHA-256 Salted WebCrypto Enclave</span>
+        </div>
       </div>
     </div>
   );
