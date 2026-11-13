@@ -110,7 +110,7 @@ export function calculateSkillTree(
   // 15 Actuarial Nodes with Constellation Coordinates & What-If Actions
   const rawNodes: Omit<SkillNode, 'status'>[] = [
     // -------------------------------------------------------------------------
-    // TIER 1: SURVIVAL FORTRESS (Row 1)
+    // TIER 1: SURVIVAL FORTRESS (Wing 1 - Left)
     // -------------------------------------------------------------------------
     {
       id: 'debt_elimination',
@@ -129,8 +129,8 @@ export function calculateSkillTree(
       actionableStep: debtBalance > 0 ? 'Direct all surplus cashflow into clearing this revolving principal immediately.' : 'Fortress established: Zero high-interest debt dragging cashflow.',
       gridColumn: 1,
       gridRow: 1,
-      treeX: 620,
-      treeY: 680,
+      treeX: 680,
+      treeY: 740,
       shortLabel: 'Debt Free',
       suggestedAction: {
         field: 'debt.cardBalance',
@@ -155,8 +155,8 @@ export function calculateSkillTree(
       actionableStep: runwayMonths < 3 ? `Park ${formatINR(Math.max(0, 3 * monthlyExpenses - currentSavings))} in liquid funds.` : '3-Month survival baseline fully secured.',
       gridColumn: 2,
       gridRow: 1,
-      treeX: 380,
-      treeY: 570,
+      treeX: 420,
+      treeY: 620,
       shortLabel: '3M Runway',
       suggestedAction: {
         field: 'savings.emergencyFundBalance',
@@ -181,8 +181,8 @@ export function calculateSkillTree(
       actionableStep: plan.expenses.insurance === 0 ? 'Secure a pure term insurance policy with zero return of premium.' : 'Family life protection verified and active.',
       gridColumn: 3,
       gridRow: 1,
-      treeX: 180,
-      treeY: 460,
+      treeX: 220,
+      treeY: 500,
       shortLabel: 'Term Shield',
       suggestedAction: {
         field: 'expenses.insurance',
@@ -207,8 +207,8 @@ export function calculateSkillTree(
       actionableStep: (!plan.tax.deductions80D && !plan.expenses.insurance) ? 'Acquire a personal base cover + super top-up policy with zero room cap.' : 'Personal health defense fortified.',
       gridColumn: 4,
       gridRow: 1,
-      treeX: 360,
-      treeY: 420,
+      treeX: 460,
+      treeY: 460,
       shortLabel: 'Health Shield',
       suggestedAction: {
         field: 'tax.deductions80D',
@@ -233,8 +233,8 @@ export function calculateSkillTree(
       actionableStep: runwayMonths < 6 ? `Build up reserves by ${formatINR(Math.max(0, 6 * monthlyExpenses - currentSavings))}.` : 'Iron Fortress unlocked: Immune to short-term economic shocks.',
       gridColumn: 5,
       gridRow: 1,
-      treeX: 200,
-      treeY: 300,
+      treeX: 220,
+      treeY: 320,
       shortLabel: '6M Fortress',
       suggestedAction: {
         field: 'savings.emergencyFundBalance',
@@ -244,7 +244,7 @@ export function calculateSkillTree(
     },
 
     // -------------------------------------------------------------------------
-    // TIER 2: VELOCITY ENGINE (Row 2)
+    // TIER 2: VELOCITY ENGINE (Wing 2 - Center)
     // -------------------------------------------------------------------------
     {
       id: 'budget_equilibrium',
@@ -263,8 +263,8 @@ export function calculateSkillTree(
       actionableStep: savingsRate < 20 ? 'Trim non-essential wants or increase inflows to restore the 20% investment baseline.' : 'Equilibrium achieved: Your balance sheet compounds naturally.',
       gridColumn: 1,
       gridRow: 2,
-      treeX: 620,
-      treeY: 520,
+      treeX: 680,
+      treeY: 570,
       shortLabel: '50/30/20 Rule',
       suggestedAction: {
         field: 'savings.monthlySip',
@@ -289,8 +289,8 @@ export function calculateSkillTree(
       actionableStep: savingsRate < 30 ? 'Step up SIP contributions or monetize freelance secondary inflows.' : 'Elite compounding: 30%+ cashflow velocity achieved.',
       gridColumn: 2,
       gridRow: 2,
-      treeX: 730,
-      treeY: 380,
+      treeX: 800,
+      treeY: 440,
       shortLabel: '30% Velocity',
       suggestedAction: {
         field: 'savings.monthlySip',
@@ -340,8 +340,8 @@ export function calculateSkillTree(
       actionableStep: 'Keep regime deductions synced to maintain zero unneeded rupee leakage to the exchequer.',
       gridColumn: 4,
       gridRow: 2,
-      treeX: 510,
-      treeY: 380,
+      treeX: 580,
+      treeY: 410,
       shortLabel: 'Tax Shield',
       suggestedAction: {
         field: 'tax.deductions80D',
@@ -366,8 +366,8 @@ export function calculateSkillTree(
       actionableStep: stepUpRate < 10 ? 'Increase your annual step-up lever to at least 10% to outrun lifestyle inflation.' : 'Exponential curve locked in: Step-up protocol active.',
       gridColumn: 5,
       gridRow: 2,
-      treeX: 620,
-      treeY: 260,
+      treeX: 760,
+      treeY: 290,
       shortLabel: '10% Step-Up',
       suggestedAction: {
         field: 'savings.stepUpSipPercent',
@@ -377,7 +377,7 @@ export function calculateSkillTree(
     },
 
     // -------------------------------------------------------------------------
-    // TIER 3: SOVEREIGN AUTONOMY (Row 3)
+    // TIER 3: SOVEREIGN AUTONOMY (Wing 3 - Right)
     // -------------------------------------------------------------------------
     {
       id: 'quarter_crore_hub',
@@ -396,8 +396,8 @@ export function calculateSkillTree(
       actionableStep: currentSavings < 2_500_000 ? `Maintain SIPs to bridge ${formatINR(2_500_000 - currentSavings)}.` : 'Crucial milestone crossed: Organic returns are now accelerating your net worth.',
       gridColumn: 1,
       gridRow: 3,
-      treeX: 530,
-      treeY: 140,
+      treeX: 640,
+      treeY: 160,
       shortLabel: '₹25L Hub',
       suggestedAction: {
         field: 'savings.emergencyFundBalance',
@@ -422,8 +422,8 @@ export function calculateSkillTree(
       actionableStep: currentSavings < annualExpenses * 15 ? 'Accumulate 15x annual expenses to unlock permanent career flexibility.' : 'Coast FIRE unlocked: You can take low-stress jobs or sabbaticals without endangering retirement.',
       gridColumn: 2,
       gridRow: 3,
-      treeX: 830,
-      treeY: 340,
+      treeX: 920,
+      treeY: 320,
       shortLabel: 'Coast FIRE',
       suggestedAction: {
         field: 'savings.emergencyFundBalance',
@@ -448,8 +448,8 @@ export function calculateSkillTree(
       actionableStep: currentSavings < 5_000_000 ? `Stay the course; ${formatINR(5_000_000 - currentSavings)} to reach the Half-Crore mark.` : 'Half-Crore inflection secured: Financial gravity works in your favor.',
       gridColumn: 3,
       gridRow: 3,
-      treeX: 880,
-      treeY: 490,
+      treeX: 1020,
+      treeY: 460,
       shortLabel: 'Half-Crore',
       suggestedAction: {
         field: 'savings.emergencyFundBalance',
@@ -474,7 +474,7 @@ export function calculateSkillTree(
       actionableStep: currentSavings < annualExpenses * 25 ? `Target corpus: ${formatINR(annualExpenses * 25)}. Compounding will close this gap.` : 'Complete Sovereign Independence: Working is now 100% optional.',
       gridColumn: 4,
       gridRow: 3,
-      treeX: 950,
+      treeX: 1100,
       treeY: 240,
       shortLabel: 'FIRE (25x)',
       suggestedAction: {
@@ -500,7 +500,7 @@ export function calculateSkillTree(
       actionableStep: currentSavings < annualExpenses * 50 ? 'Scale enterprise equity and asset diversification to establish a generational endowment.' : 'Sovereign Pinnacle: Antifragile dynastic wealth achieved.',
       gridColumn: 5,
       gridRow: 3,
-      treeX: 990,
+      treeX: 1220,
       treeY: 110,
       shortLabel: 'Dynasty (50x)',
       suggestedAction: {

@@ -401,33 +401,32 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
 
         {/* 3. VIEW MODE 1: VISUAL CELESTIAL STAR-CHART */}
         {viewMode === 'visual_tree' && (
-          <div className="skill-tree-viewport">
-            {/* FLOATING THAUMATURGY GLASS HUD INSPECTOR */}
-            <div className={`skill-tree-hud ${isDossierCollapsed ? 'collapsed' : ''}`}>
+          <div className="skill-tree-split-viewport">
+            {/* LEFT DOCKED THAUMATURGY GRIMOIRE / NODE DOSSIER */}
+            <aside className={`skill-tree-dossier-dock ${isDossierCollapsed ? 'dossier-collapsed' : ''}`} aria-label="Skill Node Inspector">
               {isDossierCollapsed ? (
                 <button
                   type="button"
                   onClick={() => setIsDossierCollapsed(false)}
-                  style={{ background: 'none', border: 'none', color: '#f2f3f7', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'monospace', fontSize: '11.5px', fontWeight: 600, padding: 0 }}
+                  className="dossier-expand-btn"
+                  title="Expand Dossier Inspector"
                 >
-                  <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'rgba(247, 141, 44, 0.2)', color: '#f78d2c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <ChevronRight size={13} />
-                  </div>
-                  <span>✦ Inspect: {activeNode.shortLabel || activeNode.title}</span>
+                  <ChevronRight size={16} />
+                  <span className="dossier-vertical-label">✦ INSPECT DOSSIER</span>
                 </button>
               ) : (
-                <div>
+                <div className="dossier-content-scroll">
                   {/* Card Header */}
                   <div className="skill-tree-hud-head">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
                       <div className="skill-tree-hud-icon">
                         {ICON_MAP[activeNode.iconName] || <Award size={18} />}
                       </div>
-                      <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                      <div style={{ minWidth: 0, overflow: 'hidden', flex: 1 }}>
                         <span style={{ fontSize: '9.5px', fontFamily: 'monospace', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block' }}>
                           {activeNode.badge} · {activeNode.tier.replace('tier', 'TIER ').replace('_', ' ').toUpperCase()}
                         </span>
-                        <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#f2f3f7', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <h4 style={{ margin: 0, fontSize: '13.5px', fontWeight: 700, color: '#f2f3f7', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {activeNode.title}
                         </h4>
                       </div>
@@ -437,20 +436,20 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                       type="button"
                       onClick={() => setIsDossierCollapsed(true)}
                       className="icon-pill"
-                      style={{ padding: '4px', borderRadius: '6px', color: 'var(--ink-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}
-                      title="Minimize Inspector"
+                      style={{ padding: '6px', borderRadius: '8px', color: 'var(--ink-muted)', background: 'transparent', border: 'none', cursor: 'pointer', flexShrink: 0 }}
+                      title="Collapse Dossier to expand tree canvas"
                     >
-                      <ChevronDown size={14} />
+                      <ChevronDown size={15} style={{ transform: 'rotate(90deg)' }} />
                     </button>
                   </div>
 
                   {/* Status Banner */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '8px 0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '8px 0', flexWrap: 'wrap', gap: '6px' }}>
                     <span style={{
                       fontSize: '10px',
                       fontFamily: 'monospace',
                       fontWeight: 700,
-                      padding: '2px 8px',
+                      padding: '3px 9px',
                       borderRadius: '9999px',
                       textTransform: 'uppercase',
                       background: activeNode.status === 'mastered' ? 'rgba(16, 185, 129, 0.2)' : activeNode.status === 'in_progress' ? 'rgba(168, 85, 247, 0.2)' : 'rgba(255, 255, 255, 0.06)',
@@ -480,7 +479,7 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
 
                   {/* Progress Bar & Gap */}
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '10px', color: 'var(--ink-muted)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '10px', color: 'var(--ink-muted)', marginBottom: '4px' }}>
                       <span>Target: <strong style={{ color: '#f2f3f7' }}>{activeNode.targetMetricLabel}</strong></span>
                       <span style={{ fontWeight: 700, color: '#f2f3f7' }}>{activeNode.progressPercent}%</span>
                     </div>
@@ -502,6 +501,12 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                     </div>
                   )}
 
+                  {/* Strategic Action Step */}
+                  <div style={{ padding: '10px 12px', borderRadius: '10px', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)', margin: '10px 0', fontSize: '11px', color: 'var(--ink-secondary)', lineHeight: 1.4 }}>
+                    <strong style={{ color: '#f2f3f7', display: 'block', marginBottom: '2px' }}>Strategic Playbook:</strong>
+                    {activeNode.actionableStep}
+                  </div>
+
                   {/* Interactive What-If Simulation Button */}
                   {activeNode.suggestedAction && (
                     <div style={{ marginTop: '10px' }}>
@@ -517,272 +522,274 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                   )}
                 </div>
               )}
-            </div>
+            </aside>
 
-            {/* FULL SVG ASTROLABE STAR-CHART CANVAS */}
-            <svg
-              viewBox="0 0 1360 760"
-              className="skill-tree-svg"
-            >
-              <defs>
-                {/* Blueprint Grid */}
-                <pattern id="celestial-grid" width="48" height="48" patternUnits="userSpaceOnUse">
-                  <path d="M 48 0 L 0 0 0 48" fill="none" stroke="rgba(255, 255, 255, 0.02)" strokeWidth="1" />
-                  <circle cx="48" cy="48" r="1.2" fill="rgba(191, 159, 241, 0.1)" />
-                </pattern>
+            {/* RIGHT PANE: 100% UNOBSTRUCTED SVG ASTROLABE STAR-CHART */}
+            <main className="skill-tree-canvas-panel" aria-label="Constellation Astrolabe Star-Chart">
+              <svg
+                viewBox="0 0 1440 820"
+                className="skill-tree-svg"
+              >
+                <defs>
+                  {/* Blueprint Grid */}
+                  <pattern id="celestial-grid" width="48" height="48" patternUnits="userSpaceOnUse">
+                    <path d="M 48 0 L 0 0 0 48" fill="none" stroke="rgba(255, 255, 255, 0.02)" strokeWidth="1" />
+                    <circle cx="48" cy="48" r="1.2" fill="rgba(191, 159, 241, 0.1)" />
+                  </pattern>
 
-                {/* Laser Glow Filter */}
-                <filter id="conduit-laser-glow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="3.5" result="blur" />
-                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                </filter>
-              </defs>
+                  {/* Laser Glow Filter */}
+                  <filter id="conduit-laser-glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="3.5" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                </defs>
 
-              {/* Background Grid */}
-              <rect width="1360" height="760" fill="url(#celestial-grid)" />
+                {/* Background Grid */}
+                <rect width="1440" height="820" fill="url(#celestial-grid)" />
 
-              {/* Concentric Astrolabe Background Rings */}
-              <circle cx="620" cy="720" r="180" fill="none" stroke="rgba(255, 255, 255, 0.04)" strokeDasharray="4 8" />
-              <circle cx="620" cy="720" r="340" fill="none" stroke="rgba(255, 255, 255, 0.04)" strokeDasharray="4 8" />
-              <circle cx="620" cy="720" r="500" fill="none" stroke="rgba(255, 255, 255, 0.035)" strokeDasharray="4 8" />
-              <circle cx="620" cy="720" r="660" fill="none" stroke="rgba(255, 255, 255, 0.03)" strokeDasharray="4 8" />
-              <circle cx="620" cy="720" r="820" fill="none" stroke="rgba(255, 255, 255, 0.025)" strokeDasharray="4 8" />
+                {/* Concentric Astrolabe Background Rings (Centered at Root x=680, y=740) */}
+                <circle cx="680" cy="740" r="180" fill="none" stroke="rgba(255, 255, 255, 0.04)" strokeDasharray="4 8" />
+                <circle cx="680" cy="740" r="340" fill="none" stroke="rgba(255, 255, 255, 0.04)" strokeDasharray="4 8" />
+                <circle cx="680" cy="740" r="500" fill="none" stroke="rgba(255, 255, 255, 0.035)" strokeDasharray="4 8" />
+                <circle cx="680" cy="740" r="660" fill="none" stroke="rgba(255, 255, 255, 0.03)" strokeDasharray="4 8" />
+                <circle cx="680" cy="740" r="820" fill="none" stroke="rgba(255, 255, 255, 0.025)" strokeDasharray="4 8" />
 
-              {/* Faint Astrolabe Radial Ray Lines */}
-              <line x1="620" y1="720" x2="180" y2="80" stroke="rgba(255, 255, 255, 0.02)" strokeDasharray="2 6" />
-              <line x1="620" y1="720" x2="380" y2="40" stroke="rgba(255, 255, 255, 0.02)" strokeDasharray="2 6" />
-              <line x1="620" y1="720" x2="620" y2="20" stroke="rgba(255, 255, 255, 0.025)" strokeDasharray="2 6" />
-              <line x1="620" y1="720" x2="860" y2="40" stroke="rgba(255, 255, 255, 0.02)" strokeDasharray="2 6" />
-              <line x1="620" y1="720" x2="1050" y2="80" stroke="rgba(255, 255, 255, 0.02)" strokeDasharray="2 6" />
+                {/* Faint Astrolabe Radial Ray Lines from Root (680, 740) */}
+                <line x1="680" y1="740" x2="220" y2="60" stroke="rgba(255, 255, 255, 0.02)" strokeDasharray="2 6" />
+                <line x1="680" y1="740" x2="440" y2="40" stroke="rgba(255, 255, 255, 0.02)" strokeDasharray="2 6" />
+                <line x1="680" y1="740" x2="680" y2="20" stroke="rgba(255, 255, 255, 0.025)" strokeDasharray="2 6" />
+                <line x1="680" y1="740" x2="940" y2="40" stroke="rgba(255, 255, 255, 0.02)" strokeDasharray="2 6" />
+                <line x1="680" y1="740" x2="1200" y2="60" stroke="rgba(255, 255, 255, 0.02)" strokeDasharray="2 6" />
 
-              {/* Three Wing Constellation Headers */}
-              <g transform="translate(170, 50)">
-                <rect x="-10" y="-16" width="220" height="30" rx="15" fill="rgba(16, 185, 129, 0.1)" stroke="rgba(16, 185, 129, 0.3)" />
-                <text x="100" y="4" textAnchor="middle" fill="#10b981" fontSize="11" fontFamily="monospace" fontWeight="bold" letterSpacing="0.08em">
-                  🛡️ DEFENSIVE CITADEL
-                </text>
-              </g>
+                {/* Three Wing Constellation Headers */}
+                <g transform="translate(190, 42)">
+                  <rect x="-10" y="-16" width="220" height="30" rx="15" fill="rgba(16, 185, 129, 0.1)" stroke="rgba(16, 185, 129, 0.3)" />
+                  <text x="100" y="4" textAnchor="middle" fill="#10b981" fontSize="11" fontFamily="monospace" fontWeight="bold" letterSpacing="0.08em">
+                    🛡️ DEFENSIVE CITADEL
+                  </text>
+                </g>
 
-              <g transform="translate(570, 50)">
-                <rect x="-10" y="-16" width="220" height="30" rx="15" fill="rgba(6, 182, 212, 0.1)" stroke="rgba(6, 182, 212, 0.3)" />
-                <text x="100" y="4" textAnchor="middle" fill="#06b6d4" fontSize="11" fontFamily="monospace" fontWeight="bold" letterSpacing="0.08em">
-                  ⚡ COMPOUNDING VELOCITY
-                </text>
-              </g>
+                <g transform="translate(570, 42)">
+                  <rect x="-10" y="-16" width="220" height="30" rx="15" fill="rgba(6, 182, 212, 0.1)" stroke="rgba(6, 182, 212, 0.3)" />
+                  <text x="100" y="4" textAnchor="middle" fill="#06b6d4" fontSize="11" fontFamily="monospace" fontWeight="bold" letterSpacing="0.08em">
+                    ⚡ COMPOUNDING VELOCITY
+                  </text>
+                </g>
 
-              <g transform="translate(880, 50)">
-                <rect x="-10" y="-16" width="220" height="30" rx="15" fill="rgba(245, 158, 11, 0.1)" stroke="rgba(245, 158, 11, 0.3)" />
-                <text x="100" y="4" textAnchor="middle" fill="#f59e0b" fontSize="11" fontFamily="monospace" fontWeight="bold" letterSpacing="0.08em">
-                  👑 SOVEREIGN AUTONOMY
-                </text>
-              </g>
+                <g transform="translate(980, 42)">
+                  <rect x="-10" y="-16" width="220" height="30" rx="15" fill="rgba(245, 158, 11, 0.1)" stroke="rgba(245, 158, 11, 0.3)" />
+                  <text x="100" y="4" textAnchor="middle" fill="#f59e0b" fontSize="11" fontFamily="monospace" fontWeight="bold" letterSpacing="0.08em">
+                    👑 SOVEREIGN AUTONOMY
+                  </text>
+                </g>
 
-              {/* 1. RENDER ORGANIC CUBIC BEZIER CONDUITS */}
-              <g className="conduits-group">
-                {SOVEREIGN_TREE_CONDUITS.map((conduit, idx) => {
-                  const parent = nodeMap.get(conduit.from);
-                  const child = nodeMap.get(conduit.to);
-                  if (!parent || !child || !parent.treeX || !parent.treeY || !child.treeX || !child.treeY) return null;
+                {/* 1. RENDER ORGANIC CUBIC BEZIER CONDUITS */}
+                <g className="conduits-group">
+                  {SOVEREIGN_TREE_CONDUITS.map((conduit, idx) => {
+                    const parent = nodeMap.get(conduit.from);
+                    const child = nodeMap.get(conduit.to);
+                    if (!parent || !child || !parent.treeX || !parent.treeY || !child.treeX || !child.treeY) return null;
 
-                  const x1 = parent.treeX;
-                  const y1 = parent.treeY;
-                  const x2 = child.treeX;
-                  const y2 = child.treeY;
+                    const x1 = parent.treeX;
+                    const y1 = parent.treeY;
+                    const x2 = child.treeX;
+                    const y2 = child.treeY;
 
-                  const pathD = generateCurvedPath(x1, y1, x2, y2);
+                    const pathD = generateCurvedPath(x1, y1, x2, y2);
 
-                  const isBothMastered = parent.status === 'mastered' && child.status === 'mastered';
-                  const isInFlight = parent.status === 'mastered' && child.status === 'in_progress';
-                  const isIlluminated = illuminatedAncestors.has(conduit.from) && illuminatedAncestors.has(conduit.to);
-                  const isDimmed = selectedTier !== 'all' && (parent.tier !== selectedTier && child.tier !== selectedTier);
+                    const isBothMastered = parent.status === 'mastered' && child.status === 'mastered';
+                    const isInFlight = parent.status === 'mastered' && child.status === 'in_progress';
+                    const isIlluminated = illuminatedAncestors.has(conduit.from) && illuminatedAncestors.has(conduit.to);
+                    const isDimmed = selectedTier !== 'all' && (parent.tier !== selectedTier && child.tier !== selectedTier);
 
-                  return (
-                    <g key={idx} opacity={isDimmed ? 0.2 : 1} className="transition-opacity duration-300">
-                      {/* Background blurred glow conduit */}
-                      {(isIlluminated || isBothMastered || isInFlight) && (
+                    return (
+                      <g key={idx} opacity={isDimmed ? 0.2 : 1} className="transition-opacity duration-300">
+                        {/* Background blurred glow conduit */}
+                        {(isIlluminated || isBothMastered || isInFlight) && (
+                          <path
+                            d={pathD}
+                            fill="none"
+                            stroke={isIlluminated ? '#f78d2c' : isBothMastered ? '#10b981' : '#a855f7'}
+                            strokeWidth={isIlluminated ? "5" : "3.5"}
+                            opacity={isIlluminated ? 0.75 : 0.35}
+                            filter="url(#conduit-laser-glow)"
+                          />
+                        )}
+                        {/* Foreground crisp energy line */}
                         <path
                           d={pathD}
                           fill="none"
-                          stroke={isIlluminated ? '#f78d2c' : isBothMastered ? '#10b981' : '#a855f7'}
-                          strokeWidth={isIlluminated ? "5" : "3.5"}
-                          opacity={isIlluminated ? 0.75 : 0.35}
-                          filter="url(#conduit-laser-glow)"
+                          stroke={
+                            isIlluminated
+                              ? '#f78d2c'
+                              : isBothMastered
+                              ? '#10b981'
+                              : isInFlight
+                              ? '#c084fc'
+                              : 'rgba(255, 255, 255, 0.12)'
+                          }
+                          strokeWidth={isIlluminated ? 3 : isBothMastered ? 2.5 : isInFlight ? 2 : 1.5}
+                          strokeDasharray={isInFlight && !isIlluminated ? '6 6' : undefined}
                         />
-                      )}
-                      {/* Foreground crisp energy line */}
-                      <path
-                        d={pathD}
-                        fill="none"
-                        stroke={
-                          isIlluminated
-                            ? '#f78d2c'
-                            : isBothMastered
-                            ? '#10b981'
-                            : isInFlight
-                            ? '#c084fc'
-                            : 'rgba(255, 255, 255, 0.12)'
-                        }
-                        strokeWidth={isIlluminated ? 3 : isBothMastered ? 2.5 : isInFlight ? 2 : 1.5}
-                        strokeDasharray={isInFlight && !isIlluminated ? '6 6' : undefined}
-                      />
-                    </g>
-                  );
-                })}
-              </g>
+                      </g>
+                    );
+                  })}
+                </g>
 
-              {/* 2. RENDER INTERACTIVE CELESTIAL NODE GLYPHS */}
-              <g className="nodes-group">
-                {treeState.nodes.map((node) => {
-                  if (!node.treeX || !node.treeY) return null;
-                  const x = node.treeX;
-                  const y = node.treeY;
-                  const isSelected = activeNode.id === node.id;
-                  const isHovered = hoveredNodeId === node.id;
-                  const isAncestor = illuminatedAncestors.has(node.id);
-                  const isMastered = node.status === 'mastered';
-                  const isInProgress = node.status === 'in_progress';
-                  const isApex = node.id === 'antifragile_dynasty';
-                  const isHub = node.id === 'quarter_crore_hub' || node.id === 'full_sovereign_fire';
+                {/* 2. RENDER INTERACTIVE CELESTIAL NODE GLYPHS */}
+                <g className="nodes-group">
+                  {treeState.nodes.map((node) => {
+                    if (!node.treeX || !node.treeY) return null;
+                    const x = node.treeX;
+                    const y = node.treeY;
+                    const isSelected = activeNode.id === node.id;
+                    const isHovered = hoveredNodeId === node.id;
+                    const isAncestor = illuminatedAncestors.has(node.id);
+                    const isMastered = node.status === 'mastered';
+                    const isInProgress = node.status === 'in_progress';
+                    const isApex = node.id === 'antifragile_dynasty';
+                    const isHub = node.id === 'quarter_crore_hub' || node.id === 'debt_elimination';
 
-                  const radius = isApex ? 34 : isHub ? 29 : 25;
-                  const circumference = 2 * Math.PI * (radius + 3);
-                  const progressOffset = circumference - (node.progressPercent / 100) * circumference;
-                  const isDimmed = selectedTier !== 'all' && node.tier !== selectedTier;
+                    const radius = isApex ? 34 : isHub ? 30 : 26;
+                    const circumference = 2 * Math.PI * (radius + 3);
+                    const progressOffset = circumference - (node.progressPercent / 100) * circumference;
+                    const isDimmed = selectedTier !== 'all' && node.tier !== selectedTier;
 
-                  // Wing category color
-                  const wingColor = node.tier === 'tier1_survival' ? '#10b981' : node.tier === 'tier2_velocity' ? '#06b6d4' : '#f59e0b';
+                    // Wing category color
+                    const wingColor = node.tier === 'tier1_survival' ? '#10b981' : node.tier === 'tier2_velocity' ? '#06b6d4' : '#f59e0b';
 
-                  return (
-                    <g
-                      key={node.id}
-                      transform={`translate(${x}, ${y})`}
-                      className="cursor-pointer transition-transform duration-200"
-                      opacity={isDimmed ? 0.3 : 1}
-                      onClick={() => {
-                        setSelectedNodeId(node.id);
-                        const freq = node.tier === 'tier1_survival' ? 440 : node.tier === 'tier2_velocity' ? 554 : 659;
-                        playChime(freq);
-                      }}
-                      onMouseEnter={() => setHoveredNodeId(node.id)}
-                      onMouseLeave={() => setHoveredNodeId(null)}
-                    >
-                      {/* Selected Outer Pulsing Halo */}
-                      {isSelected && (
+                    return (
+                      <g
+                        key={node.id}
+                        transform={`translate(${x}, ${y})`}
+                        className="cursor-pointer transition-transform duration-200"
+                        opacity={isDimmed ? 0.3 : 1}
+                        onClick={() => {
+                          setSelectedNodeId(node.id);
+                          const freq = node.tier === 'tier1_survival' ? 440 : node.tier === 'tier2_velocity' ? 554 : 659;
+                          playChime(freq);
+                        }}
+                        onMouseEnter={() => setHoveredNodeId(node.id)}
+                        onMouseLeave={() => setHoveredNodeId(null)}
+                      >
+                        {/* Selected Outer Pulsing Halo */}
+                        {isSelected && (
+                          <circle
+                            r={radius + 9}
+                            fill="none"
+                            stroke="#c084fc"
+                            strokeWidth="2"
+                            strokeDasharray="5 5"
+                            opacity="0.9"
+                            className="animate-spin-slow"
+                          />
+                        )}
+
+                        {/* Hover / Prerequisite Ancestry Highlight Ring */}
+                        {(isHovered || isAncestor) && !isSelected && (
+                          <circle
+                            r={radius + 7}
+                            fill="none"
+                            stroke={isAncestor ? '#f78d2c' : isMastered ? '#10b981' : '#38bdf8'}
+                            strokeWidth={isAncestor ? "2.5" : "1.8"}
+                            opacity={isAncestor ? 0.9 : 0.6}
+                            strokeDasharray={isAncestor ? '4 4' : undefined}
+                          />
+                        )}
+
+                        {/* Base Orb Circle */}
                         <circle
-                          r={radius + 9}
-                          fill="none"
-                          stroke="#c084fc"
-                          strokeWidth="2"
-                          strokeDasharray="5 5"
-                          opacity="0.9"
-                          className="animate-spin-slow"
+                          r={radius}
+                          fill={
+                            isSelected
+                              ? '#1e1b4b'
+                              : isMastered
+                              ? '#062817'
+                              : isInProgress
+                              ? '#18122c'
+                              : '#090d16'
+                          }
+                          stroke={
+                            isSelected
+                              ? '#c084fc'
+                              : isAncestor
+                              ? '#f78d2c'
+                              : isMastered
+                              ? '#10b981'
+                              : isInProgress
+                              ? '#a855f7'
+                              : '#1e293b'
+                          }
+                          strokeWidth={isSelected ? '2.5' : isMastered ? '2' : '1.5'}
                         />
-                      )}
 
-                      {/* Hover / Prerequisite Ancestry Highlight Ring */}
-                      {(isHovered || isAncestor) && !isSelected && (
+                        {/* Circular Progress Ring */}
                         <circle
-                          r={radius + 7}
+                          r={radius + 3}
                           fill="none"
-                          stroke={isAncestor ? '#f78d2c' : isMastered ? '#10b981' : '#38bdf8'}
-                          strokeWidth={isAncestor ? "2.5" : "1.8"}
-                          opacity={isAncestor ? 0.9 : 0.6}
-                          strokeDasharray={isAncestor ? '4 4' : undefined}
+                          stroke={isMastered ? '#10b981' : isAncestor ? '#f78d2c' : wingColor}
+                          strokeWidth="2.5"
+                          strokeDasharray={circumference}
+                          strokeDashoffset={progressOffset}
+                          strokeLinecap="round"
+                          transform="rotate(-90)"
+                          opacity={node.progressPercent > 0 ? 0.95 : 0}
                         />
-                      )}
 
-                      {/* Base Orb Circle */}
-                      <circle
-                        r={radius}
-                        fill={
-                          isSelected
-                            ? '#1e1b4b'
-                            : isMastered
-                            ? '#062817'
-                            : isInProgress
-                            ? '#18122c'
-                            : '#090d16'
-                        }
-                        stroke={
-                          isSelected
-                            ? '#c084fc'
-                            : isAncestor
-                            ? '#f78d2c'
-                            : isMastered
-                            ? '#10b981'
-                            : isInProgress
-                            ? '#a855f7'
-                            : '#1e293b'
-                        }
-                        strokeWidth={isSelected ? '2.5' : isMastered ? '2' : '1.5'}
-                      />
+                        {/* Centered Node Icon */}
+                        <foreignObject
+                          x="-12"
+                          y="-12"
+                          width="24"
+                          height="24"
+                          className="pointer-events-none"
+                        >
+                          <div className="w-full h-full flex items-center justify-center text-primary">
+                            {ICON_MAP[node.iconName] || <Award size={18} />}
+                          </div>
+                        </foreignObject>
 
-                      {/* Circular Progress Ring */}
-                      <circle
-                        r={radius + 3}
-                        fill="none"
-                        stroke={isMastered ? '#10b981' : isAncestor ? '#f78d2c' : wingColor}
-                        strokeWidth="2.5"
-                        strokeDasharray={circumference}
-                        strokeDashoffset={progressOffset}
-                        strokeLinecap="round"
-                        transform="rotate(-90)"
-                        opacity={node.progressPercent > 0 ? 0.95 : 0}
-                      />
+                        {/* Mastered Checkmark Badge (Top-Right) */}
+                        {isMastered ? (
+                          <g transform={`translate(${radius - 5}, ${-radius + 5})`}>
+                            <circle r="7" fill="#10b981" />
+                            <path d="M -3.5 0 L -1 2.5 L 4 -2" fill="none" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
+                          </g>
+                        ) : isInProgress ? (
+                          <g transform={`translate(${radius - 5}, ${-radius + 5})`}>
+                            <circle r="6" fill="#a855f7" className="animate-pulse" />
+                          </g>
+                        ) : null}
 
-                      {/* Centered Node Icon */}
-                      <foreignObject
-                        x="-12"
-                        y="-12"
-                        width="24"
-                        height="24"
-                        className="pointer-events-none"
-                      >
-                        <div className="w-full h-full flex items-center justify-center text-primary">
-                          {ICON_MAP[node.iconName] || <Award size={18} />}
-                        </div>
-                      </foreignObject>
+                        {/* Crisp Short Title (Zero Collision) */}
+                        <text
+                          textAnchor="middle"
+                          y={radius + 18}
+                          fill={isSelected ? '#ffffff' : isMastered ? '#34d399' : '#f1f5f9'}
+                          fontSize="11.5"
+                          fontFamily="sans-serif"
+                          fontWeight="700"
+                        >
+                          {node.shortLabel || node.title}
+                        </text>
 
-                      {/* Mastered Checkmark Badge (Top-Right) */}
-                      {isMastered ? (
-                        <g transform={`translate(${radius - 5}, ${-radius + 5})`}>
-                          <circle r="7" fill="#10b981" />
-                          <path d="M -3.5 0 L -1 2.5 L 4 -2" fill="none" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
-                        </g>
-                      ) : isInProgress ? (
-                        <g transform={`translate(${radius - 5}, ${-radius + 5})`}>
-                          <circle r="6" fill="#a855f7" className="animate-pulse" />
-                        </g>
-                      ) : null}
-
-                      {/* Crisp Short Title (Zero Collision) */}
-                      <text
-                        textAnchor="middle"
-                        y={radius + 18}
-                        fill={isSelected ? '#ffffff' : isMastered ? '#34d399' : '#f1f5f9'}
-                        fontSize="11.5"
-                        fontFamily="sans-serif"
-                        fontWeight="700"
-                      >
-                        {node.shortLabel || node.title}
-                      </text>
-
-                      {/* Status / Metric Sub-Label */}
-                      <text
-                        textAnchor="middle"
-                        y={radius + 31}
-                        fill={isMastered ? '#10b981' : isInProgress ? '#c084fc' : '#64748b'}
-                        fontSize="9.5"
-                        fontFamily="monospace"
-                        fontWeight="600"
-                      >
-                        {node.status === 'mastered' ? '✓ Mastered' : `${node.progressPercent}% · ${node.badge}`}
-                      </text>
-                    </g>
-                  );
-                })}
-              </g>
-            </svg>
+                        {/* Status / Metric Sub-Label */}
+                        <text
+                          textAnchor="middle"
+                          y={radius + 31}
+                          fill={isMastered ? '#10b981' : isInProgress ? '#c084fc' : '#64748b'}
+                          fontSize="9.5"
+                          fontFamily="monospace"
+                          fontWeight="600"
+                        >
+                          {node.status === 'mastered' ? '✓ Mastered' : `${node.progressPercent}% · ${node.badge}`}
+                        </text>
+                      </g>
+                    );
+                  })}
+                </g>
+              </svg>
+            </main>
           </div>
         )}
 
@@ -824,6 +831,7 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
               {filteredNodes.map((node) => {
                 const isSelected = activeNode.id === node.id;
                 const isMastered = node.status === 'mastered';
+                const wingColor = node.tier === 'tier1_survival' ? '#10b981' : node.tier === 'tier2_velocity' ? '#06b6d4' : '#f59e0b';
 
                 return (
                   <button
@@ -835,23 +843,47 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                       playChime(isMastered ? 660 : 440);
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {ICON_MAP[node.iconName] || <Award size={16} />}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: wingColor }}>
+                          {ICON_MAP[node.iconName] || <Award size={16} />}
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '9.5px', fontFamily: 'monospace', fontWeight: 700, color: wingColor, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            {node.badge}
+                          </span>
+                        </div>
                       </div>
-                      <span style={{ fontSize: '10px', fontFamily: 'monospace', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', background: 'rgba(255,255,255,0.06)', color: 'var(--ink-muted)' }}>
-                        {node.badge}
+                      <span style={{
+                        fontSize: '9.5px',
+                        fontFamily: 'monospace',
+                        fontWeight: 700,
+                        padding: '2px 8px',
+                        borderRadius: '9999px',
+                        textTransform: 'uppercase',
+                        background: isMastered ? 'rgba(16, 185, 129, 0.2)' : node.status === 'in_progress' ? 'rgba(168, 85, 247, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                        color: isMastered ? '#34d399' : node.status === 'in_progress' ? '#c084fc' : 'var(--ink-muted)',
+                        border: `1px solid ${isMastered ? 'rgba(16, 185, 129, 0.4)' : node.status === 'in_progress' ? 'rgba(168, 85, 247, 0.4)' : 'rgba(255, 255, 255, 0.1)'}`,
+                      }}>
+                        {isMastered ? '✓ Mastered' : `${node.progressPercent}%`}
                       </span>
                     </div>
 
-                    <h4 style={{ margin: '0 0 4px', fontSize: '13px', fontWeight: 700, color: '#f2f3f7' }}>{node.title}</h4>
-                    <p style={{ margin: '0 0 8px', fontSize: '11px', color: 'var(--ink-secondary)', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{node.description}</p>
+                    <h4 style={{ margin: '0 0 6px', fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>{node.title}</h4>
+                    <p style={{ margin: '0 0 10px', fontSize: '11.5px', color: 'var(--ink-secondary)', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{node.description}</p>
 
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '10.5px', paddingTop: '8px', borderTop: '1px solid var(--border-subtle)' }}>
-                      <span style={{ color: 'var(--ink-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{node.currentMetricLabel}</span>
-                      <span style={{ fontWeight: 700, color: isMastered ? '#34d399' : '#c084fc' }}>
-                        {isMastered ? '✓ Mastered' : `${node.progressPercent}%`}
-                      </span>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '8px 10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)', marginBottom: '10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontFamily: 'monospace', color: 'var(--ink-muted)', marginBottom: '4px' }}>
+                        <span>Target: <strong style={{ color: '#f8fafc' }}>{node.targetMetricLabel}</strong></span>
+                        <span style={{ color: isMastered ? '#34d399' : '#c084fc', fontWeight: 700 }}>{node.currentMetricLabel}</span>
+                      </div>
+                      <div style={{ height: '4px', width: '100%', background: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden' }}>
+                        <div style={{ width: `${node.progressPercent}%`, height: '100%', background: isMastered ? '#10b981' : 'linear-gradient(90deg, #a855f7, #06b6d4)' }} />
+                      </div>
+                    </div>
+
+                    <div style={{ fontSize: '10.5px', fontStyle: 'italic', color: 'var(--ink-muted)', lineHeight: 1.4 }}>
+                      &quot;{node.actuarialPrinciple}&quot;
                     </div>
                   </button>
                 );

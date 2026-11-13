@@ -633,7 +633,7 @@ body {
    -------------------------------------------------------------------------- */
 .cockpit-grid {
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
+  grid-template-columns: 1fr 1fr;
   gap: 28px;
   align-items: start;
   width: 100%;
@@ -650,10 +650,21 @@ body {
   box-sizing: border-box;
 }
 
+.cockpit-fullwidth-section {
+  width: 100%;
+  margin-top: 28px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 @media (max-width: 1180px) {
   .cockpit-grid {
     grid-template-columns: 1fr;
     gap: 20px;
+  }
+
+  .cockpit-fullwidth-section {
+    margin-top: 20px;
   }
 }
 
@@ -5514,27 +5525,93 @@ body {
   flex-shrink: 0;
 }
 
-/* 100% Star-Chart Viewport */
-.skill-tree-viewport {
-  position: relative !important;
-  width: 100%;
-  height: 610px;
-  min-height: 520px;
-  max-height: calc(88vh - 140px);
-  overflow: hidden !important;
-  border-radius: 16px;
-  background: radial-gradient(circle at 50% 95%, rgba(124, 79, 217, 0.12) 0%, rgba(6, 9, 19, 0.98) 70%, #03050a 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.8);
+/* 100% Star-Chart Split-Pane Viewport (Thaumaturgy Tome + Unobstructed Canvas) */
+.skill-tree-split-viewport {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: row;
+  width: 100%;
+  height: 620px;
+  min-height: 520px;
+  max-height: calc(88vh - 130px);
+  border-radius: 16px;
+  overflow: hidden;
+  background: #070a14;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 2px 16px rgba(0, 0, 0, 0.9);
+  position: relative;
   box-sizing: border-box;
 }
 
-.skill-tree-modal.skill-tree-theater-mode .skill-tree-viewport {
-  height: calc(96vh - 130px);
+.skill-tree-modal.skill-tree-theater-mode .skill-tree-split-viewport {
+  height: calc(96vh - 120px);
   max-height: none;
+}
+
+/* Left Docked Thaumaturgy Codex / Inspector */
+.skill-tree-dossier-dock {
+  width: 330px;
+  flex-shrink: 0;
+  background: #0b0f1d;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  z-index: 20;
+  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.skill-tree-dossier-dock.dossier-collapsed {
+  width: 44px;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 14px;
+  background: #090c17;
+  cursor: pointer;
+}
+
+.dossier-expand-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  color: var(--colour-quasar);
+  cursor: pointer;
+  padding: 8px 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.dossier-vertical-label {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-secondary);
+}
+
+.dossier-content-scroll {
+  padding: 16px 18px;
+  overflow-y: auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* Right Pane: 100% Unobstructed Celestial Canvas */
+.skill-tree-canvas-panel {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  position: relative;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 90%, rgba(124, 79, 217, 0.12) 0%, rgba(7, 10, 20, 0.98) 65%, #03050a 100%);
 }
 
 .skill-tree-svg {
@@ -5542,33 +5619,6 @@ body {
   height: 100%;
   display: block;
   user-select: none;
-}
-
-/* Floating Thaumaturgy HUD Card */
-.skill-tree-hud {
-  position: absolute !important;
-  top: 16px;
-  right: 16px;
-  width: 320px;
-  max-height: calc(100% - 32px);
-  overflow-y: auto;
-  z-index: 50 !important;
-  background: rgba(11, 15, 27, 0.95) !important;
-  border: 1px solid rgba(191, 159, 241, 0.35) !important;
-  border-radius: 14px;
-  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.85), 0 0 24px rgba(124, 79, 217, 0.2) !important;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  padding: 16px;
-  box-sizing: border-box;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.skill-tree-hud.collapsed {
-  width: auto;
-  max-width: 280px;
-  padding: 6px 12px;
-  cursor: pointer;
 }
 
 .skill-tree-hud-head {
@@ -5675,45 +5725,72 @@ body {
   transform: translateY(1px);
 }
 
-/* Actuarial Matrix Grid */
+/* Actuarial Matrix Grid (High-Contrast Luxury Dark Theme) */
 .skill-matrix-container {
   flex: 1;
   overflow-y: auto;
-  padding-top: 8px;
+  padding: 16px 20px;
+  background: #070a14;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 6px;
 }
 
 .skill-matrix-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 12px;
-  margin-top: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  margin-top: 14px;
 }
 
 .skill-matrix-card {
-  padding: 14px;
-  border-radius: 12px;
-  border: 1px solid var(--border-subtle);
-  background: rgba(18, 22, 34, 0.7);
+  padding: 18px 20px !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  background: #101423 !important;
   text-align: left;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
 }
 
 .skill-matrix-card:hover {
-  background: rgba(24, 30, 48, 0.9);
-  border-color: var(--border-hover);
+  background: #141a2e !important;
+  border-color: rgba(191, 159, 241, 0.45) !important;
   transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65);
 }
 
 .skill-matrix-card.selected {
-  border-color: var(--colour-quasar) !important;
-  box-shadow: 0 0 16px rgba(191, 159, 241, 0.25);
-  background: rgba(124, 79, 217, 0.12) !important;
+  border-color: #a855f7 !important;
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.35);
+  background: rgba(124, 79, 217, 0.15) !important;
 }
 
 .skill-matrix-card.mastered {
-  border-color: rgba(94, 196, 145, 0.4);
-  background: rgba(6, 40, 23, 0.35);
+  border-color: rgba(16, 185, 129, 0.45) !important;
+  background: rgba(6, 40, 23, 0.45) !important;
+}
+
+@media (max-width: 920px) {
+  .skill-tree-split-viewport {
+    flex-direction: column;
+    height: auto;
+    max-height: calc(90vh - 120px);
+  }
+
+  .skill-tree-dossier-dock {
+    width: 100%;
+    max-height: 240px;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .skill-tree-canvas-panel {
+    min-height: 380px;
+  }
 }
 
 /* Character Perks View */

@@ -161,20 +161,15 @@ export function App() {
     return () => window.removeEventListener('hashchange', handleHash);
   }, [setPlan, setStatusMessage]);
 
-  // Global hotkey listener for Esc Esc (Camouflage) and Cmd+K / Ctrl+K
+  // Global hotkey listener for Alt+X (Camouflage) and Cmd+K / Ctrl+K
   useEffect(() => {
-    let lastEsc = 0;
     const handleKeyDown = (e: KeyboardEvent) => {
       const targetTag = (e.target as HTMLElement)?.tagName;
       const isInput =
         targetTag === 'INPUT' || targetTag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable;
 
-      if (e.key === 'Escape' && !isInput) {
-        const now = Date.now();
-        if (now - lastEsc < 450) {
-          setShowCamouflage((prev) => !prev);
-        }
-        lastEsc = now;
+      if (e.key === 'Escape' && showCamouflage) {
+        setShowCamouflage(false);
       } else if (e.altKey && (e.key === 'x' || e.key === 'X')) {
         e.preventDefault();
         setShowCamouflage((prev) => !prev);
@@ -189,7 +184,7 @@ export function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [showCamouflage]);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -494,7 +489,7 @@ export function App() {
                       <div>
                         <span className="item-title flex items-center justify-between">
                           <span>Excel Camouflage</span>
-                          <span className="font-mono text-[9px] px-1 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">Esc Esc</span>
+                          <span className="font-mono text-[9px] px-1 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">Alt+X</span>
                         </span>
                         <span className="item-sub">Panic logistics spreadsheet disguise</span>
                       </div>
@@ -628,7 +623,7 @@ export function App() {
 
                 <div className="tools-mega-footer">
                   <span>⚡ Quick dispatch: Press <strong>⌘K</strong> or <strong>/</strong> anywhere</span>
-                  <span>🔒 Panic Disguise: <strong>Double-tap Esc</strong></span>
+                  <span>🔒 Panic Disguise: <strong>Alt + X</strong></span>
                 </div>
               </div>
             )}
@@ -713,19 +708,29 @@ export function App() {
           {/* Key Vitals Telemetry */}
           <SummaryCards summary={summary} debtPayoff={debtPayoff} period={period} />
 
-          {/* 2-Column Wide Desktop Cockpit Grid (Eliminates side gutters) */}
+          {/* 2-Column Wide Desktop Cockpit Grid (Symmetrically Balanced) */}
           <div className="cockpit-grid">
             <div className="cockpit-col">
               {/* Cashflow Inflow & Outflow Mix */}
-              <IncomeExpensePanel plan={plan} period={period} onChange={setPlan} />
+              <div id="tour-cashflows">
+                <IncomeExpensePanel plan={plan} period={period} onChange={setPlan} />
+              </div>
 
               {/* Debt Elimination & Tax Regime */}
-              <IndiaTaxAndDebtPanel
-                plan={plan}
-                debtPayoff={debtPayoff}
-                taxComparison={taxComparison}
-                onChange={setPlan}
-              />
+              <div id="tour-tax">
+                <IndiaTaxAndDebtPanel
+                  plan={plan}
+                  debtPayoff={debtPayoff}
+                  taxComparison={taxComparison}
+                  onChange={setPlan}
+                />
+              </div>
+
+              {/* Emergency Runway Survival Stress Test & FIRE Milestones */}
+              <div id="tour-survival" className="tour-survival-block">
+                <EmergencyStressTestWidget plan={plan} />
+                <FireMilestoneTracker plan={plan} />
+              </div>
             </div>
 
             <div className="cockpit-col">
@@ -733,24 +738,22 @@ export function App() {
               <BudgetHealthWidget analysis={budgetRule} />
 
               {/* Local Impulse Shield & Daily Burn Pocket */}
-              <ImpulseShieldWidget plan={plan} summary={summary} />
-
-              {/* Emergency Runway Survival Stress Test & FIRE Milestones */}
-              <div id="tour-survival" className="tour-survival-block">
-                <EmergencyStressTestWidget plan={plan} />
-                <FireMilestoneTracker plan={plan} />
+              <div id="tour-impulse-shield">
+                <ImpulseShieldWidget plan={plan} summary={summary} />
               </div>
-
-              {/* Forward Wealth Curve */}
-              <ProjectionSection
-                plan={plan}
-                baseline={baseline}
-                projections={projections}
-                horizonMonths={horizonMonths}
-                onHorizonChange={setHorizonMonths}
-                onChange={setPlan}
-              />
             </div>
+          </div>
+
+          {/* Full-Width Majestic Forward Wealth Compounding Curve */}
+          <div className="cockpit-fullwidth-section">
+            <ProjectionSection
+              plan={plan}
+              baseline={baseline}
+              projections={projections}
+              horizonMonths={horizonMonths}
+              onHorizonChange={setHorizonMonths}
+              onChange={setPlan}
+            />
           </div>
         </main>
       )}
