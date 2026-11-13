@@ -92,7 +92,7 @@ export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
 
     QRCode.toCanvas(
       qrCanvasRef.current,
-      beamString,
+      directUrl,
       {
         width: 280,
         margin: 2,
@@ -106,7 +106,7 @@ export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
         if (err) console.error('QR Render Error:', err);
       }
     );
-  }, [isOpen, activeTab, beamString]);
+  }, [isOpen, activeTab, directUrl]);
 
   // Clean up camera stream
   const stopCamera = () => {

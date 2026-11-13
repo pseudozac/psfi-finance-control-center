@@ -1,4 +1,4 @@
-const CACHE_NAME = 'psfi-v5.8';
+const CACHE_NAME = 'psfi-v5.9';
 
 self.addEventListener('install', () => {
   self.skipWaiting();

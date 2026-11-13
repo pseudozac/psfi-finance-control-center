@@ -107,6 +107,13 @@ export function decodeVaultBeam(
   try {
     let clean = rawInput.trim();
 
+    // Extract beam payload from URL hash if a full URL was scanned or pasted
+    if (clean.includes('#beam=')) {
+      clean = clean.split('#beam=')[1];
+    } else if (clean.includes('beam=')) {
+      clean = clean.split('beam=')[1];
+    }
+
     // Direct JSON string detection (e.g. legacy clipboard or raw paste)
     if (clean.startsWith('{') && clean.endsWith('}')) {
       try {

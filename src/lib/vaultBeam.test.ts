@@ -52,4 +52,15 @@ describe('vaultBeam compact compression and decryption', () => {
     expect(decoded.vaultName).toBe('Legacy Vault');
     expect(decoded.plan?.income.salary).toBe(DEFAULT_PLAN.income.salary);
   });
+
+  it('correctly decodes full URLs containing #beam= hash fragment', () => {
+    const original = DEFAULT_PLAN;
+    const encoded = encodeVaultBeam(original, 'Mobile Beam');
+    const fullUrl = `https://pseudo-fi.vercel.app/#beam=${encoded}`;
+
+    const decoded = decodeVaultBeam(fullUrl);
+    expect(decoded.success).toBe(true);
+    expect(decoded.vaultName).toBe('Mobile Beam');
+    expect(decoded.plan?.income.salary).toBe(original.income.salary);
+  });
 });
