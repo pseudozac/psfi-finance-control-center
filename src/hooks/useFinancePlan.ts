@@ -191,6 +191,7 @@ export function useFinancePlan() {
     createVaultAndSwitch,
     deleteVault,
     renameActiveVault,
+    refreshAccounts: () => setAccounts(loadAllAccounts()),
     statusMessage,
     setStatusMessage,
   };

@@ -61,6 +61,8 @@ import { ImpulseShieldWidget } from './components/ImpulseShieldWidget';
 import { ExcelCamouflageOverlay } from './components/ExcelCamouflageOverlay';
 import { SteganographyModal } from './components/SteganographyModal';
 import { ReverseMonteCarloModal } from './components/ReverseMonteCarloModal';
+import { VaultLockGate } from './components/VaultLockGate';
+import { VaultSecurityModal } from './components/VaultSecurityModal';
 import { decodeVaultBeam } from './lib/vaultBeam';
 
 type AppPhase = 'loading' | 'gateway' | 'dashboard';
@@ -82,6 +84,7 @@ export function App() {
     launchDemoVault,
     createVaultAndSwitch,
     deleteVault,
+    refreshAccounts,
     statusMessage,
     setStatusMessage,
   } = useFinancePlan();
@@ -103,6 +106,8 @@ export function App() {
   const [showCamouflage, setShowCamouflage] = useState<boolean>(false);
   const [showSteganography, setShowSteganography] = useState<boolean>(false);
   const [showMonteCarlo, setShowMonteCarlo] = useState<boolean>(false);
+  const [showVaultSecurity, setShowVaultSecurity] = useState<boolean>(false);
+  const [unlockedVaultIds, setUnlockedVaultIds] = useState<Set<string>>(new Set());
   const [toolsMenuOpen, setToolsMenuOpen] = useState<boolean>(false);
   const toolsDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -211,6 +216,19 @@ export function App() {
       } else if (e.altKey && (e.key === 'x' || e.key === 'X')) {
         e.preventDefault();
         setShowCamouflage((prev) => !prev);
+      } else if (e.altKey && (e.key === 'l' || e.key === 'L')) {
+        e.preventDefault();
+        // Instant Lock Active Vault
+        if (activeAccount.pinHash) {
+          setUnlockedVaultIds((prev) => {
+            const next = new Set(prev);
+            next.delete(activeAccount.id);
+            return next;
+          });
+          setStatusMessage(`🔒 Vault "${activeAccount.name}" locked.`);
+        } else {
+          setShowVaultSecurity(true);
+        }
       } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setShowCmdK((prev) => !prev);
@@ -223,6 +241,21 @@ export function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showCamouflage]);
+
+  // Auto-lock vault on document visibility change (tab hidden / screen locked)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && activeAccount?.pinHash && activeAccount?.autoLockMinutes === 0) {
+        setUnlockedVaultIds((prev) => {
+          const next = new Set(prev);
+          next.delete(activeAccount.id);
+          return next;
+        });
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [activeAccount]);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -371,6 +404,27 @@ export function App() {
     );
   }
 
+  // Check if current active vault has a PIN set and is currently locked
+  const isCurrentVaultLocked = Boolean(
+    activeAccount.pinHash && activeAccount.pinSalt && !unlockedVaultIds.has(activeAccount.id)
+  );
+
+  if (isCurrentVaultLocked) {
+    return (
+      <VaultLockGate
+        account={activeAccount}
+        accounts={accounts}
+        onUnlock={() => {
+          setUnlockedVaultIds((prev) => new Set(prev).add(activeAccount.id));
+          setStatusMessage(`🔓 Unlocked ${activeAccount.name}`);
+        }}
+        onSwitchAccount={(id) => {
+          switchAccount(id);
+        }}
+      />
+    );
+  }
+
   // Phase 3: Main Dashboard
   return (
     <div className={`app-shell layout-${layoutMode} ${privacyMode ? 'privacy-masked' : ''}`}>
@@ -393,6 +447,7 @@ export function App() {
           >
             <span className={`status-dot dot-${activeAccount.avatarColor || 'nebula'}`} />
             <span className="vault-pill-name">{activeAccount.name}</span>
+            {activeAccount.pinHash && <Lock size={10} className="text-amber-400 shrink-0" />}
             <FolderKanban size={12} className="text-muted" />
           </button>
         </div>
@@ -586,6 +641,23 @@ export function App() {
                       <ShieldCheck size={11} className="text-corona" />
                       <span>Privacy & Sovereign Defense</span>
                     </div>
+
+                    <button
+                      type="button"
+                      className="tools-menu-item"
+                      onClick={() => { setShowVaultSecurity(true); setToolsMenuOpen(false); }}
+                    >
+                      <Lock size={13} className="text-amber-400" />
+                      <div>
+                        <span className="item-title">
+                          <span>Vault PIN & Security</span>
+                          <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-800/80 shrink-0 ml-auto">Alt+L</span>
+                        </span>
+                        <span className="item-sub">
+                          {activeAccount.pinHash ? 'PIN active · Lock or reconfigure' : 'Set 4-digit PIN lock'}
+                        </span>
+                      </div>
+                    </button>
 
                     <button
                       type="button"
@@ -964,6 +1036,7 @@ export function App() {
         onOpenCamouflage={() => setShowCamouflage(true)}
         onOpenSteganography={() => setShowSteganography(true)}
         onOpenMonteCarlo={() => setShowMonteCarlo(true)}
+        onOpenVaultSecurity={() => setShowVaultSecurity(true)}
       />
 
       {/* Excel Corporate Camouflage Screen Overlay [Esc Esc] */}
@@ -999,6 +1072,25 @@ export function App() {
         summary={summary}
         taxSavingsDelta={taxComparison.savings}
         onApplySimulatedPlan={(updated) => setPlan(updated)}
+      />
+
+      {/* Master Vault PIN Security Modal */}
+      <VaultSecurityModal
+        isOpen={showVaultSecurity}
+        onClose={() => setShowVaultSecurity(false)}
+        activeAccount={activeAccount}
+        onUpdateAccount={() => {
+          refreshAccounts();
+          // Keep current vault unlocked in this session
+          setUnlockedVaultIds((prev) => new Set(prev).add(activeAccount.id));
+        }}
+        onLockNow={() => {
+          setUnlockedVaultIds((prev) => {
+            const next = new Set(prev);
+            next.delete(activeAccount.id);
+            return next;
+          });
+        }}
       />
 
       {/* Zero-Server Private Statement & Document Ingestion Modal */}

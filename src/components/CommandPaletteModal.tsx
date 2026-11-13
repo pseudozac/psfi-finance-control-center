@@ -36,6 +36,7 @@ import {
   Crown,
   Activity,
   Image as ImageIcon,
+  Lock,
 } from 'lucide-react';
 import { PLAN_PRESETS, formatINR } from '../lib/finance';
 import type { FinancePlan } from '../types/finance';
@@ -76,6 +77,7 @@ interface CommandPaletteModalProps {
   onOpenCamouflage?: () => void;
   onOpenSteganography?: () => void;
   onOpenMonteCarlo?: () => void;
+  onOpenVaultSecurity?: () => void;
   onExportJSON: () => void;
   onExportCSV: () => void;
   onPrint: () => void;
@@ -198,6 +200,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   onOpenCamouflage,
   onOpenSteganography,
   onOpenMonteCarlo,
+  onOpenVaultSecurity,
   onExportJSON,
   onExportCSV,
   onPrint,
@@ -577,6 +580,19 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         icon: <ImageIcon size={15} className="text-purple-400" />,
         badge: 'Pixel Cloak',
         execute: () => onOpenSteganography(),
+      });
+    }
+
+    if (onOpenVaultSecurity) {
+      list.push({
+        id: 'tool_vault_security',
+        category: 'Tools',
+        title: 'Vault PIN Lock & Security Settings',
+        subtitle: 'Master 4-digit PIN lock to protect your net worth against physical laptop snoopers (Alt+L)',
+        keywords: 'pin lock password security protect vault snooper physical privacy crypto salt sha256',
+        icon: <Lock size={15} className="text-amber-400" />,
+        badge: 'Master PIN',
+        execute: () => onOpenVaultSecurity(),
       });
     }
 

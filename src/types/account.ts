@@ -10,6 +10,9 @@ export interface UserAccount {
   updatedAt: string;
   plan: FinancePlan;
   baseline: FinancePlan | null;
+  pinHash?: string;
+  pinSalt?: string;
+  autoLockMinutes?: number;
 }
 
 export interface AccountStorageState {

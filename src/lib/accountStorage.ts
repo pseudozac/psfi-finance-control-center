@@ -157,6 +157,39 @@ export function updateExistingAccount(updatedAccount: UserAccount): void {
   saveAllAccounts(next);
 }
 
+export function setAccountPin(accountId: string, pinHash: string, pinSalt: string, autoLockMinutes: number = 0): void {
+  const accounts = loadAllAccounts();
+  const next = accounts.map((acc) => {
+    if (acc.id === accountId) {
+      return {
+        ...acc,
+        pinHash,
+        pinSalt,
+        autoLockMinutes,
+        updatedAt: new Date().toISOString(),
+      };
+    }
+    return acc;
+  });
+  saveAllAccounts(next);
+}
+
+export function removeAccountPin(accountId: string): void {
+  const accounts = loadAllAccounts();
+  const next = accounts.map((acc) => {
+    if (acc.id === accountId) {
+      const copy = { ...acc };
+      delete copy.pinHash;
+      delete copy.pinSalt;
+      delete copy.autoLockMinutes;
+      copy.updatedAt = new Date().toISOString();
+      return copy;
+    }
+    return acc;
+  });
+  saveAllAccounts(next);
+}
+
 export function removeAccount(id: string): UserAccount[] {
   const accounts = loadAllAccounts();
   const filtered = accounts.filter((acc) => acc.id !== id);
