@@ -14,6 +14,10 @@ import {
   FileSpreadsheet,
   Volume2,
   VolumeX,
+  Crown,
+  ShieldAlert,
+  Terminal,
+  Sparkles,
 } from 'lucide-react';
 import { VirtualMouseInstructor } from './VirtualMouseInstructor';
 
@@ -26,6 +30,8 @@ export interface MasterTourStep {
   description: string;
   tip: string;
   icon: React.ReactNode;
+  missionPrompt?: string;
+  missionActionLabel?: string;
 }
 
 export const MASTER_TOUR_STEPS: MasterTourStep[] = [
@@ -74,9 +80,48 @@ export const MASTER_TOUR_STEPS: MasterTourStep[] = [
     icon: <Receipt size={15} className="text-corona" />,
   },
   {
+    targetId: 'tour-impulse-shield',
+    targetView: 'control',
+    badge: '5. MICRO SPENDING ARMOR',
+    badgeColor: 'corona',
+    title: 'Local Impulse Shield & Daily Burn Pocket',
+    description:
+      'Stop unconscious rupee leaks before they wreck your compounding curve. Calculate instant daily afford verdicts, track lifetime impulse capital rescued, and park speculative purchases in the 72-hour cooling-off chamber.',
+    tip: 'Waiting 72 hours dissipates over 80% of spontaneous dopamine shopping urges.',
+    icon: <ShieldAlert size={15} className="text-corona" />,
+    missionPrompt: '⚡ Try testing "Can I Afford This Today?" or log ₹150 Chai',
+    missionActionLabel: 'Inspect Shield',
+  },
+  {
+    targetId: 'tour-skills',
+    targetView: 'control',
+    badge: '6. MACRO PROGRESSION',
+    badgeColor: 'solstice',
+    title: 'Sovereign Wealth RPG Skill Tree',
+    description:
+      'Transform financial independence into an immersive RPG skill constellation. 15 actuarial nodes across 3 tiers (Survival Fortress, Velocity Engine, Sovereign Autonomy) with live What-If simulation and dynamic prerequisite ancestry illumination.',
+    tip: 'Hover or tap any skill node to illuminate the dependency chain leading up to it.',
+    icon: <Crown size={15} className="text-solstice" />,
+    missionPrompt: '👑 Open the full RPG Skill Tree to inspect your masteries',
+    missionActionLabel: 'Open Skill Tree',
+  },
+  {
+    targetId: 'tour-cmdk',
+    targetView: 'control',
+    badge: '7. COMMAND OMNIBAR',
+    badgeColor: 'quasar',
+    title: 'Instant Power-User Command Omnibar (⌘K)',
+    description:
+      'Lightning-fast fuzzy dispatch terminal. Adjust income, toggle privacy mode, run scenario presets, or jump between modules using keyboard shortcuts without touching your mouse.',
+    tip: 'Press ⌘K or "/" anywhere on the keyboard to summon the command omnibar instantly.',
+    icon: <Terminal size={15} className="text-quasar" />,
+    missionPrompt: '⌨️ Press Cmd+K / Ctrl+K or tap to summon the omnibar',
+    missionActionLabel: 'Summon ⌘K',
+  },
+  {
     targetId: 'terminal-ticker',
     targetView: 'terminal',
-    badge: '5. WEALTH TERMINAL',
+    badge: '8. WEALTH TERMINAL',
     badgeColor: 'pulsar',
     title: 'Corporate P&L & Net Burn Velocity',
     description:
@@ -87,7 +132,7 @@ export const MASTER_TOUR_STEPS: MasterTourStep[] = [
   {
     targetId: 'terminal-timeframes',
     targetView: 'terminal',
-    badge: '6. TIMEFRAME VELOCITY',
+    badge: '9. TIMEFRAME VELOCITY',
     badgeColor: 'solstice',
     title: '1D Daily Burn to 12M Compounding',
     description:
@@ -98,7 +143,7 @@ export const MASTER_TOUR_STEPS: MasterTourStep[] = [
   {
     targetId: 'terminal-chart-controls',
     targetView: 'terminal',
-    badge: '7. TRAJECTORY MODES',
+    badge: '10. TRAJECTORY MODES',
     badgeColor: 'quasar',
     title: 'Net P&L Curve, Inflow vs Outflow & Valuation',
     description:
@@ -109,7 +154,7 @@ export const MASTER_TOUR_STEPS: MasterTourStep[] = [
   {
     targetId: 'terminal-financial-statement',
     targetView: 'terminal',
-    badge: '8. AUDITED LEDGER',
+    badge: '11. AUDITED LEDGER',
     badgeColor: 'nebula',
     title: 'GAAP / IFRS Personal Income Statement',
     description:
@@ -168,6 +213,8 @@ interface GuidedTourModalProps {
   initialStepIndex?: number;
   activeView?: 'control' | 'terminal';
   onViewChange?: (view: 'control' | 'terminal') => void;
+  onOpenSkillTree?: () => void;
+  onOpenCmdK?: () => void;
 }
 
 export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({
@@ -177,6 +224,8 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({
   initialStepIndex = 0,
   activeView = 'control',
   onViewChange,
+  onOpenSkillTree,
+  onOpenCmdK,
 }) => {
   const [currentStepIndex, setCurrentStepIndex] = useState(initialStepIndex);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
@@ -427,6 +476,38 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({
               <strong>Tactical Insight:</strong> {step.tip}
             </span>
           </div>
+
+          {step.missionPrompt && (
+            <div className="tour-mission-box font-mono mt-2.5 p-2 rounded-lg bg-surface-raised border border-quasar/30 flex items-center justify-between gap-2 flex-wrap">
+              <span className="text-[11px] text-primary flex items-center gap-1.5 min-w-0">
+                <Sparkles size={11} className="text-solstice shrink-0" />
+                <span>{step.missionPrompt}</span>
+              </span>
+              {step.targetId === 'tour-skills' && onOpenSkillTree ? (
+                <button
+                  type="button"
+                  className="action-pill text-[10px] py-1 px-2.5 bg-solstice/20 text-solstice border-solstice/40 shrink-0 cursor-pointer"
+                  onClick={() => {
+                    onClose();
+                    onOpenSkillTree();
+                  }}
+                >
+                  {step.missionActionLabel || 'Try Live'}
+                </button>
+              ) : step.targetId === 'tour-cmdk' && onOpenCmdK ? (
+                <button
+                  type="button"
+                  className="action-pill text-[10px] py-1 px-2.5 bg-quasar/20 text-quasar border-quasar/40 shrink-0 cursor-pointer"
+                  onClick={() => {
+                    onClose();
+                    onOpenCmdK();
+                  }}
+                >
+                  {step.missionActionLabel || 'Try Live'}
+                </button>
+              ) : null}
+            </div>
+          )}
         </div>
       </div>
 

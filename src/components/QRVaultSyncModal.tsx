@@ -274,12 +274,12 @@ export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
     <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-label="Cross-Device QR Vault Beam">
       <div className="modal-card qr-sync-modal" onClick={(e) => e.stopPropagation()}>
         {/* Modal Header */}
-        <div className="modal-header">
-          <div className="flex-align gap-2 min-w-0">
+        <div className="modal-header flex items-center justify-between gap-3 mb-4 w-full">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <QrCode size={16} className="text-quasar shrink-0" />
             <h3 className="modal-title font-semibold text-sm m-0 truncate">Cross-Device QR Vault Beam</h3>
           </div>
-          <button type="button" className="icon-pill shrink-0" onClick={onClose} title="Close (Esc)">
+          <button type="button" className="icon-pill shrink-0 ml-auto" onClick={onClose} title="Close (Esc)">
             <X size={15} />
           </button>
         </div>
@@ -352,16 +352,16 @@ export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
               </div>
             </div>
 
-            <div className="qr-privacy-pill font-mono text-[11px] flex-align justify-center gap-1.5 mt-3 mx-auto">
+            <div className="qr-privacy-pill font-mono text-[11px] flex items-center justify-center gap-1.5 my-3 mx-auto px-3.5 py-1.5">
               <ShieldCheck size={13} className="text-nebula shrink-0" />
               <span>100% Peer-to-Peer Visual Beam · Zero Server Sync</span>
             </div>
 
             {/* Alternative Direct Link & Copy Tools */}
-            <div className="mt-3 pt-3 border-t border-subtle w-full flex items-center gap-2 flex-wrap">
+            <div className="qr-beam-actions-grid mt-3 pt-3 border-t border-subtle w-full">
               <button
                 type="button"
-                className="btn-secondary font-mono text-xs flex-align gap-1.5 flex-1 justify-center py-2"
+                className="btn-secondary font-mono text-xs flex items-center justify-center gap-1.5 w-full py-2"
                 onClick={() => {
                   navigator.clipboard.writeText(directUrl);
                   setCopiedLink(true);
@@ -375,16 +375,16 @@ export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
 
               <button
                 type="button"
-                className="btn-secondary font-mono text-xs flex-align gap-1.5 flex-1 justify-center py-2"
+                className="btn-secondary font-mono text-xs flex items-center justify-center gap-1.5 w-full py-2"
                 onClick={() => {
                   navigator.clipboard.writeText(beamString);
                   setCopiedString(true);
                   setTimeout(() => setCopiedString(false), 2000);
                 }}
-                title="Copy raw payload string"
+                title="Copy raw encoded beam payload string"
               >
                 {copiedString ? <Check size={12} className="text-nebula" /> : <Copy size={12} />}
-                <span>{copiedString ? 'Copied Payload!' : 'Copy String'}</span>
+                <span>{copiedString ? 'Copied String!' : 'Copy String'}</span>
               </button>
             </div>
           </div>

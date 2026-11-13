@@ -56,6 +56,29 @@ export const SOVEREIGN_TREE_CONDUITS: TreeConduit[] = [
   { from: 'full_sovereign_fire', to: 'antifragile_dynasty' },
 ];
 
+/**
+ * Returns a set of all prerequisite ancestor node IDs feeding into the given node.
+ */
+export function getPrerequisiteAncestors(
+  targetId: string,
+  conduits: readonly TreeConduit[] = SOVEREIGN_TREE_CONDUITS
+): Set<string> {
+  const ancestors = new Set<string>();
+  const queue = [targetId];
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    for (const c of conduits) {
+      if (c.to === current && !ancestors.has(c.from)) {
+        ancestors.add(c.from);
+        queue.push(c.from);
+      }
+    }
+  }
+
+  return ancestors;
+}
+
 export function calculateSkillTree(
   plan: FinancePlan,
   summary: FinanceSummary,
@@ -93,8 +116,9 @@ export function calculateSkillTree(
       actionableStep: debtBalance > 0 ? 'Direct all surplus cashflow into clearing this revolving principal immediately.' : 'Fortress established: Zero high-interest debt dragging cashflow.',
       gridColumn: 1,
       gridRow: 1,
-      treeX: 430,
-      treeY: 560,
+      treeX: 470,
+      treeY: 580,
+      shortLabel: 'Debt Free',
       suggestedAction: {
         field: 'debt.cardBalance',
         targetValue: 0,
@@ -118,8 +142,9 @@ export function calculateSkillTree(
       actionableStep: runwayMonths < 3 ? `Park ${formatINR(Math.max(0, 3 * monthlyExpenses - currentSavings))} in liquid funds.` : '3-Month survival baseline fully secured.',
       gridColumn: 2,
       gridRow: 1,
-      treeX: 270,
-      treeY: 460,
+      treeX: 280,
+      treeY: 490,
+      shortLabel: '3M Runway',
       suggestedAction: {
         field: 'savings.emergencyFundBalance',
         targetValue: Math.round(3 * monthlyExpenses),
@@ -143,8 +168,9 @@ export function calculateSkillTree(
       actionableStep: plan.expenses.insurance === 0 ? 'Secure a pure term insurance policy with zero return of premium.' : 'Family life protection verified and active.',
       gridColumn: 3,
       gridRow: 1,
-      treeX: 140,
-      treeY: 370,
+      treeX: 130,
+      treeY: 395,
+      shortLabel: 'Term Shield',
       suggestedAction: {
         field: 'expenses.insurance',
         targetValue: Math.max(1500, Math.round(annualIncome * 0.003 / 12)),
@@ -169,7 +195,8 @@ export function calculateSkillTree(
       gridColumn: 4,
       gridRow: 1,
       treeX: 270,
-      treeY: 360,
+      treeY: 395,
+      shortLabel: 'Health Shield',
       suggestedAction: {
         field: 'tax.deductions80D',
         targetValue: 25000,
@@ -194,7 +221,8 @@ export function calculateSkillTree(
       gridColumn: 5,
       gridRow: 1,
       treeX: 200,
-      treeY: 275,
+      treeY: 295,
+      shortLabel: '6M Fortress',
       suggestedAction: {
         field: 'savings.emergencyFundBalance',
         targetValue: Math.round(6 * monthlyExpenses),
@@ -222,8 +250,9 @@ export function calculateSkillTree(
       actionableStep: savingsRate < 20 ? 'Trim non-essential wants or increase inflows to restore the 20% investment baseline.' : 'Equilibrium achieved: Your balance sheet compounds naturally.',
       gridColumn: 1,
       gridRow: 2,
-      treeX: 590,
-      treeY: 460,
+      treeX: 660,
+      treeY: 490,
+      shortLabel: '50/30/20 Rule',
       suggestedAction: {
         field: 'savings.monthlySip',
         targetValue: Math.round(monthlyInflow * 0.2),
@@ -247,8 +276,9 @@ export function calculateSkillTree(
       actionableStep: savingsRate < 30 ? 'Step up SIP contributions or monetize freelance secondary inflows.' : 'Elite compounding: 30%+ cashflow velocity achieved.',
       gridColumn: 2,
       gridRow: 2,
-      treeX: 590,
-      treeY: 360,
+      treeX: 660,
+      treeY: 395,
+      shortLabel: '30% Velocity',
       suggestedAction: {
         field: 'savings.monthlySip',
         targetValue: Math.round(monthlyInflow * 0.35),
@@ -272,8 +302,9 @@ export function calculateSkillTree(
       actionableStep: currentSavings < 1_000_000 ? 'Maintain aggressive monthly SIPs to cross the 7-digit psychological threshold.' : 'Milestone crushed: First ₹10L compounding core is generating organic momentum.',
       gridColumn: 3,
       gridRow: 2,
-      treeX: 300,
-      treeY: 205,
+      treeX: 310,
+      treeY: 210,
+      shortLabel: 'First ₹10L',
       suggestedAction: {
         field: 'savings.emergencyFundBalance',
         targetValue: 1_000_000,
@@ -296,8 +327,9 @@ export function calculateSkillTree(
       actionableStep: 'Keep regime deductions synced to maintain zero unneeded rupee leakage to the exchequer.',
       gridColumn: 4,
       gridRow: 2,
-      treeX: 430,
-      treeY: 360,
+      treeX: 470,
+      treeY: 395,
+      shortLabel: 'Tax Shield',
       suggestedAction: {
         field: 'tax.deductions80D',
         targetValue: 25000,
@@ -321,8 +353,9 @@ export function calculateSkillTree(
       actionableStep: stepUpRate < 10 ? 'Increase your annual step-up lever to at least 10% to outrun lifestyle inflation.' : 'Exponential curve locked in: Step-up protocol active.',
       gridColumn: 5,
       gridRow: 2,
-      treeX: 630,
-      treeY: 275,
+      treeX: 740,
+      treeY: 295,
+      shortLabel: '10% Step-Up',
       suggestedAction: {
         field: 'savings.stepUpSipPercent',
         targetValue: 12,
@@ -350,8 +383,9 @@ export function calculateSkillTree(
       actionableStep: currentSavings < 2_500_000 ? `Maintain SIPs to bridge ${formatINR(2_500_000 - currentSavings)}.` : 'Crucial milestone crossed: Organic returns are now accelerating your net worth.',
       gridColumn: 1,
       gridRow: 3,
-      treeX: 430,
+      treeX: 470,
       treeY: 210,
+      shortLabel: '₹25L Hub',
       suggestedAction: {
         field: 'savings.emergencyFundBalance',
         targetValue: 2_500_000,
@@ -375,8 +409,9 @@ export function calculateSkillTree(
       actionableStep: currentSavings < annualExpenses * 15 ? 'Accumulate 15x annual expenses to unlock permanent career flexibility.' : 'Coast FIRE unlocked: You can take low-stress jobs or sabbaticals without endangering retirement.',
       gridColumn: 2,
       gridRow: 3,
-      treeX: 280,
-      treeY: 125,
+      treeX: 250,
+      treeY: 120,
+      shortLabel: 'Coast FIRE',
       suggestedAction: {
         field: 'savings.emergencyFundBalance',
         targetValue: Math.round(annualExpenses * 15),
@@ -400,8 +435,9 @@ export function calculateSkillTree(
       actionableStep: currentSavings < 5_000_000 ? `Stay the course; ${formatINR(5_000_000 - currentSavings)} to reach the Half-Crore mark.` : 'Half-Crore inflection secured: Financial gravity works in your favor.',
       gridColumn: 3,
       gridRow: 3,
-      treeX: 580,
-      treeY: 125,
+      treeX: 690,
+      treeY: 120,
+      shortLabel: 'Half-Crore',
       suggestedAction: {
         field: 'savings.emergencyFundBalance',
         targetValue: 5_000_000,
@@ -425,8 +461,9 @@ export function calculateSkillTree(
       actionableStep: currentSavings < annualExpenses * 25 ? `Target corpus: ${formatINR(annualExpenses * 25)}. Compounding will close this gap.` : 'Complete Sovereign Independence: Working is now 100% optional.',
       gridColumn: 4,
       gridRow: 3,
-      treeX: 430,
-      treeY: 90,
+      treeX: 470,
+      treeY: 85,
+      shortLabel: 'FIRE (25x)',
       suggestedAction: {
         field: 'savings.emergencyFundBalance',
         targetValue: Math.round(annualExpenses * 25),
@@ -450,8 +487,9 @@ export function calculateSkillTree(
       actionableStep: currentSavings < annualExpenses * 50 ? 'Scale enterprise equity and asset diversification to establish a generational endowment.' : 'Sovereign Pinnacle: Antifragile dynastic wealth achieved.',
       gridColumn: 5,
       gridRow: 3,
-      treeX: 430,
-      treeY: 25,
+      treeX: 470,
+      treeY: 24,
+      shortLabel: 'Dynasty (50x)',
       suggestedAction: {
         field: 'savings.emergencyFundBalance',
         targetValue: Math.round(annualExpenses * 50),

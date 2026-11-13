@@ -505,11 +505,11 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
         </div>
 
         {/* Privacy & Action Controls Toolbar */}
-        <div className="share-modal-toolbar flex-between items-center mt-3 pt-3 border-t border-subtle flex-wrap gap-3">
+        <div className="share-modal-toolbar mt-4 pt-3 border-t border-subtle flex items-center justify-between gap-3 flex-wrap">
           {/* Privacy Anonymize Toggle */}
           <button
             type="button"
-            className={`action-pill shrink-0 ${anonymized ? 'pill-active-mode' : ''}`}
+            className={`action-pill ${anonymized ? 'pill-active-mode' : ''}`}
             onClick={() => setAnonymized(!anonymized)}
             title={anonymized ? 'Showing percentages and ratings only (Safe for LinkedIn/X)' : 'Showing raw rupee numbers'}
           >
@@ -520,7 +520,7 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
           </button>
 
           {/* Action Buttons */}
-          <div className="flex-align gap-2 flex-wrap shrink-0">
+          <div className="share-action-buttons-group flex items-center gap-2 flex-wrap">
             <button
               type="button"
               className="btn-secondary font-mono text-xs flex-align gap-1.5 shrink-0"

@@ -876,6 +876,13 @@ body {
   gap: 10px 14px;
 }
 
+.card-header-row .card-title {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .card-title {
   font-size: 16px;
   font-weight: 700;
@@ -2840,6 +2847,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: nowrap;
   width: 100%;
   margin-bottom: 16px;
   position: relative;
@@ -4042,8 +4050,26 @@ body {
 }
 
 .share-modal-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 16px;
   flex-wrap: wrap;
-  gap: 12px;
+  width: 100%;
+}
+
+.share-action-buttons-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.qr-beam-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  width: 100%;
 }
 
 .share-controls-row {
@@ -5692,7 +5718,54 @@ body {
 }
 
 .nodes-group g:hover {
-  filter: brightness(1.15);
+  cursor: pointer;
+}
+
+/* Floating Thaumaturgy-style Glass HUD Card */
+.rpg-hud-floating-card {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 290px;
+  max-width: 90%;
+  background: rgba(14, 18, 28, 0.9);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(191, 159, 241, 0.35);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.75), 0 0 18px rgba(191, 159, 241, 0.2);
+  z-index: 15;
+  pointer-events: none;
+}
+
+.rpg-hud-icon-box {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--surface-overlay);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Theater Mode Fullscreen Canvas */
+.skill-tree-modal.skill-tree-theater-mode {
+  max-width: 96vw;
+  width: 96vw;
+  max-height: 94vh;
+  height: 94vh;
+  padding: 18px 24px;
+}
+
+.skill-tree-modal.skill-tree-theater-mode .skill-tree-layout-grid {
+  grid-template-columns: 1fr 340px;
+  height: calc(94vh - 150px);
+}
+
+.skill-tree-modal.skill-tree-theater-mode .rpg-tree-svg-container {
+  height: 100%;
 }
 
 

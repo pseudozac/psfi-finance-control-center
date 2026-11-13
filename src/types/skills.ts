@@ -24,6 +24,7 @@ export interface SkillNode {
   // Symmetrical Visual RPG Skill Tree Canvas coordinates (0 to 860, 0 to 620)
   treeX?: number;
   treeY?: number;
+  shortLabel?: string;
   suggestedAction?: {
     field: string;
     targetValue: number;

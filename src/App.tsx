@@ -330,6 +330,7 @@ export function App() {
           {/* Terminal Command Omnibar Trigger */}
           <button
             type="button"
+            id="tour-cmdk"
             className="action-pill pill-cmdk"
             onClick={() => setShowCmdK(true)}
             title="Terminal Command Omnibar (Cmd+K / Ctrl+K or '/')"
@@ -363,6 +364,7 @@ export function App() {
           {/* Sovereign Skill Tree Trigger */}
           <button
             type="button"
+            id="tour-skills"
             className="action-pill pill-skills"
             onClick={() => setShowSkillTree(true)}
             title="Sovereign Wealth RPG Skill Tree (Gamified Financial Freedom)"
@@ -508,6 +510,7 @@ export function App() {
 
                 <button
                   type="button"
+                  id="tour-vault-sync"
                   className="tools-menu-item"
                   onClick={() => { setShowQRModal(true); setToolsMenuOpen(false); }}
                 >
@@ -687,6 +690,8 @@ export function App() {
         initialStepIndex={tourInitialStep}
         activeView={activeView}
         onViewChange={(v) => setActiveView(v)}
+        onOpenSkillTree={() => setShowSkillTree(true)}
+        onOpenCmdK={() => setShowCmdK(true)}
         onClose={() => {
           setShowTour(false);
           setTourInitialStep(0);

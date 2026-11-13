@@ -18,6 +18,8 @@ import {
   Award,
   ChevronRight,
   TrendingUp,
+  Calculator,
+  CalendarDays,
 } from 'lucide-react';
 import type { FinancePlan, FinanceSummary } from '../types/finance';
 import type { SpendCategory, SpendLogEntry, CoolingOffItem } from '../types/skills';
@@ -134,6 +136,18 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
   // Inputs for adding a cooling-off item
   const [newItemTitle, setNewItemTitle] = useState('');
   const [newItemAmount, setNewItemAmount] = useState('');
+  const [newItemUrge, setNewItemUrge] = useState<1 | 2 | 3 | 4>(3);
+
+  // Lifetime impulse capital rescued
+  const [lifetimeRescued, setLifetimeRescued] = useState<number>(() => {
+    const val = localStorage.getItem('psfi_rescued_capital');
+    return val ? parseInt(val, 10) : 42500;
+  });
+
+  // "Can I Afford This Today?" Instant Actuarial Calculator State
+  const [showAffordCalculator, setShowAffordCalculator] = useState<boolean>(false);
+  const [affordQueryName, setAffordQueryName] = useState<string>('');
+  const [affordQueryAmount, setAffordQueryAmount] = useState<string>('');
 
   // Custom spend amount input
   const [customSpendVal, setCustomSpendVal] = useState('');
@@ -161,6 +175,15 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
       // Ignore
     }
   }, [coolingItems]);
+
+  // Persist lifetime rescued capital
+  useEffect(() => {
+    try {
+      localStorage.setItem('psfi_rescued_capital', String(lifetimeRescued));
+    } catch {
+      // Ignore
+    }
+  }, [lifetimeRescued]);
 
   const burnState = useMemo(() => {
     return calculateDailyBurn(plan, summary, {
@@ -215,7 +238,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
     if (!newItemTitle.trim() || isNaN(amount) || amount <= 0) return;
 
     const item = createCoolingOffItem(
-      newItemTitle.trim(),
+      `${'🔥'.repeat(newItemUrge)} ${newItemTitle.trim()}`,
       amount,
       summary.monthlyIncome,
       burnState.effectiveDailyBurnToday
@@ -223,6 +246,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
     setCoolingItems((prev) => [item, ...prev]);
     setNewItemTitle('');
     setNewItemAmount('');
+    setNewItemUrge(3);
     playSynthesizerChime(620);
   };
 
@@ -231,12 +255,60 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
     setCoolingItems((prev) => prev.filter((i) => i.id !== item.id));
     const nextStreak = streakDays + 1;
     const nextSurplus = bankedSurplus + Math.round(item.amount * 0.2); // bank 20% of avoided impulse
+    const nextRescued = lifetimeRescued + item.amount;
     setStreakDays(nextStreak);
     setBankedSurplus(nextSurplus);
+    setLifetimeRescued(nextRescued);
     localStorage.setItem('psfi_discipline_streak', String(nextStreak));
     localStorage.setItem('psfi_banked_surplus', String(nextSurplus));
+    localStorage.setItem('psfi_rescued_capital', String(nextRescued));
     playVictoryFanfare();
   };
+
+  // Actuarial calculation for "Can I Afford This Today?"
+  const affordQueryParsedAmt = parseFloat(affordQueryAmount) || 0;
+  const affordAssessment = useMemo(() => {
+    if (affordQueryParsedAmt <= 0) return null;
+    const remaining = burnState.remainingBurnToday;
+    const safeDaily = burnState.effectiveDailyBurnToday;
+    const threeDayPocket = safeDaily * 3;
+    const daysConsumed = (affordQueryParsedAmt / Math.max(1, safeDaily)).toFixed(1);
+    const tenYearValue = Math.round(affordQueryParsedAmt * 3.106); // 12% CAGR over 10 yrs
+
+    if (affordQueryParsedAmt <= remaining) {
+      return {
+        verdict: 'safe',
+        badge: '🟢 SAFE TO PURCHASE TODAY',
+        colorClass: 'text-nebula border-nebula/40 bg-nebula/10',
+        summary: `Directly covered by your unspent daily pocket (${formatINR(remaining)}). Zero rupee drag on your committed ${formatINR(burnState.sipProtectedAmount)} monthly SIP.`,
+        daysConsumed,
+        tenYearValue,
+      };
+    } else if (affordQueryParsedAmt <= threeDayPocket) {
+      return {
+        verdict: 'caution',
+        badge: '🟡 CAUTION / REBALANCING REQUIRED',
+        colorClass: 'text-solstice border-solstice/40 bg-solstice/10',
+        summary: `Exceeds today's pocket and borrows ${daysConsumed} days of future discretionary allowance. PsFi will automatically recalibrate your future days down to preserve your SIP.`,
+        daysConsumed,
+        tenYearValue,
+      };
+    } else {
+      return {
+        verdict: 'danger',
+        badge: '🔴 SHIELD ENGAGED (HIGH IMPULSE DANGER)',
+        colorClass: 'text-flare border-flare/40 bg-flare/10',
+        summary: `Consumes ${daysConsumed} days of discretionary cash! Severe risk of breaching your ${formatINR(burnState.sipProtectedAmount)} monthly SIP. Park this purchase in the 72h chamber!`,
+        daysConsumed,
+        tenYearValue,
+      };
+    }
+  }, [affordQueryParsedAmt, burnState]);
+
+  // 30-Day Liquidity Calendar Mini-Strip dates
+  const now = new Date();
+  const currentDayOfMonth = now.getDate();
+  const daysInCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
 
   const handleBuyCoolingItem = (item: CoolingOffItem) => {
     // User decided to purchase: deduct from today's burn pocket and remove from chamber
@@ -310,6 +382,151 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                 <ShieldCheck size={12} /> Safe Burn Active
               </span>
             )}
+          </div>
+        </div>
+
+        {/* Lifetime Rescued Wealth Counter Strip */}
+        <div className="p-2 px-3 rounded-lg bg-surface-page border border-subtle mb-2.5 flex items-center justify-between gap-2 flex-wrap text-xs">
+          <div className="flex items-center gap-2">
+            <span className="tag-pill tag-nebula flex items-center gap-1 font-mono text-[11px] font-semibold">
+              <Award size={12} /> ₹{lifetimeRescued.toLocaleString('en-IN')} Capital Rescued
+            </span>
+            <span className="text-[11px] text-muted hidden sm:inline">
+              Shielded from impulsive desires
+            </span>
+          </div>
+          <span className="font-mono text-[11px] text-secondary">
+            Protecting <strong className="text-solstice">₹{Math.round(lifetimeRescued * 3.106).toLocaleString('en-IN')}</strong> in 10-Yr Compounded Wealth
+          </span>
+        </div>
+
+        {/* 1-Click "Can I Afford This Today?" Calculator Toggle & Drawer */}
+        <div className="mb-2.5">
+          <button
+            type="button"
+            className={`w-full py-2 px-3 rounded-xl border font-mono text-xs flex items-center justify-between transition-all cursor-pointer ${
+              showAffordCalculator
+                ? 'bg-quasar/10 border-quasar/40 text-primary shadow-sm'
+                : 'bg-surface-overlay border-subtle text-muted hover:text-primary'
+            }`}
+            onClick={() => {
+              setShowAffordCalculator(!showAffordCalculator);
+              playSynthesizerChime(520);
+            }}
+          >
+            <span className="flex items-center gap-1.5 font-semibold text-primary">
+              <Calculator size={13} className="text-quasar" /> Can I Afford This Today? (Actuarial Check)
+            </span>
+            <span className="text-[11px] text-quasar flex items-center gap-1">
+              <span>{showAffordCalculator ? 'Close Calculator ▲' : 'Open 1-Click Afford Verdict ▼'}</span>
+            </span>
+          </button>
+
+          {showAffordCalculator && (
+            <div className="mt-2 p-3 rounded-xl bg-surface-raised border border-quasar/30 flex flex-col gap-2.5 animate-slideDown">
+              <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+                <input
+                  type="text"
+                  placeholder="Item Name (e.g. Swiggy Splurge, Smart Watch, Weekend Trip)"
+                  className="hipuku-input text-xs flex-1 min-w-[180px] py-1.5 px-2.5"
+                  value={affordQueryName}
+                  onChange={(e) => setAffordQueryName(e.target.value)}
+                />
+                <input
+                  type="number"
+                  placeholder="Price (₹)"
+                  className="hipuku-input text-xs font-mono w-32 py-1.5 px-2.5"
+                  value={affordQueryAmount}
+                  onChange={(e) => setAffordQueryAmount(e.target.value)}
+                />
+              </div>
+
+              {affordAssessment && (
+                <div className={`p-2.5 rounded-lg border flex flex-col gap-2 ${affordAssessment.colorClass}`}>
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <span className="font-mono text-xs font-bold tracking-wider">{affordAssessment.badge}</span>
+                    <span className="font-mono text-[11px]">
+                      Consumes <strong>{affordAssessment.daysConsumed} days</strong> of discretionary allowance
+                    </span>
+                  </div>
+                  <p className="text-xs m-0 leading-relaxed text-secondary">{affordAssessment.summary}</p>
+                  <div className="flex items-center justify-between font-mono text-[11px] pt-1.5 border-t border-subtle">
+                    <span className="text-muted">10-Yr Compounded Opportunity Cost (12% CAGR):</span>
+                    <strong className="text-solstice">₹{affordAssessment.tenYearValue.toLocaleString('en-IN')}</strong>
+                  </div>
+
+                  {/* 1-Click Action Buttons */}
+                  <div className="flex items-center gap-2 pt-1 flex-wrap">
+                    <button
+                      type="button"
+                      className="action-pill text-xs py-1 px-3 bg-nebula/20 text-nebula border-nebula/40 flex items-center gap-1 cursor-pointer"
+                      onClick={() => {
+                        handleLogSpend('other', affordQueryName.trim() || 'Discretionary Purchase', affordQueryParsedAmt);
+                        setAffordQueryAmount('');
+                        setAffordQueryName('');
+                        setShowAffordCalculator(false);
+                      }}
+                    >
+                      <Zap size={11} /> Deduct from Today's Pocket
+                    </button>
+                    <button
+                      type="button"
+                      className="action-pill text-xs py-1 px-3 bg-solstice/20 text-solstice border-solstice/40 flex items-center gap-1 cursor-pointer"
+                      onClick={() => {
+                        const item = createCoolingOffItem(
+                          affordQueryName.trim() || 'Impulse Wishlist Item',
+                          affordQueryParsedAmt,
+                          summary.monthlyIncome,
+                          burnState.effectiveDailyBurnToday
+                        );
+                        setCoolingItems((prev) => [item, ...prev]);
+                        setAffordQueryAmount('');
+                        setAffordQueryName('');
+                        setShowAffordCalculator(false);
+                        setActiveTab('cooling_chamber');
+                      }}
+                    >
+                      <Hourglass size={11} /> Park in 72h Chamber
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* 30-Day Liquidity Calendar Mini-Strip */}
+        <div className="p-2 px-3 rounded-lg bg-surface-overlay border border-subtle mb-3">
+          <div className="flex items-center justify-between text-[10.5px] font-mono text-muted mb-1.5">
+            <span className="flex items-center gap-1">
+              <CalendarDays size={11} className="text-quasar" /> 30-Day Liquidity Pace Calendar: Day {currentDayOfMonth} of {daysInCurrentMonth}
+            </span>
+            <span className="text-secondary">
+              {daysInCurrentMonth - currentDayOfMonth} Days to Next Salary Cycle
+            </span>
+          </div>
+          <div className="flex items-center gap-1 w-full overflow-x-auto pb-0.5">
+            {Array.from({ length: daysInCurrentMonth }, (_, i) => i + 1).map((dayNum) => {
+              const isPast = dayNum < currentDayOfMonth;
+              const isCurrent = dayNum === currentDayOfMonth;
+              const isPayday = dayNum === 1;
+
+              return (
+                <div
+                  key={dayNum}
+                  title={`Day ${dayNum}${isPayday ? ' · Salary Replenishment' : ''}${isCurrent ? ' · Today' : ''}`}
+                  className={`flex-1 min-w-[7px] h-3.5 rounded-sm flex items-center justify-center font-mono text-[8px] transition-all ${
+                    isCurrent
+                      ? 'bg-solstice text-black font-bold ring-2 ring-solstice/50 scale-110 z-10'
+                      : isPast
+                      ? 'bg-nebula/60 text-white/80'
+                      : 'bg-white/5 border border-white/10 text-muted/60'
+                  }`}
+                >
+                  {isPayday ? '₹' : isCurrent ? '●' : ''}
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -655,28 +872,49 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                 </span>
               </div>
 
-              {/* Add Item Form */}
-              <form onSubmit={handleAddCoolingItem} className="flex gap-2 flex-wrap sm:flex-nowrap mt-2">
-                <input
-                  type="text"
-                  placeholder="e.g. AirPods Pro 2, Mechanical Keyboard, Leather Jacket"
-                  className="hipuku-input text-xs flex-1 min-w-[180px] py-1.5 px-2.5"
-                  value={newItemTitle}
-                  onChange={(e) => setNewItemTitle(e.target.value)}
-                />
-                <input
-                  type="number"
-                  placeholder="Price (₹)"
-                  className="hipuku-input text-xs font-mono w-28 py-1.5 px-2.5"
-                  value={newItemAmount}
-                  onChange={(e) => setNewItemAmount(e.target.value)}
-                />
-                <button
-                  type="submit"
-                  className="action-pill font-mono text-xs py-1.5 px-3 flex-align gap-1 bg-solstice/20 text-solstice border-solstice/40 shrink-0"
-                >
-                  <Plus size={12} /> Lock in Chamber
-                </button>
+              {/* Add Item Form with Urge Intensity Meter */}
+              <form onSubmit={handleAddCoolingItem} className="flex flex-col gap-2 mt-2">
+                <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+                  <input
+                    type="text"
+                    placeholder="e.g. AirPods Pro 2, Mechanical Keyboard, Leather Jacket"
+                    className="hipuku-input text-xs flex-1 min-w-[180px] py-1.5 px-2.5"
+                    value={newItemTitle}
+                    onChange={(e) => setNewItemTitle(e.target.value)}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Price (₹)"
+                    className="hipuku-input text-xs font-mono w-28 py-1.5 px-2.5"
+                    value={newItemAmount}
+                    onChange={(e) => setNewItemAmount(e.target.value)}
+                  />
+                  <button
+                    type="submit"
+                    className="action-pill font-mono text-xs py-1.5 px-3 flex items-center gap-1 bg-solstice/20 text-solstice border-solstice/40 shrink-0 cursor-pointer"
+                  >
+                    <Plus size={12} /> Lock in Chamber
+                  </button>
+                </div>
+
+                {/* Urge Intensity Selector */}
+                <div className="flex items-center gap-2 pt-1 flex-wrap">
+                  <span className="font-mono text-[10.5px] text-muted flex items-center gap-1">
+                    Urge Intensity:
+                  </span>
+                  <div className="flex gap-1 flex-wrap">
+                    {([1, 2, 3, 4] as const).map((level) => (
+                      <button
+                        key={level}
+                        type="button"
+                        className={`action-pill text-[10px] py-0.5 px-2 font-mono ${newItemUrge === level ? 'pill-active-mode' : ''}`}
+                        onClick={() => setNewItemUrge(level)}
+                      >
+                        {'🔥'.repeat(level)} {level === 1 ? 'Mild' : level === 2 ? 'Moderate' : level === 3 ? 'Acute' : 'Retail Fever'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </form>
             </div>
 

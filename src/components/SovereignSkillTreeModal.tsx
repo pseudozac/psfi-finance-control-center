@@ -29,10 +29,17 @@ import {
   Copy,
   Sliders,
   Filter,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 import type { FinancePlan, FinanceSummary } from '../types/finance';
 import type { SkillTier, SkillNode } from '../types/skills';
-import { calculateSkillTree, RANK_LORE_PERKS, SOVEREIGN_TREE_CONDUITS } from '../lib/skillTree';
+import {
+  calculateSkillTree,
+  RANK_LORE_PERKS,
+  SOVEREIGN_TREE_CONDUITS,
+  getPrerequisiteAncestors,
+} from '../lib/skillTree';
 import { calculateSummary, formatINR } from '../lib/finance';
 
 interface SovereignSkillTreeModalProps {
@@ -131,6 +138,7 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
   const [simulatedPlan, setSimulatedPlan] = useState<FinancePlan | null>(null);
   const [copiedSheet, setCopiedSheet] = useState<boolean>(false);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [isTheaterMode, setIsTheaterMode] = useState<boolean>(false);
 
   // Derive current active plan (real vs simulated)
   const effectivePlan = simulatedPlan || plan;
@@ -151,6 +159,19 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
   const activeNode = useMemo(() => {
     return treeState.nodes.find((n) => n.id === selectedNodeId) || treeState.nodes[0];
   }, [selectedNodeId, treeState.nodes]);
+
+  const hoveredNode = useMemo(() => {
+    return hoveredNodeId ? treeState.nodes.find((n) => n.id === hoveredNodeId) : null;
+  }, [hoveredNodeId, treeState.nodes]);
+
+  // Compute active highlighted prerequisite ancestry nodes for the hovered or selected node
+  const activeInspectId = hoveredNodeId || selectedNodeId;
+  const illuminatedAncestors = useMemo(() => {
+    if (!activeInspectId) return new Set<string>();
+    const ancestors = getPrerequisiteAncestors(activeInspectId, SOVEREIGN_TREE_CONDUITS);
+    ancestors.add(activeInspectId);
+    return ancestors;
+  }, [activeInspectId]);
 
   // Map of nodes by ID for fast coordinate lookup
   const nodeMap = useMemo(() => {
@@ -227,15 +248,15 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
 
   return (
     <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-label="Sovereign Wealth Skill Tree">
-      <div className="modal-card skill-tree-modal" onClick={(e) => e.stopPropagation()}>
+      <div className={`modal-card skill-tree-modal ${isTheaterMode ? 'skill-tree-theater-mode' : ''}`} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className="modal-header flex-between items-center">
-          <div className="flex-align gap-2.5 min-w-0">
+        <div className="modal-header flex items-center justify-between gap-3 w-full">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
             <div className="skill-tree-trophy-box shrink-0">
               <Crown size={18} className="text-solstice" />
             </div>
-            <div className="min-w-0">
-              <div className="flex-align gap-2 flex-wrap">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="modal-title font-semibold text-base m-0 text-primary">Sovereign Wealth RPG Skill Tree</h3>
                 <span className="skill-rank-badge font-mono text-[11px] px-2.5 py-0.5 rounded-full">
                   {treeState.currentRank}
@@ -253,9 +274,19 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
             </div>
           </div>
 
-          <button type="button" className="icon-pill shrink-0" onClick={onClose} title="Close (Esc)">
-            <X size={15} />
-          </button>
+          <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+            <button
+              type="button"
+              className={`icon-pill shrink-0 ${isTheaterMode ? 'pill-active-mode' : ''}`}
+              onClick={() => setIsTheaterMode(!isTheaterMode)}
+              title={isTheaterMode ? "Exit Fullscreen Theater Mode" : "Expand Fullscreen Theater Mode"}
+            >
+              {isTheaterMode ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+            </button>
+            <button type="button" className="icon-pill shrink-0" onClick={onClose} title="Close (Esc)">
+              <X size={15} />
+            </button>
+          </div>
         </div>
 
         {/* Global Progression Bar */}
@@ -382,10 +413,39 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
 
                   {/* SVG Canvas */}
                   <div className="rpg-tree-svg-container relative overflow-hidden rounded-xl border border-subtle bg-[#090d16]">
+                    {/* Floating Thaumaturgy-style Glass HUD Inspector Card */}
+                    {hoveredNode && hoveredNode.id !== activeNode.id && (
+                      <div className="rpg-hud-floating-card pointer-events-none animate-fadeIn">
+                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <div className="rpg-hud-icon-box shrink-0">
+                              {ICON_MAP[hoveredNode.iconName] || <Award size={14} />}
+                            </div>
+                            <div>
+                              <span className="font-semibold text-xs text-primary block truncate">{hoveredNode.title}</span>
+                              <span className="text-[10px] font-mono text-muted uppercase tracking-wider">{hoveredNode.badge}</span>
+                            </div>
+                          </div>
+                          <span className={`font-mono text-[10px] px-2 py-0.5 rounded-full shrink-0 ${
+                            hoveredNode.status === 'mastered' ? 'bg-nebula/20 text-nebula border border-nebula/40' :
+                            hoveredNode.status === 'in_progress' ? 'bg-quasar/20 text-quasar border border-quasar/40' :
+                            'bg-white/5 text-muted border border-white/10'
+                          }`}>
+                            {hoveredNode.status === 'mastered' ? 'MASTERED' : hoveredNode.status === 'in_progress' ? `${hoveredNode.progressPercent}%` : 'LOCKED'}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted line-clamp-2 m-0 mb-1.5 leading-relaxed">{hoveredNode.description}</p>
+                        <div className="flex items-center justify-between font-mono text-[10.5px] pt-1.5 border-t border-subtle">
+                          <span className="text-secondary">{hoveredNode.currentMetricLabel}</span>
+                          <span className="text-solstice">Target: {hoveredNode.targetMetricLabel}</span>
+                        </div>
+                      </div>
+                    )}
+
                     <svg
-                      viewBox="0 0 860 600"
+                      viewBox="0 0 940 640"
                       className="w-full h-auto select-none block"
-                      style={{ maxHeight: '520px' }}
+                      style={{ maxHeight: isTheaterMode ? '78vh' : '560px' }}
                     >
                       <defs>
                         {/* Blueprint Grid Pattern */}
@@ -414,21 +474,21 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                       </defs>
 
                       {/* Blueprint Grid Rect */}
-                      <rect width="860" height="600" fill="url(#tree-blueprint-grid)" />
+                      <rect width="940" height="640" fill="url(#tree-blueprint-grid)" />
 
                       {/* Concentric Celestial Background Rings (Monster Hunter / Jedi style) */}
-                      <circle cx="430" cy="560" r="160" fill="none" stroke="rgba(255, 255, 255, 0.03)" strokeDasharray="4 6" />
-                      <circle cx="430" cy="560" r="300" fill="none" stroke="rgba(255, 255, 255, 0.03)" strokeDasharray="4 6" />
-                      <circle cx="430" cy="560" r="450" fill="none" stroke="rgba(255, 255, 255, 0.025)" strokeDasharray="4 6" />
+                      <circle cx="470" cy="580" r="180" fill="none" stroke="rgba(255, 255, 255, 0.03)" strokeDasharray="4 6" />
+                      <circle cx="470" cy="580" r="340" fill="none" stroke="rgba(255, 255, 255, 0.03)" strokeDasharray="4 6" />
+                      <circle cx="470" cy="580" r="500" fill="none" stroke="rgba(255, 255, 255, 0.025)" strokeDasharray="4 6" />
 
                       {/* Watermark Discipline Quadrants */}
-                      <text x="140" y="470" fill="rgba(94, 196, 145, 0.15)" fontSize="11" fontFamily="monospace" fontWeight="700">
+                      <text x="70" y="495" fill="rgba(94, 196, 145, 0.16)" fontSize="11" fontFamily="monospace" fontWeight="700">
                         🛡️ DEFENSIVE MOAT WING
                       </text>
-                      <text x="570" y="470" fill="rgba(56, 189, 248, 0.15)" fontSize="11" fontFamily="monospace" fontWeight="700">
+                      <text x="670" y="495" fill="rgba(56, 189, 248, 0.16)" fontSize="11" fontFamily="monospace" fontWeight="700">
                         ⚡ COMPOUNDING VELOCITY WING
                       </text>
-                      <text x="350" y="38" fill="rgba(247, 141, 44, 0.2)" fontSize="11" fontFamily="monospace" fontWeight="700">
+                      <text x="360" y="40" fill="rgba(247, 141, 44, 0.22)" fontSize="11" fontFamily="monospace" fontWeight="700">
                         👑 SOVEREIGN AUTONOMY APEX
                       </text>
 
@@ -450,18 +510,19 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
 
                           const isBothMastered = parent.status === 'mastered' && child.status === 'mastered';
                           const isInFlight = parent.status === 'mastered' && child.status === 'in_progress';
+                          const isIlluminated = illuminatedAncestors.has(conduit.from) && illuminatedAncestors.has(conduit.to);
                           const isDimmed = selectedTier !== 'all' && (parent.tier !== selectedTier && child.tier !== selectedTier);
 
                           return (
                             <g key={idx} opacity={isDimmed ? 0.2 : 1} className="transition-opacity duration-300">
                               {/* Background blurred glow conduit */}
-                              {(isBothMastered || isInFlight) && (
+                              {(isIlluminated || isBothMastered || isInFlight) && (
                                 <path
                                   d={pathD}
                                   fill="none"
-                                  stroke={isBothMastered ? '#5ec491' : '#38bdf8'}
-                                  strokeWidth="5"
-                                  opacity="0.3"
+                                  stroke={isIlluminated ? '#f78d2c' : isBothMastered ? '#5ec491' : '#38bdf8'}
+                                  strokeWidth={isIlluminated ? "5" : "4"}
+                                  opacity={isIlluminated ? 0.6 : 0.3}
                                   filter="url(#node-glow)"
                                 />
                               )}
@@ -470,15 +531,17 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                                 d={pathD}
                                 fill="none"
                                 stroke={
-                                  isBothMastered
+                                  isIlluminated
+                                    ? '#f78d2c'
+                                    : isBothMastered
                                     ? '#5ec491'
                                     : isInFlight
                                     ? '#bf9ff1'
                                     : 'rgba(255, 255, 255, 0.12)'
                                 }
-                                strokeWidth={isBothMastered ? 2.5 : isInFlight ? 2 : 1.5}
-                                strokeDasharray={isInFlight ? '6 6' : undefined}
-                                className={isInFlight ? 'animate-pulse' : undefined}
+                                strokeWidth={isIlluminated ? 3 : isBothMastered ? 2.5 : isInFlight ? 2 : 1.5}
+                                strokeDasharray={isInFlight && !isIlluminated ? '6 6' : undefined}
+                                className={isInFlight && !isIlluminated ? 'animate-pulse' : undefined}
                               />
                             </g>
                           );
@@ -493,6 +556,7 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                           const y = node.treeY;
                           const isSelected = activeNode.id === node.id;
                           const isHovered = hoveredNodeId === node.id;
+                          const isAncestor = illuminatedAncestors.has(node.id);
                           const isMastered = node.status === 'mastered';
                           const isInProgress = node.status === 'in_progress';
                           const isApex = node.id === 'antifragile_dynasty';
@@ -525,19 +589,20 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                                   stroke="#bf9ff1"
                                   strokeWidth="2"
                                   strokeDasharray="4 4"
-                                  opacity="0.8"
+                                  opacity="0.85"
                                   className="animate-spin-slow"
                                 />
                               )}
 
-                              {/* Hover Glow Ring */}
-                              {isHovered && !isSelected && (
+                              {/* Hover / Prerequisite Ancestry Highlight Ring */}
+                              {(isHovered || isAncestor) && !isSelected && (
                                 <circle
                                   r={radius + 6}
                                   fill="none"
-                                  stroke={isMastered ? '#5ec491' : '#38bdf8'}
-                                  strokeWidth="1.5"
-                                  opacity="0.5"
+                                  stroke={isAncestor ? '#f78d2c' : isMastered ? '#5ec491' : '#38bdf8'}
+                                  strokeWidth={isAncestor ? "2" : "1.5"}
+                                  opacity={isAncestor ? 0.75 : 0.5}
+                                  strokeDasharray={isAncestor ? '3 3' : undefined}
                                 />
                               )}
 
@@ -556,6 +621,8 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                                 stroke={
                                   isSelected
                                     ? '#bf9ff1'
+                                    : isAncestor
+                                    ? '#f78d2c'
                                     : isMastered
                                     ? '#5ec491'
                                     : isInProgress
@@ -569,7 +636,7 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                               <circle
                                 r={radius + 2}
                                 fill="none"
-                                stroke={isMastered ? '#10b981' : '#a855f7'}
+                                stroke={isMastered ? '#10b981' : isAncestor ? '#f78d2c' : '#a855f7'}
                                 strokeWidth="2.5"
                                 strokeDasharray={circumference}
                                 strokeDashoffset={progressOffset}
@@ -586,7 +653,7 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                                 height="20"
                                 className="pointer-events-none"
                               >
-                                <div className="w-full h-full flex-center text-primary">
+                                <div className="w-full h-full flex items-center justify-center text-primary">
                                   {ICON_MAP[node.iconName] || <Award size={15} />}
                                 </div>
                               </foreignObject>
@@ -603,39 +670,27 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                                 </g>
                               ) : null}
 
-                              {/* Node Label Capsule (Below Node) */}
-                              <g transform={`translate(0, ${radius + 14})`}>
-                                <rect
-                                  x="-48"
-                                  y="-8"
-                                  width="96"
-                                  height="16"
-                                  rx="4"
-                                  fill="rgba(15, 23, 42, 0.85)"
-                                  stroke={isSelected ? '#bf9ff1' : 'rgba(255, 255, 255, 0.08)'}
-                                  strokeWidth="1"
-                                />
-                                <text
-                                  textAnchor="middle"
-                                  y="4"
-                                  fill={isSelected ? '#ffffff' : isMastered ? '#5ec491' : '#cbd5e1'}
-                                  fontSize="9.5"
-                                  fontFamily="sans-serif"
-                                  fontWeight="600"
-                                >
-                                  {node.title.length > 15 ? node.title.slice(0, 14) + '…' : node.title}
-                                </text>
-                              </g>
+                              {/* Clean Short Label directly below without clunky bounding box */}
+                              <text
+                                textAnchor="middle"
+                                y={radius + 14}
+                                fill={isSelected ? '#ffffff' : isMastered ? '#5ec491' : '#94a3b8'}
+                                fontSize="10"
+                                fontFamily="sans-serif"
+                                fontWeight="600"
+                              >
+                                {node.shortLabel || node.title}
+                              </text>
 
                               {/* Metric Sub-Label */}
                               <text
                                 textAnchor="middle"
-                                y={radius + 32}
-                                fill="#94a3b8"
+                                y={radius + 25}
+                                fill="#64748b"
                                 fontSize="8.5"
                                 fontFamily="monospace"
                               >
-                                {node.progressPercent}% · {node.currentMetricLabel.split(' ')[0]}
+                                {node.progressPercent}%
                               </text>
                             </g>
                           );
