@@ -21,6 +21,9 @@ export interface SkillNode {
   // Kinetic Constellation layout coordinates (percentage 0-100)
   gridColumn: number; // 1 to 5
   gridRow: number; // 1 to 3
+  // Symmetrical Visual RPG Skill Tree Canvas coordinates (0 to 860, 0 to 620)
+  treeX?: number;
+  treeY?: number;
   suggestedAction?: {
     field: string;
     targetValue: number;

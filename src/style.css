@@ -5660,6 +5660,42 @@ body {
   animation: fadeIn 0.2s ease-in-out;
 }
 
+/* ==========================================================================
+   RPG Branching Tech Tree Canvas (Star Wars Jedi / Thaumaturgy inspired)
+   ========================================================================== */
+.rpg-tree-canvas-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.rpg-tree-svg-container {
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.7);
+  background: radial-gradient(circle at 50% 90%, rgba(191, 159, 241, 0.08) 0%, rgba(9, 13, 22, 0.95) 75%), #090d16;
+}
+
+.animate-spin-slow {
+  animation: spin 16s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.nodes-group g:hover circle:first-of-type {
+  filter: drop-shadow(0 0 8px rgba(191, 159, 241, 0.6));
+}
+
+.nodes-group g:hover {
+  filter: brightness(1.15);
+}
+
+
 
 /* ==========================================================================
    Executive 1-Page Printable PDF Statement (@media print)

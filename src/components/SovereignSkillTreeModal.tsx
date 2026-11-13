@@ -28,10 +28,11 @@ import {
   Check,
   Copy,
   Sliders,
+  Filter,
 } from 'lucide-react';
 import type { FinancePlan, FinanceSummary } from '../types/finance';
 import type { SkillTier, SkillNode } from '../types/skills';
-import { calculateSkillTree, RANK_LORE_PERKS } from '../lib/skillTree';
+import { calculateSkillTree, RANK_LORE_PERKS, SOVEREIGN_TREE_CONDUITS } from '../lib/skillTree';
 import { calculateSummary, formatINR } from '../lib/finance';
 
 interface SovereignSkillTreeModalProps {
@@ -43,24 +44,24 @@ interface SovereignSkillTreeModalProps {
   onApplySimulatedPlan?: (updated: FinancePlan) => void;
 }
 
-type ViewMode = 'constellation' | 'matrix' | 'character_sheet';
+type ViewMode = 'visual_tree' | 'matrix' | 'character_sheet';
 
 const ICON_MAP: Record<string, React.ReactNode> = {
-  ShieldAlert: <ShieldAlert size={18} className="text-corona" />,
-  ShieldCheck: <ShieldCheck size={18} className="text-nebula" />,
-  Umbrella: <Umbrella size={18} className="text-pulsar" />,
-  HeartPulse: <HeartPulse size={18} className="text-solstice" />,
-  Castle: <Castle size={18} className="text-quasar" />,
-  Coins: <Coins size={18} className="text-solstice" />,
-  PieChart: <PieChart size={18} className="text-pulsar" />,
-  Zap: <Zap size={18} className="text-corona" />,
-  Scale: <Scale size={18} className="text-quasar" />,
-  TrendingUp: <TrendingUp size={18} className="text-nebula" />,
-  Rocket: <Rocket size={18} className="text-quasar" />,
-  Flame: <Flame size={18} className="text-corona" />,
-  Anchor: <Anchor size={18} className="text-pulsar" />,
-  Crown: <Crown size={18} className="text-solstice" />,
-  Sparkles: <Sparkles size={18} className="text-quasar" />,
+  ShieldAlert: <ShieldAlert size={16} className="text-corona" />,
+  ShieldCheck: <ShieldCheck size={16} className="text-nebula" />,
+  Umbrella: <Umbrella size={16} className="text-pulsar" />,
+  HeartPulse: <HeartPulse size={16} className="text-solstice" />,
+  Castle: <Castle size={16} className="text-quasar" />,
+  Coins: <Coins size={16} className="text-solstice" />,
+  PieChart: <PieChart size={16} className="text-pulsar" />,
+  Zap: <Zap size={16} className="text-corona" />,
+  Scale: <Scale size={16} className="text-quasar" />,
+  TrendingUp: <TrendingUp size={16} className="text-nebula" />,
+  Rocket: <Rocket size={16} className="text-quasar" />,
+  Flame: <Flame size={16} className="text-corona" />,
+  Anchor: <Anchor size={16} className="text-pulsar" />,
+  Crown: <Crown size={16} className="text-solstice" />,
+  Sparkles: <Sparkles size={16} className="text-quasar" />,
 };
 
 // Subtle Web Audio synthesizer chime on selecting or exploring nodes
@@ -85,11 +86,11 @@ function playChime(freq = 520) {
     osc.start();
     osc.stop(ctx.currentTime + 0.25);
   } catch {
-    // Ignore audio autoplay restrictions
+    // Ignore audio
   }
 }
 
-// Victory arpeggio for What-If unlock or copying sheet
+// Multi-tone victory arpeggio for What-If unlock or copying sheet
 function playFanfare() {
   try {
     const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -116,22 +117,6 @@ function playFanfare() {
   }
 }
 
-// Prerequisite conduit connections between node IDs for SVG rendering
-const CONDUIT_PAIRS: Array<{ from: string; to: string }> = [
-  { from: 'debt_elimination', to: 'liquidity_3m' },
-  { from: 'liquidity_3m', to: 'iron_fortress_6m' },
-  { from: 'term_shield_100x', to: 'iron_fortress_6m' },
-  { from: 'health_shield_1cr', to: 'iron_fortress_6m' },
-  { from: 'iron_fortress_6m', to: 'first_10l_core' },
-  { from: 'savings_velocity_30', to: 'velocity_hyper_50' },
-  { from: 'tax_drag_minimizer', to: 'direct_mf_indexer' },
-  { from: 'first_10l_core', to: 'quarter_crore_hub' },
-  { from: 'quarter_crore_hub', to: 'half_crore_inflection' },
-  { from: 'half_crore_inflection', to: 'crore_foundation_1cr' },
-  { from: 'crore_foundation_1cr', to: 'full_sovereign_fire' },
-  { from: 'full_sovereign_fire', to: 'antifragile_dynasty' },
-];
-
 export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = ({
   isOpen,
   onClose,
@@ -140,11 +125,12 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
   taxSavingsDelta = 0,
   onApplySimulatedPlan,
 }) => {
-  const [viewMode, setViewMode] = useState<ViewMode>('constellation');
+  const [viewMode, setViewMode] = useState<ViewMode>('visual_tree');
   const [selectedTier, setSelectedTier] = useState<SkillTier | 'all'>('all');
   const [selectedNodeId, setSelectedNodeId] = useState<string>('debt_elimination');
   const [simulatedPlan, setSimulatedPlan] = useState<FinancePlan | null>(null);
   const [copiedSheet, setCopiedSheet] = useState<boolean>(false);
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
 
   // Derive current active plan (real vs simulated)
   const effectivePlan = simulatedPlan || plan;
@@ -165,6 +151,13 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
   const activeNode = useMemo(() => {
     return treeState.nodes.find((n) => n.id === selectedNodeId) || treeState.nodes[0];
   }, [selectedNodeId, treeState.nodes]);
+
+  // Map of nodes by ID for fast coordinate lookup
+  const nodeMap = useMemo(() => {
+    const map = new Map<string, SkillNode>();
+    treeState.nodes.forEach((n) => map.set(n.id, n));
+    return map;
+  }, [treeState.nodes]);
 
   // Close on Escape key
   useEffect(() => {
@@ -190,7 +183,6 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
     const [section, field] = node.suggestedAction.field.split('.');
 
     if (section && field) {
-      // e.g. savings.emergencyFundBalance or debt.cardBalance
       // @ts-expect-error dynamic path assignment for simulation
       if (cloned[section]) cloned[section][field] = node.suggestedAction.targetValue;
     }
@@ -267,26 +259,26 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
         </div>
 
         {/* Global Progression Bar */}
-        <div className="w-full bg-surface-overlay rounded-full h-2 my-2.5 overflow-hidden border border-subtle">
+        <div className="w-full bg-surface-overlay rounded-full h-2 my-2 overflow-hidden border border-subtle">
           <div
             className="h-full bg-gradient-to-r from-quasar via-pulsar to-nebula transition-all duration-500"
             style={{ width: `${treeState.overallMasteryPercent}%` }}
           />
         </div>
 
-        {/* Mode Switcher Nav */}
-        <div className="flex-between items-center gap-2 mb-3 flex-wrap">
+        {/* Mode Switcher Nav & Global Lever Status */}
+        <div className="flex-between items-center gap-2 mb-2.5 flex-wrap">
           <div className="pill-segmented flex gap-1 text-xs font-mono">
             <button
               type="button"
-              className={`px-3 py-1.5 flex-align gap-1.5 ${viewMode === 'constellation' ? 'pill-active' : ''}`}
+              className={`px-3 py-1.5 flex-align gap-1.5 ${viewMode === 'visual_tree' ? 'pill-active' : ''}`}
               onClick={() => {
-                setViewMode('constellation');
+                setViewMode('visual_tree');
                 playChime(480);
               }}
             >
               <GitBranch size={13} />
-              <span>Constellation Tech Tree</span>
+              <span>RPG Tech Tree</span>
             </button>
             <button
               type="button"
@@ -308,11 +300,11 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
               }}
             >
               <Scroll size={13} />
-              <span>RPG Character Perks</span>
+              <span>Character Perks</span>
             </button>
           </div>
 
-          {/* Quick Simulation Indicator */}
+          {/* Quick Simulation Actions */}
           {simulatedPlan ? (
             <div className="flex-align gap-2">
               <button
@@ -335,117 +327,325 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
               )}
             </div>
           ) : (
-            <div className="text-[11px] font-mono text-muted flex-align gap-1.5">
-              <span>Select any milestone to test What-If unlocking</span>
+            <div className="text-[11px] font-mono text-muted flex-align gap-1">
+              <span>Interactive branching network · Click any node to inspect or simulate</span>
             </div>
           )}
         </div>
 
-        {/* VIEW MODE 1 & 2: Constellation Tree or Matrix + Right Actuarial Drawer */}
+        {/* VIEW MODE 1 & 2: RPG Visual Tree or Matrix + Right Actuarial Drawer */}
         {viewMode !== 'character_sheet' ? (
           <div className="skill-tree-layout-grid">
-            {/* Left Column: Constellation or Matrix */}
+            {/* Left Column: Interactive Tree Canvas or Matrix Grid */}
             <div className="skill-nodes-scroll-container">
-              {viewMode === 'constellation' ? (
-                /* Kinetic Constellation Tech Tree with SVG Energy Conduits */
-                <div className="constellation-canvas-wrapper">
-                  <div className="constellation-legend flex-between items-center mb-2 px-1 text-[11px] font-mono text-muted">
-                    <span className="flex-align gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-nebula inline-block" /> Mastered Conduits
-                      <span className="w-2 h-2 rounded-full bg-quasar inline-block ml-2" /> In Flight
-                      <span className="w-2 h-2 rounded-full bg-border-subtle inline-block ml-2" /> Locked
+              {viewMode === 'visual_tree' ? (
+                /* =========================================================
+                   TRUE VISUAL RPG SKILL TREE CANVAS (Star Wars Jedi / Thaumaturgy style)
+                   ========================================================= */
+                <div className="rpg-tree-canvas-card">
+                  {/* Branch Filter Pills */}
+                  <div className="flex-between items-center mb-2 px-2 py-1 bg-surface-page rounded-lg border border-subtle flex-wrap gap-1 text-xs font-mono">
+                    <span className="flex-align gap-1 text-[11px] text-muted">
+                      <Filter size={11} /> Filter Branch:
                     </span>
-                    <span>3 Actuarial Tiers · 15 Milestones</span>
-                  </div>
-
-                  {/* Active Energy Conduit Flow Spine */}
-                  <div className="conduit-network-flow flex-between items-center px-3 py-1.5 rounded-lg bg-surface-page border border-subtle mb-3 overflow-x-auto text-[10.5px] font-mono gap-1.5">
-                    <span className="text-muted shrink-0 flex-align gap-1">
-                      <Zap size={11} className="text-solstice" /> Core Spine:
-                    </span>
-                    <div className="flex-align gap-1.5 flex-wrap">
-                      {CONDUIT_PAIRS.slice(0, 6).map((pair, pIdx) => {
-                        const fromNode = treeState.nodes.find((n) => n.id === pair.from);
-                        const toNode = treeState.nodes.find((n) => n.id === pair.to);
-                        const isHot = fromNode?.status === 'mastered' && toNode?.status === 'mastered';
-                        const isInFlight = fromNode?.status === 'mastered' && toNode?.status === 'in_progress';
-                        return (
-                          <div key={pIdx} className="flex-align gap-1 shrink-0">
-                            <span className={isHot ? 'text-nebula font-semibold' : isInFlight ? 'text-quasar' : 'text-muted'}>
-                              {fromNode?.title.split(' ')[0]}
-                            </span>
-                            <span className={isHot ? 'text-nebula' : isInFlight ? 'text-quasar' : 'text-muted'}>
-                              ➔
-                            </span>
-                          </div>
-                        );
-                      })}
+                    <div className="flex gap-1 flex-wrap">
+                      <button
+                        type="button"
+                        className={`action-pill text-[10.5px] py-0.5 px-2 ${selectedTier === 'all' ? 'pill-active' : ''}`}
+                        onClick={() => setSelectedTier('all')}
+                      >
+                        All Nodes ({treeState.unlockedCount}/15)
+                      </button>
+                      <button
+                        type="button"
+                        className={`action-pill text-[10.5px] py-0.5 px-2 ${selectedTier === 'tier1_survival' ? 'pill-active' : ''}`}
+                        onClick={() => setSelectedTier('tier1_survival')}
+                      >
+                        🛡️ Defense Moat ({treeState.tier1MasteredCount}/5)
+                      </button>
+                      <button
+                        type="button"
+                        className={`action-pill text-[10.5px] py-0.5 px-2 ${selectedTier === 'tier2_velocity' ? 'pill-active' : ''}`}
+                        onClick={() => setSelectedTier('tier2_velocity')}
+                      >
+                        ⚡ Velocity ({treeState.tier2MasteredCount}/5)
+                      </button>
+                      <button
+                        type="button"
+                        className={`action-pill text-[10.5px] py-0.5 px-2 ${selectedTier === 'tier3_autonomy' ? 'pill-active' : ''}`}
+                        onClick={() => setSelectedTier('tier3_autonomy')}
+                      >
+                        👑 Autonomy Apex ({treeState.tier3MasteredCount}/5)
+                      </button>
                     </div>
                   </div>
 
-                  {/* 3 Tier Rows */}
-                  <div className="constellation-grid-container">
-                    {(['tier1_survival', 'tier2_velocity', 'tier3_autonomy'] as SkillTier[]).map((tierKey) => {
-                      const tierNodes = treeState.nodes.filter((n) => n.tier === tierKey);
-                      const tierName =
-                        tierKey === 'tier1_survival'
-                          ? 'Tier I: Iron Fortress'
-                          : tierKey === 'tier2_velocity'
-                          ? 'Tier II: Velocity Engines'
-                          : 'Tier III: Sovereign Autonomy';
-                      const tierIcon = tierKey === 'tier1_survival' ? '🛡️' : tierKey === 'tier2_velocity' ? '⚡' : '👑';
+                  {/* SVG Canvas */}
+                  <div className="rpg-tree-svg-container relative overflow-hidden rounded-xl border border-subtle bg-[#090d16]">
+                    <svg
+                      viewBox="0 0 860 600"
+                      className="w-full h-auto select-none block"
+                      style={{ maxHeight: '520px' }}
+                    >
+                      <defs>
+                        {/* Blueprint Grid Pattern */}
+                        <pattern id="tree-blueprint-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255, 255, 255, 0.025)" strokeWidth="1" />
+                          <circle cx="40" cy="40" r="1.2" fill="rgba(191, 159, 241, 0.12)" />
+                        </pattern>
 
-                      return (
-                        <div key={tierKey} className="constellation-tier-band">
-                          <div className="constellation-tier-label font-mono text-[11px] text-muted mb-2 flex-between items-center">
-                            <span>{tierIcon} {tierName}</span>
-                            <span className="text-secondary">
-                              {tierNodes.filter((n) => n.status === 'mastered').length}/{tierNodes.length} Unlocked
-                            </span>
-                          </div>
+                        {/* Mastered Gradient */}
+                        <linearGradient id="grad-mastered" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#10b981" />
+                          <stop offset="100%" stopColor="#5ec491" />
+                        </linearGradient>
 
-                          <div className="constellation-nodes-row">
-                            {tierNodes.map((node) => {
-                              const isSelected = activeNode.id === node.id;
-                              const isMastered = node.status === 'mastered';
-                              const isInProgress = node.status === 'in_progress';
+                        {/* In-Flight Gradient */}
+                        <linearGradient id="grad-progress" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#bf9ff1" />
+                          <stop offset="100%" stopColor="#38bdf8" />
+                        </linearGradient>
 
-                              return (
-                                <button
-                                  key={node.id}
-                                  type="button"
-                                  className={`constellation-node-token ${isSelected ? 'token-selected' : ''} ${
-                                    isMastered ? 'token-mastered' : isInProgress ? 'token-progress' : 'token-locked'
-                                  }`}
-                                  onClick={() => {
-                                    setSelectedNodeId(node.id);
-                                    playChime(isMastered ? 660 : 440);
-                                  }}
-                                  title={`${node.title} (${node.progressPercent}%) - ${node.currentMetricLabel}`}
+                        {/* Glow Filter */}
+                        <filter id="node-glow" x="-30%" y="-30%" width="160%" height="160%">
+                          <feGaussianBlur stdDeviation="4" result="blur" />
+                          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                        </filter>
+                      </defs>
+
+                      {/* Blueprint Grid Rect */}
+                      <rect width="860" height="600" fill="url(#tree-blueprint-grid)" />
+
+                      {/* Concentric Celestial Background Rings (Monster Hunter / Jedi style) */}
+                      <circle cx="430" cy="560" r="160" fill="none" stroke="rgba(255, 255, 255, 0.03)" strokeDasharray="4 6" />
+                      <circle cx="430" cy="560" r="300" fill="none" stroke="rgba(255, 255, 255, 0.03)" strokeDasharray="4 6" />
+                      <circle cx="430" cy="560" r="450" fill="none" stroke="rgba(255, 255, 255, 0.025)" strokeDasharray="4 6" />
+
+                      {/* Watermark Discipline Quadrants */}
+                      <text x="140" y="470" fill="rgba(94, 196, 145, 0.15)" fontSize="11" fontFamily="monospace" fontWeight="700">
+                        🛡️ DEFENSIVE MOAT WING
+                      </text>
+                      <text x="570" y="470" fill="rgba(56, 189, 248, 0.15)" fontSize="11" fontFamily="monospace" fontWeight="700">
+                        ⚡ COMPOUNDING VELOCITY WING
+                      </text>
+                      <text x="350" y="38" fill="rgba(247, 141, 44, 0.2)" fontSize="11" fontFamily="monospace" fontWeight="700">
+                        👑 SOVEREIGN AUTONOMY APEX
+                      </text>
+
+                      {/* 1. RENDER SVG CONDUITS (Parent to Child Links) */}
+                      <g className="conduits-group">
+                        {SOVEREIGN_TREE_CONDUITS.map((conduit, idx) => {
+                          const parent = nodeMap.get(conduit.from);
+                          const child = nodeMap.get(conduit.to);
+                          if (!parent || !child || !parent.treeX || !parent.treeY || !child.treeX || !child.treeY) return null;
+
+                          const x1 = parent.treeX;
+                          const y1 = parent.treeY;
+                          const x2 = child.treeX;
+                          const y2 = child.treeY;
+
+                          // Smooth cubic Bezier curve connecting parent to child
+                          const dy = y2 - y1;
+                          const pathD = `M ${x1} ${y1} C ${x1} ${y1 + dy * 0.45}, ${x2} ${y2 - dy * 0.45}, ${x2} ${y2}`;
+
+                          const isBothMastered = parent.status === 'mastered' && child.status === 'mastered';
+                          const isInFlight = parent.status === 'mastered' && child.status === 'in_progress';
+                          const isDimmed = selectedTier !== 'all' && (parent.tier !== selectedTier && child.tier !== selectedTier);
+
+                          return (
+                            <g key={idx} opacity={isDimmed ? 0.2 : 1} className="transition-opacity duration-300">
+                              {/* Background blurred glow conduit */}
+                              {(isBothMastered || isInFlight) && (
+                                <path
+                                  d={pathD}
+                                  fill="none"
+                                  stroke={isBothMastered ? '#5ec491' : '#38bdf8'}
+                                  strokeWidth="5"
+                                  opacity="0.3"
+                                  filter="url(#node-glow)"
+                                />
+                              )}
+                              {/* Foreground crisp energy line */}
+                              <path
+                                d={pathD}
+                                fill="none"
+                                stroke={
+                                  isBothMastered
+                                    ? '#5ec491'
+                                    : isInFlight
+                                    ? '#bf9ff1'
+                                    : 'rgba(255, 255, 255, 0.12)'
+                                }
+                                strokeWidth={isBothMastered ? 2.5 : isInFlight ? 2 : 1.5}
+                                strokeDasharray={isInFlight ? '6 6' : undefined}
+                                className={isInFlight ? 'animate-pulse' : undefined}
+                              />
+                            </g>
+                          );
+                        })}
+                      </g>
+
+                      {/* 2. RENDER INTERACTIVE CIRCULAR NODE GLYPHS */}
+                      <g className="nodes-group">
+                        {treeState.nodes.map((node) => {
+                          if (!node.treeX || !node.treeY) return null;
+                          const x = node.treeX;
+                          const y = node.treeY;
+                          const isSelected = activeNode.id === node.id;
+                          const isHovered = hoveredNodeId === node.id;
+                          const isMastered = node.status === 'mastered';
+                          const isInProgress = node.status === 'in_progress';
+                          const isApex = node.id === 'antifragile_dynasty';
+                          const isHub = node.id === 'quarter_crore_hub' || node.id === 'full_sovereign_fire';
+                          const radius = isApex ? 26 : isHub ? 23 : 20;
+                          const circumference = 2 * Math.PI * (radius + 2);
+                          const progressOffset = circumference - (node.progressPercent / 100) * circumference;
+
+                          const isDimmed = selectedTier !== 'all' && node.tier !== selectedTier;
+
+                          return (
+                            <g
+                              key={node.id}
+                              transform={`translate(${x}, ${y})`}
+                              className="cursor-pointer transition-transform duration-200"
+                              opacity={isDimmed ? 0.3 : 1}
+                              onClick={() => {
+                                setSelectedNodeId(node.id);
+                                const freq = node.tier === 'tier1_survival' ? 440 : node.tier === 'tier2_velocity' ? 554 : 659;
+                                playChime(freq);
+                              }}
+                              onMouseEnter={() => setHoveredNodeId(node.id)}
+                              onMouseLeave={() => setHoveredNodeId(null)}
+                            >
+                              {/* Selected Outer Pulsing Aura */}
+                              {isSelected && (
+                                <circle
+                                  r={radius + 8}
+                                  fill="none"
+                                  stroke="#bf9ff1"
+                                  strokeWidth="2"
+                                  strokeDasharray="4 4"
+                                  opacity="0.8"
+                                  className="animate-spin-slow"
+                                />
+                              )}
+
+                              {/* Hover Glow Ring */}
+                              {isHovered && !isSelected && (
+                                <circle
+                                  r={radius + 6}
+                                  fill="none"
+                                  stroke={isMastered ? '#5ec491' : '#38bdf8'}
+                                  strokeWidth="1.5"
+                                  opacity="0.5"
+                                />
+                              )}
+
+                              {/* Base Dark Orb Circle */}
+                              <circle
+                                r={radius}
+                                fill={
+                                  isSelected
+                                    ? '#1e1b4b'
+                                    : isMastered
+                                    ? '#062817'
+                                    : isInProgress
+                                    ? '#18122c'
+                                    : '#0f172a'
+                                }
+                                stroke={
+                                  isSelected
+                                    ? '#bf9ff1'
+                                    : isMastered
+                                    ? '#5ec491'
+                                    : isInProgress
+                                    ? '#a78bfa'
+                                    : '#334155'
+                                }
+                                strokeWidth={isSelected ? '2.5' : isMastered ? '2' : '1.5'}
+                              />
+
+                              {/* Outer Circular Progress Meter */}
+                              <circle
+                                r={radius + 2}
+                                fill="none"
+                                stroke={isMastered ? '#10b981' : '#a855f7'}
+                                strokeWidth="2.5"
+                                strokeDasharray={circumference}
+                                strokeDashoffset={progressOffset}
+                                strokeLinecap="round"
+                                transform="rotate(-90)"
+                                opacity={node.progressPercent > 0 ? 0.9 : 0}
+                              />
+
+                              {/* Centered Node Icon */}
+                              <foreignObject
+                                x="-10"
+                                y="-10"
+                                width="20"
+                                height="20"
+                                className="pointer-events-none"
+                              >
+                                <div className="w-full h-full flex-center text-primary">
+                                  {ICON_MAP[node.iconName] || <Award size={15} />}
+                                </div>
+                              </foreignObject>
+
+                              {/* Mini Status Badge Pip (Top-Right) */}
+                              {isMastered ? (
+                                <g transform={`translate(${radius - 4}, ${-radius + 4})`}>
+                                  <circle r="6" fill="#10b981" />
+                                  <path d="M -3 0 L -1 2 L 3 -2" fill="none" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" />
+                                </g>
+                              ) : isInProgress ? (
+                                <g transform={`translate(${radius - 4}, ${-radius + 4})`}>
+                                  <circle r="5" fill="#a855f7" className="animate-pulse" />
+                                </g>
+                              ) : null}
+
+                              {/* Node Label Capsule (Below Node) */}
+                              <g transform={`translate(0, ${radius + 14})`}>
+                                <rect
+                                  x="-48"
+                                  y="-8"
+                                  width="96"
+                                  height="16"
+                                  rx="4"
+                                  fill="rgba(15, 23, 42, 0.85)"
+                                  stroke={isSelected ? '#bf9ff1' : 'rgba(255, 255, 255, 0.08)'}
+                                  strokeWidth="1"
+                                />
+                                <text
+                                  textAnchor="middle"
+                                  y="4"
+                                  fill={isSelected ? '#ffffff' : isMastered ? '#5ec491' : '#cbd5e1'}
+                                  fontSize="9.5"
+                                  fontFamily="sans-serif"
+                                  fontWeight="600"
                                 >
-                                  <div className="token-icon-orb">
-                                    {ICON_MAP[node.iconName] || <Award size={15} />}
-                                    {isMastered && (
-                                      <span className="token-badge-checkmark">
-                                        <CheckCircle2 size={10} />
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="token-content">
-                                    <span className="token-title truncate">{node.title}</span>
-                                    <span className="token-progress-label font-mono">{node.progressPercent}%</span>
-                                  </div>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      );
-                    })}
+                                  {node.title.length > 15 ? node.title.slice(0, 14) + '…' : node.title}
+                                </text>
+                              </g>
+
+                              {/* Metric Sub-Label */}
+                              <text
+                                textAnchor="middle"
+                                y={radius + 32}
+                                fill="#94a3b8"
+                                fontSize="8.5"
+                                fontFamily="monospace"
+                              >
+                                {node.progressPercent}% · {node.currentMetricLabel.split(' ')[0]}
+                              </text>
+                            </g>
+                          );
+                        })}
+                      </g>
+                    </svg>
                   </div>
                 </div>
               ) : (
-                /* Matrix Mode: Filter Tabs + Card Grid */
+                /* MATRIX VIEW: Classic Tabbed Grid */
                 <div>
                   <div className="pill-segmented skill-tier-segmented mb-3 w-full flex flex-wrap gap-1" role="tablist">
                     <button
@@ -544,7 +744,7 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
               )}
             </div>
 
-            {/* Right Column: Node Actuarial Drawer + What-If Unlock Simulator */}
+            {/* Right Column: Node Actuarial Drawer + What-If Lever Simulator */}
             <div className="skill-actuarial-drawer">
               <div className="drawer-header flex-align gap-2.5 pb-2.5 border-b border-subtle">
                 <div className="skill-drawer-icon-box">
