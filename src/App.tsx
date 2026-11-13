@@ -27,6 +27,7 @@ import {
   FileText,
   Crown,
   Activity,
+  Lock,
   Image as ImageIcon,
 } from 'lucide-react';
 import type { FinancePlan, ViewPeriod } from './types/finance';
@@ -104,6 +105,12 @@ export function App() {
   const [showMonteCarlo, setShowMonteCarlo] = useState<boolean>(false);
   const [toolsMenuOpen, setToolsMenuOpen] = useState<boolean>(false);
   const toolsDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Incoming PIN-protected beam resolution states
+  const [pendingBeamPayload, setPendingBeamPayload] = useState<string | null>(null);
+  const [pendingBeamPin, setPendingBeamPin] = useState<string>('');
+  const [pendingBeamError, setPendingBeamError] = useState<string | null>(null);
+
   const [layoutMode, setLayoutMode] = useState<'mobile' | 'desktop'>(() => {
     const saved = localStorage.getItem('psfi_layout_mode');
     if (saved === 'mobile' || saved === 'desktop') return saved;
@@ -156,10 +163,13 @@ export function App() {
         const result = decodeVaultBeam(payload);
         if (result.success && result.plan) {
           setPlan(result.plan);
-          setStatusMessage(`Beamed vault successfully imported from link: ${result.vaultName || 'Shared Vault'}`);
+          setAppPhase('dashboard');
+          setStatusMessage(`⚡ Beamed vault "${result.vaultName || 'Shared Vault'}" successfully imported!`);
           window.history.replaceState(null, '', window.location.pathname);
         } else if (result.needsPin) {
-          setShowQRModal(true);
+          setPendingBeamPayload(payload);
+          setPendingBeamPin('');
+          setPendingBeamError(null);
         }
       }
     };
@@ -167,6 +177,27 @@ export function App() {
     window.addEventListener('hashchange', handleHash);
     return () => window.removeEventListener('hashchange', handleHash);
   }, [setPlan, setStatusMessage]);
+
+  const handleUnlockPendingBeam = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!pendingBeamPayload || pendingBeamPin.length < 4) {
+      setPendingBeamError('Please enter a 4-digit PIN.');
+      return;
+    }
+    const result = decodeVaultBeam(pendingBeamPayload, pendingBeamPin);
+    if (result.success && result.plan) {
+      setPlan(result.plan);
+      setAppPhase('dashboard');
+      setStatusMessage(`🔓 Beamed vault "${result.vaultName || 'Shared Vault'}" unlocked and imported!`);
+      setPendingBeamPayload(null);
+      setPendingBeamPin('');
+      setPendingBeamError(null);
+      window.history.replaceState(null, '', window.location.pathname);
+    } else {
+      setPendingBeamError('Incorrect 4-digit PIN. Please try again.');
+      setPendingBeamPin('');
+    }
+  };
 
   // Global hotkey listener for Alt+X (Camouflage) and Cmd+K / Ctrl+K
   useEffect(() => {
@@ -244,6 +275,69 @@ export function App() {
       e.target.value = '';
     }
   };
+
+  const renderPinUnlockModal = () => {
+    if (!pendingBeamPayload) return null;
+    return (
+      <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="PIN Unlock">
+        <div className="modal-card max-w-sm w-full mx-4 p-6 bg-surface-primary border border-medium rounded-2xl shadow-2xl text-center animate-slideDown">
+          <div className="w-12 h-12 rounded-full bg-solstice/15 border border-solstice/30 text-solstice flex items-center justify-center mx-auto mb-3 shadow-lg">
+            <Lock size={22} />
+          </div>
+          <h3 className="text-base font-semibold text-primary m-0">PIN-Protected Vault Beam</h3>
+          <p className="text-xs text-secondary mt-1.5 leading-relaxed">
+            This incoming portfolio was locked with a 4-digit security PIN by the sender. Enter the PIN to decrypt and load:
+          </p>
+
+          <form onSubmit={handleUnlockPendingBeam} className="mt-4">
+            <input
+              type="password"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={4}
+              placeholder="••••"
+              value={pendingBeamPin}
+              onChange={(e) => setPendingBeamPin(e.target.value.replace(/\D/g, ''))}
+              className="w-32 text-center text-lg tracking-widest font-mono py-2 px-3 bg-surface-overlay border border-medium rounded-lg text-primary focus:border-solstice focus:outline-none"
+              autoFocus
+            />
+
+            {pendingBeamError && (
+              <p className="text-xs text-corona font-mono mt-2 mb-0 animate-fadeIn">{pendingBeamError}</p>
+            )}
+
+            <div className="flex gap-2 mt-4">
+              <button
+                type="button"
+                className="btn-secondary flex-1 py-2 text-xs font-mono"
+                onClick={() => {
+                  setPendingBeamPayload(null);
+                  setPendingBeamPin('');
+                  setPendingBeamError(null);
+                  window.history.replaceState(null, '', window.location.pathname);
+                  setAppPhase('dashboard');
+                }}
+              >
+                Dismiss
+              </button>
+              <button
+                type="submit"
+                className="btn-primary flex-1 py-2 text-xs font-mono font-semibold"
+                disabled={pendingBeamPin.length < 4}
+              >
+                Unlock Vault
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
+  // If receiving a PIN-protected beam before dashboard mounts, block and prompt
+  if (pendingBeamPayload && appPhase !== 'dashboard') {
+    return renderPinUnlockModal();
+  }
 
   // Phase 1: Intro Loader
   if (appPhase === 'loading') {
@@ -827,6 +921,9 @@ export function App() {
           setStatusMessage(`Beamed vault successfully imported: ${vaultName || 'Imported Vault'}`);
         }}
       />
+
+      {/* Incoming URL Beam PIN Unlock Modal */}
+      {renderPinUnlockModal()}
 
       {/* Terminal Command Omnibar Modal (Cmd+K / Ctrl+K) */}
       <CommandPaletteModal
