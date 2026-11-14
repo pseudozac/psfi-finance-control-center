@@ -1,4 +1,4 @@
-const CACHE_NAME = 'psfi-v5.21-tools-portal-fix';
+const CACHE_NAME = 'psfi-v5.22-toast-and-top-deck-no-overlap';
 
 self.addEventListener('install', () => {
   self.skipWaiting();

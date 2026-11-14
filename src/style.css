@@ -2032,8 +2032,8 @@ body {
     flex-direction: row !important;
     justify-content: space-between !important;
     align-items: center !important;
-    padding: 7px 12px !important;
-    gap: 8px !important;
+    padding: 6px 10px !important;
+    gap: 6px !important;
     margin-bottom: 16px !important;
     border-radius: var(--radius-full) !important;
     width: 100% !important;
@@ -2045,13 +2045,31 @@ body {
     display: flex !important;
     align-items: center !important;
     width: auto !important;
-    gap: 8px !important;
+    gap: 6px !important;
     min-width: 0 !important;
     flex-shrink: 1 !important;
+    overflow: hidden !important;
+  }
+
+  .brand-cluster .wordmark {
+    font-size: 17px !important;
+    letter-spacing: -0.04em !important;
+    flex-shrink: 0 !important;
+  }
+
+  .pill-vault {
+    display: inline-flex !important;
+    align-items: center !important;
+    min-width: 0 !important;
+    flex-shrink: 1 !important;
+    overflow: hidden !important;
+    padding: 3px 8px !important;
+    gap: 5px !important;
   }
 
   .vault-pill-name {
-    max-width: 95px !important;
+    max-width: 75px !important;
+    min-width: 0 !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
@@ -2064,19 +2082,21 @@ body {
     width: auto !important;
     border-top: none !important;
     padding-top: 0 !important;
-    gap: 5px !important;
+    gap: 4px !important;
     flex-wrap: nowrap !important;
     flex-shrink: 0 !important;
   }
 
   .period-switcher button {
     padding: 3px 6px !important;
-    font-size: 10px !important;
+    font-size: 9.5px !important;
+    letter-spacing: -0.01em !important;
   }
 
   .pill-tour {
-    padding: 3px 8px !important;
-    font-size: 10.5px !important;
+    padding: 3px 7px !important;
+    font-size: 10px !important;
+    flex-shrink: 0 !important;
   }
 
   .dock-utility-icons {
@@ -2087,6 +2107,28 @@ body {
     padding-left: 5px !important;
     margin-left: 0 !important;
     width: auto !important;
+    flex-shrink: 0 !important;
+  }
+
+  .dock-utility-icons .icon-pill {
+    width: 27px !important;
+    height: 27px !important;
+  }
+
+  /* Mobile Toast Notification: Float cleanly above mobile-bottom-dock (bottom: 12px, height: 58px) */
+  .hipuku-toast {
+    position: fixed !important;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 84px) !important;
+    left: 16px !important;
+    right: 16px !important;
+    margin: 0 auto !important;
+    max-width: calc(100% - 32px) !important;
+    width: fit-content !important;
+    z-index: 10005 !important;
+    justify-content: center !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.65), 0 0 16px rgba(94, 196, 145, 0.3) !important;
   }
 
   .tools-mobile-drawer-handle {
@@ -2158,6 +2200,34 @@ body {
   .main-stack,
   .wealth-terminal-shell {
     padding-bottom: 74px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .vault-pill-name {
+    max-width: 46px !important;
+  }
+  .pill-tour {
+    padding: 3px 5px !important;
+  }
+  .dock-actions-cluster {
+    gap: 3px !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .vault-pill-name {
+    display: none !important;
+  }
+  .pill-tour span {
+    display: none !important;
+  }
+  .pill-tour {
+    padding: 3px 6px !important;
+  }
+  .dock-utility-icons .icon-pill {
+    width: 25px !important;
+    height: 25px !important;
   }
 }
 
