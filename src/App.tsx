@@ -942,7 +942,7 @@ export function App() {
             title="Terminal Command Omnibar (Cmd+K / Ctrl+K or '/')"
           >
             <Terminal size={12} className="text-quasar" />
-            <span className="font-mono text-xs">⌘K</span>
+            <span className="font-mono text-xs pill-label">⌘K</span>
           </button>
 
           {/* Statement Parser Trigger */}
@@ -953,7 +953,7 @@ export function App() {
             title="Ingest Financial Statements: Mutual Fund CAS, Bank, Credit Cards & Payslips (100% Private in-memory)"
           >
             <FileText size={12} className="text-nebula" />
-            <span className="font-mono text-xs">ingest</span>
+            <span className="font-mono text-xs pill-label">ingest</span>
           </button>
 
           {/* Guided Tour Trigger */}
@@ -964,7 +964,7 @@ export function App() {
             title="Start Interactive Guided Tour"
           >
             <Compass size={13} className="text-quasar" />
-            <span className="font-mono text-xs">tour</span>
+            <span className="font-mono text-xs pill-label">tour</span>
           </button>
 
           {/* Sovereign Skill Tree Trigger */}
@@ -976,7 +976,7 @@ export function App() {
             title="Sovereign Wealth RPG Skill Tree (Gamified Financial Freedom)"
           >
             <Crown size={12} className="text-solstice" />
-            <span className="font-mono text-xs">skills</span>
+            <span className="font-mono text-xs pill-label">skills</span>
           </button>
 
           {/* Unified Tools Dropdown Menu */}
@@ -988,35 +988,37 @@ export function App() {
               title="Tools, Scenarios & Data Operations"
             >
               <Sparkles size={13} className="text-solstice" />
-              <span className="font-mono text-xs">tools</span>
+              <span className="font-mono text-xs pill-label">tools</span>
               <ChevronDown size={11} className={`text-muted transition-transform ${toolsMenuOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {/* Tools menu portal is handled globally at bottom of document body */}
           </div>
+        </div>
 
-          {/* Quick Utility Icon Group */}
-          <div className="dock-utility-icons">
-            {/* Privacy Mask Toggle */}
-            <button
-              type="button"
-              className={`icon-pill ${privacyMode ? 'pill-active-mode' : ''}`}
-              onClick={() => setPrivacyMode(!privacyMode)}
-              title={privacyMode ? 'Disable privacy masking' : 'Enable privacy mask (blur sensitive figures)'}
-            >
-              {privacyMode ? <EyeOff size={13} className="text-corona" /> : <Eye size={13} />}
-            </button>
+        {/* Quick Utility Icon Group: Permanently Anchored at Dock Far Right */}
+        <div className="dock-utility-icons" role="toolbar" aria-label="Quick utilities">
+          {/* Privacy Mask Toggle */}
+          <button
+            type="button"
+            className={`icon-pill ${privacyMode ? 'pill-active-mode' : ''}`}
+            onClick={() => setPrivacyMode(!privacyMode)}
+            title={privacyMode ? 'Disable privacy masking' : 'Enable privacy mask (blur sensitive figures)'}
+            aria-label={privacyMode ? 'Disable privacy masking' : 'Enable privacy masking'}
+          >
+            {privacyMode ? <EyeOff size={13} className="text-corona" /> : <Eye size={13} />}
+          </button>
 
-            {/* Theme Toggle */}
-            <button
-              type="button"
-              className="icon-pill"
-              onClick={toggleTheme}
-              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-            >
-              {theme === 'dark' ? <Sun size={13} className="text-solstice" /> : <Moon size={13} className="text-pulsar" />}
-            </button>
-          </div>
+          {/* Theme Toggle */}
+          <button
+            type="button"
+            className="icon-pill"
+            onClick={toggleTheme}
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          >
+            {theme === 'dark' ? <Sun size={13} className="text-solstice" /> : <Moon size={13} className="text-pulsar" />}
+          </button>
         </div>
       </header>
 
