@@ -574,7 +574,30 @@ export function calculateSkillTree(
     nextRank = 'Fortress Architect';
   }
 
-  const currentRankPerks = RANK_LORE_PERKS[currentRank]?.perks || ['Cashflow mapping active'];
+  const rawRankPerks = RANK_LORE_PERKS[currentRank]?.perks || ['Cashflow balance sheet mapped'];
+  
+  // Dynamically audit perks to ensure claims match real underlying financial values
+  const currentRankPerks = rawRankPerks.map((perk) => {
+    if (perk.toLowerCase().includes('zero high-interest debt drag')) {
+      return debtBalance <= 0
+        ? 'Zero high-interest debt drag'
+        : `Active debt liquidation (${formatINR(debtBalance)} balance remaining)`;
+    }
+    if (perk.toLowerCase().includes('6-month iron shock absorption')) {
+      return runwayMonths >= 6
+        ? 'Full 6-month iron shock absorption'
+        : runwayMonths >= 3
+        ? `3-Month core liquidity buffer (${runwayMonths.toFixed(1)} mos)`
+        : `Building liquidity core (${runwayMonths.toFixed(1)} / 6 mos)`;
+    }
+    if (perk.toLowerCase().includes('term & health shield')) {
+      return plan.expenses.insurance > 0
+        ? 'Family catastrophic risk neutralized via term & health shield'
+        : 'Insurance shield pending activation';
+    }
+    return perk;
+  });
+
   const nextRankPerks = RANK_LORE_PERKS[nextRank]?.perks || ['Sovereign Autonomy'];
 
   return {

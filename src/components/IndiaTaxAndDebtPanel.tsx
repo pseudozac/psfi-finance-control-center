@@ -108,25 +108,55 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
       {/* 2. Indian Tax Regime Optimization */}
       <section className="hipuku-card flex-col justify-between">
         <div>
-          <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+          <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
             <div className="flex items-center gap-2 min-w-0 flex-wrap">
               <span className="tag-pill tag-quasar shrink-0 text-[11px]">tax engine</span>
               <h3 className="card-title m-0 text-base font-bold whitespace-nowrap flex items-center gap-1.5">
-                <span>FY 2025–26 &amp; FY 2024–25 Regime Verdict</span>
+                <span>Tax Year 2026–27 (Income-tax Act, 2025) &amp; Prior Act</span>
                 <InfoTooltip
-                  title="FY 2025–26 & FY 2024–25 Indian Tax Regime Engine"
-                  explanation="Calculates net tax liabilities under both Old and New Tax Regimes (FY 2024-25 / AY 2025-26 & FY 2025-26 / AY 2026-27 Union Budget). The New Regime features a standard deduction of ₹75,000, revised slab brackets, and Section 87A rebate (zero tax up to ₹7.75L). The Old Regime permits deductions under 80C, 80D, NPS 80CCD(1B), and HRA exemptions."
+                  title="Tax Year 2026–27 (Income-tax Act, 2025) Statutory Audit"
+                  explanation="Distinguishes current-year planning under the newly enacted Income-tax Act, 2025 (TY 2026–27) from historical comparisons under the prior Income-tax Act, 1961 (FY 2024-25 & FY 2025-26). The 2025 Act establishes the Simplified Regime as default (₹75k standard deduction, 87A rebate with zero tax up to ₹7.75L). Prior Act 1961 allows itemized 80C, 80D, 80CCD, and HRA deductions."
                   formula="Tax Liability = Slab Computation − Rebate 87A + 4% Health & Edu Cess"
-                  benchmark="PsFi automatically highlights the optimal regime and calculates your exact net rupee savings delta."
+                  benchmark="PsFi audits both acts to highlight your mathematically optimal regime and exact rupee savings delta."
                 />
               </h3>
             </div>
-            <span className="tag-pill tag-pulsar shrink-0 whitespace-nowrap text-xs">Sec 87A + 4% Cess</span>
+            <span className="tag-pill tag-pulsar shrink-0 whitespace-nowrap text-xs">Income-tax Act, 2025</span>
+          </div>
+
+          {/* Statutory Transition Note & Authority Links */}
+          <div className="p-2.5 px-3 rounded-xl bg-surface-overlay border border-subtle mb-3 text-[11px] leading-relaxed">
+            <div className="flex items-center justify-between gap-2 flex-wrap text-muted">
+              <span className="text-secondary font-medium">
+                🏛️ <strong>Statutory Distinction:</strong> TY 2026–27 uses <em>Income-tax Act, 2025</em>; prior years remain under the 1961 Act.
+              </span>
+              <div className="flex items-center gap-2 font-mono text-[10.5px]">
+                <a
+                  href="https://www.incometax.gov.in/iec/foportal/help/all-topics/e-filing-services/objective-and-scope-new-act-faq?mobile-app=1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-quasar hover:underline"
+                  title="Income Tax Department transition FAQ"
+                >
+                  ITD Transition FAQ ↗
+                </a>
+                <span className="text-muted/40">·</span>
+                <a
+                  href="https://www.incometax.gov.in/iec/foportal/help/all-topics/e-filing-services/income-and-tax-estimator-um"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-cyan-400 hover:underline"
+                  title="Tax estimator manual for TY 2026–27"
+                >
+                  TY 26–27 Estimator Manual ↗
+                </a>
+              </div>
+            </div>
           </div>
 
           <SliderNumberField
             id="tax-80c"
-            label="Section 80C Deductions (PPF, ELSS, EPF, max ₹1.5L)"
+            label="Section 80C Deductions (PPF, ELSS, EPF, max ₹1.5L) · Prior Act"
             value={plan.tax.deductions80C}
             min={0}
             max={150_000}
@@ -182,10 +212,10 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
           </div>
 
           <div className="tax-regime-grid mt-3">
-            {/* New Regime Card */}
+            {/* Income-tax Act, 2025 Card */}
             <div className={`tax-compare-card ${taxComparison.recommended === 'new' ? 'winner-card' : ''}`}>
               <div className="tax-compare-head">
-                <span className="tax-name">New Regime</span>
+                <span className="tax-name">Income-tax Act, 2025</span>
                 {taxComparison.recommended === 'new' && (
                   <span className="winner-badge">
                     <CheckCircle2 size={11} /> OPTIMAL
@@ -195,13 +225,13 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
               <div className="tax-amount font-mono">
                 {formatINR(taxComparison.newRegimeTax)}
               </div>
-              <span className="tax-note">₹75k Std Ded · Rebate &le; ₹7L</span>
+              <span className="tax-note">TY 2026–27 Default · ₹75k Std Ded · Sec 87A Rebate &le; ₹7L</span>
             </div>
 
-            {/* Old Regime Card */}
+            {/* Prior Act 1961 Card */}
             <div className={`tax-compare-card ${taxComparison.recommended === 'old' ? 'winner-card' : ''}`}>
               <div className="tax-compare-head">
-                <span className="tax-name">Old Regime</span>
+                <span className="tax-name">Prior Act 1961</span>
                 {taxComparison.recommended === 'old' && (
                   <span className="winner-badge">
                     <CheckCircle2 size={11} /> OPTIMAL
@@ -211,7 +241,7 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
               <div className="tax-amount font-mono">
                 {formatINR(taxComparison.oldRegimeTax)}
               </div>
-              <span className="tax-note">₹50k Std + 80C + 80D + NPS + HRA</span>
+              <span className="tax-note">Historical Itemized · ₹50k Std + 80C + 80D + NPS + HRA</span>
             </div>
           </div>
         </div>
@@ -219,11 +249,11 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
         <div className="mt-4">
           <div className="verdict-banner">
             {taxComparison.recommended === 'tie' ? (
-              <span className="font-mono text-xs">Both regimes produce identical tax liability for this income structure.</span>
+              <span className="font-mono text-xs">Both acts produce identical tax liability for this income structure.</span>
             ) : (
               <div className="flex-align gap-2 text-xs">
                 <span className="text-nebula font-bold font-mono">
-                  {taxComparison.recommended === 'new' ? 'NEW REGIME' : 'OLD REGIME'} RECOMMENDED
+                  {taxComparison.recommended === 'new' ? 'INCOME-TAX ACT, 2025 (TY 2026–27)' : 'PRIOR ACT 1961 (ITEMIZED)'} RECOMMENDED
                 </span>
                 <ArrowRight size={13} className="text-muted" />
                 <span>

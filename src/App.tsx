@@ -600,7 +600,7 @@ export function App() {
           </button>
           )}
 
-          {matchesToolsSearch('Reverse Monte Carlo', '10,000 black swan simulations') && (
+          {matchesToolsSearch('Reverse Monte Carlo', '5,000 stochastic lifespan simulations') && (
           <button
             type="button"
             className="tools-menu-item"
@@ -609,7 +609,7 @@ export function App() {
             <Activity size={13} className="text-cyan-400" />
             <div>
               <span className="item-title">Reverse Monte Carlo</span>
-              <span className="item-sub">10,000 black swan simulations</span>
+              <span className="item-sub">5,000 stochastic lifespan simulations</span>
             </div>
           </button>
           )}
@@ -992,8 +992,7 @@ export function App() {
               <ChevronDown size={11} className={`text-muted transition-transform ${toolsMenuOpen ? 'rotate-180' : ''}`} />
             </button>
 
-            {/* Desktop: dropdown attached beneath trigger */}
-            {toolsMenuOpen && !isMobileViewport && renderToolsMenu()}
+            {/* Tools menu portal is handled globally at bottom of document body */}
           </div>
 
           {/* Quick Utility Icon Group */}
@@ -1029,7 +1028,7 @@ export function App() {
           <span className="cyber-pulse-dot" />
           <span className="cyber-badge-tag">PSFI // ENGINE</span>
           <span className="cyber-badge-sep">·</span>
-          <span className="cyber-badge-sub">INDIA STATUTORY FY 2025–26</span>
+          <span className="cyber-badge-sub">TY 2026–27 // INCOME-TAX ACT, 2025</span>
           <span className="cyber-badge-secure">🛡️ OFFLINE / PRIVATE</span>
         </div>
 
@@ -1070,9 +1069,9 @@ export function App() {
             type="button"
             className="hero-inline-link link-tax"
             onClick={() => document.getElementById('tour-tax')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-            title="Jump to Indian Tax Engine (FY 2025–26 & FY 2024–25)"
+            title="Jump to Indian Tax Engine (Income-tax Act, 2025 & Prior Act 1961)"
           >
-            FY 2025–26 tax regimes
+            TY 2026–27 tax regimes (Income-tax Act, 2025)
           </button>
           . Completely private, client-side, and offline.
         </p>
@@ -1520,8 +1519,8 @@ export function App() {
         </nav>
       )}
 
-      {/* Mobile Tools Action Sheet portaled directly to document.body to bypass navbar-dock's backdrop-filter containing block */}
-      {toolsMenuOpen && isMobileViewport && typeof document !== 'undefined' && createPortal(renderToolsMenu(), document.body)}
+      {/* Tools Action Sheet portaled directly to document.body to bypass navbar-dock's backdrop-filter containing block on all screens */}
+      {toolsMenuOpen && typeof document !== 'undefined' && createPortal(renderToolsMenu(), document.body)}
     </div>
   );
 }

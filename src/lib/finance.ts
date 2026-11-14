@@ -377,8 +377,11 @@ function computeSlabs(income: number, slabs: [number, number][]): number {
 }
 
 /**
- * Estimates Indian personal income tax under New vs Old regimes (FY 2024-25 / AY 2025-26 baseline).
- * Enhanced with NPS 80CCD(1B) and HRA exemptions under the Old Regime.
+ * Estimates Indian personal income tax comparing:
+ * - Current-year statutory planning under Income-tax Act, 2025 (Tax Year 2026–27 Default Simplified Schedule)
+ * - Historical itemized comparisons under prior Income-tax Act, 1961 (FY 2024–25 & FY 2025–26)
+ * Includes standard deduction of ₹75,000, Section 87A rebate (zero tax up to ₹7.75L gross),
+ * plus Old Regime 80C, 80D, NPS 80CCD(1B), and HRA exemption modeling.
  */
 export function estimateIndianIncomeTax(
   annualGrossIncome: number,

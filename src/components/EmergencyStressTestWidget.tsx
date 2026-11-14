@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldAlert, ShieldCheck, AlertCircle, HeartPulse, Zap, RotateCcw, AlertTriangle } from 'lucide-react';
+import { ShieldAlert, ShieldCheck, AlertCircle, HeartPulse, Zap, RotateCcw, AlertTriangle, Info } from 'lucide-react';
 import type { FinancePlan } from '../types/finance';
 import { calculateEmergencyStressTest, formatINR } from '../lib/finance';
 import { InfoTooltip } from './InfoTooltip';
@@ -59,16 +59,21 @@ export const EmergencyStressTestWidget: React.FC<EmergencyStressTestWidgetProps>
   // Calculate adjusted runway months
   const simBarebonesMonths = barebonesDeficit > 0
     ? Number((simulatedReserve / barebonesDeficit).toFixed(1))
-    : 99.9;
+    : baseStress.barebonesRunwayMonths;
   const simStandardMonths = standardDeficit > 0
     ? Number((simulatedReserve / standardDeficit).toFixed(1))
-    : 99.9;
+    : baseStress.standardRunwayMonths;
   const simFullMonths = fullDeficit > 0
     ? Number((simulatedReserve / fullDeficit).toFixed(1))
-    : 99.9;
+    : baseStress.fullRunwayMonths;
+
+  // The institutional benchmark runway for status badges must be derived from actual standard living runway
+  const evaluatedRunwayMonths = activeScenario === 'baseline'
+    ? baseStress.standardRunwayMonths
+    : simStandardMonths;
 
   const displayStressStatus =
-    simStandardMonths >= 6 ? 'fortified' : simStandardMonths >= 3 ? 'moderate' : 'critical';
+    evaluatedRunwayMonths >= 6 ? 'fortified' : evaluatedRunwayMonths >= 3 ? 'moderate' : 'critical';
 
   return (
     <section className="hipuku-card stress-test-section" aria-label="Emergency Survival Stress Test">
@@ -273,6 +278,36 @@ export const EmergencyStressTestWidget: React.FC<EmergencyStressTestWidgetProps>
               {activeScenario === 'baseline' ? `${baseStress.fullRunwayMonths} months` : `${simFullMonths} months`}
             </span>
             <span className="muted text-xs">cash runway</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Expense Composition Explainer */}
+      <div className="p-2.5 px-3 rounded-xl bg-surface-overlay border border-subtle mb-3 text-xs">
+        <div className="font-mono text-[10.5px] text-muted flex items-center justify-between flex-wrap gap-2 mb-1.5">
+          <span className="font-semibold text-secondary flex items-center gap-1">
+            <Info size={12} className="text-quasar" /> Which expenses each runway figure includes:
+          </span>
+          <span className="text-[10px]">Liquid Reserve: {formatINR(baseStress.liquidReserve)}</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 font-mono text-[10.5px]">
+          <div className="p-2 rounded-lg bg-surface-page/60 border border-subtle/50">
+            <strong className="text-quasar block font-sans">Tier 1: Barebones ({formatINR(baseStress.barebonesMonthly)}/mo)</strong>
+            <span className="text-muted block text-[10px] mt-0.5">
+              Housing ({formatINR(plan.expenses.housing)}) + Groceries ({formatINR(plan.expenses.groceries)}) + Utilities ({formatINR(plan.expenses.utilities)}) + Debt EMI ({formatINR(plan.debt.cardBalance > 0 ? plan.debt.monthlyPayment : 0)})
+            </span>
+          </div>
+          <div className="p-2 rounded-lg bg-surface-page/60 border border-subtle/50">
+            <strong className="text-pulsar block font-sans">Tier 2: Standard ({formatINR(baseStress.standardMonthly)}/mo)</strong>
+            <span className="text-muted block text-[10px] mt-0.5">
+              Tier 1 + Term Insurance ({formatINR(plan.expenses.insurance)}) + Transport ({formatINR(plan.expenses.transport)})
+            </span>
+          </div>
+          <div className="p-2 rounded-lg bg-surface-page/60 border border-subtle/50">
+            <strong className="text-corona block font-sans">Tier 3: Full Burn ({formatINR(baseStress.fullMonthly)}/mo)</strong>
+            <span className="text-muted block text-[10px] mt-0.5">
+              Tier 2 + Dining, Shopping &amp; All Discretionary Wants
+            </span>
           </div>
         </div>
       </div>

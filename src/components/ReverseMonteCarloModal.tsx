@@ -3,6 +3,9 @@ import {
   X,
   Activity,
   Sparkles,
+  Dices,
+  RotateCcw,
+  Info,
 } from 'lucide-react';
 import type { FinancePlan, FinanceSummary } from '../types/finance';
 import {
@@ -36,7 +39,8 @@ export const ReverseMonteCarloModal: React.FC<ReverseMonteCarloModalProps> = ({
 }) => {
   const [scenario, setScenario] = useState<StressScenario>('baseline');
   const [equityRatio, setEquityRatio] = useState<number>(0.70);
-  const simCount = 2000;
+  const [simCount, setSimCount] = useState<number>(5000);
+  const [randomSeed, setRandomSeed] = useState<number>(42);
   const [customRetireYears, setCustomRetireYears] = useState<number>(10);
   const [customHorizonYears, setCustomHorizonYears] = useState<number>(30);
 
@@ -45,7 +49,7 @@ export const ReverseMonteCarloModal: React.FC<ReverseMonteCarloModalProps> = ({
   const monthlySavings = plan.savings.monthlySip + plan.savings.monthlySavings;
   const monthlyRetirementBurn = summary.monthlyExpenses || 50000;
 
-  // Run simulation
+  // Run simulation with deterministic or re-seeded generator
   const result: MonteCarloResult = useMemo(() => {
     return runMonteCarloSimulation({
       currentCorpus,
@@ -56,6 +60,7 @@ export const ReverseMonteCarloModal: React.FC<ReverseMonteCarloModalProps> = ({
       equityRatio,
       numSimulations: simCount,
       scenario,
+      randomSeed,
     });
   }, [
     currentCorpus,
@@ -66,6 +71,7 @@ export const ReverseMonteCarloModal: React.FC<ReverseMonteCarloModalProps> = ({
     equityRatio,
     simCount,
     scenario,
+    randomSeed,
   ]);
 
   if (!isOpen) return null;
@@ -112,31 +118,80 @@ export const ReverseMonteCarloModal: React.FC<ReverseMonteCarloModalProps> = ({
     <div className="fixed inset-0 z-[50000] bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
       <div className="modal-content w-full max-w-4xl bg-[#090d16] border border-subtle rounded-2xl p-5 sm:p-6 shadow-2xl relative text-primary animate-fadeIn my-auto">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-subtle">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-cyan-950/40 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+        <div className="flex items-center justify-between pb-4 border-b border-subtle flex-wrap gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-cyan-950/40 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
               <Activity size={20} />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold flex items-center gap-2">
-                Reverse Monte Carlo FIRE Stress-Testing
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-950/60 border border-cyan-600/40 text-cyan-300">
-                  {simCount.toLocaleString()} Iterations
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-base sm:text-lg font-bold">
+                  Reverse Monte Carlo FIRE Stress-Testing
+                </h2>
+                <span className="text-[10.5px] font-mono px-2 py-0.5 rounded-full bg-cyan-950/60 border border-cyan-600/40 text-cyan-300">
+                  {simCount.toLocaleString()} Stochastic Iterations
                 </span>
-              </h2>
-              <p className="text-xs text-muted">
-                10,000 localized client-side stochastic simulations testing Indian black swans, high CPI inflation & sequence-of-returns risk.
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-purple-950/40 border border-purple-500/30 text-purple-300">
+                  Seed #{randomSeed}
+                </span>
+              </div>
+              <p className="text-xs text-muted mt-0.5">
+                {simCount.toLocaleString()} client-side stochastic simulations testing Indian black swans, high CPI inflation &amp; sequence-of-returns risk.
               </p>
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-muted hover:text-primary hover:bg-slate-800 transition-colors"
-          >
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Seed & Iteration Controls */}
+            <div className="flex items-center gap-1.5 bg-slate-900/60 border border-subtle rounded-xl p-1 text-xs font-mono">
+              <button
+                type="button"
+                className={`px-2 py-0.5 rounded-lg text-[10.5px] transition-all ${simCount === 5000 ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30' : 'text-muted hover:text-primary'}`}
+                onClick={() => setSimCount(5000)}
+                title="Run 5,000 stochastic lifespan paths"
+              >
+                5k Sim
+              </button>
+              <button
+                type="button"
+                className={`px-2 py-0.5 rounded-lg text-[10.5px] transition-all ${simCount === 10000 ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30' : 'text-muted hover:text-primary'}`}
+                onClick={() => setSimCount(10000)}
+                title="Run 10,000 stochastic lifespan paths (higher statistical convergence)"
+              >
+                10k Sim
+              </button>
+
+              <div className="w-[1px] h-3.5 bg-white/10 mx-0.5" />
+
+              <button
+                type="button"
+                className="px-2 py-0.5 rounded-lg text-[10.5px] flex items-center gap-1 text-cyan-400 hover:bg-cyan-500/10 transition-colors"
+                onClick={() => setRandomSeed(Math.floor(Math.random() * 900000) + 100000)}
+                title="Generate new stochastic pseudo-random seed"
+              >
+                <Dices size={12} />
+                <span>New Run</span>
+              </button>
+              {randomSeed !== 42 && (
+                <button
+                  type="button"
+                  className="px-1.5 py-0.5 rounded-lg text-[10.5px] text-muted hover:text-primary hover:bg-white/5 transition-colors"
+                  onClick={() => setRandomSeed(42)}
+                  title="Reset to deterministic baseline Seed #42"
+                >
+                  <RotateCcw size={11} />
+                </button>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-muted hover:text-primary hover:bg-slate-800 transition-colors"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* 1. SCENARIO SELECTOR STRIP */}
@@ -396,6 +451,34 @@ export const ReverseMonteCarloModal: React.FC<ReverseMonteCarloModalProps> = ({
             <strong className="text-cyan-200 block">{result.actuarialVerdict}</strong>
             <p className="text-[11px] leading-relaxed">{result.srrExplanation}</p>
           </div>
+        </div>
+
+        {/* 6. ACTUARIAL ASSUMPTIONS & DISCLOSURES */}
+        <div className="mt-3 p-3 rounded-xl bg-slate-900/40 border border-subtle text-[11px] text-muted space-y-1.5">
+          <div className="flex items-center gap-1.5 text-primary font-semibold font-mono text-xs">
+            <Info size={13} className="text-cyan-400" />
+            <span>Actuarial Model Parameters &amp; Stochastic Assumptions</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 font-mono text-[10.5px] pt-1">
+            <div className="p-2 rounded-lg bg-surface-page/50 border border-white/5">
+              <span className="text-secondary block font-sans font-medium">Equity Distribution (Nifty 50):</span>
+              <span className="text-cyan-300">μ = 12.5% CAGR, σ = 18.0%</span>
+              <span className="text-muted/70 block text-[9.5px]">Log-normal annual returns with fat-tail drawdown sampling</span>
+            </div>
+            <div className="p-2 rounded-lg bg-surface-page/50 border border-white/5">
+              <span className="text-secondary block font-sans font-medium">Debt &amp; Fixed Income:</span>
+              <span className="text-cyan-300">μ = 7.0%, σ = 3.0%</span>
+              <span className="text-muted/70 block text-[9.5px]">Target maturity G-Sec &amp; corporate bond baseline</span>
+            </div>
+            <div className="p-2 rounded-lg bg-surface-page/50 border border-white/5">
+              <span className="text-secondary block font-sans font-medium">Indian CPI Inflation:</span>
+              <span className="text-cyan-300">μ = 6.5%, σ = 2.0%</span>
+              <span className="text-muted/70 block text-[9.5px]">Annual compounding living expense adjustment</span>
+            </div>
+          </div>
+          <p className="text-[10px] text-muted/80 leading-normal pt-1">
+            * Methodology: Box-Muller transform Gaussian paths. Rebalanced annually. Deterministic PRNG seed ensures reproducible scenario audits. Stochastic models present probability distributions, not guaranteed future performance.
+          </p>
         </div>
       </div>
     </div>

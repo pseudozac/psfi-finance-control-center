@@ -118,4 +118,22 @@ describe('Sovereign Skill Tree Actuarial Engine', () => {
     expect(path).toMatch(/^M 640 680 C /);
     expect(path).toContain('390 570');
   });
+
+  it('dynamically gates rank perks based on exact underlying debt and runway values', () => {
+    // When debt is 45,000, zero debt perk should NOT be granted even if rank has high level
+    const debtPlan = { ...DEFAULT_PLAN, debt: { ...DEFAULT_PLAN.debt, cardBalance: 45000 } };
+    const summary = calculateSummary(debtPlan);
+    const tree = calculateSkillTree(debtPlan, summary);
+
+    // If "Fortress Architect" or similar rank is reached, perk should show active liquidation, not false claim
+    const hasFalseClaim = tree.currentRankPerks.some((p) => p === 'Zero high-interest debt drag');
+    expect(hasFalseClaim).toBe(false);
+
+    // When debt is 0, zero debt perk can appear if rank supports it
+    const zeroPlan = { ...DEFAULT_PLAN, debt: { ...DEFAULT_PLAN.debt, cardBalance: 0 } };
+    const zeroSummary = calculateSummary(zeroPlan);
+    const zeroTree = calculateSkillTree(zeroPlan, zeroSummary);
+    const liquidationClaims = zeroTree.currentRankPerks.some((p) => p.includes('Active debt liquidation'));
+    expect(liquidationClaims).toBe(false);
+  });
 });

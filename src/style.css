@@ -414,26 +414,32 @@ body {
 }
 
 .tools-dropdown-backdrop {
-  display: none;
+  display: block;
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 6, 14, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 10009;
 }
 
 .tools-dropdown-menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 14px;
+  position: fixed;
+  top: 72px;
+  right: 24px;
   width: 740px;
-  max-width: calc(100% - 28px);
+  max-width: calc(100vw - 32px);
   max-height: calc(100vh - 90px);
   overflow-y: auto;
   box-sizing: border-box;
-  background: rgba(14, 17, 24, 0.97);
+  background: rgba(14, 17, 24, 0.98);
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-xl);
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.07);
-  padding: 14px;
-  z-index: 1000;
+  padding: 16px;
+  z-index: 10011;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -577,11 +583,11 @@ body {
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   flex-shrink: 0 !important;
-  min-height: 38px !important;
+  min-height: 42px !important;
   align-items: center;
-  padding-bottom: 6px;
-  margin-bottom: 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 4px 2px 8px 2px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .tools-category-segmented-pills::-webkit-scrollbar {
@@ -2490,7 +2496,7 @@ body {
   }
 }
 
-@media (max-width: 1024px) and (min-width: 769px) {
+@media (max-width: 1100px) and (min-width: 769px) {
   .view-label-full {
     display: none !important;
   }
@@ -2498,40 +2504,47 @@ body {
     display: inline !important;
   }
   .navbar-dock {
-    padding: 6px 10px;
-    gap: 6px;
+    padding: 6px 12px;
+    gap: 8px;
     flex-wrap: nowrap;
+    overflow: visible !important;
   }
   .brand-cluster {
     gap: 8px;
     min-width: 0;
-    flex-shrink: 0;
+    flex-shrink: 1;
   }
   .wordmark {
     font-size: 18px;
   }
   .vault-pill-name {
-    max-width: 75px;
+    max-width: 80px;
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
   }
   .dock-actions-cluster {
-    gap: 4px;
+    gap: 5px;
     flex-wrap: nowrap;
     flex-shrink: 0;
   }
-  .period-switcher button {
-    padding: 3px 6px;
-    font-size: 10px;
+  /* Hide low-priority top buttons on tablet to avoid any text collision */
+  .pill-cmdk,
+  .pill-ingest,
+  .pill-tour {
+    display: none !important;
   }
-  .action-pill {
-    padding: 4px 7px;
+  .period-switcher button {
+    padding: 3px 8px;
     font-size: 10.5px;
   }
+  .action-pill {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
   .dock-utility-icons {
-    padding-left: 5px;
-    gap: 2px;
+    padding-left: 6px;
+    gap: 3px;
   }
   .two-col-grid {
     grid-template-columns: 1fr;
@@ -2638,7 +2651,7 @@ body {
     border-radius: var(--radius-full) !important;
     width: 100% !important;
     box-sizing: border-box !important;
-    overflow: hidden !important;
+    overflow: visible !important;
   }
 
   .brand-cluster {
@@ -2648,7 +2661,7 @@ body {
     gap: 6px !important;
     min-width: 0 !important;
     flex-shrink: 1 !important;
-    overflow: hidden !important;
+    overflow: visible !important;
   }
 
   .brand-cluster .wordmark {

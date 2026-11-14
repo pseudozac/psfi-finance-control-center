@@ -548,16 +548,19 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
 
         {/* 30-Day Liquidity Calendar Mini-Strip */}
         <div className="p-2.5 px-3 rounded-xl bg-surface-overlay border border-subtle mb-3">
-          <div className="flex flex-wrap items-center justify-between gap-1.5 text-[11px] font-mono text-muted mb-2">
-            <div className="flex items-center gap-1.5 text-primary font-medium min-w-0 flex-wrap">
-              <CalendarDays size={12} className="text-quasar shrink-0" />
-              <span>Day {currentDayOfMonth} of {daysInCurrentMonth}</span>
-              <span className="text-muted/40">·</span>
-              <span className="text-secondary text-[10px]">30-Day Liquidity Track</span>
+          <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-muted mb-2">
+            <div className="flex items-center gap-2 text-primary font-medium min-w-0 flex-wrap">
+              <CalendarDays size={13} className="text-quasar shrink-0" />
+              <span className="bg-white/5 px-2 py-0.5 rounded border border-white/10 text-white font-semibold whitespace-nowrap">
+                Day {currentDayOfMonth} of {daysInCurrentMonth}
+              </span>
+              <span className="text-secondary text-[10px] hidden xs:inline whitespace-nowrap">
+                30-Day Liquidity Track
+              </span>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-solstice font-semibold bg-solstice/10 px-2 py-0.5 rounded border border-solstice/20 text-[10px]">
-                {daysInCurrentMonth - currentDayOfMonth} Days to Salary Cycle
+              <span className="text-solstice font-semibold bg-solstice/10 px-2.5 py-0.5 rounded-full border border-solstice/25 text-[10.5px] whitespace-nowrap">
+                {daysInCurrentMonth - currentDayOfMonth} Days Remaining
               </span>
             </div>
           </div>
@@ -593,9 +596,9 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
         {activeTab === 'burn_pocket' ? (
           <div>
             {/* Visual Radial Burn Gauge & Core Metrics Grid */}
-            <div className="p-3 rounded-2xl bg-surface-overlay border border-subtle mb-3 flex flex-col md:flex-row items-center gap-4">
+            <div className="p-3.5 rounded-2xl bg-surface-overlay border border-subtle mb-3 flex flex-col md:flex-row items-center gap-4">
               {/* Radial Donut Gauge */}
-              <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
+              <div className="relative w-32 h-32 shrink-0 flex items-center justify-center">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
                   {/* Background Track */}
                   <circle
@@ -626,10 +629,10 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                   />
                 </svg>
                 {/* Center Content */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none">
-                  <span className="text-[10px] font-mono text-muted leading-tight">Left</span>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none p-1">
+                  <span className="text-[10px] font-mono text-muted uppercase tracking-wider leading-tight">Left</span>
                   <span
-                    className={`font-mono text-sm font-bold leading-tight ${
+                    className={`font-mono text-sm sm:text-base font-bold leading-tight whitespace-nowrap ${
                       burnState.isOverspentToday > 0 ? 'text-flare' : 'text-primary'
                     }`}
                   >
@@ -637,7 +640,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                       ? `-${formatINR(burnState.isOverspentToday)}`
                       : formatINR(burnState.remainingBurnToday)}
                   </span>
-                  <span className="text-[9px] font-mono text-muted/70">{percentUsedToday}% used</span>
+                  <span className="text-[9.5px] font-mono text-muted/80 whitespace-nowrap mt-0.5">{percentUsedToday}% burned</span>
                 </div>
               </div>
 
@@ -646,7 +649,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                 {/* Box 1: Safe Burn Allowance */}
                 <div className="p-2.5 rounded-xl bg-surface-page border border-subtle/70">
                   <span className="font-mono text-[10px] text-muted block">Safe Burn / Day</span>
-                  <strong className="font-mono text-base text-primary block mt-0.5">
+                  <strong className="font-mono text-base text-primary block mt-0.5 whitespace-nowrap">
                     {formatINR(burnState.effectiveDailyBurnToday)}
                   </strong>
                   <span className="text-[9.5px] text-muted block mt-0.5">
@@ -657,7 +660,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                 {/* Box 2: Logged Today */}
                 <div className="p-2.5 rounded-xl bg-surface-page border border-subtle/70">
                   <span className="font-mono text-[10px] text-muted block">Spent Today</span>
-                  <strong className="font-mono text-base text-secondary block mt-0.5">
+                  <strong className="font-mono text-base text-secondary block mt-0.5 whitespace-nowrap">
                     {formatINR(spentToday)}
                   </strong>
                   <span className="text-[9.5px] text-muted block mt-0.5">
@@ -668,7 +671,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                 {/* Box 3: Recalibrated Future Cap */}
                 <div className="p-2.5 rounded-xl bg-surface-page border border-subtle/70">
                   <span className="font-mono text-[10px] text-muted block">Future Daily Cap</span>
-                  <strong className="font-mono text-base text-solstice block mt-0.5">
+                  <strong className="font-mono text-base text-solstice block mt-0.5 whitespace-nowrap">
                     {formatINR(burnState.recalibratedRemainingDailyBurn)}
                   </strong>
                   <span className="text-[9.5px] text-muted block mt-0.5 font-mono">
@@ -681,7 +684,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                   <span className="font-mono text-[10px] text-muted block flex items-center gap-1">
                     <Lock size={10} className="text-quasar" /> SIP Protected
                   </span>
-                  <strong className="font-mono text-base text-quasar block mt-0.5">
+                  <strong className="font-mono text-base text-quasar block mt-0.5 whitespace-nowrap">
                     {formatINR(burnState.sipProtectedAmount)}
                   </strong>
                   <span className="text-[9.5px] text-muted block mt-0.5">100% Ring-Fenced</span>

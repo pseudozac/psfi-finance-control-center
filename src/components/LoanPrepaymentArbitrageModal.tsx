@@ -14,6 +14,7 @@ import {
   GraduationCap,
   Banknote,
   CheckCircle2,
+  AlertTriangle,
 } from 'lucide-react';
 import { calculateLoanArbitrage, type LoanArbitrageInputs } from '../lib/loanArbitrage';
 
@@ -109,6 +110,11 @@ export function LoanPrepaymentArbitrageModal({
   );
 
   const result = useMemo(() => calculateLoanArbitrage(inputs), [inputs]);
+
+  // Sensitivity scenarios across market cycles
+  const bearOutcome = useMemo(() => calculateLoanArbitrage({ ...inputs, sipExpectedCagr: 8.0 }), [inputs]);
+  const baseOutcome = useMemo(() => calculateLoanArbitrage({ ...inputs, sipExpectedCagr: 12.0 }), [inputs]);
+  const bullOutcome = useMemo(() => calculateLoanArbitrage({ ...inputs, sipExpectedCagr: 15.0 }), [inputs]);
 
   if (!isOpen) return null;
 
@@ -211,17 +217,20 @@ export function LoanPrepaymentArbitrageModal({
               <div>
                 <span className="text-[11px] font-mono uppercase tracking-wider font-bold block opacity-80">
                   {result.recommendedStrategy === 'invest_sip'
-                    ? '⚡ Equity Compounding Superiority'
+                    ? '⚡ Scenario Projection: Equity Advantage (Assumption-Dependent)'
                     : result.recommendedStrategy === 'prepay_debt'
-                    ? '🛡️ Guaranteed Debt Elimination Favored'
-                    : '⚖️ Balanced 50/50 Split Recommended'}
+                    ? '🛡️ Scenario Projection: Debt Elimination Favored (Guaranteed)'
+                    : '⚖️ Scenario Projection: Balanced 50/50 Split'}
                 </span>
                 <span className="text-sm font-semibold text-ink-primary">
                   {result.recommendedStrategy === 'invest_sip'
-                    ? `Equity SIP creates ${formatLakhs(result.netArbitrageAdvantage)} extra wealth over prepaying loan.`
+                    ? `At an assumed ${sipExpectedCagr}% CAGR vs an ${annualInterestRate}% loan rate, equity compounding projects ${formatLakhs(result.netArbitrageAdvantage)} extra terminal wealth.`
                     : result.recommendedStrategy === 'prepay_debt'
-                    ? `Guaranteed ${annualInterestRate}% debt interest savings outpaces conservative equity return.`
+                    ? `Guaranteed ${annualInterestRate}% risk-free debt interest savings outpaces conservative equity return.`
                     : `Spread extra cashflow: prepay 50% for peace of mind, compound 50% for wealth.`}
+                </span>
+                <span className="text-[10.5px] text-muted block mt-0.5">
+                  Sensitivity depends on market return volatility, loan terms, and Section 24(b) / 115BAC tax deductions.
                 </span>
               </div>
             </div>
@@ -231,6 +240,80 @@ export function LoanPrepaymentArbitrageModal({
                 <span className="font-bold text-ink-primary">{result.breakEvenCagr}%</span>
               </div>
             </div>
+          </div>
+
+          {/* 3-Tier Market Sensitivity Range Banner */}
+          <div className="p-3.5 rounded-xl bg-surface-raised/40 border border-subtle/80 space-y-2">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <span className="text-xs font-mono font-bold text-ink-primary flex items-center gap-1.5">
+                <Scale size={13} className="text-solstice" />
+                <span>Market Outcome Range &amp; Sensitivity Spectrum:</span>
+              </span>
+              <span className="text-[10.5px] font-mono text-muted">
+                {taxRegime === 'old_regime' ? 'Section 24(b) Tax Deductible (Eff. Rate ~' + result.taxDetails.effectiveLoanRate + '%)' : 'Section 115BAC Default (No Sec 24b Deduction)'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 font-mono text-xs">
+              {/* Bear Market */}
+              <div className={`p-2.5 rounded-lg border ${
+                bearOutcome.netArbitrageAdvantage <= 0 ? 'bg-solstice/10 border-solstice/30' : 'bg-surface-page border-subtle'
+              }`}>
+                <div className="flex items-center justify-between text-[11px] mb-1">
+                  <span className="text-solstice font-semibold">📉 Bear (8.0% CAGR)</span>
+                  <span className="text-[9.5px] px-1.5 py-0.2 rounded bg-white/5 text-muted">Depressed</span>
+                </div>
+                <div className="text-xs text-ink-secondary">
+                  Delta vs Prepay:{' '}
+                  <strong className={bearOutcome.netArbitrageAdvantage >= 0 ? 'text-nebula' : 'text-solstice'}>
+                    {bearOutcome.netArbitrageAdvantage >= 0 ? `+${formatLakhs(bearOutcome.netArbitrageAdvantage)}` : `-${formatLakhs(Math.abs(bearOutcome.netArbitrageAdvantage))}`}
+                  </strong>
+                </div>
+                <span className="text-[10px] text-muted block mt-0.5">
+                  {bearOutcome.netArbitrageAdvantage <= 0 ? 'Prepaying debt wins (guaranteed savings)' : 'Marginal equity edge'}
+                </span>
+              </div>
+
+              {/* Base Case */}
+              <div className={`p-2.5 rounded-lg border ${
+                baseOutcome.recommendedStrategy === 'invest_sip' ? 'bg-nebula/10 border-nebula/30' : 'bg-surface-page border-subtle'
+              }`}>
+                <div className="flex items-center justify-between text-[11px] mb-1">
+                  <span className="text-nebula font-semibold">📈 Base Case (12.0% CAGR)</span>
+                  <span className="text-[9.5px] px-1.5 py-0.2 rounded bg-nebula/15 text-nebula font-bold">Standard</span>
+                </div>
+                <div className="text-xs text-ink-secondary">
+                  Delta vs Prepay:{' '}
+                  <strong className="text-nebula font-bold">
+                    +{formatLakhs(baseOutcome.netArbitrageAdvantage)}
+                  </strong>
+                </div>
+                <span className="text-[10px] text-muted block mt-0.5">
+                  Equity compounding outpaces debt cost
+                </span>
+              </div>
+
+              {/* Bull Market */}
+              <div className="p-2.5 rounded-lg bg-surface-page border border-subtle">
+                <div className="flex items-center justify-between text-[11px] mb-1">
+                  <span className="text-cyan-400 font-semibold">🚀 Bull (15.0% CAGR)</span>
+                  <span className="text-[9.5px] px-1.5 py-0.2 rounded bg-white/5 text-muted">Optimistic</span>
+                </div>
+                <div className="text-xs text-ink-secondary">
+                  Delta vs Prepay:{' '}
+                  <strong className="text-cyan-300 font-bold">
+                    +{formatLakhs(bullOutcome.netArbitrageAdvantage)}
+                  </strong>
+                </div>
+                <span className="text-[10px] text-muted block mt-0.5">
+                  Aggressive compounding dominance
+                </span>
+              </div>
+            </div>
+
+            <p className="text-[10px] text-muted/80 leading-normal pt-1">
+              * Note: Equity investments carry sequence-of-returns volatility and 12.5% LTCG tax above ₹1.25L exemption (Finance Act 2024 / TY 2026–27). Debt prepayment delivers an unconditional, guaranteed post-tax return equal to your effective borrowing rate.
+            </p>
           </div>
 
           {/* Virtual Debt-Free Milestone Banner */}
@@ -568,6 +651,15 @@ export function LoanPrepaymentArbitrageModal({
                 </table>
               </div>
             )}
+          </div>
+
+          {/* Non-Advisory Actuarial Disclaimer */}
+          <div className="p-3 rounded-xl bg-solstice/10 border border-solstice/25 text-[10.5px] text-ink-secondary flex items-start gap-2 leading-relaxed">
+            <AlertTriangle size={14} className="text-solstice shrink-0 mt-0.5" />
+            <div>
+              <strong className="text-solstice block font-mono font-semibold">Educational Actuarial Model — Not Financial or Investment Advice:</strong>
+              Equity returns are volatile and non-linear; past or expected CAGR does not guarantee future gains. Prepaying home debt delivers an unconditional, guaranteed post-tax return equal to your effective borrowing rate. Assess personal liquidity, job stability, and emergency runway before prioritizing aggressive equity allocations over debt elimination.
+            </div>
           </div>
         </div>
 

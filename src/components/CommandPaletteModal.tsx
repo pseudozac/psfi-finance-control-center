@@ -497,8 +497,15 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
 
     // Archetype Models
     PLAN_PRESETS.forEach((preset) => {
+      const totalMonthlyIncome =
+        (preset.plan.income.salary || 0) +
+        (preset.plan.income.freelance || 0) +
+        (preset.plan.income.other || 0);
       const isCurrent =
-        preset.plan.income.salary === currentPlan.income.salary &&
+        totalMonthlyIncome ===
+          (currentPlan.income.salary || 0) +
+            (currentPlan.income.freelance || 0) +
+            (currentPlan.income.other || 0) &&
         preset.plan.savings.monthlySip === currentPlan.savings.monthlySip;
 
       const iconMap: Record<string, React.ReactNode> = {
@@ -512,7 +519,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         id: `preset_${preset.id}`,
         category: 'Archetypes',
         title: `Load Archetype: ${preset.name}`,
-        subtitle: `${preset.tagline} (Inflow: +${formatINR(preset.plan.income.salary)} | SIP: ${formatINR(preset.plan.savings.monthlySip)}/mo)`,
+        subtitle: `${preset.tagline} (Inflow: +${formatINR(totalMonthlyIncome)} | SIP: ${formatINR(preset.plan.savings.monthlySip)}/mo)`,
         keywords: `archetype preset scenario ${preset.id} ${preset.name} ${preset.badge}`,
         icon: iconMap[preset.id] || <Sparkles size={15} className="text-quasar" />,
         badge: isCurrent ? 'Active' : preset.badge,
@@ -552,10 +559,10 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         id: 'tool_monte_carlo',
         category: 'Tools',
         title: 'Reverse Monte Carlo FIRE Stress-Testing',
-        subtitle: '10,000 stochastic lifespan simulations testing Indian 2008 Lehman, Covid & stagflation shocks',
+        subtitle: '5,000 stochastic lifespan simulations testing Indian 2008 Lehman, Covid & stagflation shocks (deterministic seed)',
         keywords: 'monte carlo fire stress test sequence of returns srr black swan lehman crash covid inflation antifragile',
         icon: <Activity size={15} className="text-cyan-400" />,
-        badge: '10,000 Sim',
+        badge: '5,000 Sim',
         execute: () => onOpenMonteCarlo(),
       });
     }
