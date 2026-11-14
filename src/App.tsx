@@ -462,7 +462,7 @@ export function App() {
 
   // Phase 3: Main Dashboard
   return (
-    <div className={`app-shell layout-${layoutMode} ${privacyMode ? 'privacy-masked' : ''}`}>
+    <div className={`app-shell layout-${layoutMode} ${privacyMode ? 'privacy-masked' : ''} ${showTour ? 'tour-active' : ''}`}>
       {/* Floating Pill Dock Navbar */}
       <header className="navbar-dock" id="tour-dock">
         {/* Left: Brand & Active Vault */}
@@ -578,7 +578,7 @@ export function App() {
           </button>
 
           {/* Unified Tools Dropdown Menu */}
-          <div className="tools-dropdown-wrapper" ref={toolsDropdownRef}>
+          <div className="tools-dropdown-wrapper pill-tools" ref={toolsDropdownRef}>
             <button
               type="button"
               className={`action-pill ${toolsMenuOpen ? 'pill-active-mode' : ''}`}
@@ -1287,83 +1287,85 @@ export function App() {
         </div>
       </footer>
 
-      {/* Mobile Floating Bottom Navigation Dock */}
-      <nav className="mobile-bottom-dock" aria-label="Mobile Navigation Dock">
-        <button
-          type="button"
-          className={`mobile-dock-btn ${activeView === 'control' && !isAnyModalActive ? 'active' : ''}`}
-          onClick={() => {
-            closeAllMobileOverlays();
-            setActiveView('control');
-          }}
-          title="Tactile Control Center"
-        >
-          <Sliders size={17} />
-          <span>Control</span>
-        </button>
-
-        <button
-          type="button"
-          className={`mobile-dock-btn ${activeView === 'terminal' && !isAnyModalActive ? 'active' : ''}`}
-          onClick={() => {
-            closeAllMobileOverlays();
-            setActiveView('terminal');
-          }}
-          title="Wealth Terminal"
-        >
-          <TrendingUp size={17} />
-          <span>Terminal</span>
-        </button>
-
-        <button
-          type="button"
-          className={`mobile-dock-btn mobile-dock-omnibar-btn ${showCmdK ? 'active' : ''}`}
-          onClick={() => {
-            closeAllMobileOverlays();
-            setShowCmdK(true);
-          }}
-          title="Search & Omnibar (⌘K)"
-        >
-          <div className="mobile-dock-omnibar-icon">
-            <Search size={16} />
-          </div>
-          <span>Omnibar</span>
-        </button>
-
-        <button
-          type="button"
-          className={`mobile-dock-btn ${showSkillTree ? 'active' : ''}`}
-          onClick={() => {
-            if (showSkillTree) {
-              setShowSkillTree(false);
-            } else {
+      {/* Mobile Floating Bottom Navigation Dock (Hidden during Tour so tour controls are 100% unobstructed) */}
+      {!showTour && (
+        <nav className="mobile-bottom-dock" aria-label="Mobile Navigation Dock">
+          <button
+            type="button"
+            className={`mobile-dock-btn ${activeView === 'control' && !isAnyModalActive ? 'active' : ''}`}
+            onClick={() => {
               closeAllMobileOverlays();
-              setShowSkillTree(true);
-            }
-          }}
-          title="Sovereign RPG Constellation"
-        >
-          <Crown size={17} className="text-solstice" />
-          <span>RPG</span>
-        </button>
+              setActiveView('control');
+            }}
+            title="Tactile Control Center"
+          >
+            <Sliders size={17} />
+            <span>Control</span>
+          </button>
 
-        <button
-          type="button"
-          className={`mobile-dock-btn ${toolsMenuOpen ? 'active' : ''}`}
-          onClick={() => {
-            if (toolsMenuOpen) {
-              setToolsMenuOpen(false);
-            } else {
+          <button
+            type="button"
+            className={`mobile-dock-btn ${activeView === 'terminal' && !isAnyModalActive ? 'active' : ''}`}
+            onClick={() => {
               closeAllMobileOverlays();
-              setToolsMenuOpen(true);
-            }
-          }}
-          title="Tools & Scenarios"
-        >
-          <Sparkles size={17} className="text-solstice" />
-          <span>Tools</span>
-        </button>
-      </nav>
+              setActiveView('terminal');
+            }}
+            title="Wealth Terminal"
+          >
+            <TrendingUp size={17} />
+            <span>Terminal</span>
+          </button>
+
+          <button
+            type="button"
+            className={`mobile-dock-btn mobile-dock-omnibar-btn ${showCmdK ? 'active' : ''}`}
+            onClick={() => {
+              closeAllMobileOverlays();
+              setShowCmdK(true);
+            }}
+            title="Search & Omnibar (⌘K)"
+          >
+            <div className="mobile-dock-omnibar-icon">
+              <Search size={16} />
+            </div>
+            <span>Omnibar</span>
+          </button>
+
+          <button
+            type="button"
+            className={`mobile-dock-btn ${showSkillTree ? 'active' : ''}`}
+            onClick={() => {
+              if (showSkillTree) {
+                setShowSkillTree(false);
+              } else {
+                closeAllMobileOverlays();
+                setShowSkillTree(true);
+              }
+            }}
+            title="Sovereign RPG Constellation"
+          >
+            <Crown size={17} className="text-solstice" />
+            <span>RPG</span>
+          </button>
+
+          <button
+            type="button"
+            className={`mobile-dock-btn ${toolsMenuOpen ? 'active' : ''}`}
+            onClick={() => {
+              if (toolsMenuOpen) {
+                setToolsMenuOpen(false);
+              } else {
+                closeAllMobileOverlays();
+                setToolsMenuOpen(true);
+              }
+            }}
+            title="Tools & Scenarios"
+          >
+            <Sparkles size={17} className="text-solstice" />
+            <span>Tools</span>
+          </button>
+        </nav>
+      )}
     </div>
   );
 }

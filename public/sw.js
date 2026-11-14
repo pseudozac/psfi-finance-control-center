@@ -1,4 +1,4 @@
-const CACHE_NAME = 'psfi-v5.16-mobile-tab-switch-and-hud-theme';
+const CACHE_NAME = 'psfi-v5.17-tour-dock-and-top-deck-alignment';
 
 self.addEventListener('install', () => {
   self.skipWaiting();

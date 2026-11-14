@@ -455,11 +455,23 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({
             </span>
           </div>
 
-          <div className="flex-align gap-1 text-muted text-[11px] font-mono">
-            <span>View: </span>
-            <strong className={step.targetView === 'terminal' ? 'text-pulsar' : 'text-quasar'}>
-              {step.targetView === 'terminal' ? 'Wealth Terminal' : 'Control Center'}
-            </strong>
+          <div className="flex-align gap-2">
+            <div className="flex-align gap-1 text-muted text-[11px] font-mono">
+              <span>View: </span>
+              <strong className={step.targetView === 'terminal' ? 'text-pulsar' : 'text-quasar'}>
+                {step.targetView === 'terminal' ? 'Wealth Terminal' : 'Control Center'}
+              </strong>
+            </div>
+
+            <button
+              type="button"
+              className="tour-card-close-btn"
+              onClick={onClose}
+              title="Cancel tour (Esc)"
+              aria-label="Cancel tour"
+            >
+              <X size={13} />
+            </button>
           </div>
         </div>
 
@@ -523,7 +535,7 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({
             title={isFirst ? 'On first step' : 'Return to previous step (←)'}
           >
             <ArrowLeft size={14} />
-            <span>Previous</span>
+            <span className="tour-btn-text">Prev</span>
           </button>
         </div>
 
@@ -536,7 +548,7 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({
             title="Cancel tour anytime (Esc)"
           >
             <X size={13} />
-            <span>Cancel Tour</span>
+            <span>Cancel</span>
           </button>
 
           {/* Interactive Step Stepper with Direct Jump */}
@@ -576,7 +588,7 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({
             onClick={handleNext}
             title={isLast ? 'Finish tour' : 'Advance to next step (→ or Enter)'}
           >
-            <span>{isLast ? 'Finish Tour' : 'Next Step'}</span>
+            <span className="tour-btn-text">{isLast ? 'Finish' : 'Next'}</span>
             {isLast ? <CheckCircle2 size={14} /> : <ArrowRight size={14} />}
           </button>
         </div>
