@@ -2677,16 +2677,41 @@ body {
     display: none !important;
   }
 
-  /* Streamline top deck: hide redundant duplicate buttons so top navbar never collides */
+  /* Mobile top deck: Keep period-switcher and tour accessible; hide controls duplicated in mobile bottom dock */
   .dock-view-switcher,
-  .period-switcher,
-  .pill-tour,
   .pill-cmdk,
   .pill-ingest,
   .pill-skills,
   .pill-tools,
   .pill-density-toggle {
     display: none !important;
+  }
+
+  .period-switcher {
+    display: inline-flex !important;
+    flex-shrink: 0 !important;
+  }
+
+  .pill-tour {
+    display: inline-flex !important;
+    padding: 3px 7px !important;
+    font-size: 10px !important;
+    gap: 3px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .pill-tour svg {
+    width: 11px !important;
+    height: 11px !important;
+  }
+
+  @media (max-width: 380px) {
+    .pill-tour .pill-label {
+      display: none !important;
+    }
+    .vault-pill-name {
+      max-width: 55px !important;
+    }
   }
 
   .navbar-dock {
