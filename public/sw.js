@@ -1,4 +1,4 @@
-const CACHE_NAME = 'psfi-v5.12-cyber-vault-modal';
+const CACHE_NAME = 'psfi-v5.13-mobile-responsive-overhaul';
 
 self.addEventListener('install', () => {
   self.skipWaiting();

@@ -237,44 +237,43 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
       >
         {/* 1. TOP HEADER & RPG RANK BANNER */}
         <div className="skill-tree-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+          <div className="skill-tree-header-left">
             <div className="skill-tree-crown-box">
-              <Crown size={22} />
+              <Crown size={20} />
             </div>
 
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                <h3 className="modal-title" style={{ margin: 0, fontWeight: 700, fontSize: '17px', color: '#f2f3f7' }}>
+            <div className="skill-tree-header-info">
+              <div className="skill-tree-title-row">
+                <h3 className="modal-title skill-tree-title">
                   Sovereign Wealth RPG Constellation
                 </h3>
                 <span className="skill-rank-badge">
                   {treeState.currentRank}
                 </span>
                 {simulatedPlan && (
-                  <span style={{ fontFamily: 'monospace', fontSize: '10px', background: 'rgba(191, 159, 241, 0.2)', color: 'var(--colour-quasar)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(191, 159, 241, 0.4)' }}>
+                  <span className="skill-sim-pill font-mono">
                     🧪 What-If Active (+{treeState.overallMasteryPercent - realTreeState.overallMasteryPercent}%)
                   </span>
                 )}
               </div>
 
-              <div className="skill-tree-stats-row">
-                <span>Mastered: <strong style={{ color: 'var(--colour-nebula)' }}>{treeState.unlockedCount}</strong> / 15 ({treeState.overallMasteryPercent}%)</span>
-                <span>·</span>
-                <span>Moat: <strong style={{ color: '#f2f3f7' }}>{treeState.tier1MasteredCount}/5</strong></span>
-                <span>·</span>
-                <span>Velocity: <strong style={{ color: '#f2f3f7' }}>{treeState.tier2MasteredCount}/5</strong></span>
-                <span>·</span>
-                <span>Autonomy: <strong style={{ color: '#f2f3f7' }}>{treeState.tier3MasteredCount}/5</strong></span>
+              <div className="skill-tree-stats-row font-mono">
+                <span className="stat-pill">Mastered: <strong className="text-nebula">{treeState.unlockedCount}</strong>/15 ({treeState.overallMasteryPercent}%)</span>
+                <span className="stat-divider">·</span>
+                <span className="stat-pill">Moat: <strong>{treeState.tier1MasteredCount}/5</strong></span>
+                <span className="stat-divider">·</span>
+                <span className="stat-pill">Velocity: <strong>{treeState.tier2MasteredCount}/5</strong></span>
+                <span className="stat-divider">·</span>
+                <span className="stat-pill">Autonomy: <strong>{treeState.tier3MasteredCount}/5</strong></span>
               </div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, marginLeft: 'auto' }}>
+          <div className="skill-tree-header-right">
             <button
               type="button"
-              className={`action-pill font-mono text-xs ${isTheaterMode ? 'pill-active-mode' : ''}`}
+              className={`action-pill font-mono text-xs skill-tree-theater-btn ${isTheaterMode ? 'pill-active-mode' : ''}`}
               onClick={() => setIsTheaterMode(!isTheaterMode)}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px' }}
               title={isTheaterMode ? "Exit Fullscreen Theater Mode" : "Expand Fullscreen Theater Mode"}
             >
               {isTheaterMode ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
@@ -283,7 +282,6 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
             <button
               type="button"
               className="icon-pill"
-              style={{ padding: '6px', borderRadius: '8px', color: 'var(--ink-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}
               onClick={onClose}
               title="Close (Esc)"
             >
@@ -295,7 +293,7 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
         {/* 2. PROGRESSION & NAVIGATION BAR */}
         <div className="skill-tree-nav-bar">
           {/* Mode Switcher Tabs */}
-          <div className="pill-segmented flex gap-1 text-xs font-mono">
+          <div className="pill-segmented skill-tree-tabs flex gap-1 text-xs font-mono">
             <button
               type="button"
               className={`px-3 py-1 flex items-center gap-1.5 ${viewMode === 'visual_tree' ? 'pill-active' : ''}`}
@@ -333,8 +331,8 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
 
           {/* Constellation Branch Filters */}
           {viewMode === 'visual_tree' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '11px', color: 'var(--ink-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginRight: '4px' }}>
+            <div className="skill-tree-filters-strip">
+              <span className="skill-filter-label" style={{ fontSize: '11px', color: 'var(--ink-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginRight: '4px' }}>
                 <Filter size={11} /> Filter:
               </span>
               <button
@@ -411,8 +409,8 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                   className="dossier-expand-btn"
                   title="Expand Dossier Inspector"
                 >
-                  <ChevronRight size={16} />
-                  <span className="dossier-vertical-label">✦ INSPECT DOSSIER</span>
+                  <ChevronRight size={16} className="dossier-chevron-icon" />
+                  <span className="dossier-vertical-label">✦ INSPECT DOSSIER: {activeNode.title}</span>
                 </button>
               ) : (
                 <div className="dossier-content-scroll">
@@ -435,11 +433,11 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                     <button
                       type="button"
                       onClick={() => setIsDossierCollapsed(true)}
-                      className="icon-pill"
+                      className="icon-pill dossier-collapse-btn"
                       style={{ padding: '6px', borderRadius: '8px', color: 'var(--ink-muted)', background: 'transparent', border: 'none', cursor: 'pointer', flexShrink: 0 }}
-                      title="Collapse Dossier to expand tree canvas"
+                      title="Collapse Dossier"
                     >
-                      <ChevronDown size={15} style={{ transform: 'rotate(90deg)' }} />
+                      <ChevronDown size={15} className="dossier-collapse-icon" />
                     </button>
                   </div>
 
@@ -666,6 +664,7 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                         opacity={isDimmed ? 0.3 : 1}
                         onClick={() => {
                           setSelectedNodeId(node.id);
+                          setIsDossierCollapsed(false);
                           const freq = node.tier === 'tier1_survival' ? 440 : node.tier === 'tier2_velocity' ? 554 : 659;
                           playChime(freq);
                         }}

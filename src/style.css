@@ -5533,6 +5533,14 @@ body {
   flex-shrink: 0;
 }
 
+.skill-tree-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
 .skill-tree-crown-box {
   width: 42px;
   height: 42px;
@@ -5545,6 +5553,43 @@ body {
   justify-content: center;
   flex-shrink: 0;
   box-shadow: 0 4px 16px rgba(247, 141, 44, 0.15);
+}
+
+.skill-tree-header-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.skill-tree-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.skill-tree-title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 17px;
+  color: #f2f3f7;
+}
+
+.skill-tree-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.skill-sim-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  background: rgba(191, 159, 241, 0.2);
+  color: var(--colour-quasar);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(191, 159, 241, 0.4);
 }
 
 .skill-rank-badge {
@@ -5570,6 +5615,22 @@ body {
   color: var(--ink-muted);
   margin-top: 4px;
   flex-wrap: wrap;
+}
+
+.skill-tree-filters-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.skill-filter-label {
+  font-size: 11px;
+  color: var(--ink-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 4px;
 }
 
 /* Navigation & Levers Bar */
@@ -5848,6 +5909,192 @@ body {
 
   .skill-tree-canvas-panel {
     min-height: 380px;
+  }
+}
+
+@media (max-width: 768px) {
+  .skill-tree-modal {
+    padding: 12px 14px !important;
+    width: 98vw !important;
+    max-width: 100% !important;
+    max-height: 96vh !important;
+    border-radius: 16px !important;
+  }
+
+  .skill-tree-header {
+    padding-bottom: 8px !important;
+    gap: 8px !important;
+  }
+
+  .skill-tree-header-left {
+    gap: 8px !important;
+    min-width: 0 !important;
+    flex: 1 !important;
+  }
+
+  .skill-tree-crown-box {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+  }
+
+  .skill-tree-title {
+    font-size: 14px !important;
+    line-height: 1.25 !important;
+  }
+
+  .skill-rank-badge {
+    font-size: 9.5px !important;
+    padding: 1px 7px !important;
+  }
+
+  .skill-tree-theater-btn {
+    display: none !important;
+  }
+
+  .skill-tree-stats-row {
+    gap: 6px !important;
+    font-size: 10.5px !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 2px !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .skill-tree-stats-row .stat-pill {
+    flex-shrink: 0 !important;
+  }
+
+  .skill-tree-nav-bar {
+    margin: 6px 0 !important;
+    gap: 6px !important;
+  }
+
+  .skill-tree-tabs {
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+    display: flex !important;
+  }
+
+  .skill-tree-tabs button {
+    flex-shrink: 0 !important;
+    padding: 4px 8px !important;
+    font-size: 10.5px !important;
+  }
+
+  .skill-tree-filters-strip {
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+    display: flex !important;
+    gap: 4px !important;
+    padding-bottom: 4px !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .skill-tree-filters-strip button {
+    flex-shrink: 0 !important;
+    padding: 2px 8px !important;
+    font-size: 10px !important;
+  }
+
+  .skill-tree-split-viewport {
+    flex-direction: column !important;
+    height: calc(85vh - 170px) !important;
+    min-height: 380px !important;
+    position: relative !important;
+  }
+
+  .skill-tree-canvas-panel {
+    width: 100% !important;
+    height: 100% !important;
+    flex: 1 !important;
+    overflow: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .skill-tree-svg {
+    min-width: 820px !important;
+    height: 100% !important;
+    display: block !important;
+  }
+
+  /* Mobile Dossier Drawer (Slide-Up Bottom Sheet UX) */
+  .skill-tree-dossier-dock {
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-height: 65% !important;
+    background: rgba(10, 14, 26, 0.98) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border-top: 1px solid rgba(191, 159, 241, 0.35) !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.85) !important;
+    z-index: 50 !important;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), max-height 0.25s ease !important;
+  }
+
+  .skill-tree-dossier-dock.dossier-collapsed {
+    width: 100% !important;
+    height: 40px !important;
+    max-height: 40px !important;
+    padding: 0 12px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    cursor: pointer !important;
+    background: rgba(9, 12, 23, 0.95) !important;
+  }
+
+  .skill-tree-dossier-dock.dossier-collapsed .dossier-expand-btn {
+    flex-direction: row !important;
+    gap: 8px !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+
+  .skill-tree-dossier-dock.dossier-collapsed .dossier-vertical-label {
+    writing-mode: horizontal-tb !important;
+    letter-spacing: 0.05em !important;
+    font-size: 11px !important;
+    color: var(--colour-quasar) !important;
+    text-overflow: ellipsis !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    max-width: calc(100vw - 80px) !important;
+  }
+
+  .skill-tree-dossier-dock.dossier-collapsed .dossier-chevron-icon {
+    transform: rotate(-90deg) !important;
+    flex-shrink: 0 !important;
+  }
+
+  .dossier-collapse-icon {
+    transform: none !important;
+  }
+
+  .skill-matrix-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .skill-matrix-card {
+    padding: 14px 16px !important;
   }
 }
 
@@ -7319,4 +7566,212 @@ body {
   border-color: rgba(245, 158, 11, 0.35);
   background: rgba(245, 158, 11, 0.06);
 }
+
+/* ==========================================================================
+   Universal Mobile Modal & Responsive Safeguards
+   ========================================================================== */
+@media (max-width: 640px) {
+  /* Prevent any modal from breaking outside screen bounds */
+  .modal-backdrop,
+  .vault-security-modal-backdrop {
+    padding: 8px !important;
+  }
+
+  .modal-card {
+    padding: 16px 14px !important;
+    max-width: 100% !important;
+    width: 98vw !important;
+    border-radius: 16px !important;
+  }
+
+  .modal-header {
+    margin-bottom: 12px !important;
+    gap: 8px !important;
+  }
+
+  .modal-title {
+    font-size: 14.5px !important;
+  }
+
+  /* Command Palette Modal Mobile */
+  .palette-backdrop {
+    padding: 12px 8px !important;
+  }
+
+  .palette-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 16px !important;
+  }
+
+  .palette-tabs-bar {
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    display: flex !important;
+    gap: 4px !important;
+    padding-bottom: 2px !important;
+  }
+
+  .palette-tab-btn {
+    flex-shrink: 0 !important;
+  }
+
+  .palette-history-chips {
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    display: flex !important;
+    gap: 4px !important;
+  }
+
+  .palette-chip-btn {
+    flex-shrink: 0 !important;
+  }
+
+  .palette-kbd,
+  .palette-footer {
+    display: none !important;
+  }
+
+  /* Statement Parser Ingestion Modal Mobile */
+  .statement-modal-overlay {
+    padding: 8px !important;
+  }
+
+  .statement-modal-window {
+    max-height: 94vh !important;
+    border-radius: 16px !important;
+    width: 100% !important;
+  }
+
+  .statement-modal-header {
+    padding: 12px 14px !important;
+    gap: 10px !important;
+  }
+
+  .statement-modal-title {
+    font-size: 14px !important;
+  }
+
+  .statement-client-badge {
+    display: none !important;
+  }
+
+  .statement-modal-sub {
+    font-size: 11px !important;
+  }
+
+  /* What-If Sandbox Modal Mobile */
+  .modal-content.sandbox-modal {
+    padding: 16px 14px !important;
+    max-height: 94vh !important;
+  }
+
+  .sandbox-levers-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .sandbox-comparison-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .modal-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .modal-actions .flex-align {
+    width: 100% !important;
+    justify-content: stretch !important;
+  }
+
+  .modal-actions button {
+    flex: 1 !important;
+    justify-content: center !important;
+  }
+
+  /* Social Share Card Modal Mobile */
+  .share-card-modal {
+    padding: 14px 12px !important;
+    max-height: 94vh !important;
+  }
+
+  .share-controls-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .share-controls-row .pill-segmented {
+    width: 100% !important;
+    display: flex !important;
+  }
+
+  .share-controls-row .pill-segmented button {
+    flex: 1 !important;
+    text-align: center !important;
+    font-size: 11px !important;
+    padding: 5px 6px !important;
+  }
+
+  .share-modal-toolbar {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  .share-modal-toolbar button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* QR Sync Modal Mobile */
+  .qr-sync-modal {
+    padding: 16px 14px !important;
+    max-width: 100% !important;
+  }
+
+  .qr-canvas-holder {
+    padding: 8px !important;
+  }
+
+  .qr-code-canvas {
+    width: min(200px, 60vw) !important;
+    height: min(200px, 60vw) !important;
+  }
+
+  /* Vault Security Modal Mobile */
+  .vault-security-modal-card {
+    padding: 18px 14px !important;
+    border-radius: 20px !important;
+  }
+
+  .vault-features-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .vault-pin-slot {
+    width: 44px !important;
+    height: 50px !important;
+    font-size: 19px !important;
+    border-radius: 12px !important;
+  }
+
+  .vault-pin-slots-row {
+    gap: 8px !important;
+  }
+
+  .vault-keypad-btn {
+    height: 48px !important;
+    font-size: 18px !important;
+    border-radius: 12px !important;
+  }
+}
+
 
