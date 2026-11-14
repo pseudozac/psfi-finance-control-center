@@ -4,8 +4,8 @@
 [![React](https://img.shields.io/badge/React-18.3-61dafb.svg?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178c6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.0-646cff.svg?logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Tests](https://img.shields.io/badge/Vitest-59%2F59%20Passed-5ec491.svg?logo=vitest&logoColor=white)](https://vitest.dev/)
-[![Offline PWA](https://img.shields.io/badge/PWA-v5.9%20Offline%20Ready-f78d2c.svg)](https://pseudo-fi.vercel.app/)
+[![Tests](https://img.shields.io/badge/Vitest-63%2F63%20Passed-5ec491.svg?logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Offline PWA](https://img.shields.io/badge/PWA-v5.10%20Offline%20Ready-f78d2c.svg)](https://pseudo-fi.vercel.app/)
 [![Privacy](https://img.shields.io/badge/Privacy-100%25%20Client--Side%20Enclave-bf9ff1.svg)](#-security--privacy-architecture)
 
 **Live Production Deployment:** [https://pseudo-fi.vercel.app/](https://pseudo-fi.vercel.app/)
@@ -138,6 +138,19 @@ Instant full-screen operational disguise system for using personal finance tools
 
 ### 14. Interactive Holographic Guided Tour
 - 8-step interactive tour featuring precision spotlight cutouts, holographic corner brackets, contextual audio cues, step jumping (keys `1`–`8`), sound mute toggle (`M`), and a virtual instructor cursor.
+
+### 15. Tactile Bi-Directional Slide-to-Commit / Discard Capsule
+- **Zero Accidental Mutation Protection:** Prevents unintentional mis-clicks or slider drags from polluting financial vaults.
+- **Dynamic Haptic Floating Dock:** Automatically emerges when uncommitted modifications exist and quietly rests without obstructing input fields.
+- **Bi-Directional Gesture Control:**
+  - **Slide Left (`<-- Discard`):** Reverts the active draft back to the last committed vault baseline with a clean reverse sweep animation.
+  - **Slide Right (`Save -->`):** Atomically commits and persists the modified state to AES-256 local storage with a green checkmark pulse.
+- **Cross-Platform Affordance:** Supports intuitive touch/pointer drag sliding alongside single-tap end buttons for desktop trackpads.
+
+### 16. Loan Prepayment vs. Equity SIP Arbitrage Simulator
+- **Indian Borrower Dilemma Engine:** Mathematically compares prepaying debt (saving guaranteed 8.5%–9.5% loan interest) against compounding extra cashflow into Nifty 50 equity mutual fund SIPs (12%–14% CAGR).
+- **Actuarial Outputs:** Calculates baseline amortization, new tenure, exact interest saved, months shaved off loan, SIP future value, and net arbitrage alpha (rupee wealth differential).
+- **Automated Actuarial Recommendation:** Categorizes optimal capital deployment into *Equity Compounding Superior*, *Guaranteed Debt Elimination Recommended*, or *Balanced 50/50 Split*.
 
 ---
 

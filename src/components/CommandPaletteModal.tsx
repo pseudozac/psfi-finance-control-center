@@ -37,6 +37,7 @@ import {
   Activity,
   Image as ImageIcon,
   Lock,
+  Scale,
 } from 'lucide-react';
 import { PLAN_PRESETS, formatINR } from '../lib/finance';
 import type { FinancePlan } from '../types/finance';
@@ -78,6 +79,7 @@ interface CommandPaletteModalProps {
   onOpenSteganography?: () => void;
   onOpenMonteCarlo?: () => void;
   onOpenVaultSecurity?: () => void;
+  onOpenLoanArbitrage?: () => void;
   onExportJSON: () => void;
   onExportCSV: () => void;
   onPrint: () => void;
@@ -201,6 +203,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   onOpenSteganography,
   onOpenMonteCarlo,
   onOpenVaultSecurity,
+  onOpenLoanArbitrage,
   onExportJSON,
   onExportCSV,
   onPrint,
@@ -593,6 +596,19 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         icon: <Lock size={15} className="text-amber-400" />,
         badge: 'Master PIN',
         execute: () => onOpenVaultSecurity(),
+      });
+    }
+
+    if (onOpenLoanArbitrage) {
+      list.push({
+        id: 'tool_loan_arbitrage',
+        category: 'Tools',
+        title: 'Loan Prepayment vs Equity SIP Arbitrage',
+        subtitle: 'Actuarial comparison: prepaying home/education loan vs compounding in Nifty 50 SIP',
+        keywords: 'loan prepayment emi home loan debt arbitrage sip equity interest payoff vs',
+        icon: <Scale size={15} className="text-solstice" />,
+        badge: 'Arbitrage',
+        execute: () => onOpenLoanArbitrage(),
       });
     }
 

@@ -32,6 +32,7 @@ import {
   Image as ImageIcon,
   X,
   Search,
+  Scale,
 } from 'lucide-react';
 import type { FinancePlan, ViewPeriod } from './types/finance';
 import {
@@ -66,6 +67,8 @@ import { SteganographyModal } from './components/SteganographyModal';
 import { ReverseMonteCarloModal } from './components/ReverseMonteCarloModal';
 import { VaultLockGate } from './components/VaultLockGate';
 import { VaultSecurityModal } from './components/VaultSecurityModal';
+import { LoanPrepaymentArbitrageModal } from './components/LoanPrepaymentArbitrageModal';
+import { TactileCommitSlider } from './components/TactileCommitSlider';
 import { decodeVaultBeam } from './lib/vaultBeam';
 
 type AppPhase = 'loading' | 'gateway' | 'dashboard';
@@ -90,6 +93,9 @@ export function App() {
     refreshAccounts,
     statusMessage,
     setStatusMessage,
+    isDirty,
+    commitPlanChanges,
+    discardPlanChanges,
   } = useFinancePlan();
 
   // App phase control: loading -> gateway -> dashboard
@@ -110,6 +116,7 @@ export function App() {
   const [showSteganography, setShowSteganography] = useState<boolean>(false);
   const [showMonteCarlo, setShowMonteCarlo] = useState<boolean>(false);
   const [showVaultSecurity, setShowVaultSecurity] = useState<boolean>(false);
+  const [showLoanArbitrage, setShowLoanArbitrage] = useState<boolean>(false);
   const [unlockedVaultIds, setUnlockedVaultIds] = useState<Set<string>>(new Set());
   const [toolsMenuOpen, setToolsMenuOpen] = useState<boolean>(false);
   const [toolsSearchQuery, setToolsSearchQuery] = useState<string>('');
@@ -122,6 +129,18 @@ export function App() {
   const [pendingBeamPin, setPendingBeamPin] = useState<string>('');
   const [pendingBeamError, setPendingBeamError] = useState<string | null>(null);
 
+  // Warn if user attempts to leave with uncommitted modifications
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
+
   const closeAllMobileOverlays = () => {
     setShowSkillTree(false);
     setToolsMenuOpen(false);
@@ -132,6 +151,7 @@ export function App() {
     setShowShareModal(false);
     setShowQRModal(false);
     setShowVaultSecurity(false);
+    setShowLoanArbitrage(false);
     setShowCmdK(false);
   };
 
@@ -144,7 +164,8 @@ export function App() {
     showSteganography ||
     showShareModal ||
     showQRModal ||
-    showVaultSecurity
+    showVaultSecurity ||
+    showLoanArbitrage
   );
 
   const [layoutMode, setLayoutMode] = useState<'mobile' | 'desktop'>(() => {
@@ -495,7 +516,7 @@ export function App() {
           <div className="tools-mobile-drawer-title">
             <Sparkles size={14} className="text-solstice shrink-0" />
             <span className="truncate">{isMobileViewport ? 'Sovereign Tools' : 'Actuarial & Sovereign Tools'}</span>
-            <span className="tools-badge-count shrink-0">13 Tools</span>
+            <span className="tools-badge-count shrink-0">14 Tools</span>
           </div>
           <button
             type="button"
@@ -536,7 +557,7 @@ export function App() {
             className={toolsCategoryFilter === 'all' ? 'pill-cat-active' : ''}
             onClick={() => setToolsCategoryFilter('all')}
           >
-            All (13)
+            All (14)
           </button>
           <button
             type="button"
@@ -622,6 +643,20 @@ export function App() {
             <div>
               <span className="item-title">What-If Sandbox</span>
               <span className="item-sub">Simulate raises, bonuses & inflation</span>
+            </div>
+          </button>
+          )}
+
+          {matchesToolsSearch('Loan Prepayment Arbitrage', 'Debt prepayment vs. Equity SIP') && (
+          <button
+            type="button"
+            className="tools-menu-item"
+            onClick={() => { setShowLoanArbitrage(true); setToolsMenuOpen(false); }}
+          >
+            <Scale size={13} className="text-solstice" />
+            <div>
+              <span className="item-title">Loan Arbitrage Simulator</span>
+              <span className="item-sub">Prepay home/edu loan vs Equity SIP compounding</span>
             </div>
           </button>
           )}
@@ -1015,73 +1050,76 @@ export function App() {
         </div>
       </header>
 
-      {/* Editorial Hero Header */}
-      <section className="hero-section">
-        <div className="hero-telemetry-strip flex flex-wrap items-center gap-2 mb-3 select-none">
-          <span className="hero-stat-capsule bg-surface-raised border border-subtle/80 px-2.5 py-1 rounded-full text-[11px] font-mono text-muted flex items-center gap-1.5 shadow-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>100% Client-Side Sandbox</span>
-          </span>
-          <span className="hero-stat-capsule bg-surface-raised border border-subtle/80 px-2.5 py-1 rounded-full text-[11px] font-mono text-muted flex items-center gap-1.5 shadow-sm">
-            <span className="text-solstice">🇮🇳</span>
-            <span>Union Budget Calibrated (FY 2025–26 &amp; FY 2024–25)</span>
-          </span>
-          <span className="hero-stat-capsule bg-surface-raised border border-subtle/80 px-2.5 py-1 rounded-full text-[11px] font-mono text-muted flex items-center gap-1.5 shadow-sm">
-            <span className="text-quasar">🛡️</span>
-            <span>Zero Telemetry / Offline Ready</span>
-          </span>
+      {/* Minimalist Yet Cool Editorial Hero */}
+      <section className="hero-section hero-minimal-cool">
+        <div className="hero-ambient-aura" aria-hidden="true" />
+
+        <div className="hero-cyber-badge">
+          <span className="cyber-pulse-dot" />
+          <span className="cyber-badge-tag">PSFI // ENGINE</span>
+          <span className="cyber-badge-sep">·</span>
+          <span className="cyber-badge-sub">INDIA STATUTORY FY 2025–26</span>
+          <span className="cyber-badge-secure">🛡️ OFFLINE / PRIVATE</span>
         </div>
 
         <h1 className="hero-headline">
-          Tactile personal finance control for India<span className="text-corona">.</span>
+          Tactile Financial Intelligence<span className="hero-dot">.</span>
         </h1>
+
         <p className="hero-lede">
-          Model your{' '}
+          Private, zero-telemetry control center for cashflow modeling, compounding step-up SIPs, and statutory Indian tax optimization.
+        </p>
+
+        {/* Minimalist Tactile Quick-Jump Dock */}
+        <div className="hero-quick-dock" role="navigation" aria-label="Quick section navigation">
           <button
             type="button"
-            className="hero-pill-badge hero-pill-quasar"
+            className="hero-quick-pill pill-cashflow"
             onClick={() => {
               document.getElementById('tour-cashflows')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }}
-            title="Jump to Monthly Cashflow inputs"
+            title="Jump to Monthly Cashflow Cockpit"
           >
-            monthly cashflow
+            <span className="quick-pill-dot" />
+            <span>Monthly Cashflow</span>
           </button>
-          , compound with{' '}
+
           <button
             type="button"
-            className="hero-pill-badge hero-pill-nebula"
+            className="hero-quick-pill pill-sip"
             onClick={() => {
               document.getElementById('tour-stepup')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }}
             title="Jump to Step-Up SIP Compounding"
           >
-            step-up SIPs
+            <span className="quick-pill-dot" />
+            <span>Step-Up SIPs</span>
           </button>
-          , audit your{' '}
+
           <button
             type="button"
-            className="hero-pill-badge hero-pill-solstice"
+            className="hero-quick-pill pill-balance"
             onClick={() => {
               document.getElementById('tour-budget-health')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }}
             title="Jump to 50/30/20 Budget Health"
           >
-            50/30/20 budget balance
+            <span className="quick-pill-dot" />
+            <span>50/30/20 Balance</span>
           </button>
-          , and compare{' '}
+
           <button
             type="button"
-            className="hero-pill-badge hero-pill-pulsar"
+            className="hero-quick-pill pill-tax"
             onClick={() => {
               document.getElementById('tour-tax')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }}
             title="Jump to Indian Tax Engine (FY 2025–26 & FY 2024–25)"
           >
-            FY 2025–26 &amp; FY 2024–25 tax regimes
+            <span className="quick-pill-dot" />
+            <span>Tax Regimes</span>
           </button>
-          . Completely private, client-side, and offline.
-        </p>
+        </div>
       </section>
 
       {/* Toast Notification */}
@@ -1264,6 +1302,7 @@ export function App() {
         onOpenSteganography={() => setShowSteganography(true)}
         onOpenMonteCarlo={() => setShowMonteCarlo(true)}
         onOpenVaultSecurity={() => setShowVaultSecurity(true)}
+        onOpenLoanArbitrage={() => setShowLoanArbitrage(true)}
       />
 
       {/* Excel Corporate Camouflage Screen Overlay [Esc Esc] */}
@@ -1333,6 +1372,20 @@ export function App() {
           createVaultAndSwitch(name, vaultPlan);
           setStatusMessage(`Created and switched to new isolated vault: "${name}"`);
         }}
+      />
+
+      {/* Loan Prepayment vs. Equity SIP Arbitrage Simulator Modal */}
+      <LoanPrepaymentArbitrageModal
+        isOpen={showLoanArbitrage}
+        onClose={() => setShowLoanArbitrage(false)}
+        defaultLoanAmount={5000000}
+      />
+
+      {/* Floating Bi-Directional Slide-to-Commit / Discard Capsule */}
+      <TactileCommitSlider
+        isDirty={isDirty}
+        onSave={commitPlanChanges}
+        onDiscard={discardPlanChanges}
       />
 
       {/* Minimalist Footer */}

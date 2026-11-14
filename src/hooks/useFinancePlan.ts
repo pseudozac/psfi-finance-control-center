@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ExportEnvelope, FinancePlan } from '../types/finance';
 import type { UserAccount, AccountAvatarColor } from '../types/account';
 import {
@@ -28,10 +28,27 @@ export function useFinancePlan() {
   const plan = activeAccount?.plan ?? DEFAULT_PLAN;
   const baseline = activeAccount?.baseline ?? null;
 
-  // Sync active account whenever accounts or activeId change
+  // Anchor snapshot of the committed plan (for uncommitted change detection)
+  const [committedPlan, setCommittedPlan] = useState<FinancePlan>(() => structuredClone(plan));
+
+  // When activeId changes, sync committedPlan
   useEffect(() => {
-    saveAllAccounts(accounts);
-  }, [accounts]);
+    const current = accounts.find((a) => a.id === activeId) ?? accounts[0];
+    if (current?.plan) {
+      setCommittedPlan(structuredClone(current.plan));
+    }
+  }, [activeId]);
+
+  const isDirty = useMemo(() => {
+    return JSON.stringify(plan) !== JSON.stringify(committedPlan);
+  }, [plan, committedPlan]);
+
+  // Sync active account whenever accounts change AND it's not in an uncommitted dirty state
+  useEffect(() => {
+    if (!isDirty) {
+      saveAllAccounts(accounts);
+    }
+  }, [accounts, isDirty]);
 
   const setPlan = useCallback(
     (nextPlan: FinancePlan) => {
@@ -45,6 +62,17 @@ export function useFinancePlan() {
     },
     [activeId]
   );
+
+  const commitPlanChanges = useCallback(() => {
+    setCommittedPlan(structuredClone(plan));
+    saveAllAccounts(accounts);
+    setStatusMessage('Vault state committed & saved to local storage.');
+  }, [plan, accounts]);
+
+  const discardPlanChanges = useCallback(() => {
+    setPlan(structuredClone(committedPlan));
+    setStatusMessage('Unsaved modifications discarded. Vault restored.');
+  }, [committedPlan, setPlan]);
 
   const setBaseline = useCallback(
     (nextBaseline: FinancePlan | null) => {
@@ -194,5 +222,9 @@ export function useFinancePlan() {
     refreshAccounts: () => setAccounts(loadAllAccounts()),
     statusMessage,
     setStatusMessage,
+    isDirty,
+    commitPlanChanges,
+    discardPlanChanges,
+    committedPlan,
   };
 }

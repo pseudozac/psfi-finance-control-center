@@ -1,4 +1,4 @@
-const CACHE_NAME = 'psfi-v5.9.0-hero-shockdial-sip-accel';
+const CACHE_NAME = 'psfi-v5.10.0-commit-slider-loan-arbitrage-cool-hero';
 
 self.addEventListener('install', () => {
   self.skipWaiting();
