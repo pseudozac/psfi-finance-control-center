@@ -1381,12 +1381,16 @@ export function App() {
         defaultLoanAmount={5000000}
       />
 
-      {/* Floating Bi-Directional Slide-to-Commit / Discard Capsule */}
-      <TactileCommitSlider
-        isDirty={isDirty}
-        onSave={commitPlanChanges}
-        onDiscard={discardPlanChanges}
-      />
+      {/* Floating Bi-Directional Slide-to-Commit / Discard Capsule portaled to document.body */}
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <TactileCommitSlider
+            isDirty={isDirty}
+            onSave={commitPlanChanges}
+            onDiscard={discardPlanChanges}
+          />,
+          document.body
+        )}
 
       {/* Minimalist Footer */}
       <footer className="footer-capsule">
