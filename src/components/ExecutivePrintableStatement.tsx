@@ -62,7 +62,7 @@ export const ExecutivePrintableStatement: React.FC<ExecutivePrintableStatementPr
           </div>
           <div className="exec-meta-slot">
             <span className="meta-lbl">Statutory Basis:</span>
-            <span className="meta-val">FY 2025–26 &amp; FY 2024–25 Tax Codes</span>
+            <span className="meta-val">TY 2026–27 (Income-tax Act, 2025) &amp; Prior Act</span>
           </div>
           <div className="exec-meta-slot">
             <span className="meta-lbl">Verification:</span>
@@ -172,7 +172,7 @@ export const ExecutivePrintableStatement: React.FC<ExecutivePrintableStatementPr
 
         {/* Right Column: Indian Statutory Tax Engine */}
         <div className="exec-sub-col">
-          <div className="exec-section-heading">03 // STATUTORY TAX AUDIT (CBDT / UNION BUDGET)</div>
+          <div className="exec-section-heading">03 // STATUTORY TAX AUDIT (TY 2026–27 INCOME-TAX ACT, 2025)</div>
           <table className="exec-table">
             <thead>
               <tr>
@@ -185,8 +185,8 @@ export const ExecutivePrintableStatement: React.FC<ExecutivePrintableStatementPr
             <tbody>
               <tr className={taxComparison.recommended === 'new' ? 'row-recommended' : ''}>
                 <td>
-                  <strong>New Tax Regime (Section 115BAC)</strong>
-                  <div className="text-[9px] text-slate-500">Zero surcharge threshold &amp; rebate</div>
+                  <strong>Simplified Regime (Income-tax Act, 2025)</strong>
+                  <div className="text-[9px] text-slate-500">TY 2026–27 Default · ₹75k Std Ded · Sec 87A Rebate &le; ₹7L</div>
                 </td>
                 <td className="text-right font-mono font-bold text-slate-900">
                   {formatINR(taxComparison.newRegimeTax)}
@@ -202,8 +202,8 @@ export const ExecutivePrintableStatement: React.FC<ExecutivePrintableStatementPr
               </tr>
               <tr className={taxComparison.recommended === 'old' ? 'row-recommended' : ''}>
                 <td>
-                  <strong>Old Regime (80C / 80D / 24b / HRA)</strong>
-                  <div className="text-[9px] text-slate-500">Itemized deductions applied</div>
+                  <strong>Prior Act 1961 (Itemized 80C / 80D / HRA)</strong>
+                  <div className="text-[9px] text-slate-500">Historical comparison with itemized deductions</div>
                 </td>
                 <td className="text-right font-mono">
                   {formatINR(taxComparison.oldRegimeTax)}
@@ -223,9 +223,9 @@ export const ExecutivePrintableStatement: React.FC<ExecutivePrintableStatementPr
             <span className="font-bold text-slate-800">Tax Optimization: </span>
             <span>
               {taxComparison.recommended === 'new'
-                ? `Opting for New Regime saves ${formatINR(taxComparison.savings)}/year vs Old Regime.`
+                ? `Opting for Simplified Regime (Income-tax Act, 2025) saves ${formatINR(taxComparison.savings)}/year vs Prior Act.`
                 : taxComparison.recommended === 'old'
-                ? `Old Regime with deductions saves ${formatINR(taxComparison.savings)}/year.`
+                ? `Prior Act 1961 with itemized deductions saves ${formatINR(taxComparison.savings)}/year.`
                 : 'Both regimes yield equivalent statutory liability.'}
             </span>
           </div>

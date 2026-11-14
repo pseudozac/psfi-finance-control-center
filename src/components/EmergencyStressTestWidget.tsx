@@ -96,19 +96,44 @@ export const EmergencyStressTestWidget: React.FC<EmergencyStressTestWidgetProps>
 
         <div className="flex-align gap-2">
           {displayStressStatus === 'fortified' ? (
-            <span className="tag-pill tag-nebula font-mono text-[11px]">
-              <ShieldCheck size={13} /> FORTIFIED BUFFER (&ge; 6 MOS)
+            <span
+              className="tag-pill tag-nebula font-mono text-[11px]"
+              title={`Tier 2 Standard living runway: ${evaluatedRunwayMonths.toFixed(1)} months (Core essentials excluding lifestyle)`}
+            >
+              <ShieldCheck size={13} /> TIER 2 BUFFER: {evaluatedRunwayMonths.toFixed(1)} MOS (&ge; 6 MOS FORTIFIED)
             </span>
           ) : displayStressStatus === 'moderate' ? (
-            <span className="tag-pill tag-solstice font-mono text-[11px]">
-              <AlertCircle size={13} /> MODERATE BUFFER (3–6 MOS)
+            <span
+              className="tag-pill tag-solstice font-mono text-[11px]"
+              title={`Tier 2 Standard living runway: ${evaluatedRunwayMonths.toFixed(1)} months`}
+            >
+              <AlertCircle size={13} /> TIER 2 BUFFER: {evaluatedRunwayMonths.toFixed(1)} MOS (3–6 MOS MODERATE)
             </span>
           ) : (
-            <span className="tag-pill tag-flare font-mono text-[11px] animate-pulse">
-              <ShieldAlert size={13} /> CRITICAL BUFFER (&lt; 3 MOS)
+            <span
+              className="tag-pill tag-flare font-mono text-[11px] animate-pulse"
+              title={`Tier 2 Standard living runway: ${evaluatedRunwayMonths.toFixed(1)} months`}
+            >
+              <ShieldAlert size={13} /> TIER 2 BUFFER: {evaluatedRunwayMonths.toFixed(1)} MOS (&lt; 3 MOS CRITICAL)
             </span>
           )}
         </div>
+      </div>
+
+      {/* Expense Runway Transparency Disclosure */}
+      <div className="text-[11px] font-mono text-muted flex flex-wrap gap-x-4 gap-y-1 mb-3 bg-surface-overlay/60 px-3 py-2 rounded-xl border border-subtle">
+        <span title="Uses all monthly expenses including lifestyle & discretionary shopping">
+          <strong className="text-secondary">Dashboard Runway (Full Burn):</strong>{' '}
+          <span className="text-corona font-bold">{baseStress.fullRunwayMonths} mos</span> ({formatINR(baseStress.fullMonthly)}/mo incl. lifestyle)
+        </span>
+        <span title="Uses core living expenses: housing, food, utilities, health & debt EMI">
+          <strong className="text-secondary">Tier 2 Standard (Lean Living):</strong>{' '}
+          <span className="text-nebula font-bold">{baseStress.standardRunwayMonths} mos</span> ({formatINR(baseStress.standardMonthly)}/mo core survival)
+        </span>
+        <span title="Uses absolute bare survival: rent, rations & loan service only">
+          <strong className="text-secondary">Tier 1 Barebones:</strong>{' '}
+          <span className="text-quasar font-bold">{baseStress.barebonesRunwayMonths} mos</span> ({formatINR(baseStress.barebonesMonthly)}/mo rations only)
+        </span>
       </div>
 
       {/* 1-Tap Catastrophic Income Shock Dial */}

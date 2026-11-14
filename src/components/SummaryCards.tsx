@@ -81,7 +81,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, debtPayoff,
             <span className="kpi-title">Emergency Runway</span>
             <InfoTooltip
               title="Emergency Runway Duration"
-              explanation="How many months your household can survive with zero income using current liquid reserves."
+              explanation="How many months your household can survive with zero income using current liquid reserves based on full monthly expenses (lifestyle, housing, food, EMIs, insurance). For lean survival runway excluding lifestyle spending, see the Emergency Survival Stress Test section below."
               formula="Liquid Savings ÷ Total Monthly Expenses"
               benchmark="Maintain at least 6 months of living expenses in high-liquidity instruments."
             />
