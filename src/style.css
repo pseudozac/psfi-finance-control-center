@@ -6885,53 +6885,99 @@ body {
 }
 
 /* ==========================================================================
-   Vault Security & Master PIN Glass Enclave Modal
+   Vault Security & Master PIN Glass Enclave Modal & Tactile Keypad
    ========================================================================== */
-@keyframes modalSlideDown {
-  from {
+@keyframes cyberModalPop {
+  0% {
     opacity: 0;
-    transform: translateY(-16px) scale(0.97);
+    transform: scale(0.92) translateY(12px);
   }
-  to {
+  70% {
+    transform: scale(1.01) translateY(-2px);
+  }
+  100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: scale(1) translateY(0);
   }
 }
 
 @keyframes keyShake {
   0%, 100% { transform: translateX(0); }
-  20%, 60% { transform: translateX(-6px); }
-  40%, 80% { transform: translateX(6px); }
+  15%, 45%, 75% { transform: translateX(-8px); }
+  30%, 60%, 90% { transform: translateX(8px); }
+}
+
+@keyframes shieldPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 0 28px rgba(245, 158, 11, 0.55);
+  }
+}
+
+@keyframes slotDotPop {
+  0% { transform: scale(0.3); opacity: 0; }
+  70% { transform: scale(1.25); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.vault-security-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(3, 6, 14, 0.88);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  animation: fadeIn 0.2s ease-out;
 }
 
 .vault-security-modal-card {
-  max-width: 460px;
-  width: 92vw;
-  background: rgba(14, 18, 28, 0.96);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
-  border: 1px solid rgba(245, 158, 11, 0.28);
-  border-radius: var(--radius-xl);
-  padding: 24px;
-  box-shadow: 0 28px 72px rgba(0, 0, 0, 0.9), 0 0 32px rgba(245, 158, 11, 0.08);
+  max-width: 480px;
+  width: 94vw;
+  background: linear-gradient(165deg, rgba(16, 21, 36, 0.96) 0%, rgba(9, 12, 22, 0.99) 100%);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 24px;
+  padding: 26px;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.92), 0 0 50px rgba(245, 158, 11, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.15);
   box-sizing: border-box;
-  animation: modalSlideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: cyberModalPop 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   color: var(--ink-primary);
   position: relative;
+  overflow: hidden;
+}
+
+.vault-security-modal-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.8), rgba(191, 159, 241, 0.6), transparent);
+  pointer-events: none;
 }
 
 .vault-lock-gate-card {
-  max-width: 380px;
-  width: 90vw;
-  background: rgba(10, 13, 22, 0.98);
-  backdrop-filter: blur(32px);
-  -webkit-backdrop-filter: blur(32px);
-  border: 1px solid rgba(245, 158, 11, 0.32);
+  max-width: 390px;
+  width: 92vw;
+  background: linear-gradient(165deg, rgba(14, 18, 30, 0.98) 0%, rgba(6, 9, 18, 0.99) 100%);
+  backdrop-filter: blur(36px) saturate(180%);
+  -webkit-backdrop-filter: blur(36px) saturate(180%);
+  border: 1px solid rgba(245, 158, 11, 0.36);
   border-radius: 28px;
-  padding: 32px 24px;
-  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.95), 0 0 40px rgba(245, 158, 11, 0.12);
+  padding: 34px 26px;
+  box-shadow: 0 36px 90px rgba(0, 0, 0, 0.96), 0 0 55px rgba(245, 158, 11, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.15);
   box-sizing: border-box;
-  animation: modalSlideDown 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: cyberModalPop 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   color: var(--ink-primary);
   position: relative;
 }
@@ -6940,21 +6986,217 @@ body {
   animation: keyShake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
-.vault-security-status-card {
+.vault-shield-crest {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.22) 0%, rgba(247, 141, 44, 0.08) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  color: #fbbf24;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 16px;
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+  animation: shieldPulse 3s infinite ease-in-out;
+}
+
+.vault-shield-crest.crest-active {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(245, 158, 11, 0.15) 100%);
+  border-color: rgba(16, 185, 129, 0.5);
+  color: #34d399;
+  box-shadow: 0 0 22px rgba(16, 185, 129, 0.35);
+}
+
+.vault-status-hud-card {
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  background: rgba(18, 24, 38, 0.65);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.vault-status-hud-card.status-active {
+  border-color: rgba(16, 185, 129, 0.35);
+  background: linear-gradient(165deg, rgba(16, 185, 129, 0.08) 0%, rgba(18, 24, 38, 0.6) 100%);
+}
+
+.vault-meter-dots {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.vault-meter-bar {
+  width: 14px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  transition: all 0.25s ease;
+}
+
+.vault-meter-bar.active-amber {
+  background: var(--colour-solstice);
+  box-shadow: 0 0 8px rgba(247, 141, 44, 0.8);
+}
+
+.vault-meter-bar.active-emerald {
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.8);
+}
+
+.vault-cyber-gradient-btn {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 13px 20px;
+  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 50%, #c026d3 100%);
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-subtle);
-  background: rgba(22, 27, 40, 0.6);
+  cursor: pointer;
+  box-shadow: 0 8px 28px rgba(245, 158, 11, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vault-cyber-gradient-btn:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 12px 36px rgba(245, 158, 11, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+.vault-cyber-gradient-btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.99);
+}
+
+.vault-cyber-gradient-btn::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -60%;
+  width: 40%;
+  height: 200%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: rotate(25deg);
+  transition: all 0.75s ease;
+}
+
+.vault-cyber-gradient-btn:hover::after {
+  left: 130%;
+}
+
+.vault-cyber-lock-now-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 18px;
+  background: rgba(245, 158, 11, 0.16);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  border-radius: var(--radius-lg);
+  color: #fbbf24;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.2);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vault-cyber-lock-now-btn:hover {
+  background: rgba(245, 158, 11, 0.28);
+  border-color: rgba(245, 158, 11, 0.85);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(245, 158, 11, 0.35);
+}
+
+.vault-features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
   margin-bottom: 20px;
 }
 
-.vault-security-status-card.status-active {
-  border-color: rgba(245, 158, 11, 0.35);
-  background: rgba(245, 158, 11, 0.06);
+.vault-feature-mini-card {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vault-feature-mini-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-primary);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.vault-feature-mini-desc {
+  font-size: 10px;
+  color: var(--ink-muted);
+  line-height: 1.35;
+}
+
+.vault-pin-slots-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.vault-pin-slot {
+  width: 52px;
+  height: 60px;
+  border-radius: 14px;
+  background: rgba(14, 18, 30, 0.85);
+  border: 1.5px solid var(--border-medium);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffffff;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.vault-pin-slot.slot-active {
+  border-color: var(--colour-solstice);
+  background: rgba(245, 158, 11, 0.08);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.3), inset 0 2px 4px rgba(0, 0, 0, 0.4);
+  transform: scale(1.04);
+}
+
+.vault-pin-slot.slot-filled {
+  border-color: rgba(245, 158, 11, 0.6);
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.vault-slot-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--colour-solstice);
+  box-shadow: 0 0 12px rgba(247, 141, 44, 0.8);
+  animation: slotDotPop 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .vault-pin-dots {
@@ -6990,45 +7232,46 @@ body {
 }
 
 .vault-keypad-btn {
-  height: 54px;
-  border-radius: 16px;
-  background: rgba(26, 32, 48, 0.65);
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(22, 28, 44, 0.7);
   border: 1px solid var(--border-subtle);
   color: #f1f5f9;
   font-family: var(--font-mono);
-  font-size: 19px;
+  font-size: 20px;
   font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .vault-keypad-btn:hover:not(:disabled) {
-  background: rgba(40, 48, 70, 0.8);
-  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(36, 46, 72, 0.9);
+  border-color: rgba(245, 158, 11, 0.5);
   color: #ffffff;
   transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.2);
 }
 
 .vault-keypad-btn:active:not(:disabled) {
   transform: translateY(1px) scale(0.96);
-  background: rgba(245, 158, 11, 0.2);
+  background: rgba(245, 158, 11, 0.25);
 }
 
 .vault-keypad-btn.btn-action {
   background: transparent;
   border-color: transparent;
   box-shadow: none;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink-muted);
   font-family: var(--font-sans);
 }
 
 .vault-keypad-btn.btn-action:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.06);
   color: var(--ink-primary);
 }
 
@@ -7058,5 +7301,22 @@ body {
 .vault-pin-input-field:focus {
   border-color: var(--colour-solstice);
   box-shadow: 0 0 14px rgba(247, 141, 44, 0.25);
+}
+
+.vault-security-status-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  background: rgba(22, 27, 40, 0.6);
+  margin-bottom: 20px;
+}
+
+.vault-security-status-card.status-active {
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.06);
 }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'psfi-v5.11-glass-security';
+const CACHE_NAME = 'psfi-v5.12-cyber-vault-modal';
 
 self.addEventListener('install', () => {
   self.skipWaiting();
