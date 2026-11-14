@@ -33,7 +33,6 @@ import {
   ZoomIn,
   ZoomOut,
   RefreshCw,
-  ArrowLeft,
 } from 'lucide-react';
 import type { FinancePlan, FinanceSummary } from '../types/finance';
 import type { SkillTier, SkillNode } from '../types/skills';
@@ -437,28 +436,6 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
         {/* 1. TOP HEADER & RPG RANK BANNER */}
         <div className="skill-tree-header">
           <div className="skill-tree-header-left">
-            {isMobile && (
-              <button
-                type="button"
-                className="action-pill font-mono text-xs"
-                onClick={onClose}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  padding: '5px 9px',
-                  marginRight: '6px',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  color: '#ffffff',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  borderRadius: '999px',
-                }}
-                title="Return to Control Center"
-              >
-                <ArrowLeft size={13} />
-                <span>Back</span>
-              </button>
-            )}
             <div className="skill-tree-crown-box">
               <Crown size={20} />
             </div>
