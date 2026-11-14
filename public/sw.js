@@ -1,4 +1,4 @@
-const CACHE_NAME = 'psfi-v5.20-mobile-tools-drawer-zindex';
+const CACHE_NAME = 'psfi-v5.21-tools-portal-fix';
 
 self.addEventListener('install', () => {
   self.skipWaiting();

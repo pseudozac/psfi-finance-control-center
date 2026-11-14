@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Download,
   Upload,
@@ -114,6 +115,7 @@ export function App() {
   const [toolsSearchQuery, setToolsSearchQuery] = useState<string>('');
   const [toolsCategoryFilter, setToolsCategoryFilter] = useState<'all' | 'sim' | 'privacy' | 'data'>('all');
   const toolsDropdownRef = useRef<HTMLDivElement>(null);
+  const toolsMenuRef = useRef<HTMLDivElement>(null);
 
   // Incoming PIN-protected beam resolution states
   const [pendingBeamPayload, setPendingBeamPayload] = useState<string | null>(null);
@@ -159,6 +161,16 @@ export function App() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [windowWidth, setWindowWidth] = useState<number>(() => typeof window !== 'undefined' ? window.innerWidth : 1024);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const isMobileViewport = windowWidth <= 768;
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('psfi_theme', theme);
@@ -167,7 +179,12 @@ export function App() {
   // Click outside or press Escape to close tools dropdown
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
-      if (toolsDropdownRef.current && !toolsDropdownRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        toolsDropdownRef.current &&
+        !toolsDropdownRef.current.contains(target) &&
+        (!toolsMenuRef.current || !toolsMenuRef.current.contains(target))
+      ) {
         setToolsMenuOpen(false);
       }
     };
@@ -460,6 +477,375 @@ export function App() {
     return title.toLowerCase().includes(q) || sub.toLowerCase().includes(q);
   };
 
+  const renderToolsMenu = () => (
+    <>
+      <div
+        className="tools-dropdown-backdrop"
+        onClick={() => setToolsMenuOpen(false)}
+        aria-hidden="true"
+      />
+      <div className="tools-dropdown-menu" ref={toolsMenuRef} role="menu">
+        {/* Mobile Drawer Handle & Header */}
+        <div
+          className="tools-mobile-drawer-handle"
+          onClick={() => setToolsMenuOpen(false)}
+          aria-label="Drag down to close"
+        />
+        <div className="tools-mobile-drawer-header">
+          <div className="tools-mobile-drawer-title">
+            <Sparkles size={14} className="text-solstice" />
+            <span>Actuarial & Sovereign Tools</span>
+            <span className="tools-badge-count">13 Tools</span>
+          </div>
+          <button
+            type="button"
+            className="tools-mobile-drawer-close"
+            onClick={() => setToolsMenuOpen(false)}
+            aria-label="Close tools menu"
+          >
+            <X size={15} />
+          </button>
+        </div>
+
+        {/* Live Search & Filter Bar */}
+        <div className="tools-search-bar">
+          <Search size={14} className="text-quasar shrink-0" />
+          <input
+            type="text"
+            placeholder="Search tools, scenarios, shortcuts (or Alt+L, Alt+X)..."
+            value={toolsSearchQuery}
+            onChange={(e) => setToolsSearchQuery(e.target.value)}
+            className="tools-search-input"
+          />
+          {toolsSearchQuery && (
+            <button
+              type="button"
+              onClick={() => setToolsSearchQuery('')}
+              className="tools-search-clear"
+              aria-label="Clear search"
+            >
+              <X size={12} />
+            </button>
+          )}
+        </div>
+
+        {/* Category Filter Pills */}
+        <div className="tools-category-segmented-pills">
+          <button
+            type="button"
+            className={toolsCategoryFilter === 'all' ? 'pill-cat-active' : ''}
+            onClick={() => setToolsCategoryFilter('all')}
+          >
+            All (13)
+          </button>
+          <button
+            type="button"
+            className={toolsCategoryFilter === 'sim' ? 'pill-cat-active' : ''}
+            onClick={() => setToolsCategoryFilter('sim')}
+          >
+            🔮 Simulations
+          </button>
+          <button
+            type="button"
+            className={toolsCategoryFilter === 'privacy' ? 'pill-cat-active' : ''}
+            onClick={() => setToolsCategoryFilter('privacy')}
+          >
+            🛡️ Privacy & Defense
+          </button>
+          <button
+            type="button"
+            className={toolsCategoryFilter === 'data' ? 'pill-cat-active' : ''}
+            onClick={() => setToolsCategoryFilter('data')}
+          >
+            📂 Ledgers & Backup
+          </button>
+        </div>
+
+        <div className="tools-mega-grid">
+        {/* COLUMN 1: ACTUARIAL ENGINES & STRESS-TESTS */}
+        {(toolsCategoryFilter === 'all' || toolsCategoryFilter === 'sim') && (
+        <div className="tools-category-column">
+          <div className="tools-category-header text-nebula">
+            <Sparkles size={11} className="text-nebula" />
+            <span>Actuarial & Simulations</span>
+          </div>
+
+          {matchesToolsSearch('Ingest Statements', 'CAS, Bank, Cards & Payslips') && (
+          <button
+            type="button"
+            className="tools-menu-item"
+            onClick={() => { setShowStatementParser(true); setToolsMenuOpen(false); }}
+          >
+            <FileText size={13} className="text-nebula" />
+            <div>
+              <span className="item-title">Ingest Statements</span>
+              <span className="item-sub">CAS, Bank, Cards & Payslips</span>
+            </div>
+          </button>
+          )}
+
+          {matchesToolsSearch('Sovereign Skill Tree', 'RPG financial independence constellation') && (
+          <button
+            type="button"
+            className="tools-menu-item"
+            onClick={() => { setShowSkillTree(true); setToolsMenuOpen(false); }}
+          >
+            <Crown size={13} className="text-solstice" />
+            <div>
+              <span className="item-title">Sovereign Skill Tree</span>
+              <span className="item-sub">RPG financial independence constellation</span>
+            </div>
+          </button>
+          )}
+
+          {matchesToolsSearch('Reverse Monte Carlo', '10,000 black swan simulations') && (
+          <button
+            type="button"
+            className="tools-menu-item"
+            onClick={() => { setShowMonteCarlo(true); setToolsMenuOpen(false); }}
+          >
+            <Activity size={13} className="text-cyan-400" />
+            <div>
+              <span className="item-title">Reverse Monte Carlo</span>
+              <span className="item-sub">10,000 black swan simulations</span>
+            </div>
+          </button>
+          )}
+
+          {matchesToolsSearch('What-If Sandbox', 'Simulate raises, bonuses & inflation') && (
+          <button
+            type="button"
+            className="tools-menu-item"
+            onClick={() => { setShowSandbox(true); setToolsMenuOpen(false); }}
+          >
+            <Sparkles size={13} className="text-quasar" />
+            <div>
+              <span className="item-title">What-If Sandbox</span>
+              <span className="item-sub">Simulate raises, bonuses & inflation</span>
+            </div>
+          </button>
+          )}
+
+          {matchesToolsSearch(baseline ? 'Clear Baseline' : 'Pin Baseline', baseline ? 'Remove delta snapshot' : 'Snapshot figures for variance') && (
+          <button
+            type="button"
+            className="tools-menu-item"
+            onClick={() => {
+              if (baseline) clearBaseline(); else pinBaseline();
+              setToolsMenuOpen(false);
+            }}
+          >
+            {baseline ? <PinOff size={13} className="text-solstice" /> : <Pin size={13} />}
+            <div>
+              <span className="item-title">{baseline ? 'Clear Baseline' : 'Pin Baseline'}</span>
+              <span className="item-sub">{baseline ? 'Remove delta snapshot' : 'Snapshot figures for variance'}</span>
+            </div>
+          </button>
+          )}
+        </div>
+        )}
+
+        {/* COLUMN 2: PRIVACY & SOVEREIGN CLOAKING */}
+        {(toolsCategoryFilter === 'all' || toolsCategoryFilter === 'privacy') && (
+        <div className="tools-category-column">
+          <div className="tools-category-header text-corona">
+            <ShieldCheck size={11} className="text-corona" />
+            <span>Privacy & Sovereign Defense</span>
+          </div>
+
+          {matchesToolsSearch('Vault PIN & Security', activeAccount.pinHash ? 'PIN active · Lock or reconfigure' : 'Set 4-digit PIN lock Alt+L') && (
+          <button
+            type="button"
+            className="tools-menu-item"
+            onClick={() => { setShowVaultSecurity(true); setToolsMenuOpen(false); }}
+          >
+            <Lock size={13} className="text-amber-400" />
+            <div>
+              <span className="item-title">
+                <span>Vault PIN & Security</span>
+                <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-800/80 shrink-0 ml-auto">Alt+L</span>
+              </span>
+              <span className="item-sub">
+                {activeAccount.pinHash ? 'PIN active · Lock or reconfigure' : 'Set 4-digit PIN lock'}
+              </span>
+            </div>
+          </button>
+          )}
+
+          {matchesToolsSearch('Excel Camouflage', 'Panic logistics spreadsheet disguise Alt+X') && (
+          <button
+            type="button"
+            className="tools-menu-item"
+            onClick={() => { setShowCamouflage(true); setToolsMenuOpen(false); }}
+          >
+            <FileSpreadsheet size={13} className="text-emerald-400" />
+            <div>
+              <span className="item-title">
+                <span>Excel Camouflage</span>
+                <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-800/80 shrink-0 ml-auto">Alt+X</span>
+              </span>
+              <span className="item-sub">Panic logistics spreadsheet disguise</span>
+            </div>
+          </button>
+          )}
+
+          {matchesToolsSearch('Steganographic PNG', 'Hide encrypted vault inside wallpaper') && (
+          <button
+            type="button"
+            className="tools-menu-item"
+            onClick={() => { setShowSteganography(true); setToolsMenuOpen(false); }}
+          >
+            <ImageIcon size={13} className="text-purple-400" />
+            <div>
+              <span className="item-title">Steganographic PNG</span>
+              <span className="item-sub">Hide encrypted vault inside wallpaper</span>
+            </div>
+          </button>
+          )}
+
+          {matchesToolsSearch('Cross-Device QR Beam', 'P2P zero-cloud offline sync') && (
+          <button
+            type="button"
+            id="tour-vault-sync"
+            className="tools-menu-item"
+            onClick={() => { setShowQRModal(true); setToolsMenuOpen(false); }}
+          >
+            <QrCode size={13} className="text-quasar" />
+            <div>
+              <span className="item-title">Cross-Device QR Beam</span>
+              <span className="item-sub">P2P zero-cloud offline sync</span>
+            </div>
+          </button>
+          )}
+
+          {matchesToolsSearch('Share Health Card', 'Anonymized 16:9 / 1:1 scorecard') && (
+          <button
+            type="button"
+            className="tools-menu-item"
+            onClick={() => { setShowShareModal(true); setToolsMenuOpen(false); }}
+          >
+            <Share2 size={13} className="text-pulsar" />
+            <div>
+              <span className="item-title">Share Health Card</span>
+              <span className="item-sub">Anonymized 16:9 / 1:1 scorecard</span>
+            </div>
+          </button>
+          )}
+        </div>
+        )}
+
+        {/* COLUMN 3: DATA LEDGERS & ARCHIVES */}
+        {(toolsCategoryFilter === 'all' || toolsCategoryFilter === 'data') && (
+        <div className="tools-category-column">
+          <div className="tools-category-header text-solstice">
+            <Download size={11} className="text-solstice" />
+            <span>Ledgers & System</span>
+          </div>
+
+          {matchesToolsSearch('Import JSON', 'Load vault backup file') && (
+          <>
+            <button
+              type="button"
+              className="tools-menu-item"
+              onClick={() => { fileInputRef.current?.click(); setToolsMenuOpen(false); }}
+            >
+              <Upload size={13} className="text-muted" />
+              <div>
+                <span className="item-title">Import JSON</span>
+                <span className="item-sub">Load vault backup file</span>
+              </div>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/json,.json"
+              onChange={handleFileImport}
+              hidden
+            />
+          </>
+          )}
+
+          {matchesToolsSearch('Export JSON', 'Download offline vault state') && (
+          <button
+            type="button"
+            className="tools-menu-item"
+            onClick={() => { exportJSON(); setToolsMenuOpen(false); }}
+          >
+            <Download size={13} className="text-muted" />
+            <div>
+              <span className="item-title">Export JSON</span>
+              <span className="item-sub">Download offline vault state</span>
+            </div>
+          </button>
+          )}
+
+          {matchesToolsSearch('Export CSV', 'Spreadsheet projections matrix') && (
+          <button
+            type="button"
+            className="tools-menu-item"
+            onClick={() => { exportCSV(horizonMonths); setToolsMenuOpen(false); }}
+          >
+            <FileSpreadsheet size={13} className="text-muted" />
+            <div>
+              <span className="item-title">Export CSV</span>
+              <span className="item-sub">Spreadsheet projections matrix</span>
+            </div>
+          </button>
+          )}
+
+          {matchesToolsSearch('Print Executive PDF', '1-page formatted report') && (
+          <button
+            type="button"
+            className="tools-menu-item"
+            onClick={() => { setToolsMenuOpen(false); window.print(); }}
+          >
+            <Printer size={13} className="text-muted" />
+            <div>
+              <span className="item-title">Print Executive PDF</span>
+              <span className="item-sub">1-page formatted report</span>
+            </div>
+          </button>
+          )}
+
+          {matchesToolsSearch('Load Demo Vault', 'Seeded Tech Lead portfolio') && (
+          <button
+            type="button"
+            className="tools-menu-item"
+            onClick={() => { launchDemoVault(); setToolsMenuOpen(false); }}
+          >
+            <Sparkles size={13} className="text-solstice" />
+            <div>
+              <span className="item-title">Load Demo Vault</span>
+              <span className="item-sub">Seeded Tech Lead portfolio</span>
+            </div>
+          </button>
+          )}
+
+          {matchesToolsSearch('Reset to Defaults', 'Clear plan to zeroed slate') && (
+          <button
+            type="button"
+            className="tools-menu-item item-danger"
+            onClick={() => { resetToDefaults(); setToolsMenuOpen(false); }}
+          >
+            <RotateCcw size={13} />
+            <div>
+              <span className="item-title">Reset to Defaults</span>
+              <span className="item-sub">Clear plan to zeroed slate</span>
+            </div>
+          </button>
+          )}
+        </div>
+        )}
+      </div>
+
+      <div className="tools-mega-footer">
+        <span>⚡ Quick dispatch: Press <strong>⌘K</strong> or <strong>/</strong> anywhere</span>
+        <span>🔒 Panic Disguise: <strong>Alt + X</strong></span>
+      </div>
+    </div>
+  </>
+);
+
   // Phase 3: Main Dashboard
   return (
     <div className={`app-shell layout-${layoutMode} ${privacyMode ? 'privacy-masked' : ''} ${showTour ? 'tour-active' : ''}`}>
@@ -590,374 +976,8 @@ export function App() {
               <ChevronDown size={11} className={`text-muted transition-transform ${toolsMenuOpen ? 'rotate-180' : ''}`} />
             </button>
 
-            {toolsMenuOpen && (
-              <>
-                <div
-                  className="tools-dropdown-backdrop"
-                  onClick={() => setToolsMenuOpen(false)}
-                  aria-hidden="true"
-                />
-                <div className="tools-dropdown-menu" role="menu">
-                  {/* Mobile Drawer Handle & Header */}
-                  <div
-                    className="tools-mobile-drawer-handle"
-                    onClick={() => setToolsMenuOpen(false)}
-                    aria-label="Drag down to close"
-                  />
-                  <div className="tools-mobile-drawer-header">
-                    <div className="tools-mobile-drawer-title">
-                      <Sparkles size={14} className="text-solstice" />
-                      <span>Actuarial & Sovereign Tools</span>
-                      <span className="tools-badge-count">13 Tools</span>
-                    </div>
-                    <button
-                      type="button"
-                      className="tools-mobile-drawer-close"
-                      onClick={() => setToolsMenuOpen(false)}
-                      aria-label="Close tools menu"
-                    >
-                      <X size={15} />
-                    </button>
-                  </div>
-
-                  {/* Live Search & Filter Bar */}
-                  <div className="tools-search-bar">
-                    <Search size={14} className="text-quasar shrink-0" />
-                    <input
-                      type="text"
-                      placeholder="Search tools, scenarios, shortcuts (or Alt+L, Alt+X)..."
-                      value={toolsSearchQuery}
-                      onChange={(e) => setToolsSearchQuery(e.target.value)}
-                      className="tools-search-input"
-                    />
-                    {toolsSearchQuery && (
-                      <button
-                        type="button"
-                        onClick={() => setToolsSearchQuery('')}
-                        className="tools-search-clear"
-                        aria-label="Clear search"
-                      >
-                        <X size={12} />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Category Filter Pills */}
-                  <div className="tools-category-segmented-pills">
-                    <button
-                      type="button"
-                      className={toolsCategoryFilter === 'all' ? 'pill-cat-active' : ''}
-                      onClick={() => setToolsCategoryFilter('all')}
-                    >
-                      All (13)
-                    </button>
-                    <button
-                      type="button"
-                      className={toolsCategoryFilter === 'sim' ? 'pill-cat-active' : ''}
-                      onClick={() => setToolsCategoryFilter('sim')}
-                    >
-                      🔮 Simulations
-                    </button>
-                    <button
-                      type="button"
-                      className={toolsCategoryFilter === 'privacy' ? 'pill-cat-active' : ''}
-                      onClick={() => setToolsCategoryFilter('privacy')}
-                    >
-                      🛡️ Privacy & Defense
-                    </button>
-                    <button
-                      type="button"
-                      className={toolsCategoryFilter === 'data' ? 'pill-cat-active' : ''}
-                      onClick={() => setToolsCategoryFilter('data')}
-                    >
-                      📂 Ledgers & Backup
-                    </button>
-                  </div>
-
-                  <div className="tools-mega-grid">
-                  {/* COLUMN 1: ACTUARIAL ENGINES & STRESS-TESTS */}
-                  {(toolsCategoryFilter === 'all' || toolsCategoryFilter === 'sim') && (
-                  <div className="tools-category-column">
-                    <div className="tools-category-header text-nebula">
-                      <Sparkles size={11} className="text-nebula" />
-                      <span>Actuarial & Simulations</span>
-                    </div>
-
-                    {matchesToolsSearch('Ingest Statements', 'CAS, Bank, Cards & Payslips') && (
-                    <button
-                      type="button"
-                      className="tools-menu-item"
-                      onClick={() => { setShowStatementParser(true); setToolsMenuOpen(false); }}
-                    >
-                      <FileText size={13} className="text-nebula" />
-                      <div>
-                        <span className="item-title">Ingest Statements</span>
-                        <span className="item-sub">CAS, Bank, Cards & Payslips</span>
-                      </div>
-                    </button>
-                    )}
-
-                    {matchesToolsSearch('Sovereign Skill Tree', 'RPG financial independence constellation') && (
-                    <button
-                      type="button"
-                      className="tools-menu-item"
-                      onClick={() => { setShowSkillTree(true); setToolsMenuOpen(false); }}
-                    >
-                      <Crown size={13} className="text-solstice" />
-                      <div>
-                        <span className="item-title">Sovereign Skill Tree</span>
-                        <span className="item-sub">RPG financial independence constellation</span>
-                      </div>
-                    </button>
-                    )}
-
-                    {matchesToolsSearch('Reverse Monte Carlo', '10,000 black swan simulations') && (
-                    <button
-                      type="button"
-                      className="tools-menu-item"
-                      onClick={() => { setShowMonteCarlo(true); setToolsMenuOpen(false); }}
-                    >
-                      <Activity size={13} className="text-cyan-400" />
-                      <div>
-                        <span className="item-title">Reverse Monte Carlo</span>
-                        <span className="item-sub">10,000 black swan simulations</span>
-                      </div>
-                    </button>
-                    )}
-
-                    {matchesToolsSearch('What-If Sandbox', 'Simulate raises, bonuses & inflation') && (
-                    <button
-                      type="button"
-                      className="tools-menu-item"
-                      onClick={() => { setShowSandbox(true); setToolsMenuOpen(false); }}
-                    >
-                      <Sparkles size={13} className="text-quasar" />
-                      <div>
-                        <span className="item-title">What-If Sandbox</span>
-                        <span className="item-sub">Simulate raises, bonuses & inflation</span>
-                      </div>
-                    </button>
-                    )}
-
-                    {matchesToolsSearch(baseline ? 'Clear Baseline' : 'Pin Baseline', baseline ? 'Remove delta snapshot' : 'Snapshot figures for variance') && (
-                    <button
-                      type="button"
-                      className="tools-menu-item"
-                      onClick={() => {
-                        if (baseline) clearBaseline(); else pinBaseline();
-                        setToolsMenuOpen(false);
-                      }}
-                    >
-                      {baseline ? <PinOff size={13} className="text-solstice" /> : <Pin size={13} />}
-                      <div>
-                        <span className="item-title">{baseline ? 'Clear Baseline' : 'Pin Baseline'}</span>
-                        <span className="item-sub">{baseline ? 'Remove delta snapshot' : 'Snapshot figures for variance'}</span>
-                      </div>
-                    </button>
-                    )}
-                  </div>
-                  )}
-
-                  {/* COLUMN 2: PRIVACY & SOVEREIGN CLOAKING */}
-                  {(toolsCategoryFilter === 'all' || toolsCategoryFilter === 'privacy') && (
-                  <div className="tools-category-column">
-                    <div className="tools-category-header text-corona">
-                      <ShieldCheck size={11} className="text-corona" />
-                      <span>Privacy & Sovereign Defense</span>
-                    </div>
-
-                    {matchesToolsSearch('Vault PIN & Security', activeAccount.pinHash ? 'PIN active · Lock or reconfigure' : 'Set 4-digit PIN lock Alt+L') && (
-                    <button
-                      type="button"
-                      className="tools-menu-item"
-                      onClick={() => { setShowVaultSecurity(true); setToolsMenuOpen(false); }}
-                    >
-                      <Lock size={13} className="text-amber-400" />
-                      <div>
-                        <span className="item-title">
-                          <span>Vault PIN & Security</span>
-                          <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-800/80 shrink-0 ml-auto">Alt+L</span>
-                        </span>
-                        <span className="item-sub">
-                          {activeAccount.pinHash ? 'PIN active · Lock or reconfigure' : 'Set 4-digit PIN lock'}
-                        </span>
-                      </div>
-                    </button>
-                    )}
-
-                    {matchesToolsSearch('Excel Camouflage', 'Panic logistics spreadsheet disguise Alt+X') && (
-                    <button
-                      type="button"
-                      className="tools-menu-item"
-                      onClick={() => { setShowCamouflage(true); setToolsMenuOpen(false); }}
-                    >
-                      <FileSpreadsheet size={13} className="text-emerald-400" />
-                      <div>
-                        <span className="item-title">
-                          <span>Excel Camouflage</span>
-                          <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-800/80 shrink-0 ml-auto">Alt+X</span>
-                        </span>
-                        <span className="item-sub">Panic logistics spreadsheet disguise</span>
-                      </div>
-                    </button>
-                    )}
-
-                    {matchesToolsSearch('Steganographic PNG', 'Hide encrypted vault inside wallpaper') && (
-                    <button
-                      type="button"
-                      className="tools-menu-item"
-                      onClick={() => { setShowSteganography(true); setToolsMenuOpen(false); }}
-                    >
-                      <ImageIcon size={13} className="text-purple-400" />
-                      <div>
-                        <span className="item-title">Steganographic PNG</span>
-                        <span className="item-sub">Hide encrypted vault inside wallpaper</span>
-                      </div>
-                    </button>
-                    )}
-
-                    {matchesToolsSearch('Cross-Device QR Beam', 'P2P zero-cloud offline sync') && (
-                    <button
-                      type="button"
-                      id="tour-vault-sync"
-                      className="tools-menu-item"
-                      onClick={() => { setShowQRModal(true); setToolsMenuOpen(false); }}
-                    >
-                      <QrCode size={13} className="text-quasar" />
-                      <div>
-                        <span className="item-title">Cross-Device QR Beam</span>
-                        <span className="item-sub">P2P zero-cloud offline sync</span>
-                      </div>
-                    </button>
-                    )}
-
-                    {matchesToolsSearch('Share Health Card', 'Anonymized 16:9 / 1:1 scorecard') && (
-                    <button
-                      type="button"
-                      className="tools-menu-item"
-                      onClick={() => { setShowShareModal(true); setToolsMenuOpen(false); }}
-                    >
-                      <Share2 size={13} className="text-pulsar" />
-                      <div>
-                        <span className="item-title">Share Health Card</span>
-                        <span className="item-sub">Anonymized 16:9 / 1:1 scorecard</span>
-                      </div>
-                    </button>
-                    )}
-                  </div>
-                  )}
-
-                  {/* COLUMN 3: DATA LEDGERS & ARCHIVES */}
-                  {(toolsCategoryFilter === 'all' || toolsCategoryFilter === 'data') && (
-                  <div className="tools-category-column">
-                    <div className="tools-category-header text-solstice">
-                      <Download size={11} className="text-solstice" />
-                      <span>Ledgers & System</span>
-                    </div>
-
-                    {matchesToolsSearch('Import JSON', 'Load vault backup file') && (
-                    <>
-                      <button
-                        type="button"
-                        className="tools-menu-item"
-                        onClick={() => { fileInputRef.current?.click(); setToolsMenuOpen(false); }}
-                      >
-                        <Upload size={13} className="text-muted" />
-                        <div>
-                          <span className="item-title">Import JSON</span>
-                          <span className="item-sub">Load vault backup file</span>
-                        </div>
-                      </button>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="application/json,.json"
-                        onChange={handleFileImport}
-                        hidden
-                      />
-                    </>
-                    )}
-
-                    {matchesToolsSearch('Export JSON', 'Download offline vault state') && (
-                    <button
-                      type="button"
-                      className="tools-menu-item"
-                      onClick={() => { exportJSON(); setToolsMenuOpen(false); }}
-                    >
-                      <Download size={13} className="text-muted" />
-                      <div>
-                        <span className="item-title">Export JSON</span>
-                        <span className="item-sub">Download offline vault state</span>
-                      </div>
-                    </button>
-                    )}
-
-                    {matchesToolsSearch('Export CSV', 'Spreadsheet projections matrix') && (
-                    <button
-                      type="button"
-                      className="tools-menu-item"
-                      onClick={() => { exportCSV(horizonMonths); setToolsMenuOpen(false); }}
-                    >
-                      <FileSpreadsheet size={13} className="text-muted" />
-                      <div>
-                        <span className="item-title">Export CSV</span>
-                        <span className="item-sub">Spreadsheet projections matrix</span>
-                      </div>
-                    </button>
-                    )}
-
-                    {matchesToolsSearch('Print Executive PDF', '1-page formatted report') && (
-                    <button
-                      type="button"
-                      className="tools-menu-item"
-                      onClick={() => { setToolsMenuOpen(false); window.print(); }}
-                    >
-                      <Printer size={13} className="text-muted" />
-                      <div>
-                        <span className="item-title">Print Executive PDF</span>
-                        <span className="item-sub">1-page formatted report</span>
-                      </div>
-                    </button>
-                    )}
-
-                    {matchesToolsSearch('Load Demo Vault', 'Seeded Tech Lead portfolio') && (
-                    <button
-                      type="button"
-                      className="tools-menu-item"
-                      onClick={() => { launchDemoVault(); setToolsMenuOpen(false); }}
-                    >
-                      <Sparkles size={13} className="text-solstice" />
-                      <div>
-                        <span className="item-title">Load Demo Vault</span>
-                        <span className="item-sub">Seeded Tech Lead portfolio</span>
-                      </div>
-                    </button>
-                    )}
-
-                    {matchesToolsSearch('Reset to Defaults', 'Clear plan to zeroed slate') && (
-                    <button
-                      type="button"
-                      className="tools-menu-item item-danger"
-                      onClick={() => { resetToDefaults(); setToolsMenuOpen(false); }}
-                    >
-                      <RotateCcw size={13} />
-                      <div>
-                        <span className="item-title">Reset to Defaults</span>
-                        <span className="item-sub">Clear plan to zeroed slate</span>
-                      </div>
-                    </button>
-                    )}
-                  </div>
-                  )}
-                </div>
-
-                <div className="tools-mega-footer">
-                  <span>⚡ Quick dispatch: Press <strong>⌘K</strong> or <strong>/</strong> anywhere</span>
-                  <span>🔒 Panic Disguise: <strong>Alt + X</strong></span>
-                </div>
-              </div>
-            </>
-          )}
+            {/* Desktop: dropdown attached beneath trigger */}
+            {toolsMenuOpen && !isMobileViewport && renderToolsMenu()}
           </div>
 
           {/* Quick Utility Icon Group */}
@@ -1366,6 +1386,9 @@ export function App() {
           </button>
         </nav>
       )}
+
+      {/* Mobile Tools Action Sheet portaled directly to document.body to bypass navbar-dock's backdrop-filter containing block */}
+      {toolsMenuOpen && isMobileViewport && typeof document !== 'undefined' && createPortal(renderToolsMenu(), document.body)}
     </div>
   );
 }
