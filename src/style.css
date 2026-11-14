@@ -7556,11 +7556,186 @@ body {
 }
 
 /* ==========================================================================
-   Impulse Shield & Daily Burn Pocket
+   Impulse Shield & Daily Discretionary Pocket (Upgraded FinTech Cockpit)
    ========================================================================== */
 .impulse-shield-card {
   position: relative;
   overflow: hidden;
+  background: linear-gradient(180deg, rgba(16, 21, 34, 0.98) 0%, rgba(10, 13, 22, 0.99) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.pocket-hud-cockpit {
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-xl);
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (max-width: 860px) {
+  .pocket-hud-cockpit {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 14px;
+  }
+}
+
+.pocket-radial-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 8px;
+  min-height: 180px;
+}
+
+.pocket-radial-svg {
+  transform: rotate(-90deg);
+  overflow: visible;
+  filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.25));
+}
+
+.pocket-radial-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.pocket-telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 680px) {
+  .pocket-telemetry-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+.pocket-telemetry-card {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pocket-telemetry-card:hover {
+  background: rgba(255, 255, 255, 0.045);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.pocket-envelopes-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 960px) {
+  .pocket-envelopes-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .pocket-envelopes-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pocket-envelope-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-lg);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  transition: all 0.2s ease;
+}
+
+.pocket-envelope-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.pocket-spend-chip {
+  flex: 1;
+  padding: 6px 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--ink-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pocket-spend-chip:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
+  transform: scale(1.04);
+}
+
+.pocket-spend-chip:active {
+  transform: scale(0.96);
+}
+
+.pocket-payday-strip {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  overflow-x: auto;
+  padding: 6px 2px;
+  scrollbar-width: none;
+}
+
+.pocket-payday-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.pocket-day-node {
+  flex: 1;
+  min-width: 7px;
+  height: 18px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.pocket-day-node:hover {
+  transform: scale(1.15);
+  z-index: 5;
 }
 
 .tag-flare {
