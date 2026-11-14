@@ -1,4 +1,4 @@
-const CACHE_NAME = 'psfi-v5.15-astrolabe-tools-overhaul';
+const CACHE_NAME = 'psfi-v5.16-mobile-tab-switch-and-hud-theme';
 
 self.addEventListener('install', () => {
   self.skipWaiting();

@@ -120,6 +120,31 @@ export function App() {
   const [pendingBeamPin, setPendingBeamPin] = useState<string>('');
   const [pendingBeamError, setPendingBeamError] = useState<string | null>(null);
 
+  const closeAllMobileOverlays = () => {
+    setShowSkillTree(false);
+    setToolsMenuOpen(false);
+    setShowSandbox(false);
+    setShowStatementParser(false);
+    setShowMonteCarlo(false);
+    setShowSteganography(false);
+    setShowShareModal(false);
+    setShowQRModal(false);
+    setShowVaultSecurity(false);
+    setShowCmdK(false);
+  };
+
+  const isAnyModalActive = Boolean(
+    showSkillTree ||
+    toolsMenuOpen ||
+    showSandbox ||
+    showStatementParser ||
+    showMonteCarlo ||
+    showSteganography ||
+    showShareModal ||
+    showQRModal ||
+    showVaultSecurity
+  );
+
   const [layoutMode, setLayoutMode] = useState<'mobile' | 'desktop'>(() => {
     const saved = localStorage.getItem('psfi_layout_mode');
     if (saved === 'mobile' || saved === 'desktop') return saved;
@@ -1266,11 +1291,12 @@ export function App() {
       <nav className="mobile-bottom-dock" aria-label="Mobile Navigation Dock">
         <button
           type="button"
-          className={`mobile-dock-btn ${activeView === 'control' && !toolsMenuOpen ? 'active' : ''}`}
+          className={`mobile-dock-btn ${activeView === 'control' && !isAnyModalActive ? 'active' : ''}`}
           onClick={() => {
+            closeAllMobileOverlays();
             setActiveView('control');
-            setToolsMenuOpen(false);
           }}
+          title="Tactile Control Center"
         >
           <Sliders size={17} />
           <span>Control</span>
@@ -1278,11 +1304,12 @@ export function App() {
 
         <button
           type="button"
-          className={`mobile-dock-btn ${activeView === 'terminal' && !toolsMenuOpen ? 'active' : ''}`}
+          className={`mobile-dock-btn ${activeView === 'terminal' && !isAnyModalActive ? 'active' : ''}`}
           onClick={() => {
+            closeAllMobileOverlays();
             setActiveView('terminal');
-            setToolsMenuOpen(false);
           }}
+          title="Wealth Terminal"
         >
           <TrendingUp size={17} />
           <span>Terminal</span>
@@ -1290,8 +1317,11 @@ export function App() {
 
         <button
           type="button"
-          className="mobile-dock-btn mobile-dock-omnibar-btn"
-          onClick={() => setShowCmdK(true)}
+          className={`mobile-dock-btn mobile-dock-omnibar-btn ${showCmdK ? 'active' : ''}`}
+          onClick={() => {
+            closeAllMobileOverlays();
+            setShowCmdK(true);
+          }}
           title="Search & Omnibar (⌘K)"
         >
           <div className="mobile-dock-omnibar-icon">
@@ -1302,10 +1332,14 @@ export function App() {
 
         <button
           type="button"
-          className="mobile-dock-btn"
+          className={`mobile-dock-btn ${showSkillTree ? 'active' : ''}`}
           onClick={() => {
-            setShowSkillTree(true);
-            setToolsMenuOpen(false);
+            if (showSkillTree) {
+              setShowSkillTree(false);
+            } else {
+              closeAllMobileOverlays();
+              setShowSkillTree(true);
+            }
           }}
           title="Sovereign RPG Constellation"
         >
@@ -1316,7 +1350,14 @@ export function App() {
         <button
           type="button"
           className={`mobile-dock-btn ${toolsMenuOpen ? 'active' : ''}`}
-          onClick={() => setToolsMenuOpen(!toolsMenuOpen)}
+          onClick={() => {
+            if (toolsMenuOpen) {
+              setToolsMenuOpen(false);
+            } else {
+              closeAllMobileOverlays();
+              setToolsMenuOpen(true);
+            }
+          }}
           title="Tools & Scenarios"
         >
           <Sparkles size={17} className="text-solstice" />

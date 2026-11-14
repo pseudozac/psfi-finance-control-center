@@ -25,7 +25,6 @@ import {
   RotateCcw,
   Check,
   Copy,
-  Filter,
   Maximize2,
   Minimize2,
   ChevronRight,
@@ -145,7 +144,8 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
   const [isDossierCollapsed, setIsDossierCollapsed] = useState<boolean>(false);
   
   // Dynamic Astrolabe ViewBox State (frames constellation mathematically across any screen)
-  const DEFAULT_VIEWBOX = useMemo(() => ({ x: 80, y: 30, w: 1280, h: 780 }), []);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+  const DEFAULT_VIEWBOX = useMemo(() => isMobile ? { x: 200, y: 150, w: 760, h: 640 } : { x: 80, y: 30, w: 1280, h: 780 }, [isMobile]);
   const CITADEL_VIEWBOX = useMemo(() => ({ x: 120, y: 160, w: 560, h: 640 }), []);
   const VELOCITY_VIEWBOX = useMemo(() => ({ x: 440, y: 90, w: 540, h: 710 }), []);
   const AUTONOMY_VIEWBOX = useMemo(() => ({ x: 740, y: 60, w: 600, h: 620 }), []);
@@ -169,7 +169,7 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
       setViewBox(AUTONOMY_VIEWBOX);
       playChime(659);
     } else {
-      setViewBox(DEFAULT_VIEWBOX);
+      setViewBox(isMobile ? DEFAULT_VIEWBOX : { x: 80, y: 30, w: 1280, h: 780 });
       playChime(520);
     }
   };
@@ -469,47 +469,6 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
               <span>Character Perks</span>
             </button>
           </div>
-
-          {/* Constellation Branch Filters */}
-          {viewMode === 'visual_tree' && (
-            <div className="skill-tree-filters-strip">
-              <span className="skill-filter-label" style={{ fontSize: '11px', color: 'var(--ink-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginRight: '4px' }}>
-                <Filter size={11} /> Filter:
-              </span>
-              <button
-                type="button"
-                className={`action-pill text-xs ${selectedTier === 'all' ? 'pill-active' : ''}`}
-                style={{ padding: '2px 10px', fontSize: '11px' }}
-                onClick={() => handleFilterTier('all')}
-              >
-                All Constellations (15)
-              </button>
-              <button
-                type="button"
-                className={`action-pill text-xs ${selectedTier === 'tier1_survival' ? 'pill-active' : ''}`}
-                style={{ padding: '2px 10px', fontSize: '11px' }}
-                onClick={() => handleFilterTier('tier1_survival')}
-              >
-                🛡️ Citadel ({treeState.tier1MasteredCount}/5)
-              </button>
-              <button
-                type="button"
-                className={`action-pill text-xs ${selectedTier === 'tier2_velocity' ? 'pill-active' : ''}`}
-                style={{ padding: '2px 10px', fontSize: '11px' }}
-                onClick={() => handleFilterTier('tier2_velocity')}
-              >
-                ⚡ Velocity ({treeState.tier2MasteredCount}/5)
-              </button>
-              <button
-                type="button"
-                className={`action-pill text-xs ${selectedTier === 'tier3_autonomy' ? 'pill-active' : ''}`}
-                style={{ padding: '2px 10px', fontSize: '11px' }}
-                onClick={() => handleFilterTier('tier3_autonomy')}
-              >
-                👑 Autonomy ({treeState.tier3MasteredCount}/5)
-              </button>
-            </div>
-          )}
 
           {/* Quick Simulation Levers */}
           {simulatedPlan && (
