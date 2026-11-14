@@ -191,7 +191,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 8px 14px 8px 18px;
+  padding: 8px 18px;
   background: var(--surface-dock);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -2476,82 +2476,81 @@ body {
   display: none;
 }
 
-@media (max-width: 1200px) {
+/* Wide & Standard Desktop & Laptops (<= 1440px)
+   Prevent header overflow and clipping of tools/utility buttons.
+   Switch workspace labels to compact ("Control", "Terminal")
+   Streamline redundant single-tool shortcuts (.pill-ingest, .pill-tour) into ✨ Tools & ⌘K */
+@media (max-width: 1440px) {
   .view-label-full {
     display: none !important;
   }
   .view-label-compact {
     display: inline !important;
   }
+  .pill-tour,
+  .pill-ingest {
+    display: none !important;
+  }
   .navbar-dock {
-    padding: 7px 12px;
-    gap: 8px;
+    padding: 7px 16px !important;
+    gap: 10px !important;
   }
   .dock-actions-cluster {
-    gap: 5px;
-  }
-  .period-switcher button {
-    padding: 4px 8px;
-    font-size: 10.5px;
+    gap: 6px !important;
   }
   .action-pill {
-    padding: 4px 8px;
-    font-size: 11px;
+    padding: 4px 9px !important;
+    font-size: 11px !important;
+  }
+  .period-switcher button {
+    padding: 4px 8px !important;
+    font-size: 10.5px !important;
   }
   .vault-pill-name {
-    max-width: 90px;
+    max-width: 110px !important;
   }
 }
 
-@media (max-width: 1100px) and (min-width: 769px) {
-  .view-label-full {
+/* Medium Desktop & Compact Laptops (<= 1240px and >= 769px)
+   Streamline .pill-skills into ✨ Tools, ensuring ✨ Tools and Utility Icons (Eye/Sun)
+   have generous breathing room and are 100% visible with zero clipping */
+@media (max-width: 1240px) and (min-width: 769px) {
+  .pill-skills {
     display: none !important;
-  }
-  .view-label-compact {
-    display: inline !important;
-  }
-  .navbar-dock {
-    padding: 6px 12px;
-    gap: 8px;
-    flex-wrap: nowrap;
-    overflow: visible !important;
-  }
-  .brand-cluster {
-    gap: 8px;
-    min-width: 0;
-    flex-shrink: 1;
-  }
-  .wordmark {
-    font-size: 18px;
   }
   .vault-pill-name {
-    max-width: 80px;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
+    max-width: 90px !important;
+  }
+  .navbar-dock {
+    padding: 6px 14px !important;
+    gap: 8px !important;
   }
   .dock-actions-cluster {
-    gap: 5px;
-    flex-wrap: nowrap;
-    flex-shrink: 0;
+    gap: 5px !important;
+    flex-shrink: 0 !important;
   }
-  /* Hide low-priority top buttons on tablet to avoid any text collision */
-  .pill-cmdk,
-  .pill-ingest,
-  .pill-tour {
+  .brand-cluster {
+    gap: 8px !important;
+    min-width: 0 !important;
+    flex-shrink: 1 !important;
+  }
+}
+
+/* Compact Tablets & Split Windows (<= 1024px and >= 769px)
+   Hide .pill-cmdk as well (accessible via '/' or Cmd+K / Ctrl+K) */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .pill-cmdk {
     display: none !important;
   }
-  .period-switcher button {
-    padding: 3px 8px;
-    font-size: 10.5px;
+  .vault-pill-name {
+    max-width: 75px !important;
   }
-  .action-pill {
-    padding: 4px 8px;
-    font-size: 11px;
+  .dock-actions-cluster {
+    gap: 4px !important;
   }
   .dock-utility-icons {
-    padding-left: 6px;
-    gap: 3px;
+    padding-left: 6px !important;
+    gap: 3px !important;
   }
   .two-col-grid {
     grid-template-columns: 1fr;
