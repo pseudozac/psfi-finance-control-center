@@ -1,4 +1,4 @@
-const CACHE_NAME = 'psfi-v5.19-purge-grey-and-rpg-autofit';
+const CACHE_NAME = 'psfi-v5.20-mobile-tools-drawer-zindex';
 
 self.addEventListener('install', () => {
   self.skipWaiting();

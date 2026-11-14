@@ -578,10 +578,10 @@ export function App() {
           </button>
 
           {/* Unified Tools Dropdown Menu */}
-          <div className="tools-dropdown-wrapper pill-tools" ref={toolsDropdownRef}>
+          <div className="tools-dropdown-wrapper" ref={toolsDropdownRef}>
             <button
               type="button"
-              className={`action-pill ${toolsMenuOpen ? 'pill-active-mode' : ''}`}
+              className={`action-pill pill-tools ${toolsMenuOpen ? 'pill-active-mode' : ''}`}
               onClick={() => setToolsMenuOpen(!toolsMenuOpen)}
               title="Tools, Scenarios & Data Operations"
             >
