@@ -878,7 +878,7 @@ body {
 .hero-minimal-cool {
   position: relative;
   text-align: left;
-  margin-bottom: 28px;
+  margin-bottom: 22px;
   padding: 4px 4px 0 4px;
 }
 
@@ -957,7 +957,7 @@ body {
   font-weight: 800;
   letter-spacing: -0.04em;
   line-height: 1.15;
-  margin: 0 0 8px;
+  margin: 0 0 14px;
   color: var(--ink-primary);
   position: relative;
   z-index: 1;

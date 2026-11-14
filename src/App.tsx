@@ -1028,55 +1028,14 @@ export function App() {
 
         <div className="hero-cyber-badge">
           <span className="cyber-pulse-dot" />
-          <span className="cyber-badge-tag">PSFI // ENGINE</span>
+          <span className="cyber-badge-tag">TY 2026–27</span>
           <span className="cyber-badge-sep">·</span>
-          <span className="cyber-badge-sub">TY 2026–27 // INCOME-TAX ACT, 2025</span>
           <span className="cyber-badge-secure">🛡️ OFFLINE / PRIVATE</span>
         </div>
 
         <h1 className="hero-headline">
           Tactile personal finance control for India<span className="hero-dot">.</span>
         </h1>
-
-        <p className="hero-lede">
-          Model your{' '}
-          <button
-            type="button"
-            className="hero-inline-link link-cashflow"
-            onClick={() => document.getElementById('tour-cashflows')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-            title="Jump to Monthly Cashflow Cockpit"
-          >
-            monthly cashflow
-          </button>
-          , compound with{' '}
-          <button
-            type="button"
-            className="hero-inline-link link-sip"
-            onClick={() => document.getElementById('tour-stepup')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-            title="Jump to Step-Up SIP Compounding"
-          >
-            step-up SIPs
-          </button>
-          , audit your{' '}
-          <button
-            type="button"
-            className="hero-inline-link link-balance"
-            onClick={() => document.getElementById('tour-budget-health')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-            title="Jump to 50/30/20 Budget Health"
-          >
-            50/30/20 budget balance
-          </button>
-          , and compare{' '}
-          <button
-            type="button"
-            className="hero-inline-link link-tax"
-            onClick={() => document.getElementById('tour-tax')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-            title="Jump to Indian Tax Engine (Income-tax Act, 2025 & Prior Act 1961)"
-          >
-            TY 2026–27 tax regimes (Income-tax Act, 2025)
-          </button>
-          . Completely private, client-side, and offline.
-        </p>
 
         {/* Minimalist Tactile Quick-Jump Dock */}
         <div className="hero-quick-dock" role="navigation" aria-label="Quick section navigation">
