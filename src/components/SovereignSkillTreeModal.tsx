@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   X,
   Sparkles,
@@ -29,6 +29,7 @@ import {
   Minimize2,
   ChevronRight,
   ChevronDown,
+  ChevronUp,
   ZoomIn,
   ZoomOut,
   RefreshCw,
@@ -143,18 +144,44 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
   const [isTheaterMode, setIsTheaterMode] = useState<boolean>(false);
   const [isDossierCollapsed, setIsDossierCollapsed] = useState<boolean>(false);
   
-  // Dynamic Astrolabe ViewBox State (frames constellation mathematically across any screen)
-  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-  const DEFAULT_VIEWBOX = useMemo(() => isMobile ? { x: 200, y: 150, w: 760, h: 640 } : { x: 80, y: 30, w: 1280, h: 780 }, [isMobile]);
-  const CITADEL_VIEWBOX = useMemo(() => ({ x: 120, y: 160, w: 560, h: 640 }), []);
-  const VELOCITY_VIEWBOX = useMemo(() => ({ x: 440, y: 90, w: 540, h: 710 }), []);
-  const AUTONOMY_VIEWBOX = useMemo(() => ({ x: 740, y: 60, w: 600, h: 620 }), []);
+  // Dynamic Responsive Window State & Astrolabe ViewBox (frames constellation mathematically across any screen)
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const isMobile = windowWidth <= 768;
+
+  // ViewBox bounds calculated from exact node coordinates (X: 220-1220, Y: 110-740)
+  // Optimal full view: Center X = 720, Center Y = 430
+  const DEFAULT_VIEWBOX = useMemo(() => {
+    if (isMobile) {
+      return { x: 180, y: 120, w: 900, h: 680 };
+    }
+    return { x: 130, y: 40, w: 1180, h: 760 };
+  }, [isMobile]);
+
+  const CITADEL_VIEWBOX = useMemo(() => ({ x: 150, y: 240, w: 590, h: 560 }), []);
+  const VELOCITY_VIEWBOX = useMemo(() => ({ x: 310, y: 100, w: 580, h: 700 }), []);
+  const AUTONOMY_VIEWBOX = useMemo(() => ({ x: 650, y: 60, w: 660, h: 730 }), []);
 
   const [viewBox, setViewBox] = useState<{ x: number; y: number; w: number; h: number }>(DEFAULT_VIEWBOX);
   const isDraggingRef = useRef<boolean>(false);
   const dragStartRef = useRef<{ clientX: number; clientY: number; vbX: number; vbY: number }>({ clientX: 0, clientY: 0, vbX: 0, vbY: 0 });
   const dragDistanceRef = useRef<number>(0);
   const svgRef = useRef<SVGSVGElement>(null);
+
+  // Auto-center and reset to fit whenever modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setViewBox(DEFAULT_VIEWBOX);
+      setSelectedTier('all');
+      setIsDossierCollapsed(isMobile);
+    }
+  }, [isOpen, DEFAULT_VIEWBOX, isMobile]);
 
   // Focus view on wing
   const handleFilterTier = (tier: SkillTier | 'all') => {
@@ -169,7 +196,7 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
       setViewBox(AUTONOMY_VIEWBOX);
       playChime(659);
     } else {
-      setViewBox(isMobile ? DEFAULT_VIEWBOX : { x: 80, y: 30, w: 1280, h: 780 });
+      setViewBox(DEFAULT_VIEWBOX);
       playChime(520);
     }
   };
@@ -400,12 +427,9 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
 
               <div className="skill-tree-stats-row font-mono">
                 <span className="stat-pill">Mastered: <strong className="text-nebula">{treeState.unlockedCount}</strong>/15 ({treeState.overallMasteryPercent}%)</span>
-                <span className="stat-divider">·</span>
-                <span className="stat-pill">Moat: <strong>{treeState.tier1MasteredCount}/5</strong></span>
-                <span className="stat-divider">·</span>
-                <span className="stat-pill">Velocity: <strong>{treeState.tier2MasteredCount}/5</strong></span>
-                <span className="stat-divider">·</span>
-                <span className="stat-pill">Autonomy: <strong>{treeState.tier3MasteredCount}/5</strong></span>
+                <span className="stat-pill">🛡️ Moat: <strong>{treeState.tier1MasteredCount}/5</strong></span>
+                <span className="stat-pill">⚡ Velocity: <strong>{treeState.tier2MasteredCount}/5</strong></span>
+                <span className="stat-pill">👑 Autonomy: <strong>{treeState.tier3MasteredCount}/5</strong></span>
               </div>
             </div>
           </div>
@@ -509,11 +533,25 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                   className="dossier-expand-btn"
                   title="Expand Dossier Inspector"
                 >
-                  <ChevronRight size={16} className="dossier-chevron-icon" />
-                  <span className="dossier-vertical-label">✦ INSPECT DOSSIER: {activeNode.title}</span>
+                  {isMobile ? <ChevronUp size={15} className="dossier-chevron-icon" /> : <ChevronRight size={16} className="dossier-chevron-icon" />}
+                  <span className={isMobile ? "dossier-horizontal-label" : "dossier-vertical-label"}>✦ DOSSIER: {activeNode.title}</span>
+                  {isMobile && <span className="dossier-mobile-open-pill">TAP TO VIEW</span>}
                 </button>
               ) : (
                 <div className="dossier-content-scroll">
+                  {isMobile && (
+                    <div className="dossier-mobile-sheet-bar" onClick={() => setIsDossierCollapsed(true)}>
+                      <div className="dossier-mobile-pull-handle" />
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setIsDossierCollapsed(true); }}
+                        className="dossier-sheet-close-btn"
+                        title="Dismiss Dossier Sheet"
+                      >
+                        <ChevronDown size={14} /> Close Dossier
+                      </button>
+                    </div>
+                  )}
                   {/* Card Header */}
                   <div className="skill-tree-hud-head">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>

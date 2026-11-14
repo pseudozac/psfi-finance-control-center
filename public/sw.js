@@ -1,4 +1,4 @@
-const CACHE_NAME = 'psfi-v5.17-tour-dock-and-top-deck-alignment';
+const CACHE_NAME = 'psfi-v5.19-purge-grey-and-rpg-autofit';
 
 self.addEventListener('install', () => {
   self.skipWaiting();

@@ -93,6 +93,40 @@
   box-sizing: border-box;
 }
 
+button {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+/* Universal Cyber-Glass Sleek Scrollbars (Purges all thick grey native scrollbars) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(6, 10, 20, 0.6);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(191, 159, 241, 0.28);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(191, 159, 241, 0.55);
+  box-shadow: 0 0 10px rgba(191, 159, 241, 0.5);
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(191, 159, 241, 0.28) rgba(6, 10, 20, 0.6);
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -6137,10 +6171,10 @@ body {
   align-items: center;
   gap: 5px;
   padding: 4px 11px;
-  background: transparent;
-  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 999px;
-  color: var(--ink-secondary, #94a3b8);
+  color: #cbd5e1;
   font-family: var(--font-sans);
   font-size: 11px;
   font-weight: 600;
@@ -6151,42 +6185,44 @@ body {
 }
 
 .hud-pill:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(191, 159, 241, 0.4);
+  color: #ffffff;
+  transform: translateY(-1px);
 }
 
 .hud-pill.active {
-  background: rgba(124, 79, 217, 0.28);
-  border-color: rgba(191, 159, 241, 0.6);
-  color: #ffffff;
-  box-shadow: 0 0 14px rgba(124, 79, 217, 0.4);
+  background: rgba(124, 79, 217, 0.35) !important;
+  border-color: rgba(191, 159, 241, 0.75) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 16px rgba(124, 79, 217, 0.5) !important;
 }
 
 .hud-pill-citadel.active {
-  background: rgba(16, 185, 129, 0.22);
-  border-color: rgba(16, 185, 129, 0.65);
-  color: #6ee7b7;
-  box-shadow: 0 0 14px rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.28) !important;
+  border-color: rgba(16, 185, 129, 0.75) !important;
+  color: #6ee7b7 !important;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.45) !important;
 }
 
 .hud-pill-velocity.active {
-  background: rgba(6, 182, 212, 0.22);
-  border-color: rgba(6, 182, 212, 0.65);
-  color: #67e8f9;
-  box-shadow: 0 0 14px rgba(6, 182, 212, 0.35);
+  background: rgba(6, 182, 212, 0.28) !important;
+  border-color: rgba(6, 182, 212, 0.75) !important;
+  color: #67e8f9 !important;
+  box-shadow: 0 0 16px rgba(6, 182, 212, 0.45) !important;
 }
 
 .hud-pill-autonomy.active {
-  background: rgba(245, 158, 11, 0.22);
-  border-color: rgba(245, 158, 11, 0.65);
-  color: #fcd34d;
-  box-shadow: 0 0 14px rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.28) !important;
+  border-color: rgba(245, 158, 11, 0.75) !important;
+  color: #fcd34d !important;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.45) !important;
 }
 
 .hud-zoom-cluster {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   border-left: 1px solid rgba(255, 255, 255, 0.12);
   padding-left: 6px;
   margin-left: 2px;
@@ -6200,9 +6236,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  border: 1px solid transparent;
-  color: var(--ink-secondary, #94a3b8);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
   cursor: pointer;
   padding: 0;
   transition: all 0.15s ease;
@@ -6210,9 +6246,10 @@ body {
 }
 
 .hud-icon-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: #f8fafc;
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(191, 159, 241, 0.25);
+  border-color: rgba(191, 159, 241, 0.5);
+  color: #ffffff;
+  transform: translateY(-1px);
 }
 
 .hud-icon-btn:active {
@@ -6372,22 +6409,34 @@ body {
   background: rgba(6, 40, 23, 0.45) !important;
 }
 
-@media (max-width: 920px) {
+@media (max-width: 1024px) and (min-width: 769px) {
+  .skill-tree-modal {
+    width: 98vw !important;
+    padding: 14px 16px !important;
+  }
+
   .skill-tree-split-viewport {
-    flex-direction: column;
-    height: auto;
-    max-height: calc(90vh - 120px);
+    display: flex !important;
+    flex-direction: row !important;
+    height: 560px !important;
+    max-height: calc(88vh - 120px) !important;
+    overflow: hidden !important;
   }
 
   .skill-tree-dossier-dock {
-    width: 100%;
-    max-height: 240px;
-    border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    width: 280px !important;
+    height: 100% !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-bottom: none !important;
+  }
+
+  .skill-tree-dossier-dock.dossier-collapsed {
+    width: 44px !important;
   }
 
   .skill-tree-canvas-panel {
-    min-height: 380px;
+    height: 100% !important;
+    flex: 1 !important;
   }
 }
 
@@ -6433,7 +6482,7 @@ body {
   }
 
   .skill-tree-stats-row {
-    gap: 4px 8px !important;
+    gap: 4px 6px !important;
     font-size: 10px !important;
     overflow: visible !important;
     white-space: normal !important;
@@ -6444,6 +6493,11 @@ body {
 
   .skill-tree-stats-row .stat-pill {
     flex-shrink: 0 !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 999px !important;
+    padding: 2px 7px !important;
+    white-space: nowrap !important;
   }
 
   .skill-tree-nav-bar {
@@ -6487,6 +6541,8 @@ body {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    padding-bottom: 44px !important;
+    box-sizing: border-box !important;
     touch-action: none !important;
     cursor: grab;
   }
@@ -6598,20 +6654,65 @@ body {
     align-items: center !important;
   }
 
-  .skill-tree-dossier-dock.dossier-collapsed .dossier-vertical-label {
-    writing-mode: horizontal-tb !important;
-    letter-spacing: 0.05em !important;
+  .dossier-horizontal-label {
+    font-family: var(--font-mono) !important;
     font-size: 11px !important;
-    color: var(--colour-quasar) !important;
-    text-overflow: ellipsis !important;
-    overflow: hidden !important;
+    font-weight: 700 !important;
+    color: #e2e8f0 !important;
     white-space: nowrap !important;
-    max-width: calc(100vw - 80px) !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: calc(100vw - 160px) !important;
+  }
+
+  .dossier-mobile-open-pill {
+    font-family: var(--font-mono) !important;
+    font-size: 9.5px !important;
+    font-weight: 700 !important;
+    padding: 3px 8px !important;
+    border-radius: 999px !important;
+    background: rgba(191, 159, 241, 0.2) !important;
+    border: 1px solid rgba(191, 159, 241, 0.45) !important;
+    color: var(--colour-quasar) !important;
+    letter-spacing: 0.05em !important;
+    flex-shrink: 0 !important;
+  }
+
+  .dossier-mobile-sheet-bar {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding-bottom: 8px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    margin-bottom: 10px !important;
+    cursor: pointer !important;
+  }
+
+  .dossier-mobile-pull-handle {
+    width: 36px !important;
+    height: 4px !important;
+    background: rgba(255, 255, 255, 0.25) !important;
+    border-radius: 999px !important;
+  }
+
+  .dossier-sheet-close-btn {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    font-family: var(--font-mono) !important;
+    font-size: 10.5px !important;
+    color: var(--ink-secondary) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 999px !important;
+    padding: 3px 10px !important;
+    cursor: pointer !important;
   }
 
   .skill-tree-dossier-dock.dossier-collapsed .dossier-chevron-icon {
-    transform: rotate(-90deg) !important;
     flex-shrink: 0 !important;
+    color: var(--colour-quasar) !important;
   }
 
   .dossier-collapse-icon {
