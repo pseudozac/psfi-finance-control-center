@@ -2476,6 +2476,13 @@ body {
   display: none;
 }
 
+.dock-view-switcher button {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  white-space: nowrap !important;
+}
+
 /* Wide & Standard Desktop & Laptops (<= 1440px)
    Prevent header overflow and clipping of tools/utility buttons.
    Switch workspace labels to compact ("Control", "Terminal")
@@ -2501,28 +2508,30 @@ body {
   .action-pill {
     padding: 4px 9px !important;
     font-size: 11px !important;
+    white-space: nowrap !important;
   }
   .period-switcher button {
     padding: 4px 8px !important;
     font-size: 10.5px !important;
+    white-space: nowrap !important;
   }
   .vault-pill-name {
     max-width: 110px !important;
   }
 }
 
-/* Medium Desktop & Compact Laptops (<= 1240px and >= 769px)
+/* Medium Desktop & Standard Laptops (<= 1320px and >= 769px)
    Streamline .pill-skills into ✨ Tools, ensuring ✨ Tools and Utility Icons (Eye/Sun)
-   have generous breathing room and are 100% visible with zero clipping */
-@media (max-width: 1240px) and (min-width: 769px) {
+   have generous breathing room and are 100% visible on 1280x800 and 1366x768 */
+@media (max-width: 1320px) and (min-width: 769px) {
   .pill-skills {
     display: none !important;
   }
   .vault-pill-name {
-    max-width: 90px !important;
+    max-width: 85px !important;
   }
   .navbar-dock {
-    padding: 6px 14px !important;
+    padding: 6px 16px !important;
     gap: 8px !important;
   }
   .dock-actions-cluster {
@@ -2543,7 +2552,7 @@ body {
     display: none !important;
   }
   .vault-pill-name {
-    max-width: 75px !important;
+    max-width: 70px !important;
   }
   .dock-actions-cluster {
     gap: 4px !important;
@@ -5129,6 +5138,7 @@ body {
 
 .view-label {
   font-size: 11px;
+  white-space: nowrap !important;
 }
 
 @media (max-width: 1180px) {
