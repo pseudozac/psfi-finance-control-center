@@ -1116,7 +1116,7 @@ body {
 
 @media (max-width: 768px) {
   .tactile-commit-slider-wrapper {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 76px);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 88px) !important;
   }
 }
 
@@ -1138,6 +1138,13 @@ body {
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
   box-sizing: border-box;
   overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.tactile-commit-track.track-dragging {
+  cursor: grabbing;
 }
 
 .commit-track-fill {
@@ -2706,12 +2713,6 @@ body {
     letter-spacing: -0.01em !important;
   }
 
-  .pill-tour {
-    padding: 3px 7px !important;
-    font-size: 10px !important;
-    flex-shrink: 0 !important;
-  }
-
   .dock-utility-icons {
     display: flex !important;
     align-items: center !important;
@@ -2831,25 +2832,10 @@ body {
 
 @media (max-width: 480px) {
   .vault-pill-name {
-    max-width: 46px !important;
-  }
-  .pill-tour {
-    padding: 3px 5px !important;
+    max-width: 60px !important;
   }
   .dock-actions-cluster {
     gap: 3px !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .vault-pill-name {
-    max-width: 60px !important;
-  }
-  .pill-tour span {
-    display: none !important;
-  }
-  .pill-tour {
-    padding: 3px 6px !important;
   }
 }
 

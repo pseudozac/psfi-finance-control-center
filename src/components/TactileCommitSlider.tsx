@@ -71,6 +71,7 @@ export function TactileCommitSlider({
   const [hasCrossedThreshold, setHasCrossedThreshold] = useState<boolean>(false);
 
   const startXRef = useRef<number>(0);
+  const dragXRef = useRef<number>(0);
   const trackRef = useRef<HTMLDivElement>(null);
 
   // Maximum drag distance in px
@@ -90,37 +91,12 @@ export function TactileCommitSlider({
       const timer = setTimeout(() => {
         setStatus('idle');
         setDragX(0);
+        dragXRef.current = 0;
         setHasCrossedThreshold(false);
       }, 900);
       return () => clearTimeout(timer);
     }
   }, [status]);
-
-  // Keyboard Navigation: ArrowLeft to Revert, ArrowRight/Enter to Commit, Esc to Dismiss
-  useEffect(() => {
-    if (!isDirty || isDismissed || status !== 'idle') return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept when user is typing in form inputs
-      const target = e.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
-        return;
-      }
-
-      if (e.key === 'ArrowRight' || (e.ctrlKey && e.key === 's') || (e.metaKey && e.key === 's')) {
-        e.preventDefault();
-        triggerCommit();
-      } else if (e.key === 'ArrowLeft' && (e.altKey || e.ctrlKey)) {
-        e.preventDefault();
-        triggerRevert();
-      } else if (e.key === 'Escape') {
-        setIsDismissed(true);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isDirty, isDismissed, status]);
 
   const triggerCommit = useCallback(() => {
     if (status !== 'idle') return;
@@ -146,63 +122,104 @@ export function TactileCommitSlider({
     onDiscard();
   }, [status, onDiscard]);
 
+  // Global window pointer listeners while dragging to guarantee cursor never gets stuck on desktop or mobile
+  useEffect(() => {
+    if (!isDragging || status !== 'idle') return;
+
+    const handleWindowPointerMove = (e: PointerEvent) => {
+      const rawDelta = e.clientX - startXRef.current;
+
+      // Fluid Logarithmic Elastic Dampening beyond TRIGGER_THRESHOLD
+      let clamped: number;
+      if (Math.abs(rawDelta) > TRIGGER_THRESHOLD) {
+        const excess = Math.abs(rawDelta) - TRIGGER_THRESHOLD;
+        const dampedExcess = excess * 0.45; // Smooth spring resistance
+        const dampedTotal = Math.min(MAX_DRAG, TRIGGER_THRESHOLD + dampedExcess);
+        clamped = rawDelta > 0 ? dampedTotal : -dampedTotal;
+      } else {
+        clamped = Math.max(-MAX_DRAG, Math.min(MAX_DRAG, rawDelta));
+      }
+
+      dragXRef.current = clamped;
+      setDragX(clamped);
+
+      // Trigger subtle haptic and tick sound on threshold crossing
+      const isNowPastThreshold = Math.abs(clamped) >= TRIGGER_THRESHOLD;
+      setHasCrossedThreshold((prev) => {
+        if (isNowPastThreshold && !prev) {
+          playAudioFeedback('tick');
+          try {
+            navigator.vibrate?.([8]);
+          } catch {
+            // ignore
+          }
+          return true;
+        }
+        if (!isNowPastThreshold && prev) {
+          return false;
+        }
+        return prev;
+      });
+    };
+
+    const handleWindowPointerUp = () => {
+      setIsDragging(false);
+      const finalX = dragXRef.current;
+
+      if (finalX >= TRIGGER_THRESHOLD) {
+        triggerCommit();
+      } else if (finalX <= -TRIGGER_THRESHOLD) {
+        triggerRevert();
+      } else {
+        // Fluid snap back to center
+        setDragX(0);
+        dragXRef.current = 0;
+        setHasCrossedThreshold(false);
+      }
+    };
+
+    window.addEventListener('pointermove', handleWindowPointerMove);
+    window.addEventListener('pointerup', handleWindowPointerUp);
+    window.addEventListener('pointercancel', handleWindowPointerUp);
+
+    return () => {
+      window.removeEventListener('pointermove', handleWindowPointerMove);
+      window.removeEventListener('pointerup', handleWindowPointerUp);
+      window.removeEventListener('pointercancel', handleWindowPointerUp);
+    };
+  }, [isDragging, status, triggerCommit, triggerRevert]);
+
+  // Keyboard Navigation: ArrowLeft to Revert, ArrowRight/Enter to Commit, Esc to Dismiss
+  useEffect(() => {
+    if (!isDirty || isDismissed || status !== 'idle') return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept when user is typing in form inputs
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+
+      if (e.key === 'ArrowRight' || (e.ctrlKey && e.key === 's') || (e.metaKey && e.key === 's')) {
+        e.preventDefault();
+        triggerCommit();
+      } else if (e.key === 'ArrowLeft' && (e.altKey || e.ctrlKey)) {
+        e.preventDefault();
+        triggerRevert();
+      } else if (e.key === 'Escape') {
+        setIsDismissed(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isDirty, isDismissed, status, triggerCommit, triggerRevert]);
+
   const handlePointerDown = (e: React.PointerEvent) => {
     if (status !== 'idle') return;
     setIsDragging(true);
     startXRef.current = e.clientX;
-    setHasCrossedThreshold(false);
-  };
-
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDragging || status !== 'idle') return;
-    const rawDelta = e.clientX - startXRef.current;
-
-    // Fluid Logarithmic Elastic Dampening beyond TRIGGER_THRESHOLD
-    let clamped: number;
-    if (Math.abs(rawDelta) > TRIGGER_THRESHOLD) {
-      const excess = Math.abs(rawDelta) - TRIGGER_THRESHOLD;
-      const dampedExcess = excess * 0.45; // Smooth spring resistance
-      const dampedTotal = Math.min(MAX_DRAG, TRIGGER_THRESHOLD + dampedExcess);
-      clamped = rawDelta > 0 ? dampedTotal : -dampedTotal;
-    } else {
-      clamped = Math.max(-MAX_DRAG, Math.min(MAX_DRAG, rawDelta));
-    }
-
-    // Trigger subtle haptic and tick sound on threshold crossing
-    const isNowPastThreshold = Math.abs(clamped) >= TRIGGER_THRESHOLD;
-    if (isNowPastThreshold && !hasCrossedThreshold) {
-      setHasCrossedThreshold(true);
-      playAudioFeedback('tick');
-      try {
-        navigator.vibrate?.([8]);
-      } catch {
-        // ignore
-      }
-    } else if (!isNowPastThreshold && hasCrossedThreshold) {
-      setHasCrossedThreshold(false);
-    }
-
-    setDragX(clamped);
-  };
-
-  const handlePointerUp = () => {
-    if (!isDragging || status !== 'idle') return;
-    setIsDragging(false);
-
-    if (dragX >= TRIGGER_THRESHOLD) {
-      triggerCommit();
-    } else if (dragX <= -TRIGGER_THRESHOLD) {
-      triggerRevert();
-    } else {
-      // Fluid snap back to center
-      setDragX(0);
-      setHasCrossedThreshold(false);
-    }
-  };
-
-  const handlePointerCancel = () => {
-    setIsDragging(false);
-    setDragX(0);
+    dragXRef.current = 0;
     setHasCrossedThreshold(false);
   };
 
@@ -212,7 +229,7 @@ export function TactileCommitSlider({
 
   const isLeftActive = dragX <= -16;
   const isRightActive = dragX >= 16;
-  const isTriggerReady = Math.abs(dragX) >= TRIGGER_THRESHOLD;
+  const isTriggerReady = hasCrossedThreshold || Math.abs(dragX) >= TRIGGER_THRESHOLD;
 
   // Calculate track fill width percentages from center (50%)
   const fillWidthPct = Math.min(50, Math.round((Math.abs(dragX) / TRIGGER_THRESHOLD) * 44));
@@ -229,15 +246,19 @@ export function TactileCommitSlider({
     >
       <div
         ref={trackRef}
+        onPointerDown={handlePointerDown}
         className={`tactile-commit-track status-${status} ${
+          isDragging ? 'track-dragging' : ''
+        } ${
           isTriggerReady
             ? dragX > 0
               ? 'track-save-primed'
               : 'track-revert-primed'
             : ''
         }`}
+        title="Slide right to Save, slide left to Revert, or click Save / Revert directly"
       >
-        {/* Dynamic Fluid Fill Indicators following Puck Direction */}
+        {/* Dynamic Fluid Fill Indicators following Drag Direction */}
         {dragX > 0 && status === 'idle' && (
           <div
             className="commit-track-fill fill-right"
@@ -268,7 +289,7 @@ export function TactileCommitSlider({
         </button>
 
         {/* Dynamic Center Prompt or Status Banner */}
-        <div className="commit-track-center">
+        <div className="commit-track-center select-none pointer-events-none">
           {status === 'saving' ? (
             <span className="commit-status-text text-saved">
               <Check size={11} />
@@ -334,37 +355,6 @@ export function TactileCommitSlider({
             <X size={10} />
           </button>
         </div>
-
-        {/* Interactive Center Puck (Slider Thumb) */}
-        {status === 'idle' && (
-          <div
-            className={`tactile-commit-puck ${isDragging ? 'puck-dragging' : ''} ${
-              isTriggerReady
-                ? dragX > 0
-                  ? 'puck-save-primed'
-                  : 'puck-revert-primed'
-                : ''
-            }`}
-            style={{
-              left: `calc(50% + ${dragX}px)`,
-              transform: 'translate(-50%, -50%)',
-              transition: isDragging
-                ? 'none'
-                : 'left 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-            }}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerCancel}
-            title="Slide right to Save, slide left to Revert"
-          >
-            <div className="tactile-commit-puck-inner">
-              <span className="puck-ridge" />
-              <span className="puck-ridge" />
-              <span className="puck-ridge" />
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
