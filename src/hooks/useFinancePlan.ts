@@ -28,7 +28,7 @@ export function useFinancePlan() {
   const plan = activeAccount?.plan ?? DEFAULT_PLAN;
   const baseline = activeAccount?.baseline ?? null;
 
-  // Anchor snapshot of the committed plan (for uncommitted change detection)
+  // Anchor snapshot of the committed plan (for uncommitted change detection and revert)
   const [committedPlan, setCommittedPlan] = useState<FinancePlan>(() => structuredClone(plan));
 
   // When activeId changes, sync committedPlan
@@ -43,12 +43,10 @@ export function useFinancePlan() {
     return JSON.stringify(plan) !== JSON.stringify(committedPlan);
   }, [plan, committedPlan]);
 
-  // Sync active account whenever accounts change AND it's not in an uncommitted dirty state
+  // Seamless continuous auto-save to localStorage — user modifications are NEVER lost
   useEffect(() => {
-    if (!isDirty) {
-      saveAllAccounts(accounts);
-    }
-  }, [accounts, isDirty]);
+    saveAllAccounts(accounts);
+  }, [accounts]);
 
   const setPlan = useCallback(
     (nextPlan: FinancePlan) => {
@@ -66,12 +64,12 @@ export function useFinancePlan() {
   const commitPlanChanges = useCallback(() => {
     setCommittedPlan(structuredClone(plan));
     saveAllAccounts(accounts);
-    setStatusMessage('Vault state committed & saved to local storage.');
+    setStatusMessage('Vault state snapshot committed.');
   }, [plan, accounts]);
 
   const discardPlanChanges = useCallback(() => {
     setPlan(structuredClone(committedPlan));
-    setStatusMessage('Unsaved modifications discarded. Vault restored.');
+    setStatusMessage('Modifications discarded. Reverted to vault baseline.');
   }, [committedPlan, setPlan]);
 
   const setBaseline = useCallback(
@@ -107,6 +105,7 @@ export function useFinancePlan() {
     setActiveAccountId(id);
     const target = accounts.find((a) => a.id === id);
     if (target) {
+      setCommittedPlan(structuredClone(target.plan));
       setStatusMessage(`Switched to "${target.name}".`);
     }
   }, [accounts]);
@@ -116,6 +115,7 @@ export function useFinancePlan() {
     setAccounts(loadAllAccounts());
     setActiveIdState(demo.id);
     setActiveAccountId(demo.id);
+    setCommittedPlan(structuredClone(demo.plan));
     setStatusMessage('Loaded Interactive Demo Vault (pre-configured Indian tech professional profile).');
     return demo;
   }, []);
@@ -126,6 +126,7 @@ export function useFinancePlan() {
       setAccounts(loadAllAccounts());
       setActiveIdState(created.id);
       setActiveAccountId(created.id);
+      setCommittedPlan(structuredClone(created.plan));
       setStatusMessage(`Created and opened new vault "${created.name}".`);
       return created;
     },

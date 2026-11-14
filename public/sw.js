@@ -1,4 +1,4 @@
-const CACHE_NAME = 'psfi-v5.10.0-commit-slider-loan-arbitrage-cool-hero';
+const CACHE_NAME = 'psfi-v5.11.0-fix-layout-autosave-clean-slider';
 
 self.addEventListener('install', () => {
   self.skipWaiting();

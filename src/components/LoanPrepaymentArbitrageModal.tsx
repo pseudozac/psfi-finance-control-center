@@ -54,13 +54,13 @@ export function LoanPrepaymentArbitrageModal({
   };
 
   return (
-    <div className="modal-backdrop fixed inset-0 z-[120] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-fadeIn">
+    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-label="Loan Prepayment vs Equity SIP Arbitrage">
       <div
-        className="modal-container w-full max-w-4xl max-h-[92vh] flex flex-col rounded-2xl bg-surface-base border border-subtle/80 shadow-2xl overflow-hidden animate-scaleUp"
+        className="modal-card loan-arbitrage-modal"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="modal-header flex items-center justify-between px-6 py-4 border-b border-subtle/60 bg-surface-raised/40">
+        <div className="loan-arbitrage-header">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-solstice/10 border border-solstice/30 flex items-center justify-center text-solstice shadow-inner">
               <Scale size={18} />
@@ -81,7 +81,7 @@ export function LoanPrepaymentArbitrageModal({
           </div>
           <button
             type="button"
-            className="icon-btn-ghost text-muted hover:text-ink-primary p-2 rounded-lg transition-colors"
+            className="icon-pill"
             onClick={onClose}
             title="Close Arbitrage Simulator"
           >
@@ -90,7 +90,7 @@ export function LoanPrepaymentArbitrageModal({
         </div>
 
         {/* Content Body */}
-        <div className="modal-content overflow-y-auto px-6 py-5 space-y-6">
+        <div className="loan-arbitrage-body">
           {/* Actuarial Verdict Hero Banner */}
           <div
             className={`p-4 rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all ${
@@ -305,13 +305,13 @@ export function LoanPrepaymentArbitrageModal({
         </div>
 
         {/* Footer */}
-        <div className="modal-footer flex items-center justify-between px-6 py-3.5 border-t border-subtle/60 bg-surface-raised/40">
+        <div className="loan-arbitrage-footer">
           <span className="text-[11px] font-mono text-muted">
             Indian Statutory Amortization Engine · 100% Client-Side
           </span>
           <button
             type="button"
-            className="px-4 py-1.5 rounded-lg bg-surface-raised border border-subtle text-xs font-medium text-ink-primary hover:bg-surface-base transition-colors"
+            className="action-pill font-mono text-xs"
             onClick={onClose}
           >
             Done

@@ -16,8 +16,6 @@ import {
   FolderKanban,
   Printer,
   Sparkles,
-  Smartphone,
-  Monitor,
   Compass,
   Sliders,
   TrendingUp,
@@ -129,18 +127,6 @@ export function App() {
   const [pendingBeamPin, setPendingBeamPin] = useState<string>('');
   const [pendingBeamError, setPendingBeamError] = useState<string | null>(null);
 
-  // Warn if user attempts to leave with uncommitted modifications
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isDirty) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isDirty]);
-
   const closeAllMobileOverlays = () => {
     setShowSkillTree(false);
     setToolsMenuOpen(false);
@@ -168,12 +154,6 @@ export function App() {
     showLoanArbitrage
   );
 
-  const [layoutMode, setLayoutMode] = useState<'mobile' | 'desktop'>(() => {
-    const saved = localStorage.getItem('psfi_layout_mode');
-    if (saved === 'mobile' || saved === 'desktop') return saved;
-    if (typeof window !== 'undefined' && window.innerWidth <= 768) return 'mobile';
-    return 'desktop';
-  });
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     const saved = localStorage.getItem('psfi_theme');
     if (saved === 'light' || saved === 'dark') return saved;
@@ -187,10 +167,17 @@ export function App() {
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
+    // Purge any stale legacy layoutMode locks that squished desktop screens
+    try {
+      localStorage.removeItem('psfi_layout_mode');
+    } catch {
+      // ignore
+    }
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const isMobileViewport = windowWidth <= 768;
+  const layoutMode: 'mobile' | 'desktop' = isMobileViewport ? 'mobile' : 'desktop';
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -326,13 +313,6 @@ export function App() {
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
-  };
-
-  const toggleLayoutMode = () => {
-    const next = layoutMode === 'mobile' ? 'desktop' : 'mobile';
-    setLayoutMode(next);
-    localStorage.setItem('psfi_layout_mode', next);
-    setStatusMessage(`Display density switched to ${next.toUpperCase()} VIEW.`);
   };
 
   const summary = useMemo(() => calculateSummary(plan), [plan]);
@@ -1017,16 +997,6 @@ export function App() {
 
           {/* Quick Utility Icon Group */}
           <div className="dock-utility-icons">
-            {/* View Density Switcher */}
-            <button
-              type="button"
-              className={`icon-pill pill-density-toggle ${layoutMode === 'mobile' ? 'mode-mobile-active' : 'mode-desktop-active'}`}
-              onClick={toggleLayoutMode}
-              title={layoutMode === 'mobile' ? 'Mobile View. Click for Desktop View' : 'Desktop View. Click for Mobile View'}
-            >
-              {layoutMode === 'mobile' ? <Smartphone size={13} className="text-nebula" /> : <Monitor size={13} className="text-pulsar" />}
-            </button>
-
             {/* Privacy Mask Toggle */}
             <button
               type="button"
@@ -1286,7 +1256,9 @@ export function App() {
           else pinBaseline();
         }}
         layoutMode={layoutMode}
-        onToggleLayout={toggleLayoutMode}
+        onToggleLayout={() => {
+          setStatusMessage(`Active display density: ${layoutMode.toUpperCase()} (${windowWidth}px responsive viewport).`);
+        }}
         theme={theme}
         onToggleTheme={toggleTheme}
         period={period}
