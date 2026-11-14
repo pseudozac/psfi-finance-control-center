@@ -1,4 +1,4 @@
-const CACHE_NAME = 'psfi-v5.22-toast-and-top-deck-no-overlap';
+const CACHE_NAME = 'psfi-v5.23-tools-drawer-pills-fix';
 
 self.addEventListener('install', () => {
   self.skipWaiting();

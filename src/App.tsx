@@ -493,9 +493,9 @@ export function App() {
         />
         <div className="tools-mobile-drawer-header">
           <div className="tools-mobile-drawer-title">
-            <Sparkles size={14} className="text-solstice" />
-            <span>Actuarial & Sovereign Tools</span>
-            <span className="tools-badge-count">13 Tools</span>
+            <Sparkles size={14} className="text-solstice shrink-0" />
+            <span className="truncate">{isMobileViewport ? 'Sovereign Tools' : 'Actuarial & Sovereign Tools'}</span>
+            <span className="tools-badge-count shrink-0">13 Tools</span>
           </div>
           <button
             type="button"
@@ -512,7 +512,7 @@ export function App() {
           <Search size={14} className="text-quasar shrink-0" />
           <input
             type="text"
-            placeholder="Search tools, scenarios, shortcuts (or Alt+L, Alt+X)..."
+            placeholder={isMobileViewport ? "Search tools & scenarios..." : "Search tools, scenarios, shortcuts (or Alt+L, Alt+X)..."}
             value={toolsSearchQuery}
             onChange={(e) => setToolsSearchQuery(e.target.value)}
             className="tools-search-input"
