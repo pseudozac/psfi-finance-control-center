@@ -487,6 +487,95 @@ body {
   }
 }
 
+/* Upgraded Tools Command Sheet Controls */
+.tools-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(191, 159, 241, 0.2);
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+}
+
+.tools-search-bar:focus-within {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(191, 159, 241, 0.6);
+  box-shadow: 0 0 16px rgba(124, 79, 217, 0.25);
+}
+
+.tools-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 12px;
+  font-family: var(--font-sans);
+  outline: none;
+}
+
+.tools-search-input::placeholder {
+  color: var(--ink-muted);
+}
+
+.tools-search-clear {
+  background: transparent;
+  border: none;
+  color: var(--ink-muted);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tools-category-segmented-pills {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.tools-category-segmented-pills button {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--ink-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.tools-category-segmented-pills button:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.tools-category-segmented-pills button.pill-cat-active {
+  background: rgba(124, 79, 217, 0.25);
+  border-color: rgba(191, 159, 241, 0.5);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(124, 79, 217, 0.35);
+}
+
+.tools-badge-count {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(124, 79, 217, 0.25);
+  border: 1px solid rgba(191, 159, 241, 0.35);
+  color: var(--colour-solstice);
+  margin-left: 6px;
+}
+
 .tools-category-column {
   display: flex;
   flex-direction: column;
@@ -1914,170 +2003,38 @@ body {
   grid-template-columns: 1fr !important;
 }
 
-/* On Desktop Monitors: Frame .layout-mobile inside a realistic Handheld Smartphone Viewport */
-@media (min-width: 769px) {
-  .layout-mobile {
-    max-width: 440px !important;
-    margin: 28px auto 60px auto !important;
-    border-radius: 46px !important;
-    border: 8px solid #1a2233 !important;
-    box-shadow: 0 32px 100px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.1), 0 0 50px rgba(124, 79, 217, 0.22) !important;
-    background: #080b14 !important;
-    position: relative !important;
-    padding: 14px 14px 90px 14px !important;
-    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  }
-
-  /* Hardware Speaker & Camera Notch (Dynamic Island) */
-  .layout-mobile::before {
-    content: '';
-    display: block;
-    width: 110px;
-    height: 16px;
-    margin: 0 auto 14px auto;
-    background: #030509;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.9);
-  }
-
-  .mobile-sim-banner {
-    display: flex !important;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 12px;
-    margin-bottom: 14px;
-    background: rgba(124, 79, 217, 0.14);
-    border: 1px solid rgba(191, 159, 241, 0.3);
-    border-radius: 14px;
-    font-size: 11px;
-    animation: fadeIn 0.2s ease-out;
-  }
-
-  .mobile-sim-badge {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--colour-solstice);
-    font-weight: 600;
-  }
-
-  .mobile-sim-exit-btn {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 3px 9px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: #ffffff;
-    cursor: pointer;
-    font-size: 10.5px;
-    transition: all 0.2s ease;
-  }
-
-  .mobile-sim-exit-btn:hover {
-    background: rgba(255, 255, 255, 0.16);
-    transform: translateY(-1px);
-  }
-
-  /* Mobile bottom dock in desktop simulator */
-  .layout-mobile .mobile-bottom-dock {
-    position: sticky !important;
-    bottom: 12px !important;
-    margin-top: 20px !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    display: flex !important;
-  }
-
-  /* Tools bottom action sheet in simulator */
-  .layout-mobile .tools-mobile-drawer-handle {
-    display: block !important;
-    width: 44px;
-    height: 5px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.25);
-    margin: 2px auto 14px auto;
-    cursor: pointer;
-  }
-
-  .layout-mobile .tools-mobile-drawer-header {
-    display: flex !important;
-    align-items: center;
-    justify-content: space-between;
-    padding-bottom: 12px;
-    margin-bottom: 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .layout-mobile .tools-mobile-drawer-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13.5px;
-    font-weight: 600;
-    color: #ffffff;
-    font-family: var(--font-mono);
-  }
-
-  .layout-mobile .tools-mobile-drawer-close {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: var(--ink-muted);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-  }
-
-  .layout-mobile .tools-dropdown-menu {
-    position: absolute !important;
-    bottom: 0 !important;
-    top: auto !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    max-height: 80% !important;
-    border-radius: 24px 24px 0 0 !important;
-    border: 1px solid rgba(191, 159, 241, 0.35) !important;
-    border-bottom: none !important;
-    background: rgba(11, 15, 27, 0.98) !important;
-    backdrop-filter: blur(32px) !important;
-    -webkit-backdrop-filter: blur(32px) !important;
-    box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.95) !important;
-    padding: 12px 14px 24px 14px !important;
-    overflow-y: auto !important;
-    z-index: 1000 !important;
-    animation: slideUpMobileDrawer 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
-    scrollbar-width: thin !important;
-    scrollbar-color: rgba(191, 159, 241, 0.25) transparent !important;
-  }
-
-  .layout-mobile .tools-dropdown-backdrop {
-    display: block !important;
-    position: absolute !important;
-    inset: 0 !important;
-    background: rgba(3, 6, 14, 0.7) !important;
-    backdrop-filter: blur(6px) !important;
-    z-index: 999 !important;
-  }
-
-  .layout-mobile .tools-mega-grid {
-    grid-template-columns: 1fr !important;
-    gap: 12px !important;
-  }
-}
-
 /* Mobile Screens (Native Viewport <= 768px) */
 @media (max-width: 768px) {
-  .mobile-sim-banner {
+  /* Streamline top deck: hide redundant duplicate buttons */
+  .dock-view-switcher {
     display: none !important;
+  }
+  .pill-cmdk,
+  .pill-ingest,
+  .pill-skills,
+  .pill-tools {
+    display: none !important;
+  }
+
+  .navbar-dock {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 8px 12px !important;
+    gap: 8px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .brand-cluster {
+    width: auto !important;
+    gap: 8px !important;
+  }
+
+  .dock-actions-cluster {
+    width: auto !important;
+    border-top: none !important;
+    padding-top: 0 !important;
+    gap: 6px !important;
   }
 
   .tools-mobile-drawer-handle {

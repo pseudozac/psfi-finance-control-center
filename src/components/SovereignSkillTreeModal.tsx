@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import {
   X,
   Sparkles,
@@ -30,6 +30,9 @@ import {
   Minimize2,
   ChevronRight,
   ChevronDown,
+  ZoomIn,
+  ZoomOut,
+  RefreshCw,
 } from 'lucide-react';
 import type { FinancePlan, FinanceSummary } from '../types/finance';
 import type { SkillTier, SkillNode } from '../types/skills';
@@ -140,41 +143,142 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [isTheaterMode, setIsTheaterMode] = useState<boolean>(false);
   const [isDossierCollapsed, setIsDossierCollapsed] = useState<boolean>(false);
-  const canvasPanelRef = useRef<HTMLElement>(null);
+  
+  // Dynamic Astrolabe ViewBox State (frames constellation mathematically across any screen)
+  const DEFAULT_VIEWBOX = useMemo(() => ({ x: 80, y: 30, w: 1280, h: 780 }), []);
+  const CITADEL_VIEWBOX = useMemo(() => ({ x: 120, y: 160, w: 560, h: 640 }), []);
+  const VELOCITY_VIEWBOX = useMemo(() => ({ x: 440, y: 90, w: 540, h: 710 }), []);
+  const AUTONOMY_VIEWBOX = useMemo(() => ({ x: 740, y: 60, w: 600, h: 620 }), []);
 
-  // Auto-center horizontal scroll on root node when modal opens
-  useEffect(() => {
-    if (isOpen && viewMode === 'visual_tree') {
-      const timer = setTimeout(() => {
-        if (canvasPanelRef.current) {
-          const panel = canvasPanelRef.current;
-          if (panel.scrollWidth > panel.clientWidth) {
-            const targetScroll = (680 / 1440) * panel.scrollWidth - panel.clientWidth / 2;
-            panel.scrollTo({ left: Math.max(0, targetScroll), behavior: 'smooth' });
-          }
-        }
-      }, 150);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, viewMode]);
+  const [viewBox, setViewBox] = useState<{ x: number; y: number; w: number; h: number }>(DEFAULT_VIEWBOX);
+  const isDraggingRef = useRef<boolean>(false);
+  const dragStartRef = useRef<{ clientX: number; clientY: number; vbX: number; vbY: number }>({ clientX: 0, clientY: 0, vbX: 0, vbY: 0 });
+  const dragDistanceRef = useRef<number>(0);
+  const svgRef = useRef<SVGSVGElement>(null);
 
-  // Smoothly scroll astrolabe canvas to target wing
+  // Focus view on wing
   const handleFilterTier = (tier: SkillTier | 'all') => {
     setSelectedTier(tier);
-    playChime(tier === 'tier1_survival' ? 440 : tier === 'tier2_velocity' ? 554 : tier === 'tier3_autonomy' ? 659 : 520);
-    if (canvasPanelRef.current) {
-      const panel = canvasPanelRef.current;
-      if (panel.scrollWidth > panel.clientWidth) {
-        if (tier === 'tier1_survival') {
-          panel.scrollTo({ left: 0, behavior: 'smooth' });
-        } else if (tier === 'tier2_velocity') {
-          panel.scrollTo({ left: (panel.scrollWidth - panel.clientWidth) / 2, behavior: 'smooth' });
-        } else if (tier === 'tier3_autonomy') {
-          panel.scrollTo({ left: panel.scrollWidth - panel.clientWidth, behavior: 'smooth' });
-        } else {
-          panel.scrollTo({ left: (panel.scrollWidth - panel.clientWidth) / 2, behavior: 'smooth' });
-        }
-      }
+    if (tier === 'tier1_survival') {
+      setViewBox(CITADEL_VIEWBOX);
+      playChime(440);
+    } else if (tier === 'tier2_velocity') {
+      setViewBox(VELOCITY_VIEWBOX);
+      playChime(554);
+    } else if (tier === 'tier3_autonomy') {
+      setViewBox(AUTONOMY_VIEWBOX);
+      playChime(659);
+    } else {
+      setViewBox(DEFAULT_VIEWBOX);
+      playChime(520);
+    }
+  };
+
+  const handleZoomIn = () => {
+    setViewBox((prev) => {
+      const zoomFactor = 0.8;
+      const nextW = Math.max(300, prev.w * zoomFactor);
+      const nextH = Math.max(180, prev.h * zoomFactor);
+      const cx = prev.x + prev.w / 2;
+      const cy = prev.y + prev.h / 2;
+      return { x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH };
+    });
+    playChime(600);
+  };
+
+  const handleZoomOut = () => {
+    setViewBox((prev) => {
+      const zoomFactor = 1.25;
+      const nextW = Math.min(1600, prev.w * zoomFactor);
+      const nextH = Math.min(1000, prev.h * zoomFactor);
+      const cx = prev.x + prev.w / 2;
+      const cy = prev.y + prev.h / 2;
+      return { x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH };
+    });
+    playChime(420);
+  };
+
+  const handleResetFit = () => {
+    setViewBox(DEFAULT_VIEWBOX);
+    setSelectedTier('all');
+    playChime(480);
+  };
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    isDraggingRef.current = true;
+    dragDistanceRef.current = 0;
+    dragStartRef.current = {
+      clientX: e.clientX,
+      clientY: e.clientY,
+      vbX: viewBox.x,
+      vbY: viewBox.y,
+    };
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDraggingRef.current || !svgRef.current) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+
+    const scaleX = viewBox.w / rect.width;
+    const scaleY = viewBox.h / rect.height;
+
+    const dx = (e.clientX - dragStartRef.current.clientX) * scaleX;
+    const dy = (e.clientY - dragStartRef.current.clientY) * scaleY;
+
+    dragDistanceRef.current += Math.hypot(e.movementX, e.movementY);
+
+    setViewBox((prev) => ({
+      ...prev,
+      x: dragStartRef.current.vbX - dx,
+      y: dragStartRef.current.vbY - dy,
+    }));
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    isDraggingRef.current = false;
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const zoomFactor = e.deltaY > 0 ? 1.08 : 0.92;
+    setViewBox((prev) => {
+      const nextW = Math.max(300, Math.min(1600, prev.w * zoomFactor));
+      const nextH = Math.max(180, Math.min(1000, prev.h * zoomFactor));
+      const cx = prev.x + prev.w / 2;
+      const cy = prev.y + prev.h / 2;
+      return { x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH };
+    });
+  };
+
+  const handleNodeClick = (node: SkillNode) => {
+    if (dragDistanceRef.current > 8) return;
+    setSelectedNodeId(node.id);
+    setIsDossierCollapsed(false);
+    const freq = node.tier === 'tier1_survival' ? 440 : node.tier === 'tier2_velocity' ? 554 : 659;
+    playChime(freq);
+
+    if (node.treeX && node.treeY) {
+      setViewBox((prev) => {
+        const targetW = Math.min(prev.w, 750);
+        const targetH = (targetW / prev.w) * prev.h;
+        return {
+          x: node.treeX! - targetW / 2,
+          y: node.treeY! - targetH / 2,
+          w: targetW,
+          h: targetH,
+        };
+      });
     }
   };
 
@@ -560,14 +664,69 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
             </aside>
 
             {/* RIGHT PANE: 100% UNOBSTRUCTED SVG ASTROLABE STAR-CHART */}
-            <main className="skill-tree-canvas-panel" ref={canvasPanelRef} aria-label="Constellation Astrolabe Star-Chart">
-              {/* Mobile Constellation Pan Hint */}
-              <div className="mobile-constellation-pan-hint">
-                <span>✦ Pan wings: Citadel · Velocity · Autonomy ✦</span>
+            <main
+              className="skill-tree-canvas-panel"
+              aria-label="Constellation Astrolabe Star-Chart"
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onWheel={handleWheel}
+            >
+              {/* Floating Tactical Astrolabe HUD */}
+              <div className="astrolabe-floating-hud" onClick={(e) => e.stopPropagation()}>
+                <div className="hud-wings-cluster">
+                  <button
+                    type="button"
+                    className={`hud-pill ${selectedTier === 'all' ? 'active' : ''}`}
+                    onClick={() => handleFilterTier('all')}
+                    title="Full Constellation (15 Nodes)"
+                  >
+                    <span>🌌 All</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`hud-pill hud-pill-citadel ${selectedTier === 'tier1_survival' ? 'active' : ''}`}
+                    onClick={() => handleFilterTier('tier1_survival')}
+                    title="Focus Defensive Citadel (5 Nodes)"
+                  >
+                    <span>🛡️ Citadel ({treeState.tier1MasteredCount}/5)</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`hud-pill hud-pill-velocity ${selectedTier === 'tier2_velocity' ? 'active' : ''}`}
+                    onClick={() => handleFilterTier('tier2_velocity')}
+                    title="Focus Compounding Velocity (5 Nodes)"
+                  >
+                    <span>⚡ Velocity ({treeState.tier2MasteredCount}/5)</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`hud-pill hud-pill-autonomy ${selectedTier === 'tier3_autonomy' ? 'active' : ''}`}
+                    onClick={() => handleFilterTier('tier3_autonomy')}
+                    title="Focus Sovereign Autonomy (5 Nodes)"
+                  >
+                    <span>👑 Autonomy ({treeState.tier3MasteredCount}/5)</span>
+                  </button>
+                </div>
+
+                <div className="hud-zoom-cluster">
+                  <button type="button" className="hud-icon-btn" onClick={handleZoomIn} title="Zoom In (+)">
+                    <ZoomIn size={14} />
+                  </button>
+                  <button type="button" className="hud-icon-btn" onClick={handleZoomOut} title="Zoom Out (-)">
+                    <ZoomOut size={14} />
+                  </button>
+                  <button type="button" className="hud-icon-btn" onClick={handleResetFit} title="Reset to Fit (⛶)">
+                    <RefreshCw size={13} />
+                  </button>
+                </div>
               </div>
+
               <svg
-                viewBox="0 0 1440 820"
+                ref={svgRef}
+                viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`}
                 className="skill-tree-svg"
+                preserveAspectRatio="xMidYMid meet"
               >
                 <defs>
                   {/* Blueprint Grid */}
@@ -703,19 +862,7 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                         transform={`translate(${x}, ${y})`}
                         className="cursor-pointer transition-transform duration-200"
                         opacity={isDimmed ? 0.3 : 1}
-                        onClick={() => {
-                          setSelectedNodeId(node.id);
-                          setIsDossierCollapsed(false);
-                          const freq = node.tier === 'tier1_survival' ? 440 : node.tier === 'tier2_velocity' ? 554 : 659;
-                          playChime(freq);
-                          if (canvasPanelRef.current && node.treeX) {
-                            const panel = canvasPanelRef.current;
-                            if (panel.scrollWidth > panel.clientWidth) {
-                              const targetScroll = (node.treeX / 1440) * panel.scrollWidth - panel.clientWidth / 2;
-                              panel.scrollTo({ left: Math.max(0, targetScroll), behavior: 'smooth' });
-                            }
-                          }
-                        }}
+                        onClick={() => handleNodeClick(node)}
                         onMouseEnter={() => setHoveredNodeId(node.id)}
                         onMouseLeave={() => setHoveredNodeId(null)}
                       >

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'psfi-v5.14-mobile-app-overhaul';
+const CACHE_NAME = 'psfi-v5.15-astrolabe-tools-overhaul';
 
 self.addEventListener('install', () => {
   self.skipWaiting();
