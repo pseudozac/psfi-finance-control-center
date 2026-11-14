@@ -33,6 +33,7 @@ import {
   ZoomIn,
   ZoomOut,
   RefreshCw,
+  ArrowLeft,
 } from 'lucide-react';
 import type { FinancePlan, FinanceSummary } from '../types/finance';
 import type { SkillTier, SkillNode } from '../types/skills';
@@ -159,14 +160,34 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
   // Optimal full view: Center X = 720, Center Y = 430
   const DEFAULT_VIEWBOX = useMemo(() => {
     if (isMobile) {
-      return { x: 280, y: 100, w: 680, h: 720 };
+      return { x: 180, y: 20, w: 920, h: 800 };
     }
-    return { x: 130, y: 40, w: 1180, h: 760 };
+    return { x: 110, y: 15, w: 1220, h: 790 };
   }, [isMobile]);
 
-  const CITADEL_VIEWBOX = useMemo(() => ({ x: 150, y: 240, w: 590, h: 560 }), []);
-  const VELOCITY_VIEWBOX = useMemo(() => ({ x: 310, y: 100, w: 580, h: 700 }), []);
-  const AUTONOMY_VIEWBOX = useMemo(() => ({ x: 650, y: 60, w: 660, h: 730 }), []);
+  const CITADEL_VIEWBOX = useMemo(() => ({ x: 130, y: 180, w: 620, h: 630 }), []);
+  const VELOCITY_VIEWBOX = useMemo(() => ({ x: 340, y: 80, w: 660, h: 710 }), []);
+  const AUTONOMY_VIEWBOX = useMemo(() => ({ x: 620, y: 40, w: 720, h: 750 }), []);
+
+  // Strict clamp prevents astrolabe from flying off-screen or creating infinite black voids
+  const clampViewBox = (vb: { x: number; y: number; w: number; h: number }) => {
+    const minW = 380;
+    const maxW = 1440;
+    const minH = 280;
+    const maxH = 920;
+    const clampedW = Math.max(minW, Math.min(maxW, vb.w));
+    const clampedH = Math.max(minH, Math.min(maxH, vb.h));
+
+    const minX = -40;
+    const maxX = 1480 - clampedW;
+    const minY = -20;
+    const maxY = 860 - clampedH;
+
+    const clampedX = Math.max(minX, Math.min(maxX, vb.x));
+    const clampedY = Math.max(minY, Math.min(maxY, vb.y));
+
+    return { x: clampedX, y: clampedY, w: clampedW, h: clampedH };
+  };
 
   const [viewBox, setViewBox] = useState<{ x: number; y: number; w: number; h: number }>(DEFAULT_VIEWBOX);
   const isDraggingRef = useRef<boolean>(false);
@@ -183,20 +204,30 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
     }
   }, [isOpen, DEFAULT_VIEWBOX, isMobile]);
 
+  // Mobile Hardware / Browser Back button dismiss
+  useEffect(() => {
+    if (!isOpen) return;
+    const handlePop = () => {
+      onClose();
+    };
+    window.addEventListener('popstate', handlePop);
+    return () => window.removeEventListener('popstate', handlePop);
+  }, [isOpen, onClose]);
+
   // Focus view on wing
   const handleFilterTier = (tier: SkillTier | 'all') => {
     setSelectedTier(tier);
     if (tier === 'tier1_survival') {
-      setViewBox(CITADEL_VIEWBOX);
+      setViewBox(clampViewBox(CITADEL_VIEWBOX));
       playChime(440);
     } else if (tier === 'tier2_velocity') {
-      setViewBox(VELOCITY_VIEWBOX);
+      setViewBox(clampViewBox(VELOCITY_VIEWBOX));
       playChime(554);
     } else if (tier === 'tier3_autonomy') {
-      setViewBox(AUTONOMY_VIEWBOX);
+      setViewBox(clampViewBox(AUTONOMY_VIEWBOX));
       playChime(659);
     } else {
-      setViewBox(DEFAULT_VIEWBOX);
+      setViewBox(clampViewBox(DEFAULT_VIEWBOX));
       playChime(520);
     }
   };
@@ -204,11 +235,11 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
   const handleZoomIn = () => {
     setViewBox((prev) => {
       const zoomFactor = 0.8;
-      const nextW = Math.max(300, prev.w * zoomFactor);
-      const nextH = Math.max(180, prev.h * zoomFactor);
+      const nextW = prev.w * zoomFactor;
+      const nextH = prev.h * zoomFactor;
       const cx = prev.x + prev.w / 2;
       const cy = prev.y + prev.h / 2;
-      return { x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH };
+      return clampViewBox({ x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH });
     });
     playChime(600);
   };
@@ -216,17 +247,17 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
   const handleZoomOut = () => {
     setViewBox((prev) => {
       const zoomFactor = 1.25;
-      const nextW = Math.min(1600, prev.w * zoomFactor);
-      const nextH = Math.min(1000, prev.h * zoomFactor);
+      const nextW = prev.w * zoomFactor;
+      const nextH = prev.h * zoomFactor;
       const cx = prev.x + prev.w / 2;
       const cy = prev.y + prev.h / 2;
-      return { x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH };
+      return clampViewBox({ x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH });
     });
     playChime(420);
   };
 
   const handleResetFit = () => {
-    setViewBox(DEFAULT_VIEWBOX);
+    setViewBox(clampViewBox(DEFAULT_VIEWBOX));
     setSelectedTier('all');
     playChime(480);
   };
@@ -260,7 +291,7 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
 
     dragDistanceRef.current += Math.hypot(e.movementX, e.movementY);
 
-    setViewBox((prev) => ({
+    setViewBox((prev) => clampViewBox({
       ...prev,
       x: dragStartRef.current.vbX - dx,
       y: dragStartRef.current.vbY - dy,
@@ -280,11 +311,11 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
     e.preventDefault();
     const zoomFactor = e.deltaY > 0 ? 1.08 : 0.92;
     setViewBox((prev) => {
-      const nextW = Math.max(300, Math.min(1600, prev.w * zoomFactor));
-      const nextH = Math.max(180, Math.min(1000, prev.h * zoomFactor));
+      const nextW = prev.w * zoomFactor;
+      const nextH = prev.h * zoomFactor;
       const cx = prev.x + prev.w / 2;
       const cy = prev.y + prev.h / 2;
-      return { x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH };
+      return clampViewBox({ x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH });
     });
   };
 
@@ -299,12 +330,12 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
       setViewBox((prev) => {
         const targetW = Math.min(prev.w, 750);
         const targetH = (targetW / prev.w) * prev.h;
-        return {
+        return clampViewBox({
           x: node.treeX! - targetW / 2,
           y: node.treeY! - targetH / 2,
           w: targetW,
           h: targetH,
-        };
+        });
       });
     }
   };
@@ -406,6 +437,28 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
         {/* 1. TOP HEADER & RPG RANK BANNER */}
         <div className="skill-tree-header">
           <div className="skill-tree-header-left">
+            {isMobile && (
+              <button
+                type="button"
+                className="action-pill font-mono text-xs"
+                onClick={onClose}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '5px 9px',
+                  marginRight: '6px',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  color: '#ffffff',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  borderRadius: '999px',
+                }}
+                title="Return to Control Center"
+              >
+                <ArrowLeft size={13} />
+                <span>Back</span>
+              </button>
+            )}
             <div className="skill-tree-crown-box">
               <Crown size={20} />
             </div>
@@ -670,12 +723,27 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
               onWheel={handleWheel}
             >
               {/* Floating Tactical Astrolabe HUD */}
-              <div className="astrolabe-floating-hud" onClick={(e) => e.stopPropagation()}>
+              <div
+                className="astrolabe-floating-hud"
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  background: 'rgba(10, 14, 26, 0.94)',
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(139, 92, 246, 0.35)',
+                  borderRadius: '999px',
+                }}
+              >
                 <div className="hud-wings-cluster">
                   <button
                     type="button"
                     className={`hud-pill ${selectedTier === 'all' ? 'active' : ''}`}
                     onClick={() => handleFilterTier('all')}
+                    style={{
+                      background: selectedTier === 'all' ? 'rgba(124, 79, 217, 0.35)' : 'rgba(255, 255, 255, 0.06)',
+                      border: selectedTier === 'all' ? '1px solid rgba(191, 159, 241, 0.75)' : '1px solid rgba(255, 255, 255, 0.12)',
+                      color: selectedTier === 'all' ? '#ffffff' : '#cbd5e1',
+                    }}
                     title="Full Constellation (15 Nodes)"
                   >
                     <span>🌌 All</span>
@@ -684,6 +752,11 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                     type="button"
                     className={`hud-pill hud-pill-citadel ${selectedTier === 'tier1_survival' ? 'active' : ''}`}
                     onClick={() => handleFilterTier('tier1_survival')}
+                    style={{
+                      background: selectedTier === 'tier1_survival' ? 'rgba(16, 185, 129, 0.28)' : 'rgba(255, 255, 255, 0.06)',
+                      border: selectedTier === 'tier1_survival' ? '1px solid rgba(16, 185, 129, 0.75)' : '1px solid rgba(255, 255, 255, 0.12)',
+                      color: selectedTier === 'tier1_survival' ? '#6ee7b7' : '#cbd5e1',
+                    }}
                     title="Focus Defensive Citadel (5 Nodes)"
                   >
                     <span>🛡️ Citadel</span>
@@ -693,6 +766,11 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                     type="button"
                     className={`hud-pill hud-pill-velocity ${selectedTier === 'tier2_velocity' ? 'active' : ''}`}
                     onClick={() => handleFilterTier('tier2_velocity')}
+                    style={{
+                      background: selectedTier === 'tier2_velocity' ? 'rgba(6, 182, 212, 0.28)' : 'rgba(255, 255, 255, 0.06)',
+                      border: selectedTier === 'tier2_velocity' ? '1px solid rgba(6, 182, 212, 0.75)' : '1px solid rgba(255, 255, 255, 0.12)',
+                      color: selectedTier === 'tier2_velocity' ? '#67e8f9' : '#cbd5e1',
+                    }}
                     title="Focus Compounding Velocity (5 Nodes)"
                   >
                     <span>⚡ Velocity</span>
@@ -702,6 +780,11 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                     type="button"
                     className={`hud-pill hud-pill-autonomy ${selectedTier === 'tier3_autonomy' ? 'active' : ''}`}
                     onClick={() => handleFilterTier('tier3_autonomy')}
+                    style={{
+                      background: selectedTier === 'tier3_autonomy' ? 'rgba(245, 158, 11, 0.28)' : 'rgba(255, 255, 255, 0.06)',
+                      border: selectedTier === 'tier3_autonomy' ? '1px solid rgba(245, 158, 11, 0.75)' : '1px solid rgba(255, 255, 255, 0.12)',
+                      color: selectedTier === 'tier3_autonomy' ? '#fcd34d' : '#cbd5e1',
+                    }}
                     title="Focus Sovereign Autonomy (5 Nodes)"
                   >
                     <span>👑 Autonomy</span>
@@ -710,13 +793,31 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                 </div>
 
                 <div className="hud-zoom-cluster">
-                  <button type="button" className="hud-icon-btn" onClick={handleZoomIn} title="Zoom In (+)">
+                  <button
+                    type="button"
+                    className="hud-icon-btn"
+                    onClick={handleZoomIn}
+                    style={{ background: 'rgba(255, 255, 255, 0.06)', border: '1px solid rgba(255, 255, 255, 0.14)', color: '#ffffff' }}
+                    title="Zoom In (+)"
+                  >
                     <ZoomIn size={14} />
                   </button>
-                  <button type="button" className="hud-icon-btn" onClick={handleZoomOut} title="Zoom Out (-)">
+                  <button
+                    type="button"
+                    className="hud-icon-btn"
+                    onClick={handleZoomOut}
+                    style={{ background: 'rgba(255, 255, 255, 0.06)', border: '1px solid rgba(255, 255, 255, 0.14)', color: '#ffffff' }}
+                    title="Zoom Out (-)"
+                  >
                     <ZoomOut size={14} />
                   </button>
-                  <button type="button" className="hud-icon-btn" onClick={handleResetFit} title="Reset to Fit (⛶)">
+                  <button
+                    type="button"
+                    className="hud-icon-btn"
+                    onClick={handleResetFit}
+                    style={{ background: 'rgba(255, 255, 255, 0.06)', border: '1px solid rgba(255, 255, 255, 0.14)', color: '#ffffff' }}
+                    title="Reset to Fit (⛶)"
+                  >
                     <RefreshCw size={13} />
                   </button>
                 </div>

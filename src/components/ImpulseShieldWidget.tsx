@@ -21,6 +21,8 @@ import {
   Calculator,
   CalendarDays,
   Sparkles,
+  Car,
+  Undo2,
 } from 'lucide-react';
 import type { FinancePlan, FinanceSummary } from '../types/finance';
 import type { SpendCategory, SpendLogEntry, CoolingOffItem } from '../types/skills';
@@ -36,7 +38,6 @@ interface ImpulseShieldWidgetProps {
 
 type WidgetTab = 'burn_pocket' | 'cooling_chamber';
 
-// Audio feedback helper
 function playSynthesizerChime(freq = 580) {
   try {
     const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -155,6 +156,9 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
   const [customSpendVal, setCustomSpendVal] = useState('');
   const [showCustomInput, setShowCustomInput] = useState(false);
 
+  // Last logged entry for 1-tap Undo
+  const [lastLoggedEntry, setLastLoggedEntry] = useState<SpendLogEntry | null>(null);
+
   // Derive total spent today from log
   const spentToday = useMemo(() => {
     return todaySpendLog.reduce((acc, item) => acc + item.amount, 0);
@@ -221,16 +225,26 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
       timestamp: Date.now(),
     };
     setTodaySpendLog((prev) => [entry, ...prev]);
+    setLastLoggedEntry(entry);
     playSynthesizerChime(420);
+  };
+
+  const handleUndoLastSpend = () => {
+    if (!lastLoggedEntry) return;
+    setTodaySpendLog((prev) => prev.filter((item) => item.id !== lastLoggedEntry.id));
+    setLastLoggedEntry(null);
+    playSynthesizerChime(320);
   };
 
   const handleDeleteSpendEntry = (id: string) => {
     setTodaySpendLog((prev) => prev.filter((item) => item.id !== id));
+    if (lastLoggedEntry?.id === id) setLastLoggedEntry(null);
     playSynthesizerChime(320);
   };
 
   const handleResetToday = () => {
     setTodaySpendLog([]);
+    setLastLoggedEntry(null);
     playSynthesizerChime(350);
   };
 
@@ -248,92 +262,94 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
     setCoolingItems((prev) => [item, ...prev]);
     setNewItemTitle('');
     setNewItemAmount('');
-    setNewItemUrge(3);
-    playSynthesizerChime(620);
+    playSynthesizerChime(640);
   };
 
   const handleAbandonCoolingItem = (item: CoolingOffItem) => {
-    // Abandoning an impulse purchase is a victory: banks money and increments streak!
-    setCoolingItems((prev) => prev.filter((i) => i.id !== item.id));
-    const nextStreak = streakDays + 1;
-    const nextSurplus = bankedSurplus + Math.round(item.amount * 0.2); // bank 20% of avoided impulse
-    const nextRescued = lifetimeRescued + item.amount;
-    setStreakDays(nextStreak);
-    setBankedSurplus(nextSurplus);
-    setLifetimeRescued(nextRescued);
-    localStorage.setItem('psfi_discipline_streak', String(nextStreak));
-    localStorage.setItem('psfi_banked_surplus', String(nextSurplus));
-    localStorage.setItem('psfi_rescued_capital', String(nextRescued));
+    setCoolingItems((prev) => prev.filter((x) => x.id !== item.id));
+    setLifetimeRescued((prev) => prev + item.amount);
+    setStreakDays((prev) => {
+      const next = prev + 1;
+      localStorage.setItem('psfi_discipline_streak', String(next));
+      return next;
+    });
     playVictoryFanfare();
   };
 
-  // Actuarial calculation for "Can I Afford This Today?"
+  const handleBuyCoolingItem = (item: CoolingOffItem) => {
+    setCoolingItems((prev) => prev.filter((x) => x.id !== item.id));
+    handleLogSpend('other', `Cooling Bought: ${item.title.replace(/[🔥\s]/g, '')}`, item.amount);
+  };
+
+  const handleDeleteCoolingItem = (id: string) => {
+    setCoolingItems((prev) => prev.filter((x) => x.id !== id));
+    playSynthesizerChime(300);
+  };
+
+  const percentUsedToday = useMemo(() => {
+    if (burnState.effectiveDailyBurnToday <= 0) return 0;
+    return Math.min(200, Math.round((spentToday / burnState.effectiveDailyBurnToday) * 100));
+  }, [spentToday, burnState.effectiveDailyBurnToday]);
+
+  // Calendar dates
+  const now = new Date();
+  const currentDayOfMonth = now.getDate();
+  const daysInCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+
+  // Instant Afford Assessment
   const affordQueryParsedAmt = parseFloat(affordQueryAmount) || 0;
   const affordAssessment = useMemo(() => {
     if (affordQueryParsedAmt <= 0) return null;
+    const dailyTarget = burnState.effectiveDailyBurnToday;
     const remaining = burnState.remainingBurnToday;
-    const safeDaily = burnState.effectiveDailyBurnToday;
-    const threeDayPocket = safeDaily * 3;
-    const daysConsumed = (affordQueryParsedAmt / Math.max(1, safeDaily)).toFixed(1);
-    const tenYearValue = Math.round(affordQueryParsedAmt * 3.106); // 12% CAGR over 10 yrs
+    const daysConsumed = dailyTarget > 0 ? (affordQueryParsedAmt / dailyTarget).toFixed(1) : '99+';
+
+    // 10-Yr opportunity cost in Nifty 50 at 12% CAGR: FV = PV * (1 + 0.12)^10 ≈ 3.106
+    const tenYearValue = Math.round(affordQueryParsedAmt * 3.1058);
 
     if (affordQueryParsedAmt <= remaining) {
       return {
         verdict: 'safe',
-        badge: '🟢 SAFE TO PURCHASE TODAY',
-        colorClass: 'text-nebula border-nebula/40 bg-nebula/10',
-        summary: `Directly covered by your unspent daily pocket (${formatINR(remaining)}). Zero rupee drag on your committed ${formatINR(burnState.sipProtectedAmount)} monthly SIP.`,
+        badge: '✅ 100% AFFORDABLE TODAY',
+        colorClass: 'border-nebula/40 bg-nebula/10 text-nebula',
+        summary: `You have ${formatINR(remaining)} safe buffer left today. Spending ${formatINR(affordQueryParsedAmt)} leaves ${formatINR(remaining - affordQueryParsedAmt)} for remaining hours with zero impact on monthly savings.`,
         daysConsumed,
         tenYearValue,
       };
-    } else if (affordQueryParsedAmt <= threeDayPocket) {
+    } else if (affordQueryParsedAmt <= remaining + (burnState.recalibratedRemainingDailyBurn * 2)) {
       return {
         verdict: 'caution',
-        badge: '🟡 CAUTION / REBALANCING REQUIRED',
-        colorClass: 'text-solstice border-solstice/40 bg-solstice/10',
-        summary: `Exceeds today's pocket and borrows ${daysConsumed} days of future discretionary allowance. PsFi will automatically recalibrate your future days down to preserve your SIP.`,
+        badge: '⚠️ STRETCH PURCHASE',
+        colorClass: 'border-solstice/40 bg-solstice/10 text-solstice',
+        summary: `Exceeds today's remaining pocket by ${formatINR(affordQueryParsedAmt - remaining)}. If purchased, your daily allowance will decrease from ${formatINR(burnState.effectiveDailyBurnToday)}/day to ${formatINR(burnState.recalibratedRemainingDailyBurn)}/day to protect your SIP.`,
         daysConsumed,
         tenYearValue,
       };
     } else {
       return {
-        verdict: 'danger',
-        badge: '🔴 SHIELD ENGAGED (HIGH IMPULSE DANGER)',
-        colorClass: 'text-flare border-flare/40 bg-flare/10',
-        summary: `Consumes ${daysConsumed} days of discretionary cash! Severe risk of breaching your ${formatINR(burnState.sipProtectedAmount)} monthly SIP. Park this purchase in the 72h chamber!`,
+        verdict: 'hazard',
+        badge: '🚨 IMPULSE HAZARD',
+        colorClass: 'border-flare/40 bg-flare/10 text-flare',
+        summary: `Consumes ${daysConsumed} full days of living allowance! Would wipe out today's pocket and severely reduce future spending power. Recommend parking in 72-Hour Cooling Chamber.`,
         daysConsumed,
         tenYearValue,
       };
     }
   }, [affordQueryParsedAmt, burnState]);
 
-  // 30-Day Liquidity Calendar Mini-Strip dates
-  const now = new Date();
-  const currentDayOfMonth = now.getDate();
-  const daysInCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-
-  const handleBuyCoolingItem = (item: CoolingOffItem) => {
-    // User decided to purchase: deduct from today's burn pocket and remove from chamber
-    handleLogSpend('retail_impulse', item.title, item.amount);
-    setCoolingItems((prev) => prev.filter((i) => i.id !== item.id));
-    setActiveTab('burn_pocket');
-  };
-
-  const handleDeleteCoolingItem = (id: string) => {
-    setCoolingItems((prev) => prev.filter((i) => i.id !== id));
-    playSynthesizerChime(300);
-  };
-
-  const percentUsedToday = Math.min(
-    100,
-    Math.round((spentToday / Math.max(1, burnState.effectiveDailyBurnToday)) * 100)
-  );
+  // Radial Speedometer Circumference Math
+  const RADIUS = 44;
+  const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+  const strokeDashoffset = useMemo(() => {
+    const fraction = Math.min(1, Math.max(0, spentToday / (burnState.effectiveDailyBurnToday || 1)));
+    return CIRCUMFERENCE * (1 - fraction);
+  }, [spentToday, burnState.effectiveDailyBurnToday, CIRCUMFERENCE]);
 
   return (
     <section className="hipuku-card impulse-shield-card flex-col justify-between" id="tour-impulse-shield">
       <div>
         {/* Header with Mode Switcher */}
-        <div className="card-header-row mb-2.5 flex-between items-center flex-wrap gap-2">
+        <div className="card-header-row mb-3 flex-between items-center flex-wrap gap-2">
           <div className="flex-align gap-2 flex-wrap min-w-0">
             <span className="tag-pill tag-corona shrink-0 flex-align gap-1 font-mono text-[11px]">
               <Zap size={11} /> Impulse Shield
@@ -341,7 +357,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
             <span className="card-title whitespace-nowrap">Daily Discretionary Pocket</span>
             <InfoTooltip
               title="Tactile Daily Burn & SIP Shield"
-              explanation="Calculates your mathematically safe discretionary spending allowance per day after subtracting fixed living expenses and committed mutual fund SIPs. If you overspend on dining or gadgets today, it automatically recalibrates future days to guarantee your SIP is never broken."
+              explanation="Calculates your mathematically safe discretionary spending allowance per day after subtracting fixed living expenses and committed mutual fund SIPs. If you overspend today, it automatically recalibrates future days to guarantee your SIP is never broken."
               benchmark="Rule of thumb: Maintain a daily discretionary burn that preserves at least a 20%+ compounding savings rate."
             />
           </div>
@@ -388,7 +404,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
         </div>
 
         {/* Lifetime Rescued Wealth Counter Strip */}
-        <div className="p-2 px-3 rounded-lg bg-surface-page border border-subtle mb-2.5 flex items-center justify-between gap-2 flex-wrap text-xs">
+        <div className="p-2 px-3 rounded-xl bg-surface-page border border-subtle mb-3 flex items-center justify-between gap-2 flex-wrap text-xs">
           <div className="flex items-center gap-2">
             <span className="tag-pill tag-nebula flex items-center gap-1 font-mono text-[11px] font-semibold">
               <Award size={12} /> ₹{lifetimeRescued.toLocaleString('en-IN')} Capital Rescued
@@ -403,7 +419,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
         </div>
 
         {/* 1-Click "Can I Afford This Today?" Calculator Toggle & Drawer */}
-        <div className="mb-2.5">
+        <div className="mb-3">
           <button
             type="button"
             className={`w-full py-2 px-3 rounded-xl border text-xs flex flex-wrap items-center justify-between gap-2 transition-all cursor-pointer ${
@@ -416,18 +432,18 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
               playSynthesizerChime(520);
             }}
           >
-            <span className="flex items-center gap-1.5 font-semibold text-primary">
-              <Calculator size={13} className="text-quasar shrink-0" />
+            <span className="flex items-center gap-2 font-semibold text-primary">
+              <Calculator size={14} className="text-quasar shrink-0" />
               <span>Can I Afford This Today?</span>
-              <span className="text-[10px] text-muted font-normal hidden sm:inline">(Actuarial Check)</span>
+              <span className="text-[10.5px] text-muted font-normal hidden sm:inline">· Actuarial Check</span>
             </span>
-            <span className="text-[10.5px] font-mono text-quasar flex items-center gap-1 bg-quasar/10 px-2 py-0.5 rounded border border-quasar/25 shrink-0">
-              <span>{showAffordCalculator ? 'Close Calculator ▲' : 'Open 1-Click Verdict ▼'}</span>
+            <span className="text-[11px] font-mono text-quasar flex items-center gap-1 bg-quasar/15 px-2.5 py-0.5 rounded-full border border-quasar/30 shrink-0">
+              <span>{showAffordCalculator ? 'Close Scanner ▲' : 'Open 1-Click Scanner ▼'}</span>
             </span>
           </button>
 
           {showAffordCalculator && (
-            <div className="mt-2 p-3 rounded-xl bg-surface-raised border border-quasar/30 flex flex-col gap-2.5 animate-slideDown">
+            <div className="mt-2 p-3.5 rounded-xl bg-surface-raised border border-quasar/30 flex flex-col gap-3 animate-slideDown">
               <div className="flex gap-2 flex-wrap sm:flex-nowrap">
                 <input
                   type="text"
@@ -445,17 +461,48 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                 />
               </div>
 
+              {/* Quick Presets */}
+              <div className="flex items-center gap-1.5 flex-wrap text-[11px] font-mono">
+                <span className="text-muted text-[10px]">Quick Presets:</span>
+                {[250, 600, 1500, 4500, 12000].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    className="action-pill text-[10.5px] py-0.5 px-2 font-mono hover:text-quasar"
+                    onClick={() => {
+                      setAffordQueryAmount(String(preset));
+                      if (!affordQueryName) {
+                        setAffordQueryName(
+                          preset === 250
+                            ? 'Coffee & Snack'
+                            : preset === 600
+                            ? 'Food Delivery'
+                            : preset === 1500
+                            ? 'Casual Dinner'
+                            : preset === 4500
+                            ? 'Retail Apparel'
+                            : 'Weekend Getaway'
+                        );
+                      }
+                      playSynthesizerChime(480);
+                    }}
+                  >
+                    ₹{preset.toLocaleString('en-IN')}
+                  </button>
+                ))}
+              </div>
+
               {affordAssessment && (
-                <div className={`p-2.5 rounded-lg border flex flex-col gap-2 ${affordAssessment.colorClass}`}>
+                <div className={`p-3 rounded-lg border flex flex-col gap-2 ${affordAssessment.colorClass}`}>
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <span className="font-mono text-xs font-bold tracking-wider">{affordAssessment.badge}</span>
                     <span className="font-mono text-[11px]">
-                      Consumes <strong>{affordAssessment.daysConsumed} days</strong> of discretionary allowance
+                      Consumes <strong>{affordAssessment.daysConsumed} days</strong> of daily pocket
                     </span>
                   </div>
-                  <p className="text-xs m-0 leading-relaxed text-secondary">{affordAssessment.summary}</p>
+                  <p className="text-xs m-0 leading-relaxed text-secondary font-sans">{affordAssessment.summary}</p>
                   <div className="flex items-center justify-between font-mono text-[11px] pt-1.5 border-t border-subtle">
-                    <span className="text-muted">10-Yr Compounded Opportunity Cost (12% CAGR):</span>
+                    <span className="text-muted">10-Yr Compounded Cost in Nifty 50 (12% CAGR):</span>
                     <strong className="text-solstice">₹{affordAssessment.tenYearValue.toLocaleString('en-IN')}</strong>
                   </div>
 
@@ -545,61 +592,105 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
         {/* TAB 1: DAILY BURN POCKET */}
         {activeTab === 'burn_pocket' ? (
           <div>
-            {/* 4 Big Key Indicator Boxes */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 my-2.5">
-              {/* Box 1: Safe Burn Allowance */}
-              <div className="p-2.5 rounded-xl bg-surface-overlay border border-subtle/80 hover:border-quasar/30 transition-all flex flex-col justify-between">
-                <span className="font-mono text-[10.5px] text-muted block">Safe Burn / Day</span>
-                <strong className="font-mono text-lg text-primary block mt-0.5">
-                  {formatINR(burnState.effectiveDailyBurnToday)}
-                </strong>
-                <span className="text-[9.5px] text-muted block mt-1">
-                  {burnState.weekendModeActive ? 'Weekend Weighted' : 'Flat 30-Day Spread'}
-                </span>
+            {/* Visual Radial Burn Gauge & Core Metrics Grid */}
+            <div className="p-3 rounded-2xl bg-surface-overlay border border-subtle mb-3 flex flex-col md:flex-row items-center gap-4">
+              {/* Radial Donut Gauge */}
+              <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                  {/* Background Track */}
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r={RADIUS}
+                    className="stroke-subtle/30"
+                    strokeWidth="8"
+                    fill="none"
+                  />
+                  {/* Dynamic Value Arc */}
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r={RADIUS}
+                    className={`transition-all duration-500 ${
+                      burnState.isOverspentToday > 0
+                        ? 'stroke-flare'
+                        : percentUsedToday > 75
+                        ? 'stroke-solstice'
+                        : 'stroke-nebula'
+                    }`}
+                    strokeWidth="8"
+                    strokeDasharray={CIRCUMFERENCE}
+                    strokeDashoffset={strokeDashoffset}
+                    strokeLinecap="round"
+                    fill="none"
+                  />
+                </svg>
+                {/* Center Content */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none">
+                  <span className="text-[10px] font-mono text-muted leading-tight">Left</span>
+                  <span
+                    className={`font-mono text-sm font-bold leading-tight ${
+                      burnState.isOverspentToday > 0 ? 'text-flare' : 'text-primary'
+                    }`}
+                  >
+                    {burnState.isOverspentToday > 0
+                      ? `-${formatINR(burnState.isOverspentToday)}`
+                      : formatINR(burnState.remainingBurnToday)}
+                  </span>
+                  <span className="text-[9px] font-mono text-muted/70">{percentUsedToday}% used</span>
+                </div>
               </div>
 
-              {/* Box 2: Remaining Today */}
-              <div className="p-2.5 rounded-xl bg-surface-overlay border border-subtle/80 hover:border-nebula/30 transition-all flex flex-col justify-between">
-                <span className="font-mono text-[10.5px] text-muted block">Remaining Today</span>
-                <strong
-                  className={`font-mono text-lg block mt-0.5 ${
-                    burnState.isOverspentToday > 0 ? 'text-flare' : 'text-nebula'
-                  }`}
-                >
-                  {burnState.isOverspentToday > 0
-                    ? `-${formatINR(burnState.isOverspentToday)}`
-                    : formatINR(burnState.remainingBurnToday)}
-                </strong>
-                <span className="text-[9.5px] text-muted block mt-1">
-                  {burnState.isOverspentToday > 0 ? 'Exceeded Allowance' : 'Safe to Spend'}
-                </span>
-              </div>
+              {/* 4 Pillars Stat Row */}
+              <div className="grid grid-cols-2 gap-2 w-full">
+                {/* Box 1: Safe Burn Allowance */}
+                <div className="p-2.5 rounded-xl bg-surface-page border border-subtle/70">
+                  <span className="font-mono text-[10px] text-muted block">Safe Burn / Day</span>
+                  <strong className="font-mono text-base text-primary block mt-0.5">
+                    {formatINR(burnState.effectiveDailyBurnToday)}
+                  </strong>
+                  <span className="text-[9.5px] text-muted block mt-0.5">
+                    {burnState.weekendModeActive ? 'Weekend Weighted' : 'Flat 30-Day Spread'}
+                  </span>
+                </div>
 
-              {/* Box 3: Recalibrated Future Days */}
-              <div className="p-2.5 rounded-xl bg-surface-overlay border border-subtle/80 hover:border-solstice/30 transition-all flex flex-col justify-between">
-                <span className="font-mono text-[10.5px] text-muted block">Future Daily Cap</span>
-                <strong className="font-mono text-lg text-solstice block mt-0.5">
-                  {formatINR(burnState.recalibratedRemainingDailyBurn)}
-                </strong>
-                <span className="text-[9.5px] text-muted block mt-1 font-mono">
-                  Next {burnState.remainingDaysInMonth - 1} Days
-                </span>
-              </div>
+                {/* Box 2: Logged Today */}
+                <div className="p-2.5 rounded-xl bg-surface-page border border-subtle/70">
+                  <span className="font-mono text-[10px] text-muted block">Spent Today</span>
+                  <strong className="font-mono text-base text-secondary block mt-0.5">
+                    {formatINR(spentToday)}
+                  </strong>
+                  <span className="text-[9.5px] text-muted block mt-0.5">
+                    {todaySpendLog.length} transaction{todaySpendLog.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
 
-              {/* Box 4: SIP Untouchable Fortress */}
-              <div className="p-2.5 rounded-xl bg-surface-overlay border border-subtle/80 hover:border-quasar/30 transition-all flex flex-col justify-between">
-                <span className="font-mono text-[10.5px] text-muted block flex items-center gap-1">
-                  <Lock size={10} className="text-quasar" /> SIP Protected Core
-                </span>
-                <strong className="font-mono text-lg text-quasar block mt-0.5">
-                  {formatINR(burnState.sipProtectedAmount)}
-                </strong>
-                <span className="text-[9.5px] text-muted block mt-1">100% Ring-Fenced</span>
+                {/* Box 3: Recalibrated Future Cap */}
+                <div className="p-2.5 rounded-xl bg-surface-page border border-subtle/70">
+                  <span className="font-mono text-[10px] text-muted block">Future Daily Cap</span>
+                  <strong className="font-mono text-base text-solstice block mt-0.5">
+                    {formatINR(burnState.recalibratedRemainingDailyBurn)}
+                  </strong>
+                  <span className="text-[9.5px] text-muted block mt-0.5 font-mono">
+                    Next {burnState.remainingDaysInMonth - 1} Days
+                  </span>
+                </div>
+
+                {/* Box 4: SIP Untouchable Fortress */}
+                <div className="p-2.5 rounded-xl bg-surface-page border border-subtle/70">
+                  <span className="font-mono text-[10px] text-muted block flex items-center gap-1">
+                    <Lock size={10} className="text-quasar" /> SIP Protected
+                  </span>
+                  <strong className="font-mono text-base text-quasar block mt-0.5">
+                    {formatINR(burnState.sipProtectedAmount)}
+                  </strong>
+                  <span className="text-[9.5px] text-muted block mt-0.5">100% Ring-Fenced</span>
+                </div>
               </div>
             </div>
 
             {/* Sub-Bar: Discipline Streak & Surplus Rollover */}
-            <div className="p-2.5 rounded-xl bg-surface-page border border-subtle mb-3 flex items-center justify-between gap-2 flex-wrap text-xs">
+            <div className="p-2.5 px-3 rounded-xl bg-surface-page border border-subtle mb-3 flex items-center justify-between gap-2 flex-wrap text-xs">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="tag-pill tag-corona flex items-center gap-1 font-mono text-[11px] font-semibold">
                   <Flame size={12} className="text-corona" /> {streakDays}-Day Discipline Streak
@@ -648,28 +739,6 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
               </div>
             </div>
 
-            {/* Consumption Gauge */}
-            <div className="mb-3">
-              <div className="flex-between items-center text-xs font-mono mb-1">
-                <span className="text-muted">Today's Consumption Gauge</span>
-                <span className={burnState.isOverspentToday > 0 ? 'text-flare font-bold' : 'text-primary'}>
-                  {spentToday > 0 ? `${formatINR(spentToday)} logged (${percentUsedToday}%)` : '₹0 logged today'}
-                </span>
-              </div>
-              <div className="w-full bg-surface-page rounded-full h-2 overflow-hidden border border-subtle">
-                <div
-                  className={`h-full transition-all duration-300 ${
-                    burnState.isOverspentToday > 0
-                      ? 'bg-flare'
-                      : percentUsedToday > 80
-                      ? 'bg-solstice'
-                      : 'bg-gradient-to-r from-nebula to-quasar'
-                  }`}
-                  style={{ width: `${Math.min(100, percentUsedToday)}%` }}
-                />
-              </div>
-            </div>
-
             {/* Dynamic Overspend Alert */}
             {burnState.isOverspentToday > 0 && (
               <div className="p-2.5 rounded-xl bg-flare/10 border border-flare/30 my-2.5 flex items-start gap-2 text-xs">
@@ -693,20 +762,32 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                 <span className="font-mono text-xs text-muted flex-align gap-1">
                   <Zap size={12} className="text-corona" /> 1-Tap Category Micro-Envelopes:
                 </span>
-                <button
-                  type="button"
-                  className={`action-pill font-mono text-[11px] flex-align gap-1 ${weekendMode ? 'pill-active-mode' : ''}`}
-                  onClick={toggleWeekendMode}
-                  title={weekendMode ? 'Weekend Splurge Active (Fri-Sun weighted 1.35x)' : 'Flat Daily Spread'}
-                >
-                  <Calendar size={11} className={weekendMode ? 'text-solstice' : 'text-muted'} />
-                  <span>Weekend Mode: {weekendMode ? 'ON' : 'OFF'}</span>
-                </button>
+                <div className="flex items-center gap-1.5">
+                  {lastLoggedEntry && (
+                    <button
+                      type="button"
+                      className="action-pill font-mono text-[10.5px] py-0.5 px-2 text-flare border-flare/30 flex items-center gap-1 hover:bg-flare/10"
+                      onClick={handleUndoLastSpend}
+                      title={`Undo last logged spend: ${lastLoggedEntry.title} (${formatINR(lastLoggedEntry.amount)})`}
+                    >
+                      <Undo2 size={10} /> Undo {formatINR(lastLoggedEntry.amount)}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className={`action-pill font-mono text-[11px] flex-align gap-1 ${weekendMode ? 'pill-active-mode' : ''}`}
+                    onClick={toggleWeekendMode}
+                    title={weekendMode ? 'Weekend Splurge Active (Fri-Sun weighted 1.35x)' : 'Flat Daily Spread'}
+                  >
+                    <Calendar size={11} className={weekendMode ? 'text-solstice' : 'text-muted'} />
+                    <span>Weekend Mode: {weekendMode ? 'ON' : 'OFF'}</span>
+                  </button>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                 {/* Envelope 1: Chai & Quick Delivery */}
-                <div className="p-2 rounded-lg bg-surface-page border border-subtle">
+                <div className="p-2.5 rounded-lg bg-surface-page border border-subtle">
                   <div className="flex-align gap-1 text-[11px] font-mono text-solstice mb-1.5 font-semibold">
                     <Coffee size={12} /> Chai & Quick Snack
                   </div>
@@ -736,37 +817,37 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                 </div>
 
                 {/* Envelope 2: Dining Out & Cafes */}
-                <div className="p-2 rounded-lg bg-surface-page border border-subtle">
+                <div className="p-2.5 rounded-lg bg-surface-page border border-subtle">
                   <div className="flex-align gap-1 text-[11px] font-mono text-quasar mb-1.5 font-semibold">
-                    <Utensils size={12} /> Dining Out & Social
+                    <Utensils size={12} /> Dining & Social
                   </div>
                   <div className="flex gap-1 flex-wrap">
                     <button
                       type="button"
                       className="action-pill font-mono text-[10.5px] py-1 px-2 flex-1 text-center"
-                      onClick={() => handleLogSpend('dining_night', 'Work Lunch', 500)}
+                      onClick={() => handleLogSpend('dining_night', 'Work Lunch', 400)}
                     >
-                      +₹500
+                      +₹400
                     </button>
                     <button
                       type="button"
                       className="action-pill font-mono text-[10.5px] py-1 px-2 flex-1 text-center"
-                      onClick={() => handleLogSpend('dining_night', 'Dinner with Friends', 1200)}
+                      onClick={() => handleLogSpend('dining_night', 'Dinner with Friends', 850)}
                     >
-                      +₹1,200
+                      +₹850
                     </button>
                     <button
                       type="button"
                       className="action-pill font-mono text-[10.5px] py-1 px-2 flex-1 text-center"
-                      onClick={() => handleLogSpend('dining_night', 'Weekend Splurge Dinner', 2500)}
+                      onClick={() => handleLogSpend('dining_night', 'Weekend Splurge Dinner', 1800)}
                     >
-                      +₹2,500
+                      +₹1,800
                     </button>
                   </div>
                 </div>
 
                 {/* Envelope 3: Retail & Online Shopping */}
-                <div className="p-2 rounded-lg bg-surface-page border border-subtle">
+                <div className="p-2.5 rounded-lg bg-surface-page border border-subtle">
                   <div className="flex-align gap-1 text-[11px] font-mono text-corona mb-1.5 font-semibold">
                     <ShoppingBag size={12} /> Retail & Shopping
                   </div>
@@ -794,58 +875,97 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                     </button>
                   </div>
                 </div>
+
+                {/* Envelope 4: Commute, Metro & Cabs */}
+                <div className="p-2.5 rounded-lg bg-surface-page border border-subtle">
+                  <div className="flex-align gap-1 text-[11px] font-mono text-nebula mb-1.5 font-semibold">
+                    <Car size={12} /> Commute & Cabs
+                  </div>
+                  <div className="flex gap-1 flex-wrap">
+                    <button
+                      type="button"
+                      className="action-pill font-mono text-[10.5px] py-1 px-2 flex-1 text-center"
+                      onClick={() => handleLogSpend('other', 'Auto / Metro Card Recharge', 150)}
+                    >
+                      +₹150
+                    </button>
+                    <button
+                      type="button"
+                      className="action-pill font-mono text-[10.5px] py-1 px-2 flex-1 text-center"
+                      onClick={() => handleLogSpend('other', 'Uber / Ola Daily Cab', 350)}
+                    >
+                      +₹350
+                    </button>
+                    <button
+                      type="button"
+                      className="action-pill font-mono text-[10.5px] py-1 px-2 flex-1 text-center"
+                      onClick={() => handleLogSpend('other', 'Airport / Intercity Cab', 750)}
+                    >
+                      +₹750
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {/* Custom Spend Input Toggle */}
               <div className="mt-2.5 pt-2 border-t border-subtle flex-between items-center gap-2 flex-wrap">
-                {showCustomInput ? (
-                  <form
-                    className="flex-align gap-2 flex-1 min-w-[200px]"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      const amt = parseFloat(customSpendVal);
-                      if (!isNaN(amt) && amt > 0) {
-                        handleLogSpend('other', 'Custom Discretionary', amt);
-                        setCustomSpendVal('');
-                        setShowCustomInput(false);
-                      }
-                    }}
-                  >
-                    <input
-                      type="number"
-                      placeholder="Amount in ₹"
-                      className="hipuku-input text-xs font-mono py-1 px-2 flex-1"
-                      value={customSpendVal}
-                      onChange={(e) => setCustomSpendVal(e.target.value)}
-                      autoFocus
-                    />
-                    <button type="submit" className="action-pill font-mono text-xs py-1 px-2.5">
-                      Log
-                    </button>
-                    <button
-                      type="button"
-                      className="icon-pill"
-                      onClick={() => setShowCustomInput(false)}
-                    >
-                      <RotateCcw size={11} />
-                    </button>
-                  </form>
-                ) : (
+                {!showCustomInput ? (
                   <button
                     type="button"
                     className="text-xs font-mono text-muted hover:text-primary flex-align gap-1"
                     onClick={() => setShowCustomInput(true)}
                   >
-                    <Plus size={11} /> Log custom amount
+                    <Plus size={12} /> Log Custom Amount
                   </button>
+                ) : (
+                  <div className="flex-align gap-2 flex-wrap w-full">
+                    <input
+                      type="number"
+                      placeholder="Amount (₹)"
+                      className="hipuku-input text-xs font-mono w-28 py-1 px-2"
+                      value={customSpendVal}
+                      onChange={(e) => setCustomSpendVal(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          const amt = parseFloat(customSpendVal);
+                          if (!isNaN(amt) && amt > 0) {
+                            handleLogSpend('other', 'Custom Spend', amt);
+                            setCustomSpendVal('');
+                            setShowCustomInput(false);
+                          }
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="action-pill font-mono text-xs py-1 px-2.5 bg-solstice/20 text-solstice border-solstice/40 cursor-pointer"
+                      onClick={() => {
+                        const amt = parseFloat(customSpendVal);
+                        if (!isNaN(amt) && amt > 0) {
+                          handleLogSpend('other', 'Custom Spend', amt);
+                          setCustomSpendVal('');
+                          setShowCustomInput(false);
+                        }
+                      }}
+                    >
+                      Log Spend
+                    </button>
+                    <button
+                      type="button"
+                      className="action-pill font-mono text-xs py-1 px-2 text-muted"
+                      onClick={() => setShowCustomInput(false)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 )}
 
                 {todaySpendLog.length > 0 && (
                   <button
                     type="button"
-                    className="text-xs font-mono text-flare/80 hover:text-flare flex-align gap-1"
+                    className="action-pill font-mono text-[10.5px] py-0.5 px-2 text-muted hover:text-flare flex-align gap-1"
                     onClick={handleResetToday}
-                    title="Reset today's logged spending"
+                    title="Clear today's spend log"
                   >
                     <RotateCcw size={11} /> Reset Today ({todaySpendLog.length} items)
                   </button>
@@ -866,8 +986,10 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                         <Coffee size={12} className="text-solstice" />
                       ) : entry.category === 'dining_night' ? (
                         <Utensils size={12} className="text-quasar" />
-                      ) : (
+                      ) : entry.category === 'retail_impulse' ? (
                         <ShoppingBag size={12} className="text-corona" />
+                      ) : (
+                        <Zap size={12} className="text-nebula" />
                       )}
                       <span className="text-primary truncate font-medium">{entry.title}</span>
                     </div>

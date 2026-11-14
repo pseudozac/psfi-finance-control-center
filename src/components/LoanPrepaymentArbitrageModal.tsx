@@ -6,6 +6,14 @@ import {
   ShieldCheck,
   IndianRupee,
   Sparkles,
+  Layers,
+  ChevronDown,
+  ChevronUp,
+  Home,
+  Car,
+  GraduationCap,
+  Banknote,
+  CheckCircle2,
 } from 'lucide-react';
 import { calculateLoanArbitrage, type LoanArbitrageInputs } from '../lib/loanArbitrage';
 
@@ -14,6 +22,55 @@ interface LoanPrepaymentArbitrageModalProps {
   onClose: () => void;
   defaultLoanAmount?: number;
 }
+
+interface LoanPreset {
+  id: string;
+  name: string;
+  icon: typeof Home;
+  amount: number;
+  rate: number;
+  years: number;
+  prepayment: number;
+}
+
+const LOAN_PRESETS: LoanPreset[] = [
+  {
+    id: 'home_loan',
+    name: 'Home Loan',
+    icon: Home,
+    amount: 5000000,
+    rate: 8.5,
+    years: 20,
+    prepayment: 10000,
+  },
+  {
+    id: 'car_loan',
+    name: 'Car Loan',
+    icon: Car,
+    amount: 1200000,
+    rate: 9.25,
+    years: 7,
+    prepayment: 5000,
+  },
+  {
+    id: 'education_loan',
+    name: 'Education Loan',
+    icon: GraduationCap,
+    amount: 3000000,
+    rate: 10.25,
+    years: 10,
+    prepayment: 8000,
+  },
+  {
+    id: 'personal_loan',
+    name: 'Personal Loan',
+    icon: Banknote,
+    amount: 800000,
+    rate: 13.5,
+    years: 5,
+    prepayment: 4000,
+  },
+];
 
 export function LoanPrepaymentArbitrageModal({
   isOpen,
@@ -26,6 +83,17 @@ export function LoanPrepaymentArbitrageModal({
   const [extraMonthlyPrepayment, setExtraMonthlyPrepayment] = useState<number>(10000);
   const [lumpSumPrepayment, setLumpSumPrepayment] = useState<number>(0);
   const [sipExpectedCagr, setSipExpectedCagr] = useState<number>(12);
+  const [taxRegime, setTaxRegime] = useState<'new_regime' | 'old_regime'>('new_regime');
+  const [selectedPreset, setSelectedPreset] = useState<string>('home_loan');
+  const [showScheduleTable, setShowScheduleTable] = useState<boolean>(false);
+
+  const applyPreset = (preset: LoanPreset) => {
+    setSelectedPreset(preset.id);
+    setLoanAmount(preset.amount);
+    setAnnualInterestRate(preset.rate);
+    setTenureYears(preset.years);
+    setExtraMonthlyPrepayment(preset.prepayment);
+  };
 
   const inputs: LoanArbitrageInputs = useMemo(
     () => ({
@@ -35,8 +103,9 @@ export function LoanPrepaymentArbitrageModal({
       extraMonthlyPrepayment,
       lumpSumPrepayment,
       sipExpectedCagr,
+      taxRegime,
     }),
-    [loanAmount, annualInterestRate, tenureYears, extraMonthlyPrepayment, lumpSumPrepayment, sipExpectedCagr]
+    [loanAmount, annualInterestRate, tenureYears, extraMonthlyPrepayment, lumpSumPrepayment, sipExpectedCagr, taxRegime]
   );
 
   const result = useMemo(() => calculateLoanArbitrage(inputs), [inputs]);
@@ -50,7 +119,7 @@ export function LoanPrepaymentArbitrageModal({
     if (Math.abs(val) >= 100000) {
       return `₹${(val / 100000).toFixed(2)} L`;
     }
-    return `₹${val.toLocaleString('en-IN')}`;
+    return `₹${Math.round(val).toLocaleString('en-IN')}`;
   };
 
   return (
@@ -58,24 +127,25 @@ export function LoanPrepaymentArbitrageModal({
       <div
         className="modal-card loan-arbitrage-modal"
         onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: '980px', maxHeight: '92vh', overflowY: 'auto' }}
       >
         {/* Header */}
         <div className="loan-arbitrage-header">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-solstice/10 border border-solstice/30 flex items-center justify-center text-solstice shadow-inner">
-              <Scale size={18} />
+            <div className="w-10 h-10 rounded-xl bg-solstice/10 border border-solstice/30 flex items-center justify-center text-solstice shadow-inner">
+              <Scale size={20} />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-base font-bold text-ink-primary tracking-tight">
                   Loan Prepayment vs. Equity SIP Arbitrage
                 </h2>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-solstice/15 text-solstice border border-solstice/30">
-                  ACTUARIAL VERDICT
+                  ACTUARIAL ARBITRAGE ENGINE
                 </span>
               </div>
               <p className="text-xs text-ink-secondary">
-                Model whether extra monthly cashflow should prepay debt or compound in Nifty 50 equity
+                Model debt prepayment vs. compounding equity SIPs with Indian statutory tax rules (Section 24b vs 115BAC)
               </p>
             </div>
           </div>
@@ -90,7 +160,34 @@ export function LoanPrepaymentArbitrageModal({
         </div>
 
         {/* Content Body */}
-        <div className="loan-arbitrage-body">
+        <div className="loan-arbitrage-body space-y-4">
+          {/* Preset Selector Strip */}
+          <div className="p-2.5 rounded-xl bg-surface-raised/40 border border-subtle/70 flex items-center justify-between gap-2 flex-wrap">
+            <span className="text-[11px] font-mono text-muted flex items-center gap-1.5">
+              <Sparkles size={12} className="text-quasar" /> Loan Archetypes:
+            </span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {LOAN_PRESETS.map((preset) => {
+                const Icon = preset.icon;
+                const isActive = selectedPreset === preset.id;
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    className={`action-pill text-xs py-1 px-2.5 flex items-center gap-1.5 transition-all ${
+                      isActive ? 'pill-active-mode font-semibold' : ''
+                    }`}
+                    onClick={() => applyPreset(preset)}
+                  >
+                    <Icon size={12} />
+                    <span>{preset.name}</span>
+                    <span className="text-[10px] opacity-75 font-mono">({formatLakhs(preset.amount)})</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Actuarial Verdict Hero Banner */}
           <div
             className={`p-4 rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all ${
@@ -102,19 +199,19 @@ export function LoanPrepaymentArbitrageModal({
             }`}
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-surface-base border border-current/30 flex items-center justify-center shrink-0">
+              <div className="w-11 h-11 rounded-full bg-surface-base border border-current/30 flex items-center justify-center shrink-0">
                 {result.recommendedStrategy === 'invest_sip' ? (
-                  <TrendingUp size={20} />
+                  <TrendingUp size={22} />
                 ) : result.recommendedStrategy === 'prepay_debt' ? (
-                  <ShieldCheck size={20} />
+                  <ShieldCheck size={22} />
                 ) : (
-                  <Scale size={20} />
+                  <Scale size={22} />
                 )}
               </div>
               <div>
                 <span className="text-[11px] font-mono uppercase tracking-wider font-bold block opacity-80">
                   {result.recommendedStrategy === 'invest_sip'
-                    ? '⚡ Equity Compounding Superior'
+                    ? '⚡ Equity Compounding Superiority'
                     : result.recommendedStrategy === 'prepay_debt'
                     ? '🛡️ Guaranteed Debt Elimination Favored'
                     : '⚖️ Balanced 50/50 Split Recommended'}
@@ -128,61 +225,135 @@ export function LoanPrepaymentArbitrageModal({
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-2 font-mono text-xs bg-surface-base/80 px-3 py-1.5 rounded-lg border border-current/20 shrink-0">
-              <span className="text-muted">Break-Even Market CAGR:</span>
-              <span className="font-bold text-ink-primary">{result.breakEvenCagr}%</span>
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-2 font-mono text-xs bg-surface-base/80 px-3 py-1.5 rounded-lg border border-current/20 shrink-0">
+                <span className="text-muted">Break-Even Market CAGR:</span>
+                <span className="font-bold text-ink-primary">{result.breakEvenCagr}%</span>
+              </div>
             </div>
           </div>
 
-          {/* 4 Stat Overview Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="p-3.5 rounded-xl bg-surface-raised/50 border border-subtle/80">
-              <span className="text-[11px] font-mono text-muted block mb-1">Standard Monthly EMI</span>
-              <span className="text-lg font-bold font-mono text-ink-primary">
-                ₹{result.monthlyEmi.toLocaleString('en-IN')}
-              </span>
-              <span className="text-[10px] text-muted block mt-0.5">Over {tenureYears * 12} months baseline</span>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-surface-raised/50 border border-subtle/80">
-              <span className="text-[11px] font-mono text-solstice block mb-1">Interest Saved (Debt)</span>
-              <span className="text-lg font-bold font-mono text-solstice">
-                {formatLakhs(result.interestSaved)}
-              </span>
-              <span className="text-[10px] text-muted block mt-0.5">
-                Shaves {Math.floor(result.monthsSaved / 12)}y {result.monthsSaved % 12}m off loan
+          {/* Virtual Debt-Free Milestone Banner */}
+          {result.virtualDebtFreeYear && (
+            <div className="p-3 px-4 rounded-xl bg-solstice/10 border border-solstice/30 flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2.5">
+                <CheckCircle2 size={16} className="text-solstice shrink-0" />
+                <span className="text-xs text-ink-secondary">
+                  <strong className="text-solstice font-semibold">Virtual Debt-Free Milestone:</strong> In{' '}
+                  <strong className="font-mono text-ink-primary">Year {result.virtualDebtFreeYear}</strong>, your equity SIP corpus overtakes your remaining loan balance. You can pay off the debt at any time or keep compounding!
+                </span>
+              </div>
+              <span className="font-mono text-xs font-bold text-solstice bg-solstice/15 px-2.5 py-0.5 rounded border border-solstice/25">
+                Year {result.virtualDebtFreeYear} Crossover
               </span>
             </div>
+          )}
 
-            <div className="p-3.5 rounded-xl bg-surface-raised/50 border border-subtle/80">
-              <span className="text-[11px] font-mono text-nebula block mb-1">SIP Net Wealth Gain</span>
-              <span className="text-lg font-bold font-mono text-nebula">
-                {formatLakhs(result.sipNetWealthGain)}
-              </span>
-              <span className="text-[10px] text-muted block mt-0.5">
-                Total FV: {formatLakhs(result.sipFutureValue)}
-              </span>
+          {/* 3-Strategy Comparison Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* Strategy 1: Path A (100% Prepayment) */}
+            <div className={`p-4 rounded-xl border transition-all ${
+              result.recommendedStrategy === 'prepay_debt'
+                ? 'bg-solstice/10 border-solstice/50 shadow-sm'
+                : 'bg-surface-raised/40 border-subtle/80'
+            }`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-mono font-bold text-solstice uppercase tracking-wider flex items-center gap-1">
+                  <ShieldCheck size={14} /> Path A: 100% Prepay
+                </span>
+                {result.recommendedStrategy === 'prepay_debt' && (
+                  <span className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-solstice/20 text-solstice font-bold">OPTIMAL</span>
+                )}
+              </div>
+              <div className="space-y-1.5 pt-1">
+                <div>
+                  <span className="text-[10.5px] text-muted block font-mono">Interest Saved</span>
+                  <strong className="text-lg font-bold font-mono text-solstice">{formatLakhs(result.interestSaved)}</strong>
+                </div>
+                <div>
+                  <span className="text-[10.5px] text-muted block font-mono">Tenure Reduced</span>
+                  <span className="text-sm font-semibold font-mono text-ink-primary">
+                    Shaves {Math.floor(result.monthsSaved / 12)}y {result.monthsSaved % 12}m
+                  </span>
+                </div>
+                <div className="pt-1 border-t border-subtle/50 text-[11px] text-muted">
+                  Guaranteed risk-free return of {annualInterestRate}% p.a.
+                </div>
+              </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-surface-raised/50 border border-subtle/80">
-              <span className="text-[11px] font-mono text-quasar block mb-1">Net Arbitrage Delta</span>
-              <span className="text-lg font-bold font-mono text-quasar">
-                {result.netArbitrageAdvantage >= 0 ? '+' : ''}
-                {formatLakhs(result.netArbitrageAdvantage)}
-              </span>
-              <span className="text-[10px] text-muted block mt-0.5">SIP Wealth vs Interest Saved</span>
+            {/* Strategy 2: Path B (100% Equity SIP) */}
+            <div className={`p-4 rounded-xl border transition-all ${
+              result.recommendedStrategy === 'invest_sip'
+                ? 'bg-nebula/10 border-nebula/50 shadow-sm'
+                : 'bg-surface-raised/40 border-subtle/80'
+            }`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-mono font-bold text-nebula uppercase tracking-wider flex items-center gap-1">
+                  <TrendingUp size={14} /> Path B: 100% SIP
+                </span>
+                {result.recommendedStrategy === 'invest_sip' && (
+                  <span className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-nebula/20 text-nebula font-bold">OPTIMAL</span>
+                )}
+              </div>
+              <div className="space-y-1.5 pt-1">
+                <div>
+                  <span className="text-[10.5px] text-muted block font-mono">SIP Future Value</span>
+                  <strong className="text-lg font-bold font-mono text-nebula">{formatLakhs(result.sipFutureValue)}</strong>
+                </div>
+                <div>
+                  <span className="text-[10.5px] text-muted block font-mono">Net Wealth Gain</span>
+                  <span className="text-sm font-semibold font-mono text-ink-primary">
+                    {formatLakhs(result.sipNetWealthGain)}
+                  </span>
+                </div>
+                <div className="pt-1 border-t border-subtle/50 text-[11px] text-muted">
+                  Net wealth delta: +{formatLakhs(result.netArbitrageAdvantage)} over prepay
+                </div>
+              </div>
+            </div>
+
+            {/* Strategy 3: Path C (Smart 50/50 Hybrid) */}
+            <div className={`p-4 rounded-xl border transition-all ${
+              result.recommendedStrategy === 'balanced_split'
+                ? 'bg-quasar/10 border-quasar/50 shadow-sm'
+                : 'bg-surface-raised/40 border-subtle/80'
+            }`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-mono font-bold text-quasar uppercase tracking-wider flex items-center gap-1">
+                  <Layers size={14} /> Path C: 50/50 Hybrid
+                </span>
+                {result.recommendedStrategy === 'balanced_split' && (
+                  <span className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-quasar/20 text-quasar font-bold">BALANCED</span>
+                )}
+              </div>
+              <div className="space-y-1.5 pt-1">
+                <div>
+                  <span className="text-[10.5px] text-muted block font-mono">Combined Benefit</span>
+                  <strong className="text-lg font-bold font-mono text-quasar">{formatLakhs(result.hybrid.totalCombinedBenefit)}</strong>
+                </div>
+                <div>
+                  <span className="text-[10.5px] text-muted block font-mono">Tenure Shaved + SIP Corpus</span>
+                  <span className="text-sm font-semibold font-mono text-ink-primary">
+                    {Math.floor(result.hybrid.monthsSaved / 12)}y saved + {formatLakhs(result.hybrid.sipFutureValue)}
+                  </span>
+                </div>
+                <div className="pt-1 border-t border-subtle/50 text-[11px] text-muted">
+                  50% to Prepay ({formatLakhs(extraMonthlyPrepayment / 2)}/mo), 50% to SIP
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Controls Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+          {/* Interactive Controls & Tax Adjustment */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
             {/* Left: Debt Parameters */}
-            <div className="p-4 rounded-xl bg-surface-raised/30 border border-subtle/60 space-y-4">
+            <div className="p-4 rounded-xl bg-surface-raised/30 border border-subtle/60 space-y-3.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider font-mono text-solstice flex items-center gap-1.5">
                   <IndianRupee size={13} /> Loan Debt Profile
                 </span>
-                <span className="text-[11px] font-mono text-muted">Home / Education Loan</span>
+                <span className="text-[11px] font-mono text-muted">EMI: ₹{result.monthlyEmi.toLocaleString('en-IN')}/mo</span>
               </div>
 
               <div>
@@ -210,7 +381,7 @@ export function LoanPrepaymentArbitrageModal({
                   <input
                     type="range"
                     min={6.5}
-                    max={14.0}
+                    max={16.0}
                     step={0.1}
                     value={annualInterestRate}
                     onChange={(e) => setAnnualInterestRate(Number(e.target.value))}
@@ -233,15 +404,46 @@ export function LoanPrepaymentArbitrageModal({
                   />
                 </div>
               </div>
+
+              {/* Tax Regime Selector */}
+              <div className="pt-2 border-t border-subtle/50">
+                <div className="flex items-center justify-between text-xs mb-1.5">
+                  <span className="text-ink-secondary font-mono text-[11px]">Indian Statutory Tax Adjustment</span>
+                  <span className="font-mono text-[10.5px] text-solstice">
+                    Effective Cost: {result.taxDetails.effectiveLoanRate}%
+                  </span>
+                </div>
+                <div className="pill-segmented flex text-xs">
+                  <button
+                    type="button"
+                    className={`flex-1 py-1 text-[11px] font-mono ${taxRegime === 'new_regime' ? 'pill-active' : ''}`}
+                    onClick={() => setTaxRegime('new_regime')}
+                  >
+                    New Regime (Sec 115BAC)
+                  </button>
+                  <button
+                    type="button"
+                    className={`flex-1 py-1 text-[11px] font-mono ${taxRegime === 'old_regime' ? 'pill-active' : ''}`}
+                    onClick={() => setTaxRegime('old_regime')}
+                  >
+                    Old Regime (Sec 24b)
+                  </button>
+                </div>
+                <p className="text-[10px] text-muted mt-1">
+                  {taxRegime === 'new_regime'
+                    ? 'Under Sec 115BAC, no home loan interest deduction is permitted. Nominal rate = effective borrowing cost.'
+                    : `Sec 24(b) permits deduction up to ₹2 Lakhs, saving ~₹${(result.taxDetails.annualTaxSavingsSec24b).toLocaleString('en-IN')}/yr in 30% slab.`}
+                </p>
+              </div>
             </div>
 
             {/* Right: Arbitrage Parameters */}
-            <div className="p-4 rounded-xl bg-surface-raised/30 border border-subtle/60 space-y-4">
+            <div className="p-4 rounded-xl bg-surface-raised/30 border border-subtle/60 space-y-3.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider font-mono text-nebula flex items-center gap-1.5">
-                  <TrendingUp size={13} /> Arbitrage Capital Outflow
+                  <TrendingUp size={13} /> Arbitrage Capital Allocation
                 </span>
-                <span className="text-[11px] font-mono text-muted">Surplus Allocation</span>
+                <span className="text-[11px] font-mono text-muted">Surplus Outflow</span>
               </div>
 
               <div>
@@ -251,8 +453,8 @@ export function LoanPrepaymentArbitrageModal({
                 </div>
                 <input
                   type="range"
-                  min={0}
-                  max={50000}
+                  min={1000}
+                  max={100000}
                   step={1000}
                   value={extraMonthlyPrepayment}
                   onChange={(e) => setExtraMonthlyPrepayment(Number(e.target.value))}
@@ -278,7 +480,7 @@ export function LoanPrepaymentArbitrageModal({
                 </div>
                 <div>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-ink-secondary">Equity Expected CAGR</span>
+                    <span className="text-ink-secondary">Nifty 50 Expected CAGR</span>
                     <span className="font-mono font-bold text-nebula">{sipExpectedCagr}%</span>
                   </div>
                   <input
@@ -292,26 +494,91 @@ export function LoanPrepaymentArbitrageModal({
                   />
                 </div>
               </div>
+
+              <div className="pt-2 border-t border-subtle/50 text-[11px] text-muted space-y-1">
+                <div className="flex justify-between font-mono text-[10.5px]">
+                  <span>Post-12.5% LTCG Equity Return:</span>
+                  <span className="text-nebula font-bold">{result.taxDetails.postTaxEquityCagr}%</span>
+                </div>
+                <p className="text-[10px]">
+                  Adjusted for Finance Act 2024 LTCG tax (12.5% on capital gains over ₹1.25 Lakh per year).
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Educational Actuarial Footnote */}
-          <div className="p-3.5 rounded-xl bg-surface-base border border-subtle/60 text-xs text-muted flex items-start gap-2.5">
-            <Sparkles size={16} className="text-solstice shrink-0 mt-0.5" />
-            <p className="leading-relaxed">
-              <strong className="text-ink-primary">Psychological vs. Mathematical Decision:</strong> Prepaying debt provides a guaranteed, risk-free return equal to your loan interest rate ({annualInterestRate}%). Meanwhile, Equity SIPs compound at market rates ({sipExpectedCagr}% CAGR) with volatility. A proven rule of thumb: prepay until debt is &lt;30% of liquid net worth, then compound aggressively in diversified index equity.
-            </p>
+          {/* Collapsible Year-by-Year Milestone Schedule Table */}
+          <div className="p-3.5 rounded-xl bg-surface-raised/30 border border-subtle/60">
+            <button
+              type="button"
+              className="w-full flex items-center justify-between text-xs font-mono font-bold text-ink-primary cursor-pointer"
+              onClick={() => setShowScheduleTable(!showScheduleTable)}
+            >
+              <span className="flex items-center gap-1.5">
+                <Layers size={13} className="text-quasar" /> Year-by-Year Amortization & Crossover Schedule ({result.yearlySchedule.length} Years)
+              </span>
+              <span className="flex items-center gap-1 text-[11px] text-muted">
+                {showScheduleTable ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                <span>{showScheduleTable ? 'Collapse Table' : 'Expand Schedule'}</span>
+              </span>
+            </button>
+
+            {showScheduleTable && (
+              <div className="mt-3 overflow-x-auto">
+                <table className="w-full text-left font-mono text-[11px] border-collapse">
+                  <thead>
+                    <tr className="border-b border-subtle text-muted text-[10px]">
+                      <th className="py-2 px-2">Year</th>
+                      <th className="py-2 px-2">Standard Loan Balance</th>
+                      <th className="py-2 px-2">Prepay Loan Balance</th>
+                      <th className="py-2 px-2">SIP Corpus (Path B)</th>
+                      <th className="py-2 px-2">Interest Saved</th>
+                      <th className="py-2 px-2">Milestone</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.yearlySchedule.map((row) => (
+                      <tr
+                        key={row.year}
+                        className={`border-b border-subtle/30 hover:bg-white/5 transition-colors ${
+                          row.isVirtualDebtFree ? 'bg-solstice/5 font-semibold text-solstice' : ''
+                        }`}
+                      >
+                        <td className="py-1.5 px-2 font-bold">Yr {row.year}</td>
+                        <td className="py-1.5 px-2">{formatLakhs(row.loanBalanceStandard)}</td>
+                        <td className="py-1.5 px-2 text-solstice">{formatLakhs(row.loanBalancePrepay)}</td>
+                        <td className="py-1.5 px-2 text-nebula">{formatLakhs(row.sipPortfolioValue)}</td>
+                        <td className="py-1.5 px-2 text-muted">{formatLakhs(row.interestSavedCumulative)}</td>
+                        <td className="py-1.5 px-2">
+                          {row.isVirtualDebtFree ? (
+                            <span className="px-1.5 py-0.5 rounded bg-solstice/20 text-solstice text-[9.5px]">
+                              ✦ Virtual Debt-Free
+                            </span>
+                          ) : row.loanBalancePrepay === 0 ? (
+                            <span className="px-1.5 py-0.5 rounded bg-nebula/20 text-nebula text-[9.5px]">
+                              ✓ 100% Paid Off
+                            </span>
+                          ) : (
+                            <span className="text-muted/60">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Footer */}
         <div className="loan-arbitrage-footer">
           <span className="text-[11px] font-mono text-muted">
-            Indian Statutory Amortization Engine · 100% Client-Side
+            Indian Statutory Amortization Engine · Section 24(b) & Section 112A Compliant · 100% Client-Side
           </span>
           <button
             type="button"
-            className="action-pill font-mono text-xs"
+            className="action-pill font-mono text-xs px-4 py-1.5"
             onClick={onClose}
           >
             Done

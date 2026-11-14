@@ -67,6 +67,7 @@ import { VaultLockGate } from './components/VaultLockGate';
 import { VaultSecurityModal } from './components/VaultSecurityModal';
 import { LoanPrepaymentArbitrageModal } from './components/LoanPrepaymentArbitrageModal';
 import { TactileCommitSlider } from './components/TactileCommitSlider';
+import { ExecutivePrintableStatement } from './components/ExecutivePrintableStatement';
 import { decodeVaultBeam } from './lib/vaultBeam';
 
 type AppPhase = 'loading' | 'gateway' | 'dashboard';
@@ -1033,11 +1034,47 @@ export function App() {
         </div>
 
         <h1 className="hero-headline">
-          Tactile Financial Intelligence<span className="hero-dot">.</span>
+          Tactile personal finance control for India<span className="hero-dot">.</span>
         </h1>
 
         <p className="hero-lede">
-          Private, zero-telemetry control center for cashflow modeling, compounding step-up SIPs, and statutory Indian tax optimization.
+          Model your{' '}
+          <button
+            type="button"
+            className="hero-inline-link link-cashflow"
+            onClick={() => document.getElementById('tour-cashflows')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+            title="Jump to Monthly Cashflow Cockpit"
+          >
+            monthly cashflow
+          </button>
+          , compound with{' '}
+          <button
+            type="button"
+            className="hero-inline-link link-sip"
+            onClick={() => document.getElementById('tour-stepup')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+            title="Jump to Step-Up SIP Compounding"
+          >
+            step-up SIPs
+          </button>
+          , audit your{' '}
+          <button
+            type="button"
+            className="hero-inline-link link-balance"
+            onClick={() => document.getElementById('tour-budget-health')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+            title="Jump to 50/30/20 Budget Health"
+          >
+            50/30/20 budget balance
+          </button>
+          , and compare{' '}
+          <button
+            type="button"
+            className="hero-inline-link link-tax"
+            onClick={() => document.getElementById('tour-tax')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+            title="Jump to Indian Tax Engine (FY 2025–26 & FY 2024–25)"
+          >
+            FY 2025–26 tax regimes
+          </button>
+          . Completely private, client-side, and offline.
         </p>
 
         {/* Minimalist Tactile Quick-Jump Dock */}
@@ -1363,6 +1400,17 @@ export function App() {
           />,
           document.body
         )}
+
+      {/* Institutional Executive 1-Page Printable PDF Statement (rendered exclusively during print/PDF generation) */}
+      <ExecutivePrintableStatement
+        plan={plan}
+        summary={summary}
+        budgetRule={budgetRule}
+        taxComparison={taxComparison}
+        projections={projections}
+        activeAccount={activeAccount}
+        baseline={baseline}
+      />
 
       {/* Minimalist Footer */}
       <footer className="footer-capsule">
