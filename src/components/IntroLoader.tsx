@@ -39,7 +39,7 @@ const FEATURES = [
   {
     icon: <Landmark size={18} className="text-corona" />,
     badge: 'TAX ENGINE',
-    title: 'FY 2024-25 Old vs New Regime Engine',
+    title: 'FY 2025–26 & FY 2024–25 Regime Engine',
     desc: 'Automated tax rebate calculator incorporating the ₹75,000 standard deduction, Sec 87A rebate, and 80C/80D optimizations.',
     color: 'corona',
   },
@@ -183,7 +183,7 @@ export const IntroLoader: React.FC<IntroLoaderProps> = ({ onFinish }) => {
               {progress < 30
                 ? 'CALIBRATING CLIENT ENCLAVE'
                 : progress < 65
-                ? 'LOADING FY 2024-25 TAX ENGINE'
+                ? 'LOADING UNION BUDGET TAX ENGINE'
                 : progress < 99
                 ? 'MOUNTING ZERO-CLOUD VAULT'
                 : 'OFFLINE VAULT READY'}

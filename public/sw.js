@@ -1,4 +1,4 @@
-const CACHE_NAME = 'psfi-v5.23-tools-drawer-pills-fix';
+const CACHE_NAME = 'psfi-v5.9.0-hero-shockdial-sip-accel';
 
 self.addEventListener('install', () => {
   self.skipWaiting();

@@ -20,6 +20,7 @@ import {
   TrendingUp,
   Calculator,
   CalendarDays,
+  Sparkles,
 } from 'lucide-react';
 import type { FinancePlan, FinanceSummary } from '../types/finance';
 import type { SpendCategory, SpendLogEntry, CoolingOffItem } from '../types/skills';
@@ -30,6 +31,7 @@ import { InfoTooltip } from './InfoTooltip';
 interface ImpulseShieldWidgetProps {
   plan: FinancePlan;
   summary: FinanceSummary;
+  onPlanChange?: (nextPlan: FinancePlan) => void;
 }
 
 type WidgetTab = 'burn_pocket' | 'cooling_chamber';
@@ -86,7 +88,7 @@ function playVictoryFanfare() {
   }
 }
 
-export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, summary }) => {
+export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, summary, onPlanChange }) => {
   const [activeTab, setActiveTab] = useState<WidgetTab>('burn_pocket');
 
   // Multi-day streak & surplus state persisted in localStorage
@@ -404,7 +406,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
         <div className="mb-2.5">
           <button
             type="button"
-            className={`w-full py-2 px-3 rounded-xl border font-mono text-xs flex items-center justify-between transition-all cursor-pointer ${
+            className={`w-full py-2 px-3 rounded-xl border text-xs flex flex-wrap items-center justify-between gap-2 transition-all cursor-pointer ${
               showAffordCalculator
                 ? 'bg-quasar/10 border-quasar/40 text-primary shadow-sm'
                 : 'bg-surface-overlay border-subtle text-muted hover:text-primary'
@@ -415,10 +417,12 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
             }}
           >
             <span className="flex items-center gap-1.5 font-semibold text-primary">
-              <Calculator size={13} className="text-quasar" /> Can I Afford This Today? (Actuarial Check)
+              <Calculator size={13} className="text-quasar shrink-0" />
+              <span>Can I Afford This Today?</span>
+              <span className="text-[10px] text-muted font-normal hidden sm:inline">(Actuarial Check)</span>
             </span>
-            <span className="text-[11px] text-quasar flex items-center gap-1">
-              <span>{showAffordCalculator ? 'Close Calculator ▲' : 'Open 1-Click Afford Verdict ▼'}</span>
+            <span className="text-[10.5px] font-mono text-quasar flex items-center gap-1 bg-quasar/10 px-2 py-0.5 rounded border border-quasar/25 shrink-0">
+              <span>{showAffordCalculator ? 'Close Calculator ▲' : 'Open 1-Click Verdict ▼'}</span>
             </span>
           </button>
 
@@ -496,16 +500,21 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
         </div>
 
         {/* 30-Day Liquidity Calendar Mini-Strip */}
-        <div className="p-2 px-3 rounded-lg bg-surface-overlay border border-subtle mb-3">
-          <div className="flex items-center justify-between text-[10.5px] font-mono text-muted mb-1.5">
-            <span className="flex items-center gap-1">
-              <CalendarDays size={11} className="text-quasar" /> 30-Day Liquidity Pace Calendar: Day {currentDayOfMonth} of {daysInCurrentMonth}
-            </span>
-            <span className="text-secondary">
-              {daysInCurrentMonth - currentDayOfMonth} Days to Next Salary Cycle
-            </span>
+        <div className="p-2.5 px-3 rounded-xl bg-surface-overlay border border-subtle mb-3">
+          <div className="flex flex-wrap items-center justify-between gap-1.5 text-[11px] font-mono text-muted mb-2">
+            <div className="flex items-center gap-1.5 text-primary font-medium min-w-0 flex-wrap">
+              <CalendarDays size={12} className="text-quasar shrink-0" />
+              <span>Day {currentDayOfMonth} of {daysInCurrentMonth}</span>
+              <span className="text-muted/40">·</span>
+              <span className="text-secondary text-[10px]">30-Day Liquidity Track</span>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-solstice font-semibold bg-solstice/10 px-2 py-0.5 rounded border border-solstice/20 text-[10px]">
+                {daysInCurrentMonth - currentDayOfMonth} Days to Salary Cycle
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-1 w-full overflow-x-auto pb-0.5">
+          <div className="flex items-center gap-1 w-full overflow-x-auto pb-1 no-scrollbar select-none">
             {Array.from({ length: daysInCurrentMonth }, (_, i) => i + 1).map((dayNum) => {
               const isPast = dayNum < currentDayOfMonth;
               const isCurrent = dayNum === currentDayOfMonth;
@@ -514,16 +523,19 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
               return (
                 <div
                   key={dayNum}
-                  title={`Day ${dayNum}${isPayday ? ' · Salary Replenishment' : ''}${isCurrent ? ' · Today' : ''}`}
-                  className={`flex-1 min-w-[7px] h-3.5 rounded-sm flex items-center justify-center font-mono text-[8px] transition-all ${
+                  title={`Day ${dayNum}${isPayday ? ' · Salary Replenishment' : ''}${isCurrent ? ' · Today (Active)' : isPast ? ' · Shield Maintained' : ''}`}
+                  className={`flex-1 min-w-[8px] h-3.5 rounded-sm flex items-center justify-center font-mono text-[8px] transition-all relative ${
                     isCurrent
-                      ? 'bg-solstice text-black font-bold ring-2 ring-solstice/50 scale-110 z-10'
+                      ? 'bg-solstice text-black font-bold ring-2 ring-solstice/60 shadow-sm shadow-solstice/40 scale-110 z-10'
+                      : isPayday
+                      ? 'bg-amber-400/80 text-black font-bold'
                       : isPast
                       ? 'bg-nebula/60 text-white/80'
-                      : 'bg-white/5 border border-white/10 text-muted/60'
+                      : 'bg-white/5 border border-white/10 text-muted/40'
                   }`}
                 >
-                  {isPayday ? '₹' : isCurrent ? '●' : ''}
+                  {isCurrent && <span className="w-1.5 h-1.5 rounded-full bg-black block" />}
+                  {isPayday && !isCurrent && <span className="w-1.5 h-1.5 rounded-full bg-amber-900 block" />}
                 </div>
               );
             })}
@@ -536,7 +548,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
             {/* 4 Big Key Indicator Boxes */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 my-2.5">
               {/* Box 1: Safe Burn Allowance */}
-              <div className="p-2.5 rounded-xl bg-surface-overlay border border-subtle flex-col justify-between">
+              <div className="p-2.5 rounded-xl bg-surface-overlay border border-subtle/80 hover:border-quasar/30 transition-all flex flex-col justify-between">
                 <span className="font-mono text-[10.5px] text-muted block">Safe Burn / Day</span>
                 <strong className="font-mono text-lg text-primary block mt-0.5">
                   {formatINR(burnState.effectiveDailyBurnToday)}
@@ -547,7 +559,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
               </div>
 
               {/* Box 2: Remaining Today */}
-              <div className="p-2.5 rounded-xl bg-surface-overlay border border-subtle flex-col justify-between">
+              <div className="p-2.5 rounded-xl bg-surface-overlay border border-subtle/80 hover:border-nebula/30 transition-all flex flex-col justify-between">
                 <span className="font-mono text-[10.5px] text-muted block">Remaining Today</span>
                 <strong
                   className={`font-mono text-lg block mt-0.5 ${
@@ -564,7 +576,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
               </div>
 
               {/* Box 3: Recalibrated Future Days */}
-              <div className="p-2.5 rounded-xl bg-surface-overlay border border-subtle flex-col justify-between">
+              <div className="p-2.5 rounded-xl bg-surface-overlay border border-subtle/80 hover:border-solstice/30 transition-all flex flex-col justify-between">
                 <span className="font-mono text-[10.5px] text-muted block">Future Daily Cap</span>
                 <strong className="font-mono text-lg text-solstice block mt-0.5">
                   {formatINR(burnState.recalibratedRemainingDailyBurn)}
@@ -575,8 +587,8 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
               </div>
 
               {/* Box 4: SIP Untouchable Fortress */}
-              <div className="p-2.5 rounded-xl bg-surface-overlay border border-subtle flex-col justify-between">
-                <span className="font-mono text-[10.5px] text-muted block flex-align gap-1">
+              <div className="p-2.5 rounded-xl bg-surface-overlay border border-subtle/80 hover:border-quasar/30 transition-all flex flex-col justify-between">
+                <span className="font-mono text-[10.5px] text-muted block flex items-center gap-1">
                   <Lock size={10} className="text-quasar" /> SIP Protected Core
                 </span>
                 <strong className="font-mono text-lg text-quasar block mt-0.5">
@@ -587,9 +599,9 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
             </div>
 
             {/* Sub-Bar: Discipline Streak & Surplus Rollover */}
-            <div className="p-2.5 rounded-xl bg-surface-page border border-subtle mb-3 flex-between items-center gap-2 flex-wrap text-xs">
-              <div className="flex-align gap-2">
-                <span className="tag-pill tag-corona flex-align gap-1 font-mono text-[11px] font-semibold">
+            <div className="p-2.5 rounded-xl bg-surface-page border border-subtle mb-3 flex items-center justify-between gap-2 flex-wrap text-xs">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="tag-pill tag-corona flex items-center gap-1 font-mono text-[11px] font-semibold">
                   <Flame size={12} className="text-corona" /> {streakDays}-Day Discipline Streak
                 </span>
                 <span className="text-muted text-[11px] hidden sm:inline">
@@ -597,11 +609,11 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                 </span>
               </div>
 
-              <div className="flex-align gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-mono text-[11px] text-muted">Surplus Rollover:</span>
                 <button
                   type="button"
-                  className="action-pill font-mono text-[11px] flex-align gap-1"
+                  className="action-pill font-mono text-[11px] flex items-center gap-1 cursor-pointer"
                   onClick={handleToggleSurplusDest}
                   title="Switch unspent surplus destination between Weekend Pot and Auto-Compound Bonus SIP"
                 >
@@ -611,6 +623,28 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                     <>📈 Bonus SIP ({formatINR(bankedSurplus)})</>
                   )}
                 </button>
+
+                {onPlanChange && bankedSurplus > 0 && surplusDestination === 'bonus_sip' && (
+                  <button
+                    type="button"
+                    className="action-pill font-mono text-[10.5px] py-1 px-2.5 bg-nebula/20 text-nebula border-nebula/40 flex items-center gap-1 cursor-pointer hover:bg-nebula/30"
+                    onClick={() => {
+                      onPlanChange({
+                        ...plan,
+                        savings: {
+                          ...plan.savings,
+                          monthlySip: (plan.savings.monthlySip || 0) + bankedSurplus,
+                        },
+                      });
+                      playVictoryFanfare();
+                      setBankedSurplus(0);
+                      localStorage.setItem('psfi_banked_surplus', '0');
+                    }}
+                    title={`Boost monthly SIP permanently by ₹${bankedSurplus.toLocaleString('en-IN')}`}
+                  >
+                    <Sparkles size={11} /> Boost SIP (+{formatINR(bankedSurplus)})
+                  </button>
+                )}
               </div>
             </div>
 

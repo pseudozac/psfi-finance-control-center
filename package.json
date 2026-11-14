@@ -1,6 +1,6 @@
 {
   "name": "psfi-finance-control-center",
-  "version": "5.8.0",
+  "version": "5.9.0",
   "license": "MIT",
   "description": "Tactile personal finance control center for India with FIRE milestones, 3-tier survival stress test, and client-side encryption.",
   "type": "module",

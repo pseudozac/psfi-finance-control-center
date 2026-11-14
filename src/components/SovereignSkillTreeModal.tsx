@@ -159,7 +159,7 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
   // Optimal full view: Center X = 720, Center Y = 430
   const DEFAULT_VIEWBOX = useMemo(() => {
     if (isMobile) {
-      return { x: 180, y: 120, w: 900, h: 680 };
+      return { x: 280, y: 100, w: 680, h: 720 };
     }
     return { x: 130, y: 40, w: 1180, h: 760 };
   }, [isMobile]);
@@ -686,7 +686,8 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                     onClick={() => handleFilterTier('tier1_survival')}
                     title="Focus Defensive Citadel (5 Nodes)"
                   >
-                    <span>🛡️ Citadel ({treeState.tier1MasteredCount}/5)</span>
+                    <span>🛡️ Citadel</span>
+                    <span className="hud-pill-badge font-mono text-[9.5px] opacity-80">({treeState.tier1MasteredCount}/5)</span>
                   </button>
                   <button
                     type="button"
@@ -694,7 +695,8 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                     onClick={() => handleFilterTier('tier2_velocity')}
                     title="Focus Compounding Velocity (5 Nodes)"
                   >
-                    <span>⚡ Velocity ({treeState.tier2MasteredCount}/5)</span>
+                    <span>⚡ Velocity</span>
+                    <span className="hud-pill-badge font-mono text-[9.5px] opacity-80">({treeState.tier2MasteredCount}/5)</span>
                   </button>
                   <button
                     type="button"
@@ -702,7 +704,8 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                     onClick={() => handleFilterTier('tier3_autonomy')}
                     title="Focus Sovereign Autonomy (5 Nodes)"
                   >
-                    <span>👑 Autonomy ({treeState.tier3MasteredCount}/5)</span>
+                    <span>👑 Autonomy</span>
+                    <span className="hud-pill-badge font-mono text-[9.5px] opacity-80">({treeState.tier3MasteredCount}/5)</span>
                   </button>
                 </div>
 

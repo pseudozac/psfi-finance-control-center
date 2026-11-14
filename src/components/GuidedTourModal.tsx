@@ -73,7 +73,7 @@ export const MASTER_TOUR_STEPS: MasterTourStep[] = [
     targetView: 'control',
     badge: '4. INDIAN TAX ENGINE',
     badgeColor: 'corona',
-    title: 'FY 2024–25 Old vs. New Regime Verdict',
+    title: 'FY 2025–26 & FY 2024–25 Regime Verdict',
     description:
       'Automated side-by-side tax calculation incorporating the ₹75,000 standard deduction, Section 87A rebate (zero tax up to ₹7.75L under New Regime), Section 80CCD(1B) NPS ₹50k deduction, and Metro vs. Non-Metro HRA exemptions.',
     tip: 'PsFi automatically compares both regimes and highlights the OPTIMAL choice with your exact net annual rupee savings.',

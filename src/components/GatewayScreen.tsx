@@ -122,7 +122,7 @@ export const GatewayScreen: React.FC<GatewayScreenProps> = ({
             <span className="font-mono text-xs font-bold text-solstice uppercase">First Time or Testing?</span>
           </div>
           <p className="demo-banner-text">
-            Test-drive all features (FIRE milestone countdown, 3-tier survival stress test, and FY 2024–25 tax engine) with a realistic pre-loaded Indian tech professional profile.
+            Test-drive all features (FIRE milestone countdown, 3-tier survival stress test, and FY 2025–26 & FY 2024–25 tax engine) with a realistic pre-loaded Indian tech professional profile.
           </p>
         </div>
         <button

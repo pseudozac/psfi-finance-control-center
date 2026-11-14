@@ -1017,14 +1017,70 @@ export function App() {
 
       {/* Editorial Hero Header */}
       <section className="hero-section">
+        <div className="hero-telemetry-strip flex flex-wrap items-center gap-2 mb-3 select-none">
+          <span className="hero-stat-capsule bg-surface-raised border border-subtle/80 px-2.5 py-1 rounded-full text-[11px] font-mono text-muted flex items-center gap-1.5 shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span>100% Client-Side Sandbox</span>
+          </span>
+          <span className="hero-stat-capsule bg-surface-raised border border-subtle/80 px-2.5 py-1 rounded-full text-[11px] font-mono text-muted flex items-center gap-1.5 shadow-sm">
+            <span className="text-solstice">🇮🇳</span>
+            <span>Union Budget Calibrated (FY 2025–26 &amp; FY 2024–25)</span>
+          </span>
+          <span className="hero-stat-capsule bg-surface-raised border border-subtle/80 px-2.5 py-1 rounded-full text-[11px] font-mono text-muted flex items-center gap-1.5 shadow-sm">
+            <span className="text-quasar">🛡️</span>
+            <span>Zero Telemetry / Offline Ready</span>
+          </span>
+        </div>
+
         <h1 className="hero-headline">
           Tactile personal finance control for India<span className="text-corona">.</span>
         </h1>
         <p className="hero-lede">
-          Model your <span className="hl-quasar">monthly cashflow</span>, compound with{' '}
-          <span className="hl-nebula">step-up SIPs</span>, audit your{' '}
-          <span className="hl-solstice">50/30/20 budget balance</span>, and compare{' '}
-          <span className="hl-pulsar">FY 2024-25 tax regimes</span>. Completely private, client-side, and offline.
+          Model your{' '}
+          <button
+            type="button"
+            className="hero-pill-badge hero-pill-quasar"
+            onClick={() => {
+              document.getElementById('tour-cashflows')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }}
+            title="Jump to Monthly Cashflow inputs"
+          >
+            monthly cashflow
+          </button>
+          , compound with{' '}
+          <button
+            type="button"
+            className="hero-pill-badge hero-pill-nebula"
+            onClick={() => {
+              document.getElementById('tour-stepup')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }}
+            title="Jump to Step-Up SIP Compounding"
+          >
+            step-up SIPs
+          </button>
+          , audit your{' '}
+          <button
+            type="button"
+            className="hero-pill-badge hero-pill-solstice"
+            onClick={() => {
+              document.getElementById('tour-budget-health')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }}
+            title="Jump to 50/30/20 Budget Health"
+          >
+            50/30/20 budget balance
+          </button>
+          , and compare{' '}
+          <button
+            type="button"
+            className="hero-pill-badge hero-pill-pulsar"
+            onClick={() => {
+              document.getElementById('tour-tax')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }}
+            title="Jump to Indian Tax Engine (FY 2025–26 & FY 2024–25)"
+          >
+            FY 2025–26 &amp; FY 2024–25 tax regimes
+          </button>
+          . Completely private, client-side, and offline.
         </p>
       </section>
 
@@ -1090,7 +1146,7 @@ export function App() {
 
               {/* Local Impulse Shield & Daily Burn Pocket */}
               <div id="tour-impulse-shield">
-                <ImpulseShieldWidget plan={plan} summary={summary} />
+                <ImpulseShieldWidget plan={plan} summary={summary} onPlanChange={setPlan} />
               </div>
             </div>
           </div>

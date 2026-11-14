@@ -4,8 +4,8 @@
 [![React](https://img.shields.io/badge/React-18.3-61dafb.svg?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178c6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.0-646cff.svg?logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Tests](https://img.shields.io/badge/Vitest-53%2F53%20Passed-5ec491.svg?logo=vitest&logoColor=white)](https://vitest.dev/)
-[![Offline PWA](https://img.shields.io/badge/PWA-v5.8%20Offline%20Ready-f78d2c.svg)](https://pseudo-fi.vercel.app/)
+[![Tests](https://img.shields.io/badge/Vitest-59%2F59%20Passed-5ec491.svg?logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Offline PWA](https://img.shields.io/badge/PWA-v5.9%20Offline%20Ready-f78d2c.svg)](https://pseudo-fi.vercel.app/)
 [![Privacy](https://img.shields.io/badge/Privacy-100%25%20Client--Side%20Enclave-bf9ff1.svg)](#-security--privacy-architecture)
 
 **Live Production Deployment:** [https://pseudo-fi.vercel.app/](https://pseudo-fi.vercel.app/)
@@ -88,11 +88,17 @@ Instant full-screen operational disguise system for using personal finance tools
 - Seamlessly toggle between the **Tactile Control Center** and the **Wealth Terminal** via the floating dock switcher.
 - Real-time P&L monitors, asset allocation donut charts, equity-to-debt ratios, and tactical rebalancing suggestions.
 
-### 7. Emergency Runway 3-Tier Survival Stress Test
+### 7. Emergency Runway 3-Tier Survival Stress Test & Catastrophic Shock Dial
 - **Tier 1 (Barebones Survival):** Essential housing and utilities only. Calculates maximum survival runway if catastrophic income loss occurs.
 - **Tier 2 (Standard Lean Living):** Housing, groceries, utilities, and transport.
 - **Tier 3 (Full Lifestyle Runway):** Uncompromised current lifestyle including discretionary wants and subscriptions.
-- **Visual Runway Gauge:** Color-coded status badges (Danger `<3mo`, Caution `3-6mo`, Healthy `6-12mo`, Fortress `>12mo`).
+- **1-Tap Catastrophic Income Shock Dial:** Instantly stress-test your household antifragility under real-world economic shocks:
+  - `Baseline (100% Inflow)`
+  - `-30% Pay Cut / Sabbatical / Transition`
+  - `-60% Layoff Severance Buffer`
+  - `🚨 0% Catastrophic Income Stop`
+  - `-₹3 Lakhs Medical / Emergency Drain`
+- **Visual Runway Gauge:** Live dynamically color-coded buffer telemetry (`Danger <3mo`, `Caution 3-6mo`, `Healthy 6-12mo`, `Fortress >12mo`).
 
 ### 8. FIRE & Wealth Milestone Countdown Engine
 - Live progress and compounding timeline projections for major Indian Rupee milestones:
@@ -103,27 +109,34 @@ Instant full-screen operational disguise system for using personal finance tools
   - ₹2.5 Crore (Quarter-Decacrore Independence)
 - **25× Annual Expense Target:** Computes your personalized Financial Independence number, tracking current coverage percentage and capital shortfall.
 
-### 9. Indian Income Tax Engine (FY 2024–25 Union Budget)
-- **Side-by-Side Old vs. New Regime Comparison:**
+### 9. Indian Income Tax Engine (FY 2025–26 & FY 2024–25 Union Budget)
+- **Side-by-Side Old vs. New Regime Comparison (AY 2025–26 & AY 2026–27):**
   - Standard deduction applied (₹75,000 under New Regime, ₹50,000 under Old Regime).
   - Section 87A rebate engine (Zero tax up to ₹7.75 Lakhs under New Regime).
+  - Revised Union Budget slabs (0–3L Nil, 3–7L 5%, 7–10L 10%, 10–12L 15%, 12–15L 20%, >15L 30%).
   - Section 80CCD(1B) NPS dedicated deduction up to ₹50,000 under Old Regime.
   - Section 80C (₹1.5L) and Section 80D (Health Insurance) tax levers.
   - **HRA Exemption Calculator:** Computes statutory minimums across Metro (50%) and Non-Metro (40%) cities.
 
-### 10. Cross-Device QR Beam & Steganographic PNG Encryption
+### 10. Local Impulse Shield, Daily Discretionary Pocket & SIP Accelerometer
+- **Tactile Daily Burn Pocket:** Calculates mathematical safe daily burn after ring-fencing committed mutual fund SIPs and fixed expenses.
+- **30-Day Liquidity Track:** Live non-wrapping visual calendar pacing track with payday indicators and real-time days-to-salary countdown.
+- **1-Tap Category Micro-Envelopes:** Quick logging for `Chai & Quick Snack` (+₹50, +₹150, +₹300), `Dining Out & Social` (+₹500, +₹1,200, +₹2,500), and `Retail & Shopping` (+₹1k, +₹2.5k, +₹5k) with haptic audio synthesis.
+- **Salary Replenishment & SIP Accelerometer:** Tracks multi-day discipline streaks, banks unspent weekend surpluses, and allows 1-click permanent boosting of monthly compounding SIPs with projected 15-year wealth generation.
+
+### 11. Cross-Device QR Beam & Steganographic PNG Encryption
 - **Cross-Device QR Beam:** Near-field peer-to-peer visual data synchronization. Generates high-density animated QR codes to transfer encrypted vaults directly between laptops and mobile phones without server mediation.
 - **Steganographic PNG Disguise:** Hides your AES-256 encrypted vault backup inside the pixel canvas of a standard desktop wallpaper image using LSB (Least Significant Bit) steganography.
 
-### 11. Terminal Command Omnibar (`⌘K` / `Ctrl+K` / `/`)
+### 12. Terminal Command Omnibar (`⌘K` / `Ctrl+K` / `/`)
 - Global keyboard-driven command palette for lightning-fast navigation.
 - Jump between vaults, toggle privacy masks, trigger simulations, parse math expressions (`25000 * 12 * 1.12`), and switch archetypes without touching the mouse.
 
-### 12. Reverse Monte Carlo Black Swan Simulator & What-If Sandbox
+### 13. Reverse Monte Carlo Black Swan Simulator & What-If Sandbox
 - **Reverse Monte Carlo:** Runs 1,000 to 10,000 stochastic market drawdowns, inflation spikes, and Sequence of Returns Risk (SRR) audits to calculate the mathematical probability of portfolio survival.
 - **What-If Sandbox:** Non-destructive testing environment to preview salary increments (+10% to +50%), relocation rent spikes, and new loan EMIs with live delta variance snapshots.
 
-### 13. Interactive Holographic Guided Tour
+### 14. Interactive Holographic Guided Tour
 - 8-step interactive tour featuring precision spotlight cutouts, holographic corner brackets, contextual audio cues, step jumping (keys `1`–`8`), sound mute toggle (`M`), and a virtual instructor cursor.
 
 ---
@@ -139,8 +152,11 @@ PsFi operates on a strict **Zero-Server, Client-Side Enclave** privacy paradigm:
 | **Credential Phishing** | Net banking login & password scraping | **Zero Credentials:** Never asks for credentials, OTPs, or API keys. |
 | **Network Interception** | REST/GraphQL payloads in transit | **Zero Network Data:** Zero financial data leaves the local device. |
 | **Offline Reliability** | Fails when offline or network drops | **100% Offline Capable:** Runs anywhere via PWA Service Worker. |
+| **Cross-Site Scripting (XSS)** | Varies by framework | **Auto-Sanitized:** React JSX prevents string injection; zero `dangerouslySetInnerHTML`. |
+| **Schema Tampering** | Raw unvalidated payloads | **Runtime Validation:** Strict Zod / TypeScript schema parsing before any plan is loaded. |
+| **At-Rest Storage Extraction** | Plaintext cookie or DB storage | **AES-256-GCM PIN Vault:** Hardware-accelerated Web Crypto API with PBKDF2 (600,000 iterations). |
 
-> **Privacy Guarantee:** All financial records, vault data, and imported statements are stored exclusively inside your browser's local sandbox (`window.localStorage`). Data is never uploaded, transmitted, or synchronized to external clouds.
+> **Privacy Guarantee:** All financial records, vault data, and imported statements are stored exclusively inside your browser's local sandbox (`window.localStorage`). Data is never uploaded, transmitted, or synchronized to external clouds. Optional AES-256 PIN locking encrypts the entire vault at rest.
 
 ---
 

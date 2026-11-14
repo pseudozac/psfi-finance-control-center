@@ -752,6 +752,35 @@ body {
   padding: 0 4px;
 }
 
+.hero-telemetry-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.hero-stat-capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(18, 22, 36, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-secondary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  transition: all 0.2s ease;
+}
+
+.hero-stat-capsule:hover {
+  border-color: rgba(191, 159, 241, 0.3);
+  color: var(--ink-primary);
+  transform: translateY(-1px);
+}
+
 .hero-headline {
   font-size: clamp(28px, 4.5vw, 42px);
   font-weight: 800;
@@ -765,8 +794,72 @@ body {
   font-size: clamp(14px, 1.8vw, 17px);
   color: var(--ink-secondary);
   max-width: 780px;
-  line-height: 1.6;
+  line-height: 1.7;
   margin: 0;
+}
+
+.hero-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid transparent;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  vertical-align: baseline;
+}
+
+.hero-pill-quasar {
+  color: var(--colour-quasar);
+  background: rgba(6, 182, 212, 0.08);
+  border-color: rgba(6, 182, 212, 0.3);
+}
+.hero-pill-quasar:hover {
+  background: rgba(6, 182, 212, 0.2);
+  border-color: rgba(6, 182, 212, 0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
+}
+
+.hero-pill-nebula {
+  color: var(--colour-nebula);
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+.hero-pill-nebula:hover {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+}
+
+.hero-pill-solstice {
+  color: var(--colour-solstice);
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+.hero-pill-solstice:hover {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
+}
+
+.hero-pill-pulsar {
+  color: var(--colour-pulsar);
+  background: rgba(168, 85, 247, 0.08);
+  border-color: rgba(168, 85, 247, 0.3);
+}
+.hero-pill-pulsar:hover {
+  background: rgba(168, 85, 247, 0.2);
+  border-color: rgba(168, 85, 247, 0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.3);
 }
 
 .hl-quasar {
@@ -2244,15 +2337,21 @@ body {
   }
 }
 
-@media (max-width: 390px) {
+@media (max-width: 480px) {
   .vault-pill-name {
-    display: none !important;
+    max-width: 60px !important;
   }
   .pill-tour span {
     display: none !important;
   }
   .pill-tour {
     padding: 3px 6px !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .vault-pill-name {
+    display: none !important;
   }
   .dock-utility-icons .icon-pill {
     width: 25px !important;
@@ -6237,15 +6336,17 @@ body {
   position: absolute;
   top: 14px;
   left: 14px;
-  display: flex;
-  align-items: center;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
   gap: 8px;
   padding: 5px 8px;
-  background: rgba(9, 13, 24, 0.88);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(191, 159, 241, 0.28);
-  border-radius: 999px;
+  background: rgba(10, 14, 26, 0.94) !important;
+  backdrop-filter: blur(24px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
+  border: 1px solid rgba(139, 92, 246, 0.35) !important;
+  border-radius: 999px !important;
   box-shadow: 0 10px 32px rgba(0, 0, 0, 0.75), 0 0 16px rgba(124, 79, 217, 0.16);
   z-index: 40;
   max-width: calc(100% - 28px);
@@ -6254,10 +6355,12 @@ body {
 }
 
 .hud-wings-cluster {
-  display: flex;
-  align-items: center;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
   gap: 4px;
-  overflow-x: auto;
+  overflow-x: auto !important;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
@@ -6266,21 +6369,24 @@ body {
 }
 
 .hud-pill {
-  display: inline-flex;
-  align-items: center;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
   gap: 5px;
   padding: 4px 11px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 999px;
-  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 999px !important;
+  color: #cbd5e1 !important;
   font-family: var(--font-sans);
   font-size: 11px;
   font-weight: 600;
-  white-space: nowrap;
+  white-space: nowrap !important;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   outline: none;
+  flex-shrink: 0 !important;
 }
 
 .hud-pill:hover {
@@ -6667,25 +6773,47 @@ body {
     padding: 3px 6px !important;
     gap: 4px !important;
     justify-content: space-between !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    background: rgba(10, 14, 26, 0.94) !important;
+    border: 1px solid rgba(139, 92, 246, 0.35) !important;
   }
 
   .hud-wings-cluster {
     gap: 3px !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
   }
 
   .hud-pill {
+    appearance: none !important;
+    -webkit-appearance: none !important;
     padding: 3px 7px !important;
     font-size: 9.5px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 999px !important;
+    flex-shrink: 0 !important;
   }
 
   .hud-zoom-cluster {
     padding-left: 4px !important;
     gap: 2px !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    flex-shrink: 0 !important;
   }
 
   .hud-icon-btn {
+    appearance: none !important;
+    -webkit-appearance: none !important;
     width: 22px !important;
     height: 22px !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    flex-shrink: 0 !important;
   }
 
   .mobile-constellation-pan-hint {

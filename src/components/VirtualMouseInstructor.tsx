@@ -151,7 +151,7 @@ export const VirtualMouseInstructor: React.FC<VirtualMouseInstructorProps> = ({
       'Tracking ETA Countdown to 25× Annual Expense FIRE',
     ],
     3: [
-      'Evaluating FY 2024–25 Old vs New Tax Regime',
+      'Evaluating FY 2025–26 & FY 2024–25 Tax Regime Verdict',
       'Optimizing Sec 80CCD(1B) NPS ₹50,000 tax deduction',
     ],
     4: [
