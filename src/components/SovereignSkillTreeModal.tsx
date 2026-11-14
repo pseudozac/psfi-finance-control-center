@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   X,
   Sparkles,
@@ -140,6 +140,43 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [isTheaterMode, setIsTheaterMode] = useState<boolean>(false);
   const [isDossierCollapsed, setIsDossierCollapsed] = useState<boolean>(false);
+  const canvasPanelRef = useRef<HTMLElement>(null);
+
+  // Auto-center horizontal scroll on root node when modal opens
+  useEffect(() => {
+    if (isOpen && viewMode === 'visual_tree') {
+      const timer = setTimeout(() => {
+        if (canvasPanelRef.current) {
+          const panel = canvasPanelRef.current;
+          if (panel.scrollWidth > panel.clientWidth) {
+            const targetScroll = (680 / 1440) * panel.scrollWidth - panel.clientWidth / 2;
+            panel.scrollTo({ left: Math.max(0, targetScroll), behavior: 'smooth' });
+          }
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, viewMode]);
+
+  // Smoothly scroll astrolabe canvas to target wing
+  const handleFilterTier = (tier: SkillTier | 'all') => {
+    setSelectedTier(tier);
+    playChime(tier === 'tier1_survival' ? 440 : tier === 'tier2_velocity' ? 554 : tier === 'tier3_autonomy' ? 659 : 520);
+    if (canvasPanelRef.current) {
+      const panel = canvasPanelRef.current;
+      if (panel.scrollWidth > panel.clientWidth) {
+        if (tier === 'tier1_survival') {
+          panel.scrollTo({ left: 0, behavior: 'smooth' });
+        } else if (tier === 'tier2_velocity') {
+          panel.scrollTo({ left: (panel.scrollWidth - panel.clientWidth) / 2, behavior: 'smooth' });
+        } else if (tier === 'tier3_autonomy') {
+          panel.scrollTo({ left: panel.scrollWidth - panel.clientWidth, behavior: 'smooth' });
+        } else {
+          panel.scrollTo({ left: (panel.scrollWidth - panel.clientWidth) / 2, behavior: 'smooth' });
+        }
+      }
+    }
+  };
 
   // Active plan under evaluation
   const activePlan = simulatedPlan || plan;
@@ -339,7 +376,7 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                 type="button"
                 className={`action-pill text-xs ${selectedTier === 'all' ? 'pill-active' : ''}`}
                 style={{ padding: '2px 10px', fontSize: '11px' }}
-                onClick={() => setSelectedTier('all')}
+                onClick={() => handleFilterTier('all')}
               >
                 All Constellations (15)
               </button>
@@ -347,7 +384,7 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                 type="button"
                 className={`action-pill text-xs ${selectedTier === 'tier1_survival' ? 'pill-active' : ''}`}
                 style={{ padding: '2px 10px', fontSize: '11px' }}
-                onClick={() => setSelectedTier('tier1_survival')}
+                onClick={() => handleFilterTier('tier1_survival')}
               >
                 🛡️ Citadel ({treeState.tier1MasteredCount}/5)
               </button>
@@ -355,7 +392,7 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                 type="button"
                 className={`action-pill text-xs ${selectedTier === 'tier2_velocity' ? 'pill-active' : ''}`}
                 style={{ padding: '2px 10px', fontSize: '11px' }}
-                onClick={() => setSelectedTier('tier2_velocity')}
+                onClick={() => handleFilterTier('tier2_velocity')}
               >
                 ⚡ Velocity ({treeState.tier2MasteredCount}/5)
               </button>
@@ -363,7 +400,7 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                 type="button"
                 className={`action-pill text-xs ${selectedTier === 'tier3_autonomy' ? 'pill-active' : ''}`}
                 style={{ padding: '2px 10px', fontSize: '11px' }}
-                onClick={() => setSelectedTier('tier3_autonomy')}
+                onClick={() => handleFilterTier('tier3_autonomy')}
               >
                 👑 Autonomy ({treeState.tier3MasteredCount}/5)
               </button>
@@ -523,7 +560,11 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
             </aside>
 
             {/* RIGHT PANE: 100% UNOBSTRUCTED SVG ASTROLABE STAR-CHART */}
-            <main className="skill-tree-canvas-panel" aria-label="Constellation Astrolabe Star-Chart">
+            <main className="skill-tree-canvas-panel" ref={canvasPanelRef} aria-label="Constellation Astrolabe Star-Chart">
+              {/* Mobile Constellation Pan Hint */}
+              <div className="mobile-constellation-pan-hint">
+                <span>✦ Pan wings: Citadel · Velocity · Autonomy ✦</span>
+              </div>
               <svg
                 viewBox="0 0 1440 820"
                 className="skill-tree-svg"
@@ -667,6 +708,13 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                           setIsDossierCollapsed(false);
                           const freq = node.tier === 'tier1_survival' ? 440 : node.tier === 'tier2_velocity' ? 554 : 659;
                           playChime(freq);
+                          if (canvasPanelRef.current && node.treeX) {
+                            const panel = canvasPanelRef.current;
+                            if (panel.scrollWidth > panel.clientWidth) {
+                              const targetScroll = (node.treeX / 1440) * panel.scrollWidth - panel.clientWidth / 2;
+                              panel.scrollTo({ left: Math.max(0, targetScroll), behavior: 'smooth' });
+                            }
+                          }
                         }}
                         onMouseEnter={() => setHoveredNodeId(node.id)}
                         onMouseLeave={() => setHoveredNodeId(null)}

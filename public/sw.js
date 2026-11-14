@@ -1,4 +1,4 @@
-const CACHE_NAME = 'psfi-v5.13-mobile-responsive-overhaul';
+const CACHE_NAME = 'psfi-v5.14-mobile-app-overhaul';
 
 self.addEventListener('install', () => {
   self.skipWaiting();

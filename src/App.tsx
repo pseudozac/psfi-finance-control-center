@@ -29,6 +29,8 @@ import {
   Activity,
   Lock,
   Image as ImageIcon,
+  X,
+  Search,
 } from 'lucide-react';
 import type { FinancePlan, ViewPeriod } from './types/finance';
 import {
@@ -428,6 +430,25 @@ export function App() {
   // Phase 3: Main Dashboard
   return (
     <div className={`app-shell layout-${layoutMode} ${privacyMode ? 'privacy-masked' : ''}`}>
+      {/* Mobile Viewport Simulator Banner (Desktop Only) */}
+      {layoutMode === 'mobile' && (
+        <aside className="mobile-sim-banner" aria-label="Mobile Viewport Simulator">
+          <div className="mobile-sim-badge">
+            <Smartphone size={13} className="text-solstice" />
+            <span>Mobile Handheld Frame (440px)</span>
+          </div>
+          <button
+            type="button"
+            className="mobile-sim-exit-btn"
+            onClick={toggleLayoutMode}
+            title="Switch back to widescreen desktop layout"
+          >
+            <Monitor size={12} />
+            <span>Switch to Desktop View</span>
+          </button>
+        </aside>
+      )}
+
       {/* Floating Pill Dock Navbar */}
       <header className="navbar-dock" id="tour-dock">
         {/* Left: Brand & Active Vault */}
@@ -563,7 +584,28 @@ export function App() {
                   aria-hidden="true"
                 />
                 <div className="tools-dropdown-menu" role="menu">
-                <div className="tools-mega-grid">
+                  {/* Mobile Drawer Handle & Header */}
+                  <div
+                    className="tools-mobile-drawer-handle"
+                    onClick={() => setToolsMenuOpen(false)}
+                    aria-label="Drag down to close"
+                  />
+                  <div className="tools-mobile-drawer-header">
+                    <div className="tools-mobile-drawer-title">
+                      <Sparkles size={14} className="text-solstice" />
+                      <span>Actuarial & Sovereign Tools</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="tools-mobile-drawer-close"
+                      onClick={() => setToolsMenuOpen(false)}
+                      aria-label="Close tools menu"
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+
+                  <div className="tools-mega-grid">
                   {/* COLUMN 1: ACTUARIAL ENGINES & STRESS-TESTS */}
                   <div className="tools-category-column">
                     <div className="tools-category-header text-nebula">
@@ -1135,6 +1177,68 @@ export function App() {
           <span>react 18 · vite 6 · recharts · local storage</span>
         </div>
       </footer>
+
+      {/* Mobile Floating Bottom Navigation Dock */}
+      <nav className="mobile-bottom-dock" aria-label="Mobile Navigation Dock">
+        <button
+          type="button"
+          className={`mobile-dock-btn ${activeView === 'control' && !toolsMenuOpen ? 'active' : ''}`}
+          onClick={() => {
+            setActiveView('control');
+            setToolsMenuOpen(false);
+          }}
+        >
+          <Sliders size={17} />
+          <span>Control</span>
+        </button>
+
+        <button
+          type="button"
+          className={`mobile-dock-btn ${activeView === 'terminal' && !toolsMenuOpen ? 'active' : ''}`}
+          onClick={() => {
+            setActiveView('terminal');
+            setToolsMenuOpen(false);
+          }}
+        >
+          <TrendingUp size={17} />
+          <span>Terminal</span>
+        </button>
+
+        <button
+          type="button"
+          className="mobile-dock-btn mobile-dock-omnibar-btn"
+          onClick={() => setShowCmdK(true)}
+          title="Search & Omnibar (⌘K)"
+        >
+          <div className="mobile-dock-omnibar-icon">
+            <Search size={16} />
+          </div>
+          <span>Omnibar</span>
+        </button>
+
+        <button
+          type="button"
+          className="mobile-dock-btn"
+          onClick={() => {
+            setShowSkillTree(true);
+            setToolsMenuOpen(false);
+          }}
+          title="Sovereign RPG Constellation"
+        >
+          <Crown size={17} className="text-solstice" />
+          <span>RPG</span>
+        </button>
+
+        <button
+          type="button"
+          className={`mobile-dock-btn ${toolsMenuOpen ? 'active' : ''}`}
+          onClick={() => setToolsMenuOpen(!toolsMenuOpen)}
+          title="Tools & Scenarios"
+        >
+          <Sparkles size={17} className="text-solstice" />
+          <span>Tools</span>
+        </button>
+      </nav>
     </div>
   );
 }
