@@ -2479,15 +2479,74 @@ body {
 .dock-view-switcher button {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 6px !important;
+  gap: 5px !important;
   white-space: nowrap !important;
 }
 
-/* Wide & Standard Desktop & Laptops (<= 1440px)
-   Prevent header overflow and clipping of tools/utility buttons.
-   Switch workspace labels to compact ("Control", "Terminal")
-   Streamline redundant single-tool shortcuts (.pill-ingest, .pill-tour) into ✨ Tools & ⌘K */
-@media (max-width: 1440px) {
+/* Wide & Standard Desktop (>= 1024px):
+   ALL 10 buttons (psfi, vault, Control, Terminal, monthly/annual, ⌘K, ingest, tour, skills, tools, Eye, Sun)
+   are 100% visible, beautifully spaced, with zero clipping or text wrapping */
+@media (min-width: 1024px) {
+  .pill-tour,
+  .pill-ingest,
+  .pill-skills,
+  .pill-cmdk,
+  .pill-tools {
+    display: inline-flex !important;
+  }
+}
+
+/* Standard Desktop & Laptops (<= 1440px and >= 1024px):
+   Use compact workspace labels ("Control", "Terminal") and tailored compact padding
+   so that all 10 buttons fit with 200px+ of free breathing room */
+@media (max-width: 1440px) and (min-width: 1024px) {
+  .view-label-full {
+    display: none !important;
+  }
+  .view-label-compact {
+    display: inline !important;
+  }
+  .navbar-dock {
+    padding: 6px 14px !important;
+    gap: 8px !important;
+  }
+  .brand-cluster {
+    gap: 8px !important;
+  }
+  .brand-cluster .wordmark {
+    font-size: 18px !important;
+  }
+  .vault-pill-name {
+    max-width: clamp(70px, 8vw, 110px) !important;
+  }
+  .dock-actions-cluster {
+    gap: 5px !important;
+    flex-shrink: 0 !important;
+  }
+  .action-pill {
+    padding: 4px 8px !important;
+    font-size: 11px !important;
+    gap: 4px !important;
+    white-space: nowrap !important;
+  }
+  .period-switcher button {
+    padding: 3px 8px !important;
+    font-size: 10.5px !important;
+    white-space: nowrap !important;
+  }
+  .dock-utility-icons {
+    padding-left: 6px !important;
+    gap: 4px !important;
+  }
+  .dock-utility-icons .icon-pill {
+    width: 28px !important;
+    height: 28px !important;
+  }
+}
+
+/* Compact Tablets & Split Windows (<= 1023px and >= 769px):
+   On narrow tablet widths, keep the core actions visible */
+@media (max-width: 1023px) and (min-width: 769px) {
   .view-label-full {
     display: none !important;
   }
@@ -2498,59 +2557,6 @@ body {
   .pill-ingest {
     display: none !important;
   }
-  .navbar-dock {
-    padding: 7px 16px !important;
-    gap: 10px !important;
-  }
-  .dock-actions-cluster {
-    gap: 6px !important;
-  }
-  .action-pill {
-    padding: 4px 9px !important;
-    font-size: 11px !important;
-    white-space: nowrap !important;
-  }
-  .period-switcher button {
-    padding: 4px 8px !important;
-    font-size: 10.5px !important;
-    white-space: nowrap !important;
-  }
-  .vault-pill-name {
-    max-width: 110px !important;
-  }
-}
-
-/* Medium Desktop & Standard Laptops (<= 1320px and >= 769px)
-   Streamline .pill-skills into ✨ Tools, ensuring ✨ Tools and Utility Icons (Eye/Sun)
-   have generous breathing room and are 100% visible on 1280x800 and 1366x768 */
-@media (max-width: 1320px) and (min-width: 769px) {
-  .pill-skills {
-    display: none !important;
-  }
-  .vault-pill-name {
-    max-width: 85px !important;
-  }
-  .navbar-dock {
-    padding: 6px 16px !important;
-    gap: 8px !important;
-  }
-  .dock-actions-cluster {
-    gap: 5px !important;
-    flex-shrink: 0 !important;
-  }
-  .brand-cluster {
-    gap: 8px !important;
-    min-width: 0 !important;
-    flex-shrink: 1 !important;
-  }
-}
-
-/* Compact Tablets & Split Windows (<= 1024px and >= 769px)
-   Hide .pill-cmdk as well (accessible via '/' or Cmd+K / Ctrl+K) */
-@media (max-width: 1024px) and (min-width: 769px) {
-  .pill-cmdk {
-    display: none !important;
-  }
   .vault-pill-name {
     max-width: 70px !important;
   }
@@ -2558,7 +2564,7 @@ body {
     gap: 4px !important;
   }
   .dock-utility-icons {
-    padding-left: 6px !important;
+    padding-left: 5px !important;
     gap: 3px !important;
   }
   .two-col-grid {
