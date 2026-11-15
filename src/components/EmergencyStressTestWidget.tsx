@@ -121,26 +121,35 @@ export const EmergencyStressTestWidget: React.FC<EmergencyStressTestWidgetProps>
       </div>
 
       {/* Expense Runway Transparency Disclosure */}
-      <div className="text-[11px] font-mono text-muted flex flex-wrap gap-x-4 gap-y-1 mb-3 bg-surface-overlay/60 px-3 py-2 rounded-xl border border-subtle">
-        <span title="Uses all monthly expenses including lifestyle & discretionary shopping">
-          <strong className="text-secondary">Dashboard Runway (Full Burn):</strong>{' '}
-          <span className="text-corona font-bold">{baseStress.fullRunwayMonths} mos</span> ({formatINR(baseStress.fullMonthly)}/mo incl. lifestyle)
-        </span>
-        <span title="Uses core living expenses: housing, food, utilities, health & debt EMI">
-          <strong className="text-secondary">Tier 2 Standard (Lean Living):</strong>{' '}
-          <span className="text-nebula font-bold">{baseStress.standardRunwayMonths} mos</span> ({formatINR(baseStress.standardMonthly)}/mo core survival)
-        </span>
-        <span title="Uses absolute bare survival: rent, rations & loan service only">
-          <strong className="text-secondary">Tier 1 Barebones:</strong>{' '}
-          <span className="text-quasar font-bold">{baseStress.barebonesRunwayMonths} mos</span> ({formatINR(baseStress.barebonesMonthly)}/mo rations only)
-        </span>
+      <div className="stress-disclosure-banner">
+        <div className="stress-disclosure-pill" title="Uses all monthly expenses including lifestyle & discretionary shopping">
+          <span className="stress-disclosure-label">Dashboard Runway (Full Burn)</span>
+          <div className="flex-align gap-1.5">
+            <span className="stress-disclosure-val text-corona">{baseStress.fullRunwayMonths} mos</span>
+            <span className="text-muted text-[10.5px]">({formatINR(baseStress.fullMonthly)}/mo)</span>
+          </div>
+        </div>
+        <div className="stress-disclosure-pill" title="Uses core living expenses: housing, food, utilities, health & debt EMI">
+          <span className="stress-disclosure-label">Tier 2 Standard (Lean Living)</span>
+          <div className="flex-align gap-1.5">
+            <span className="stress-disclosure-val text-nebula">{baseStress.standardRunwayMonths} mos</span>
+            <span className="text-muted text-[10.5px]">({formatINR(baseStress.standardMonthly)}/mo)</span>
+          </div>
+        </div>
+        <div className="stress-disclosure-pill" title="Uses absolute bare survival: rent, rations & loan service only">
+          <span className="stress-disclosure-label">Tier 1 Barebones</span>
+          <div className="flex-align gap-1.5">
+            <span className="stress-disclosure-val text-quasar">{baseStress.barebonesRunwayMonths} mos</span>
+            <span className="text-muted text-[10.5px]">({formatINR(baseStress.barebonesMonthly)}/mo)</span>
+          </div>
+        </div>
       </div>
 
       {/* 1-Tap Catastrophic Income Shock Dial */}
-      <div className="p-2.5 rounded-xl bg-surface-overlay border border-subtle mb-3">
-        <div className="flex-between items-center mb-2 flex-wrap gap-1.5 text-xs font-mono">
+      <div className="shock-dial-deck">
+        <div className="shock-dial-header">
           <span className="flex-align gap-1.5 text-secondary">
-            <Zap size={12} className="text-corona" /> 1-Tap Catastrophic Shock Dial:
+            <Zap size={13} className="text-corona" /> 1-Tap Catastrophic Shock Dial:
           </span>
           {activeScenario !== 'baseline' && (
             <button
@@ -156,10 +165,10 @@ export const EmergencyStressTestWidget: React.FC<EmergencyStressTestWidgetProps>
           )}
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 font-mono text-[11px]">
+        <div className="shock-dial-grid">
           <button
             type="button"
-            className={`action-pill text-center py-1.5 px-2 cursor-pointer ${activeScenario === 'baseline' ? 'pill-active-mode' : ''}`}
+            className={`shock-dial-chip ${activeScenario === 'baseline' ? 'active' : ''}`}
             onClick={() => {
               setActiveScenario('baseline');
               playTactileClick(440);
@@ -169,7 +178,7 @@ export const EmergencyStressTestWidget: React.FC<EmergencyStressTestWidgetProps>
           </button>
           <button
             type="button"
-            className={`action-pill text-center py-1.5 px-2 cursor-pointer ${activeScenario === 'paycut_30' ? 'pill-active-mode' : ''}`}
+            className={`shock-dial-chip ${activeScenario === 'paycut_30' ? 'active' : ''}`}
             onClick={() => {
               setActiveScenario('paycut_30');
               playTactileClick(480);
@@ -180,7 +189,7 @@ export const EmergencyStressTestWidget: React.FC<EmergencyStressTestWidgetProps>
           </button>
           <button
             type="button"
-            className={`action-pill text-center py-1.5 px-2 cursor-pointer ${activeScenario === 'layoff_60' ? 'pill-active-mode' : ''}`}
+            className={`shock-dial-chip ${activeScenario === 'layoff_60' ? 'active' : ''}`}
             onClick={() => {
               setActiveScenario('layoff_60');
               playTactileClick(520);
@@ -191,7 +200,7 @@ export const EmergencyStressTestWidget: React.FC<EmergencyStressTestWidgetProps>
           </button>
           <button
             type="button"
-            className={`action-pill text-center py-1.5 px-2 cursor-pointer ${activeScenario === 'zero_income' ? 'pill-active-mode font-bold' : ''}`}
+            className={`shock-dial-chip chip-critical ${activeScenario === 'zero_income' ? 'active' : ''}`}
             onClick={() => {
               setActiveScenario('zero_income');
               playTactileClick(360);
@@ -202,7 +211,7 @@ export const EmergencyStressTestWidget: React.FC<EmergencyStressTestWidgetProps>
           </button>
           <button
             type="button"
-            className={`action-pill text-center py-1.5 px-2 cursor-pointer ${activeScenario === 'medical_hit' ? 'pill-active-mode' : ''}`}
+            className={`shock-dial-chip chip-critical ${activeScenario === 'medical_hit' ? 'active' : ''}`}
             onClick={() => {
               setActiveScenario('medical_hit');
               playTactileClick(340);
@@ -215,9 +224,9 @@ export const EmergencyStressTestWidget: React.FC<EmergencyStressTestWidgetProps>
 
         {/* Live Shock Scenario Explainer Banner */}
         {activeScenario !== 'baseline' && (
-          <div className="mt-2.5 p-2 rounded-lg bg-surface-page border border-subtle text-xs flex items-start gap-2">
-            <AlertTriangle size={13} className="text-solstice shrink-0 mt-0.5" />
-            <div className="leading-relaxed text-secondary font-sans">
+          <div className="shock-scenario-banner">
+            <AlertTriangle size={14} className="text-solstice shrink-0 mt-0.5" />
+            <div className="leading-relaxed text-secondary font-sans text-xs">
               {activeScenario === 'zero_income' && (
                 <span>
                   <strong>Catastrophic 0% Income Shock Active:</strong> Entire burn funded exclusively by{' '}
@@ -253,94 +262,129 @@ export const EmergencyStressTestWidget: React.FC<EmergencyStressTestWidgetProps>
 
       <div className="stress-grid">
         {/* Tier 1: Barebones Survival */}
-        <div className="stress-tier-card">
+        <div className="stress-tier-card stress-tier-1">
           <div className="stress-tier-head">
             <span className="tag-pill tag-quasar">TIER 1</span>
             <span className="tier-name">Barebones Survival</span>
           </div>
-          <p className="tier-sub muted text-xs">Rent + Groceries + Power/Utilities + Loan EMI</p>
+          <p className="tier-sub">Rent + Groceries + Power/Utilities + Loan EMI</p>
           <div className="tier-burn font-mono">
             {formatINR(baseStress.barebonesMonthly)} <span className="muted text-xs">/ month</span>
           </div>
           <div className="tier-runway-box">
-            <span className="tier-runway-val font-mono font-bold text-nebula">
-              {activeScenario === 'baseline' ? `${baseStress.barebonesRunwayMonths} months` : `${simBarebonesMonths} months`}
-            </span>
-            <span className="muted text-xs">cash runway</span>
+            <div className="tier-runway-top">
+              <span className="muted text-xs font-mono">cash runway</span>
+              <span className="tier-runway-val font-mono text-quasar">
+                {activeScenario === 'baseline' ? `${baseStress.barebonesRunwayMonths} mos` : `${simBarebonesMonths} mos`}
+              </span>
+            </div>
+            <div className="tier-runway-gauge">
+              <div
+                className="tier-runway-fill"
+                style={{
+                  width: `${Math.min(100, Math.max(6, ((activeScenario === 'baseline' ? baseStress.barebonesRunwayMonths : simBarebonesMonths) / 12) * 100))}%`,
+                  background: 'linear-gradient(90deg, #a855f7, #c084fc)',
+                }}
+              />
+            </div>
           </div>
         </div>
 
         {/* Tier 2: Standard Living */}
-        <div className="stress-tier-card">
+        <div className="stress-tier-card stress-tier-2">
           <div className="stress-tier-head">
             <span className="tag-pill tag-pulsar">TIER 2</span>
             <span className="tier-name">Standard Living</span>
           </div>
-          <p className="tier-sub muted text-xs">Needs + Term/Health Insurance + Commute + EMI</p>
+          <p className="tier-sub">Needs + Term/Health Insurance + Commute + EMI</p>
           <div className="tier-burn font-mono">
             {formatINR(baseStress.standardMonthly)} <span className="muted text-xs">/ month</span>
           </div>
           <div className="tier-runway-box">
-            <span className="tier-runway-val font-mono font-bold text-pulsar">
-              {activeScenario === 'baseline' ? `${baseStress.standardRunwayMonths} months` : `${simStandardMonths} months`}
-            </span>
-            <span className="muted text-xs">cash runway</span>
+            <div className="tier-runway-top">
+              <span className="muted text-xs font-mono">cash runway</span>
+              <span className="tier-runway-val font-mono text-pulsar">
+                {activeScenario === 'baseline' ? `${baseStress.standardRunwayMonths} mos` : `${simStandardMonths} mos`}
+              </span>
+            </div>
+            <div className="tier-runway-gauge">
+              <div
+                className="tier-runway-fill"
+                style={{
+                  width: `${Math.min(100, Math.max(6, ((activeScenario === 'baseline' ? baseStress.standardRunwayMonths : simStandardMonths) / 12) * 100))}%`,
+                  background: 'linear-gradient(90deg, #06b6d4, #38bdf8)',
+                }}
+              />
+            </div>
           </div>
         </div>
 
         {/* Tier 3: Current Lifestyle */}
-        <div className="stress-tier-card">
+        <div className="stress-tier-card stress-tier-3">
           <div className="stress-tier-head">
             <span className="tag-pill tag-corona">TIER 3</span>
             <span className="tier-name">Full Lifestyle</span>
           </div>
-          <p className="tier-sub muted text-xs">100% current burn (Dining, leisure, OTT, shopping)</p>
+          <p className="tier-sub">100% current burn (Dining, leisure, OTT, shopping)</p>
           <div className="tier-burn font-mono">
             {formatINR(baseStress.fullMonthly)} <span className="muted text-xs">/ month</span>
           </div>
           <div className="tier-runway-box">
-            <span className="tier-runway-val font-mono font-bold text-solstice">
-              {activeScenario === 'baseline' ? `${baseStress.fullRunwayMonths} months` : `${simFullMonths} months`}
-            </span>
-            <span className="muted text-xs">cash runway</span>
+            <div className="tier-runway-top">
+              <span className="muted text-xs font-mono">cash runway</span>
+              <span className="tier-runway-val font-mono text-solstice">
+                {activeScenario === 'baseline' ? `${baseStress.fullRunwayMonths} mos` : `${simFullMonths} mos`}
+              </span>
+            </div>
+            <div className="tier-runway-gauge">
+              <div
+                className="tier-runway-fill"
+                style={{
+                  width: `${Math.min(100, Math.max(6, ((activeScenario === 'baseline' ? baseStress.fullRunwayMonths : simFullMonths) / 12) * 100))}%`,
+                  background: 'linear-gradient(90deg, #f59e0b, #fbbf24)',
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Expense Composition Explainer */}
-      <div className="p-2.5 px-3 rounded-xl bg-surface-overlay border border-subtle mb-3 text-xs">
-        <div className="font-mono text-[10.5px] text-muted flex items-center justify-between flex-wrap gap-2 mb-1.5">
-          <span className="font-semibold text-secondary flex items-center gap-1">
+      <div className="stress-composition-deck">
+        <div className="flex-between items-center mb-1.5 flex-wrap gap-2 text-muted font-mono text-[11px]">
+          <span className="font-semibold text-secondary flex-align gap-1">
             <Info size={12} className="text-quasar" /> Which expenses each runway figure includes:
           </span>
-          <span className="text-[10px]">Liquid Reserve: {formatINR(baseStress.liquidReserve)}</span>
+          <span className="text-[10px] bg-surface-card px-2 py-0.5 rounded-full border border-subtle">
+            Liquid Reserve: <strong>{formatINR(baseStress.liquidReserve)}</strong>
+          </span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 font-mono text-[10.5px]">
-          <div className="p-2 rounded-lg bg-surface-page/60 border border-subtle/50">
-            <strong className="text-quasar block font-sans">Tier 1: Barebones ({formatINR(baseStress.barebonesMonthly)}/mo)</strong>
-            <span className="text-muted block text-[10px] mt-0.5">
+        <div className="stress-composition-grid">
+          <div className="stress-comp-box">
+            <strong className="text-quasar block font-sans mb-1">Tier 1: Barebones ({formatINR(baseStress.barebonesMonthly)}/mo)</strong>
+            <span className="text-muted block text-[10px] leading-relaxed">
               Housing ({formatINR(plan.expenses.housing)}) + Groceries ({formatINR(plan.expenses.groceries)}) + Utilities ({formatINR(plan.expenses.utilities)}) + Debt EMI ({formatINR(plan.debt.cardBalance > 0 ? plan.debt.monthlyPayment : 0)})
             </span>
           </div>
-          <div className="p-2 rounded-lg bg-surface-page/60 border border-subtle/50">
-            <strong className="text-pulsar block font-sans">Tier 2: Standard ({formatINR(baseStress.standardMonthly)}/mo)</strong>
-            <span className="text-muted block text-[10px] mt-0.5">
+          <div className="stress-comp-box">
+            <strong className="text-pulsar block font-sans mb-1">Tier 2: Standard ({formatINR(baseStress.standardMonthly)}/mo)</strong>
+            <span className="text-muted block text-[10px] leading-relaxed">
               Tier 1 + Term Insurance ({formatINR(plan.expenses.insurance)}) + Transport ({formatINR(plan.expenses.transport)})
             </span>
           </div>
-          <div className="p-2 rounded-lg bg-surface-page/60 border border-subtle/50">
-            <strong className="text-corona block font-sans">Tier 3: Full Burn ({formatINR(baseStress.fullMonthly)}/mo)</strong>
-            <span className="text-muted block text-[10px] mt-0.5">
+          <div className="stress-comp-box">
+            <strong className="text-corona block font-sans mb-1">Tier 3: Full Burn ({formatINR(baseStress.fullMonthly)}/mo)</strong>
+            <span className="text-muted block text-[10px] leading-relaxed">
               Tier 2 + Dining, Shopping &amp; All Discretionary Wants
             </span>
           </div>
         </div>
       </div>
 
-      <div className="stress-footer-note font-mono text-xs">
-        <HeartPulse size={13} className="text-corona shrink-0" />
+      <div className="stress-footer-note">
+        <HeartPulse size={14} className="text-corona shrink-0" />
         <span>
-          Liquid Reserve: <strong>{formatINR(simulatedReserve)}</strong>. In a severe crisis, trimming to Tier 1 extends your runway by{' '}
+          Liquid Reserve: <strong className="text-primary">{formatINR(simulatedReserve)}</strong>. In a severe crisis, trimming to Tier 1 extends your runway by{' '}
           <strong className="text-nebula">
             {Math.max(
               0,

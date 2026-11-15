@@ -62,10 +62,19 @@ export const FireMilestoneTracker: React.FC<FireMilestoneTrackerProps> = ({ plan
             style={{ width: `${Math.min(100, fireData.fireProgressPercent)}%` }}
           />
         </div>
-        <div className="fire-tiers-row font-mono text-xs muted">
-          <span>Lean FIRE (20×): <strong>{formatINR(fireData.leanFireTarget)}</strong></span>
-          <span>Standard FIRE (25×): <strong>{formatINR(fireData.fireTarget)}</strong></span>
-          <span>Fat FIRE (35×): <strong>{formatINR(fireData.fatFireTarget)}</strong></span>
+        <div className="fire-tiers-row font-mono text-xs">
+          <div className="fire-tier-pill">
+            <span className="muted">Lean FIRE (20×)</span>
+            <strong>{formatINR(fireData.leanFireTarget)}</strong>
+          </div>
+          <div className="fire-tier-pill">
+            <span className="muted">Standard FIRE (25×)</span>
+            <strong className="text-nebula">{formatINR(fireData.fireTarget)}</strong>
+          </div>
+          <div className="fire-tier-pill">
+            <span className="muted">Fat FIRE (35×)</span>
+            <strong className="text-corona">{formatINR(fireData.fatFireTarget)}</strong>
+          </div>
         </div>
       </div>
 
