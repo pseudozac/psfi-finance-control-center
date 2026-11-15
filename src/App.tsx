@@ -1120,39 +1120,38 @@ export function App() {
           {/* Key Vitals Telemetry */}
           <SummaryCards summary={summary} debtPayoff={debtPayoff} period={period} />
 
-          {/* 2-Column Wide Desktop Cockpit Grid (Symmetrically Balanced) */}
-          <div className="cockpit-grid">
-            <div className="cockpit-col">
-              {/* Cashflow Inflow & Outflow Mix */}
-              <div id="tour-cashflows">
-                <IncomeExpensePanel plan={plan} period={period} onChange={setPlan} />
-              </div>
+          {/* Pillar 1: Monthly Cashflow Architecture (Inflow & Outflows) */}
+          <section id="tour-cashflows" className="dashboard-section" aria-label="Cashflow Architecture">
+            <IncomeExpensePanel plan={plan} period={period} onChange={setPlan} />
+          </section>
 
-              {/* Debt Elimination & Tax Regime */}
-              <div id="tour-tax">
-                <IndiaTaxAndDebtPanel
-                  plan={plan}
-                  debtPayoff={debtPayoff}
-                  taxComparison={taxComparison}
-                  onChange={setPlan}
-                />
-              </div>
+          {/* Pillar 2: Statutory Indian Tax Optimization & Debt Elimination */}
+          <section id="tour-tax" className="dashboard-section" aria-label="Tax & Debt Elimination">
+            <IndiaTaxAndDebtPanel
+              plan={plan}
+              debtPayoff={debtPayoff}
+              taxComparison={taxComparison}
+              onChange={setPlan}
+            />
+          </section>
 
-              {/* Emergency Runway Survival Stress Test & FIRE Milestones */}
-              <div id="tour-survival" className="tour-survival-block">
-                <EmergencyStressTestWidget plan={plan} />
-                <FireMilestoneTracker plan={plan} />
-              </div>
-            </div>
-
-            <div className="cockpit-col">
-              {/* 50/30/20 Budget Health Audit */}
+          {/* Pillar 3: Discretionary Micro-Budgeting & 50/30/20 Rule (2-Card Symmetrical Row) */}
+          <div className="dashboard-two-col-row" aria-label="Budget Health and Discretionary Pocket">
+            <div className="dashboard-col">
               <BudgetHealthWidget analysis={budgetRule} />
+            </div>
+            <div id="tour-impulse-shield" className="dashboard-col">
+              <ImpulseShieldWidget plan={plan} summary={summary} onPlanChange={setPlan} />
+            </div>
+          </div>
 
-              {/* Local Impulse Shield & Daily Burn Pocket */}
-              <div id="tour-impulse-shield">
-                <ImpulseShieldWidget plan={plan} summary={summary} onPlanChange={setPlan} />
-              </div>
+          {/* Pillar 4: Emergency Runway Survival & FIRE Milestones (2-Card Symmetrical Row) */}
+          <div id="tour-survival" className="dashboard-two-col-row tour-survival-block" aria-label="Emergency Defense and Independence">
+            <div className="dashboard-col">
+              <EmergencyStressTestWidget plan={plan} />
+            </div>
+            <div className="dashboard-col">
+              <FireMilestoneTracker plan={plan} />
             </div>
           </div>
 

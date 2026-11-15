@@ -304,11 +304,6 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
   const daysInCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
   const daysRemainingInMonth = Math.max(0, daysInCurrentMonth - currentDayOfMonth);
 
-  // SVG Radial Gauge Geometry: radius 64, circumference ~402.12
-  const radialRadius = 64;
-  const radialCircumference = 2 * Math.PI * radialRadius;
-  const radialOffset = radialCircumference * (1 - Math.min(1, percentUsedToday / 100));
-
   // Instant Afford Assessment
   const affordQueryParsedAmt = parseFloat(affordQueryAmount) || 0;
   const affordAssessment = useMemo(() => {
@@ -414,211 +409,147 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
 
         {activeTab === 'burn_pocket' ? (
           <div className="flex flex-col gap-3.5">
-            {/* HERO COCKPIT: RADIAL GAUGE & TELEMETRY CLUSTER */}
-            <div className="pocket-hud-cockpit">
-              {/* Left: SVG Radial Burn Meter */}
-              <div className="pocket-radial-box">
-                <svg width="170" height="170" viewBox="0 0 170 170" className="pocket-radial-svg">
-                  <defs>
-                    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#10b981" />
-                      <stop offset="100%" stopColor="#34d399" />
-                    </linearGradient>
-                    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#f59e0b" />
-                      <stop offset="100%" stopColor="#fbbf24" />
-                    </linearGradient>
-                    <linearGradient id="roseGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#f43f5e" />
-                      <stop offset="100%" stopColor="#fb7185" />
-                    </linearGradient>
-                  </defs>
-
-                  {/* Track Circle */}
-                  <circle
-                    cx="85"
-                    cy="85"
-                    r={radialRadius}
-                    fill="none"
-                    stroke="rgba(255, 255, 255, 0.08)"
-                    strokeWidth="11"
-                  />
-
-                  {/* Dynamic Progress Arc */}
-                  <circle
-                    cx="85"
-                    cy="85"
-                    r={radialRadius}
-                    fill="none"
-                    stroke={
-                      burnState.isOverspentToday > 0
-                        ? 'url(#roseGrad)'
-                        : percentUsedToday > 75
-                        ? 'url(#amberGrad)'
-                        : 'url(#emeraldGrad)'
-                    }
-                    strokeWidth="11"
-                    strokeLinecap="round"
-                    strokeDasharray={radialCircumference}
-                    strokeDashoffset={radialOffset}
-                    style={{ transition: 'stroke-dashoffset 0.5s cubic-bezier(0.16, 1, 0.3, 1)' }}
-                  />
-                </svg>
-
-                {/* Centered Readout Content */}
-                <div className="pocket-radial-content select-none">
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-muted font-bold flex items-center gap-1">
+            {/* HERO COCKPIT: CLEAN ALLOWANCE & TELEMETRY CLUSTER */}
+            <div className="daily-burn-hero">
+              <div className="daily-burn-stat-row">
+                <div>
+                  <span className="text-[11px] font-mono text-muted uppercase tracking-wider block mb-1">
+                    Safe Daily Allowance
+                  </span>
+                  <div className="flex items-baseline gap-2.5">
                     <span
-                      className={`inline-block w-1.5 h-1.5 rounded-full ${
-                        burnState.isOverspentToday > 0 ? 'bg-rose-400' : 'bg-emerald-400 animate-pulse'
+                      className={`font-mono text-3xl font-extrabold tracking-tight ${
+                        burnState.isOverspentToday > 0 ? 'text-flare' : 'text-nebula'
                       }`}
-                    />
-                    {burnState.isOverspentToday > 0 ? 'Over Limit' : 'Safe Remaining'}
-                  </span>
+                    >
+                      {burnState.isOverspentToday > 0
+                        ? `-${formatINR(burnState.isOverspentToday)}`
+                        : formatINR(burnState.remainingBurnToday)}
+                    </span>
+                    <span className="text-xs font-mono text-muted">
+                      remaining of {formatINR(burnState.effectiveDailyBurnToday)} cap
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted m-0 mt-1.5 font-sans leading-normal">
+                    {burnState.isOverspentToday > 0 ? (
+                      <span className="text-flare font-medium">
+                        ⚠️ Over limit by {formatINR(burnState.isOverspentToday)}. Future days adapt to protect committed SIPs.
+                      </span>
+                    ) : (
+                      <span>
+                        Next {daysRemainingInMonth} days recalibrate to{' '}
+                        <strong className="text-primary font-mono">{formatINR(burnState.recalibratedRemainingDailyBurn)}/day</strong> to guarantee SIP.
+                      </span>
+                    )}
+                  </p>
+                </div>
 
-                  <span
-                    className={`font-mono text-2xl sm:text-3xl font-extrabold tracking-tight mt-0.5 whitespace-nowrap ${
-                      burnState.isOverspentToday > 0 ? 'text-rose-400' : 'text-primary'
-                    }`}
-                  >
-                    {burnState.isOverspentToday > 0
-                      ? `-${formatINR(burnState.isOverspentToday)}`
-                      : formatINR(burnState.remainingBurnToday)}
-                  </span>
+                {/* 3 Hipuku Telemetry Metric Pills */}
+                <div className="pocket-telemetry-cluster">
+                  {/* Pill 1: Ring-Fenced SIP */}
+                  <div className="hipuku-metric-pill py-2 px-3" title="Core wealth compounding is 100% ring-fenced">
+                    <span className="metric-label text-[10.5px] flex items-center gap-1 text-quasar font-semibold">
+                      <Lock size={10} /> SIP Fortress
+                    </span>
+                    <span className="metric-val text-sm font-mono text-primary font-bold">
+                      {formatINR(burnState.sipProtectedAmount)}
+                      <span className="text-[10px] font-sans font-normal text-muted">/mo</span>
+                    </span>
+                  </div>
 
-                  <span className="text-[10px] font-mono text-secondary mt-0.5">
-                    of {formatINR(burnState.effectiveDailyBurnToday)} target
-                  </span>
+                  {/* Pill 2: Streak */}
+                  <div className="hipuku-metric-pill py-2 px-3" title="Days staying within safe daily cap">
+                    <span className="metric-label text-[10.5px] flex items-center gap-1 text-corona font-semibold">
+                      <Flame size={11} className="text-corona animate-pulse" /> Discipline
+                    </span>
+                    <span className="metric-val text-sm font-mono text-solstice font-bold">
+                      {streakDays} Days
+                    </span>
+                  </div>
+
+                  {/* Pill 3: Surplus / Weekend Pot */}
+                  <div className="hipuku-metric-pill py-2 px-3">
+                    <button
+                      type="button"
+                      onClick={handleToggleSurplusDest}
+                      className="metric-label text-[10.5px] flex items-center gap-1 text-muted hover:text-primary cursor-pointer transition-colors"
+                      title="Click to toggle unspent surplus destination"
+                    >
+                      <span>{surplusDestination === 'weekend_pot' ? '🏖️ Weekend Pot' : '📈 Bonus SIP'}</span>
+                      <ArrowUpRight size={10} />
+                    </button>
+                    <span className="metric-val text-sm font-mono text-nebula font-bold">
+                      {formatINR(bankedSurplus)}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Right: Telemetric Command Cards */}
-              <div className="flex flex-col justify-between gap-2.5">
-                <div className="pocket-telemetry-grid">
-                  {/* Card 1: Committed SIP Fortress */}
-                  <div className="pocket-telemetry-card">
-                    <div className="flex items-center justify-between text-[11px] font-mono text-muted">
-                      <span className="flex items-center gap-1 text-quasar font-semibold">
-                        <Lock size={11} /> SIP Fortress
-                      </span>
-                      <span className="text-emerald-400 font-bold">100% Locked</span>
-                    </div>
-                    <div>
-                      <span className="font-mono text-base font-extrabold text-primary block">
-                        {formatINR(burnState.sipProtectedAmount)}
-                        <span className="text-[10.5px] font-sans font-normal text-muted">/mo</span>
-                      </span>
-                      <span className="text-[10.5px] text-muted leading-tight block mt-0.5 font-sans">
-                        Zero risk to committed mutual fund compounding.
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Card 2: Streak & Weekend Multiplier */}
-                  <div className="pocket-telemetry-card">
-                    <div className="flex items-center justify-between text-[11px] font-mono text-muted">
-                      <span className="flex items-center gap-1 text-corona font-semibold">
-                        <Flame size={12} className="text-corona animate-pulse" /> Discipline
-                      </span>
-                      <span className="text-solstice font-bold">{streakDays} Days</span>
-                    </div>
-                    <div>
-                      <button
-                        type="button"
-                        className={`w-full text-left py-1 px-2 rounded-md font-mono text-[10.5px] flex items-center justify-between gap-1 cursor-pointer transition-colors ${
-                          weekendMode
-                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                            : 'bg-white/5 text-muted hover:text-primary border border-white/10'
-                        }`}
-                        onClick={toggleWeekendMode}
-                        title="Toggle Weekend Weighted Allowance (Fri-Sun 1.35x multiplier)"
-                      >
-                        <span className="flex items-center gap-1">
-                          <Calendar size={10} /> Weekend Mode:
-                        </span>
-                        <strong className="text-xs">{weekendMode ? '1.35x' : 'OFF'}</strong>
-                      </button>
-                      <span className="text-[10px] text-muted block mt-1 font-sans">
-                        {weekendMode ? 'Weighted allowance active for weekend splurges' : 'Flat 30-day identical distribution'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Card 3: Unspent Surplus Pot */}
-                  <div className="pocket-telemetry-card">
-                    <div className="flex items-center justify-between text-[11px] font-mono text-muted">
-                      <button
-                        type="button"
-                        onClick={handleToggleSurplusDest}
-                        className="flex items-center gap-1 text-solstice font-semibold hover:underline cursor-pointer"
-                        title="Click to toggle unspent surplus between Weekend Pot and Bonus SIP"
-                      >
-                        {surplusDestination === 'weekend_pot' ? '🏖️ Weekend Pot' : '📈 Bonus SIP'}
-                        <ArrowUpRight size={10} />
-                      </button>
-                      <span className="text-solstice font-bold font-mono">{formatINR(bankedSurplus)}</span>
-                    </div>
-                    <div>
-                      {onPlanChange && bankedSurplus > 0 && surplusDestination === 'bonus_sip' ? (
-                        <button
-                          type="button"
-                          className="w-full py-1 px-2 rounded-md font-mono text-[10.5px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center justify-center gap-1 hover:bg-emerald-500/30 cursor-pointer"
-                          onClick={() => {
-                            onPlanChange({
-                              ...plan,
-                              savings: {
-                                ...plan.savings,
-                                monthlySip: (plan.savings.monthlySip || 0) + bankedSurplus,
-                              },
-                            });
-                            playVictoryFanfare();
-                            setBankedSurplus(0);
-                            localStorage.setItem('psfi_banked_surplus', '0');
-                          }}
-                          title={`Boost monthly SIP permanently by ₹${bankedSurplus.toLocaleString('en-IN')}`}
-                        >
-                          <Sparkles size={10} /> Boost SIP by {formatINR(bankedSurplus)}
-                        </button>
-                      ) : (
-                        <span className="text-[10.5px] text-muted block font-sans">
-                          {surplusDestination === 'weekend_pot'
-                            ? 'Saved burn rolls into weekend allowance.'
-                            : 'Saved burn auto-compounds into monthly SIP.'}
-                        </span>
-                      )}
-                      <span className="text-[10px] text-secondary block mt-1 font-mono">
-                        Next {burnState.remainingDaysInMonth} days recalibrate to{' '}
-                        <strong className="text-solstice">{formatINR(burnState.recalibratedRemainingDailyBurn)}/day</strong>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Live Progress Bar */}
-                <div className="flex flex-col gap-1 pt-1.5 border-t border-subtle/50">
-                  <div className="flex items-center justify-between text-[11px] font-mono">
-                    <span className="text-secondary">
-                      Spent Today: <strong className="text-primary">{formatINR(spentToday)}</strong> ({percentUsedToday}% of cap)
-                    </span>
-                    <span className="text-muted">
-                      {burnState.remainingBurnToday > 0
-                        ? `${formatINR(burnState.remainingBurnToday)} available`
-                        : `Over target by ${formatINR(burnState.isOverspentToday)}`}
-                    </span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-surface-overlay overflow-hidden relative">
-                    <div
-                      className={`h-full rounded-full transition-all duration-300 ${
-                        burnState.isOverspentToday > 0
-                          ? 'bg-rose-500'
-                          : percentUsedToday > 75
-                          ? 'bg-amber-400'
-                          : 'bg-emerald-400'
+              {/* Linear Burn Meter */}
+              <div className="burn-progress-track">
+                <div className="flex justify-between items-center text-[10.5px] font-mono text-muted mb-1.5">
+                  <span className="flex items-center gap-1.5">
+                    <span
+                      className={`inline-block w-1.5 h-1.5 rounded-full ${
+                        burnState.isOverspentToday > 0 ? 'bg-rose-500' : 'bg-emerald-400'
                       }`}
-                      style={{ width: `${Math.min(100, percentUsedToday)}%` }}
                     />
-                  </div>
+                    <span>Daily Burn Rate: {Math.min(100, Math.round(percentUsedToday))}%</span>
+                  </span>
+                  <span>Spent Today: {formatINR(spentToday)}</span>
                 </div>
+                <div className="burn-progress-bar-bg">
+                  <div
+                    className={`burn-progress-bar-fill ${
+                      burnState.isOverspentToday > 0
+                        ? 'bg-flare'
+                        : percentUsedToday > 75
+                        ? 'bg-solstice'
+                        : 'bg-nebula'
+                    }`}
+                    style={{ width: `${Math.min(100, percentUsedToday)}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Bonus SIP or Weekend Mode Controller */}
+              <div className="flex items-center justify-between gap-2 flex-wrap pt-2 border-t border-subtle text-[11px] font-mono">
+                <button
+                  type="button"
+                  className={`py-1 px-2.5 rounded-lg text-[10.5px] flex items-center gap-1.5 cursor-pointer transition-colors ${
+                    weekendMode
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                      : 'bg-surface-card text-muted hover:text-primary border border-subtle'
+                  }`}
+                  onClick={toggleWeekendMode}
+                  title="Toggle Weekend Weighted Allowance (Fri-Sun 1.35x multiplier)"
+                >
+                  <Calendar size={11} />
+                  <span>Weekend Mode: <strong>{weekendMode ? '1.35x ON' : 'FLAT OFF'}</strong></span>
+                </button>
+
+                {onPlanChange && bankedSurplus > 0 && surplusDestination === 'bonus_sip' && (
+                  <button
+                    type="button"
+                    className="py-1 px-2.5 rounded-lg font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1 hover:bg-emerald-500/30 cursor-pointer"
+                    onClick={() => {
+                      onPlanChange({
+                        ...plan,
+                        savings: {
+                          ...plan.savings,
+                          monthlySip: (plan.savings.monthlySip || 0) + bankedSurplus,
+                        },
+                      });
+                      playVictoryFanfare();
+                      setBankedSurplus(0);
+                      localStorage.setItem('psfi_banked_surplus', '0');
+                    }}
+                    title={`Boost monthly SIP permanently by ₹${bankedSurplus.toLocaleString('en-IN')}`}
+                  >
+                    <Sparkles size={11} />
+                    <span>Boost SIP by {formatINR(bankedSurplus)}</span>
+                  </button>
+                )}
               </div>
             </div>
 

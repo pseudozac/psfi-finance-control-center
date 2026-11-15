@@ -111,7 +111,7 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
           <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
             <div className="flex items-center gap-2 min-w-0 flex-wrap">
               <span className="tag-pill tag-quasar shrink-0 text-[11px]">tax engine</span>
-              <h3 className="card-title m-0 text-base font-bold whitespace-nowrap flex items-center gap-1.5">
+              <h3 className="card-title m-0 text-base font-bold flex items-center gap-1.5 flex-wrap">
                 <span>Tax Year 2026–27 (Income-tax Act, 2025) &amp; Prior Act</span>
                 <InfoTooltip
                   title="Tax Year 2026–27 (Income-tax Act, 2025) Statutory Audit"
@@ -121,7 +121,7 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
                 />
               </h3>
             </div>
-            <span className="tag-pill tag-pulsar shrink-0 whitespace-nowrap text-xs">Income-tax Act, 2025</span>
+            <span className="tag-pill tag-pulsar shrink-0 text-xs">Income-tax Act, 2025</span>
           </div>
 
           {/* Statutory Transition Note & Authority Links */}
@@ -183,7 +183,7 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
           />
 
           <div className="hra-config-box mt-2">
-            <div className="flex-between flex-align mb-1">
+            <div className="flex-between flex-align mb-1 flex-wrap gap-1.5">
               <span className="text-xs font-semibold text-muted">HRA Exemption Lever (Old Regime)</span>
               <button
                 type="button"
@@ -251,11 +251,11 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
             {taxComparison.recommended === 'tie' ? (
               <span className="font-mono text-xs">Both acts produce identical tax liability for this income structure.</span>
             ) : (
-              <div className="flex-align gap-2 text-xs">
+              <div className="flex-align gap-2 text-xs flex-wrap">
                 <span className="text-nebula font-bold font-mono">
                   {taxComparison.recommended === 'new' ? 'INCOME-TAX ACT, 2025 (TY 2026–27)' : 'PRIOR ACT 1961 (ITEMIZED)'} RECOMMENDED
                 </span>
-                <ArrowRight size={13} className="text-muted" />
+                <ArrowRight size={13} className="text-muted shrink-0" />
                 <span>
                   Net Annual Savings:{' '}
                   <strong className="text-nebula font-mono">{formatINR(taxComparison.savings)}</strong>
