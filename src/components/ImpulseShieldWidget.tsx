@@ -29,6 +29,7 @@ import type { FinancePlan, FinanceSummary } from '../types/finance';
 import type { SpendCategory, SpendLogEntry, CoolingOffItem } from '../types/skills';
 import { calculateDailyBurn, createCoolingOffItem } from '../lib/impulseShield';
 import { formatINR } from '../lib/finance';
+import { parseIndianAmount } from '../lib/cmdKParser';
 import { InfoTooltip } from './InfoTooltip';
 
 interface ImpulseShieldWidgetProps {
@@ -158,6 +159,9 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
   const [customCategory, setCustomCategory] = useState<SpendCategory>('other');
   const [showCustomInput, setShowCustomInput] = useState(false);
 
+  // Smart Quick-Spend Omnibar state
+  const [quickSpendText, setQuickSpendText] = useState('');
+
   // Last logged entry for 1-tap Undo with countdown
   const [lastLoggedEntry, setLastLoggedEntry] = useState<SpendLogEntry | null>(null);
 
@@ -254,6 +258,96 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
     setLastLoggedEntry(null);
     playSynthesizerChime(350);
   };
+
+  // End-of-Day unspent allowance
+  const unspentToday = Math.max(0, burnState.effectiveDailyBurnToday - spentToday);
+
+  // Sweep unspent daily allowance into banked surplus & advance discipline streak
+  const handleSweepUnspentSurplus = () => {
+    if (unspentToday <= 0) return;
+    const newBanked = bankedSurplus + unspentToday;
+    setBankedSurplus(newBanked);
+    localStorage.setItem('psfi_banked_surplus', String(newBanked));
+
+    const newStreak = streakDays + 1;
+    setStreakDays(newStreak);
+    localStorage.setItem('psfi_discipline_streak', String(newStreak));
+
+    const sweepEntry: SpendLogEntry = {
+      id: `sweep_${Date.now()}`,
+      timestamp: Date.now(),
+      amount: unspentToday,
+      category: 'other',
+      title: `🏦 Banked Daily Surplus (Discipline Streak: ${newStreak}d)`,
+    };
+    setTodaySpendLog((prev) => [sweepEntry, ...prev]);
+    setLastLoggedEntry(sweepEntry);
+    playVictoryFanfare();
+  };
+
+  // Smart quick-spend parser from text input
+  const handleSmartQuickSpend = () => {
+    const raw = quickSpendText.trim();
+    if (!raw) return;
+
+    let title = 'Quick Expense';
+    let amount = 0;
+    let category: SpendCategory = 'other';
+
+    const numOnly = parseIndianAmount(raw);
+    if (numOnly !== null && numOnly > 0) {
+      amount = numOnly;
+      title = 'Quick Expense';
+    } else {
+      const endNumMatch = raw.match(/^(.*?)\s+([0-9.a-z₹,]+)$/i);
+      const startNumMatch = raw.match(/^([0-9.a-z₹,]+)\s+(.*?)$/i);
+
+      if (endNumMatch) {
+        const parsedAmt = parseIndianAmount(endNumMatch[2]);
+        if (parsedAmt && parsedAmt > 0) {
+          amount = parsedAmt;
+          title = endNumMatch[1].trim() || 'Expense';
+        }
+      } else if (startNumMatch) {
+        const parsedAmt = parseIndianAmount(startNumMatch[1]);
+        if (parsedAmt && parsedAmt > 0) {
+          amount = parsedAmt;
+          title = startNumMatch[2].trim() || 'Expense';
+        }
+      }
+    }
+
+    if (amount <= 0) return;
+
+    const lowerTitle = title.toLowerCase();
+    if (/chai|tea|coffee|snack|biscuit|zepto|blinkit|samosa|bakery/i.test(lowerTitle)) {
+      category = 'chai_quick';
+    } else if (/swiggy|zomato|food|lunch|dinner|meal|burger|pizza|restaurant|cafe/i.test(lowerTitle)) {
+      category = 'dining_night';
+    } else if (/amazon|flipkart|myntra|clothes|shirt|shoes|shopping|gadget|retail/i.test(lowerTitle)) {
+      category = 'retail_impulse';
+    } else if (/uber|ola|rapido|cab|metro|auto|transit|petrol|fuel|commute/i.test(lowerTitle)) {
+      category = 'other';
+    }
+
+    handleLogSpend(category, title, amount);
+    setQuickSpendText('');
+  };
+
+  // Live Category Spend Breakdown
+  const categoryBreakdown = useMemo(() => {
+    if (spentToday <= 0) return null;
+    const totals: Record<SpendCategory, number> = { chai_quick: 0, dining_night: 0, retail_impulse: 0, other: 0 };
+    todaySpendLog.forEach((item) => {
+      totals[item.category] = (totals[item.category] || 0) + item.amount;
+    });
+    return {
+      chai: { amount: totals.chai_quick, pct: Math.round((totals.chai_quick / spentToday) * 100) },
+      dining: { amount: totals.dining_night, pct: Math.round((totals.dining_night / spentToday) * 100) },
+      retail: { amount: totals.retail_impulse, pct: Math.round((totals.retail_impulse / spentToday) * 100) },
+      other: { amount: totals.other, pct: Math.round((totals.other / spentToday) * 100) },
+    };
+  }, [todaySpendLog, spentToday]);
 
   const handleAddCoolingItem = (e: React.FormEvent) => {
     e.preventDefault();
@@ -555,8 +649,42 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
               </div>
             </div>
 
+            {/* END-OF-DAY SURPLUS SWEEP BANNER */}
+            {unspentToday > 0 && (
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-950/30 via-surface-card to-amber-950/20 border border-emerald-500/30 flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/35 flex items-center justify-center shrink-0">
+                    <Sparkles size={16} className="text-emerald-400" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-mono text-sm sm:text-base font-extrabold text-emerald-400">
+                        {formatINR(unspentToday)} Unspent Allowance
+                      </span>
+                      <span className="tag-pill tag-nebula text-[10px] font-mono py-0.5 px-2 font-bold">
+                        Surplus Sweep Ready
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-muted truncate">
+                      Sweep into {surplusDestination === 'weekend_pot' ? 'Weekend Pot' : 'Bonus SIP'} and advance your streak!
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="action-pill text-xs py-2 px-3.5 bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30 font-mono font-bold flex items-center gap-1.5 cursor-pointer rounded-xl transition-all shadow-sm"
+                  onClick={handleSweepUnspentSurplus}
+                  title="Sweep unspent daily allowance into banked surplus pot"
+                >
+                  <Sparkles size={12} className="text-emerald-400" />
+                  <span>Bank Surplus (+1 🔥)</span>
+                </button>
+              </div>
+            )}
+
             {/* 1-TAP TACTILE MICRO-ENVELOPES (PHYSICAL FINTECH PAD) */}
-            <div className="p-3.5 rounded-2xl bg-surface-raised border border-subtle">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-surface-raised border border-subtle">
               <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                 <span className="font-mono text-xs font-bold text-primary flex items-center gap-1.5">
                   <Zap size={13} className="text-solstice" /> 1-Tap Fast Expense Envelopes
@@ -583,6 +711,33 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                       <RotateCcw size={11} /> Reset Day
                     </button>
                   )}
+                </div>
+              </div>
+
+              {/* SMART QUICK-LOGGER INPUT */}
+              <div className="mb-3.5">
+                <div className="relative flex items-center">
+                  <Zap size={13} className="absolute left-3 text-corona pointer-events-none" />
+                  <input
+                    type="text"
+                    className="w-full pl-8 pr-20 py-2 text-xs font-mono bg-surface-overlay border border-subtle rounded-xl text-primary placeholder:text-muted focus:border-quasar/60 focus:outline-none transition-all"
+                    placeholder="Quick spend: 'Swiggy 350', 'Chai 40', 'Uber 180', 'Metro 50', '250'..."
+                    value={quickSpendText}
+                    onChange={(e) => setQuickSpendText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSmartQuickSpend();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-1.5 top-1 bottom-1 px-3 text-[11px] font-mono font-bold bg-quasar/20 text-quasar hover:bg-quasar/30 border border-quasar/30 rounded-lg flex items-center gap-1 cursor-pointer transition-all"
+                    onClick={handleSmartQuickSpend}
+                  >
+                    <Plus size={11} /> Log
+                  </button>
                 </div>
               </div>
 
@@ -803,6 +958,72 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                   </span>
                 )}
               </div>
+
+              {/* CATEGORY SPEND ALLOCATION METER */}
+              {categoryBreakdown && spentToday > 0 && (
+                <div className="mt-3 p-2.5 rounded-xl bg-surface-overlay border border-subtle flex flex-col gap-2">
+                  <div className="flex items-center justify-between text-[10.5px] font-mono text-muted">
+                    <span className="font-bold text-primary">Today's Spend Allocation:</span>
+                    <span>Total: {formatINR(spentToday)}</span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-surface-card overflow-hidden flex">
+                    {categoryBreakdown.chai.amount > 0 && (
+                      <div
+                        style={{ width: `${categoryBreakdown.chai.pct}%` }}
+                        className="bg-amber-400 transition-all duration-300"
+                        title={`Chai & Snacks: ${formatINR(categoryBreakdown.chai.amount)} (${categoryBreakdown.chai.pct}%)`}
+                      />
+                    )}
+                    {categoryBreakdown.dining.amount > 0 && (
+                      <div
+                        style={{ width: `${categoryBreakdown.dining.pct}%` }}
+                        className="bg-purple-400 transition-all duration-300"
+                        title={`Dining & Social: ${formatINR(categoryBreakdown.dining.amount)} (${categoryBreakdown.dining.pct}%)`}
+                      />
+                    )}
+                    {categoryBreakdown.retail.amount > 0 && (
+                      <div
+                        style={{ width: `${categoryBreakdown.retail.pct}%` }}
+                        className="bg-rose-400 transition-all duration-300"
+                        title={`Retail & Shopping: ${formatINR(categoryBreakdown.retail.amount)} (${categoryBreakdown.retail.pct}%)`}
+                      />
+                    )}
+                    {categoryBreakdown.other.amount > 0 && (
+                      <div
+                        style={{ width: `${categoryBreakdown.other.pct}%` }}
+                        className="bg-emerald-400 transition-all duration-300"
+                        title={`Transit & Other: ${formatINR(categoryBreakdown.other.amount)} (${categoryBreakdown.other.pct}%)`}
+                      />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2.5 flex-wrap text-[10px] font-mono">
+                    {categoryBreakdown.chai.amount > 0 && (
+                      <span className="inline-flex items-center gap-1 text-amber-300">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                        <span>Chai {formatINR(categoryBreakdown.chai.amount)} ({categoryBreakdown.chai.pct}%)</span>
+                      </span>
+                    )}
+                    {categoryBreakdown.dining.amount > 0 && (
+                      <span className="inline-flex items-center gap-1 text-purple-300">
+                        <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                        <span>Dining {formatINR(categoryBreakdown.dining.amount)} ({categoryBreakdown.dining.pct}%)</span>
+                      </span>
+                    )}
+                    {categoryBreakdown.retail.amount > 0 && (
+                      <span className="inline-flex items-center gap-1 text-rose-300">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                        <span>Retail {formatINR(categoryBreakdown.retail.amount)} ({categoryBreakdown.retail.pct}%)</span>
+                      </span>
+                    )}
+                    {categoryBreakdown.other.amount > 0 && (
+                      <span className="inline-flex items-center gap-1 text-emerald-300">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                        <span>Transit {formatINR(categoryBreakdown.other.amount)} ({categoryBreakdown.other.pct}%)</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Itemized Transactions Log */}
               {todaySpendLog.length > 0 && (

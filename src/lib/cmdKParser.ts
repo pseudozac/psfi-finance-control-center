@@ -1,4 +1,5 @@
-import { formatINR } from './finance';
+import { formatINR, estimateIndianIncomeTax } from './finance';
+import type { TaxComparisonResult } from '../types/finance';
 
 /**
  * Parses colloquial Indian currency shorthands like:
@@ -31,6 +32,108 @@ export function parseIndianAmount(input: string): number | null {
 
   const val = parseFloat(clean);
   return isNaN(val) ? null : Math.round(val);
+}
+
+/**
+ * Evaluates inline arithmetic math safely without eval or Function().
+ * Supports numbers, Indian currency suffixes (k, L, cr), operators (+, -, *, /),
+ * and parentheses.
+ */
+export function safeEvalMath(expr: string): number | null {
+  if (!expr || typeof expr !== 'string') return null;
+
+  // Pre-process Indian currency shorthands into raw digits
+  let sanitized = expr
+    .toLowerCase()
+    .replace(/₹/g, '')
+    .replace(/([0-9.]+)\s*(?:cr|crore)/g, (_, n) => String(Math.round(parseFloat(n) * 10000000)))
+    .replace(/([0-9.]+)\s*(?:lakhs|lakh|lac|l)/g, (_, n) => String(Math.round(parseFloat(n) * 100000)))
+    .replace(/([0-9.]+)\s*(?:thousand|k)/g, (_, n) => String(Math.round(parseFloat(n) * 1000)))
+    .trim();
+
+  // Must contain at least one arithmetic operator to qualify as a math expression
+  if (!/[+\-*/]/.test(sanitized)) return null;
+
+  // Must only contain digits, operators, dots, parentheses, and whitespace
+  if (!/^[\d\s.+\-*/()]+$/.test(sanitized)) return null;
+
+  try {
+    const tokens: string[] = [];
+    let i = 0;
+    while (i < sanitized.length) {
+      const ch = sanitized[i];
+      if (/\s/.test(ch)) {
+        i++;
+        continue;
+      }
+      if ('+-*/()'.includes(ch)) {
+        tokens.push(ch);
+        i++;
+      } else if (/\d|\./.test(ch)) {
+        let numStr = '';
+        while (i < sanitized.length && /[\d.]/.test(sanitized[i])) {
+          numStr += sanitized[i];
+          i++;
+        }
+        tokens.push(numStr);
+      } else {
+        return null;
+      }
+    }
+
+    if (tokens.length === 0) return null;
+
+    let pos = 0;
+    function parsePrimary(): number {
+      if (pos >= tokens.length) throw new Error();
+      const token = tokens[pos++];
+      if (token === '(') {
+        const val = parseExpr();
+        if (tokens[pos++] !== ')') throw new Error();
+        return val;
+      }
+      if (token === '-') {
+        return -parsePrimary();
+      }
+      if (token === '+') {
+        return parsePrimary();
+      }
+      const num = parseFloat(token);
+      if (isNaN(num)) throw new Error();
+      return num;
+    }
+
+    function parseTerm(): number {
+      let val = parsePrimary();
+      while (pos < tokens.length && (tokens[pos] === '*' || tokens[pos] === '/')) {
+        const op = tokens[pos++];
+        const right = parsePrimary();
+        if (op === '*') val *= right;
+        else {
+          if (right === 0) throw new Error('Divide by zero');
+          val /= right;
+        }
+      }
+      return val;
+    }
+
+    function parseExpr(): number {
+      let val = parseTerm();
+      while (pos < tokens.length && (tokens[pos] === '+' || tokens[pos] === '-')) {
+        const op = tokens[pos++];
+        const right = parseTerm();
+        if (op === '+') val += right;
+        else val -= right;
+      }
+      return val;
+    }
+
+    const result = parseExpr();
+    if (pos !== tokens.length) return null;
+    return isFinite(result) ? Math.round(result * 100) / 100 : null;
+  } catch {
+    return null;
+  }
 }
 
 // --------------------------------------------------------------------------
@@ -185,26 +288,67 @@ export function calculateInflationErosion(
 }
 
 // --------------------------------------------------------------------------
-// 6. Macro / Power Actions
+// 6. Math Calculation Result
+// --------------------------------------------------------------------------
+export interface MathCalculationResult {
+  expression: string;
+  result: number;
+}
+
+// --------------------------------------------------------------------------
+// 7. Macro / Power Actions
 // --------------------------------------------------------------------------
 export type MacroActionType =
   | { type: 'raise'; percent?: number; amount?: number; label: string }
   | { type: 'boost_sip'; percent?: number; amount?: number; label: string }
   | { type: 'cut_lifestyle'; percent?: number; amount?: number; label: string }
   | { type: 'max_80c'; label: string }
+  | { type: 'max_80d'; label: string }
   | { type: 'max_nps'; label: string }
-  | { type: 'zero_debt'; label: string };
+  | { type: 'zero_debt'; label: string }
+  | { type: 'toggle_metro'; isMetro: boolean; label: string }
+  | { type: 'reset_defaults'; label: string }
+  | { type: 'load_demo'; label: string };
 
 // --------------------------------------------------------------------------
 // Discriminated Union for All Parsed Omnibar Commands
 // --------------------------------------------------------------------------
+export type OmnibarLeverKey =
+  | 'salary'
+  | 'freelance'
+  | 'other'
+  | 'sip'
+  | 'rent'
+  | 'groceries'
+  | 'utilities'
+  | 'transport'
+  | 'lifestyle'
+  | 'insurance'
+  | 'cagr'
+  | 'stepup'
+  | 'inflation'
+  | 'emergency'
+  | 'card'
+  | 'apr'
+  | 'payment'
+  | '80c'
+  | '80d'
+  | 'nps';
+
 export type ParsedCommand =
-  | { type: 'set_lever'; lever: 'salary' | 'freelance' | 'sip' | 'rent' | 'groceries' | 'utilities' | 'lifestyle' | 'cagr' | 'stepup' | 'inflation'; value: number; label: string }
+  | {
+      type: 'set_lever';
+      lever: OmnibarLeverKey;
+      value: number;
+      label: string;
+    }
   | { type: 'sip_calc'; result: SipCalculationResult }
   | { type: 'emi_calc'; result: EmiCalculationResult }
   | { type: 'fire_calc'; result: FireTargetResult }
   | { type: 'rule72_calc'; result: Rule72Result }
   | { type: 'inf_calc'; result: InflationErosionResult }
+  | { type: 'tax_calc'; annualGross: number; result: TaxComparisonResult }
+  | { type: 'math_calc'; result: MathCalculationResult }
   | { type: 'macro_action'; macro: MacroActionType }
   | null;
 
@@ -237,7 +381,18 @@ export function parseQuickCommand(query: string): ParsedCommand {
     };
   }
 
-  // 3. Macro: Max NPS
+  // 3. Macro: Max 80D
+  if (/^(?:max\s*80d|80d\s*max|full\s*80d)$/i.test(q)) {
+    return {
+      type: 'macro_action',
+      macro: {
+        type: 'max_80d',
+        label: 'Maximize Section 80D Health Insurance (₹25,000 / yr)',
+      },
+    };
+  }
+
+  // 4. Macro: Max NPS
   if (/^(?:max\s*nps|nps\s*max|full\s*nps)$/i.test(q)) {
     return {
       type: 'macro_action',
@@ -248,7 +403,51 @@ export function parseQuickCommand(query: string): ParsedCommand {
     };
   }
 
-  // 4. Macro: Raise / Increment
+  // 5. Macro: Toggle Metro / Non-Metro City for HRA
+  if (/^(?:metro|metro\s*city)$/i.test(q)) {
+    return {
+      type: 'macro_action',
+      macro: {
+        type: 'toggle_metro',
+        isMetro: true,
+        label: 'Set HRA Location to Metro City (50% Basic Exemption)',
+      },
+    };
+  }
+  if (/^(?:non\s*metro|non-metro|non\s*metro\s*city)$/i.test(q)) {
+    return {
+      type: 'macro_action',
+      macro: {
+        type: 'toggle_metro',
+        isMetro: false,
+        label: 'Set HRA Location to Non-Metro City (40% Basic Exemption)',
+      },
+    };
+  }
+
+  // 6. Macro: Reset Defaults
+  if (/^(?:reset\s*defaults|reset\s*all|reset\s*plan|clear\s*all)$/i.test(q)) {
+    return {
+      type: 'macro_action',
+      macro: {
+        type: 'reset_defaults',
+        label: 'Reset Vault to Fresh Baseline Zero Slate',
+      },
+    };
+  }
+
+  // 7. Macro: Load Demo
+  if (/^(?:load\s*demo|demo\s*vault|demo\s*profile)$/i.test(q)) {
+    return {
+      type: 'macro_action',
+      macro: {
+        type: 'load_demo',
+        label: 'Load Pre-Populated Indian Tech Demo Vault',
+      },
+    };
+  }
+
+  // 8. Macro: Raise / Increment
   // e.g. "raise 15%", "raise 20k", "hike 10%"
   const raiseMatch = q.match(/^(?:raise|hike|increment)\s+([0-9.a-z₹,%]+)$/i);
   if (raiseMatch) {
@@ -280,7 +479,7 @@ export function parseQuickCommand(query: string): ParsedCommand {
     }
   }
 
-  // 5. Macro: Boost SIP
+  // 9. Macro: Boost SIP
   // e.g. "boost sip 20%", "boost sip 10k"
   const boostSipMatch = q.match(/^(?:boost\s*sip|increase\s*sip)\s+([0-9.a-z₹,%]+)$/i);
   if (boostSipMatch) {
@@ -312,7 +511,7 @@ export function parseQuickCommand(query: string): ParsedCommand {
     }
   }
 
-  // 6. Macro: Cut Lifestyle / Cut Expenses
+  // 10. Macro: Cut Lifestyle / Cut Expenses
   // e.g. "cut lifestyle 15%", "cut expenses 10%"
   const cutMatch = q.match(/^(?:cut\s*lifestyle|cut\s*expenses|trim\s*lifestyle|save\s*lifestyle)\s+([0-9.a-z₹,%]+)$/i);
   if (cutMatch) {
@@ -344,7 +543,21 @@ export function parseQuickCommand(query: string): ParsedCommand {
     }
   }
 
-  // 7. FIRE Corpus Calculator:
+  // 11. Quick Indian Income Tax Regime Comparison
+  // e.g. "tax 18L", "tax 1500000", "regime 24L"
+  const taxMatch = q.match(/^(?:tax|regime|regimes|incometax)\s+([0-9.a-z₹,]+)$/i);
+  if (taxMatch) {
+    const gross = parseIndianAmount(taxMatch[1]);
+    if (gross && gross > 0) {
+      return {
+        type: 'tax_calc',
+        annualGross: gross,
+        result: estimateIndianIncomeTax(gross),
+      };
+    }
+  }
+
+  // 12. FIRE Corpus Calculator:
   // e.g. "fire 50k", "fire 1.2L", "fire 75000"
   const fireMatch = q.match(/^(?:fire|corpus)\s+([0-9.a-z₹,]+)$/i);
   if (fireMatch) {
@@ -357,7 +570,7 @@ export function parseQuickCommand(query: string): ParsedCommand {
     }
   }
 
-  // 8. Loan EMI Calculator:
+  // 13. Loan EMI Calculator:
   // e.g. "emi 40L 15y 8.5%", "loan 50L 20y 9%", "emi 2500000 10y 8%"
   const emiMatch = q.match(/^(?:emi|loan|mortgage)\s+([0-9.a-z₹,]+)(?:\s+([0-9.]+)(?:y|yr|years?)?)?(?:\s+([0-9.]+)(?:%|apr)?)?$/i);
   if (emiMatch) {
@@ -372,7 +585,7 @@ export function parseQuickCommand(query: string): ParsedCommand {
     }
   }
 
-  // 9. Rule of 72 Doubling Time:
+  // 14. Rule of 72 Doubling Time:
   // e.g. "double 12%", "rule72 15%", "double 14"
   const rule72Match = q.match(/^(?:double|rule72|doubling)\s+([0-9.]+)(?:%|cagr)?$/i);
   if (rule72Match) {
@@ -385,7 +598,7 @@ export function parseQuickCommand(query: string): ParsedCommand {
     }
   }
 
-  // 10. Inflation Purchasing Power Erosion:
+  // 15. Inflation Purchasing Power Erosion:
   // e.g. "inf 1cr 20y 6%", "inflation 50L 15y 7%"
   const infMatch = q.match(/^(?:inf|inflation|erosion)\s+([0-9.a-z₹,]+)(?:\s+([0-9.]+)(?:y|yr|years?)?)?(?:\s+([0-9.]+)(?:%)?)?$/i);
   if (infMatch) {
@@ -400,9 +613,11 @@ export function parseQuickCommand(query: string): ParsedCommand {
     }
   }
 
-  // 11. SIP Compounding Calculator:
-  // e.g. "sip 25k 10y 12%", "calc 50000 15y 14%", "sip 30k 10y"
-  const sipMatch = q.match(/^(?:sip|calc|compound)\s+([0-9.a-z₹,]+)(?:\s+([0-9.]+)(?:y|yr|years?)?)?(?:\s+([0-9.]+)(?:%|cagr)?)?$/i);
+  // 16. SIP Compounding Calculator:
+  // e.g. "sip 25k 10y 12%", "compound 50000 15y 14%", "compound 30k"
+  const sipMatch =
+    q.match(/^(?:compound)\s+([0-9.a-z₹,]+)(?:\s+([0-9.]+)(?:y|yr|years?)?)?(?:\s+([0-9.]+)(?:%|cagr)?)?$/i) ||
+    q.match(/^sip\s+([0-9.a-z₹,]+)\s+([0-9.]+)(?:y|yr|years?)(?:\s+([0-9.]+)(?:%|cagr)?)?$/i);
   if (sipMatch) {
     const rawAmt = sipMatch[1];
     const rawYears = sipMatch[2] || '10'; // default 10 years if omitted
@@ -420,41 +635,118 @@ export function parseQuickCommand(query: string): ParsedCommand {
     }
   }
 
-  // 12. Direct Single Lever Tweak:
-  // e.g. "salary 1.5L", "rent 30k", "groceries 15000", "sip 45k", "cagr 14%", "stepup 10%"
-  const leverMatch = q.match(/^(salary|freelance|sip|rent|groceries|utilities|lifestyle|cagr|stepup|inflation)(?:\s*(?:=|to|:)?\s*)([0-9.a-z₹,%]+)$/i);
+  // 17. Safe Inline Arithmetic Math Evaluation:
+  // e.g. "45000 + 12000", "1.5L * 0.2", "1800000 / 12", "25k - 5k"
+  const mathVal = safeEvalMath(q);
+  if (mathVal !== null) {
+    return {
+      type: 'math_calc',
+      result: {
+        expression: query.trim(),
+        result: mathVal,
+      },
+    };
+  }
+
+  // 18. Direct Single Lever Tweak (Exhaustive Balance Sheet Mapping):
+  // e.g. "salary 1.5L", "rent 30k", "transport 5k", "groceries 15000", "emergency 3L", "cagr 14%", "card 50k", "80c 1.5L"
+  const leverAliases: Record<string, OmnibarLeverKey> = {
+    salary: 'salary',
+    income: 'salary',
+    freelance: 'freelance',
+    sidehustle: 'freelance',
+    other: 'other',
+    otherincome: 'other',
+    sip: 'sip',
+    rent: 'rent',
+    housing: 'rent',
+    home: 'rent',
+    groceries: 'groceries',
+    grocery: 'groceries',
+    food: 'groceries',
+    utilities: 'utilities',
+    utility: 'utilities',
+    bills: 'utilities',
+    transport: 'transport',
+    commute: 'transport',
+    fuel: 'transport',
+    travel: 'transport',
+    lifestyle: 'lifestyle',
+    fun: 'lifestyle',
+    discretionary: 'lifestyle',
+    insurance: 'insurance',
+    health: 'insurance',
+    cagr: 'cagr',
+    returns: 'cagr',
+    stepup: 'stepup',
+    inflation: 'inflation',
+    emergency: 'emergency',
+    emergencyfund: 'emergency',
+    runway: 'emergency',
+    card: 'card',
+    debt: 'card',
+    creditcard: 'card',
+    apr: 'apr',
+    payment: 'payment',
+    '80c': '80c',
+    '80d': '80d',
+    nps: 'nps',
+  };
+
+  const leverKeys = Object.keys(leverAliases).join('|');
+  const leverMatch = q.match(new RegExp(`^(${leverKeys})(?:\\s*(?:=|to|:)?\\s*)([0-9.a-z₹,%]+)$`, 'i'));
   if (leverMatch) {
-    const leverName = leverMatch[1].toLowerCase();
+    const rawKey = leverMatch[1].toLowerCase();
+    const lever = leverAliases[rawKey];
     const rawVal = leverMatch[2];
 
-    if (leverName === 'cagr' || leverName === 'stepup' || leverName === 'inflation') {
+    if (lever === 'cagr' || lever === 'stepup' || lever === 'inflation' || lever === 'apr') {
       const pctVal = parseFloat(rawVal.replace('%', ''));
       if (!isNaN(pctVal) && pctVal >= 0 && pctVal <= 100) {
+        const labels: Record<string, string> = {
+          cagr: `Set Expected CAGR to ${pctVal}%`,
+          stepup: `Set Step-Up SIP Rate to ${pctVal}%`,
+          inflation: `Set Inflation Rate to ${pctVal}%`,
+          apr: `Set Credit Card APR to ${pctVal}%`,
+        };
         return {
           type: 'set_lever',
-          lever: leverName as 'cagr' | 'stepup' | 'inflation',
+          lever,
           value: pctVal,
-          label: `Set ${leverName.toUpperCase()} to ${pctVal}%`,
+          label: labels[lever] || `Set ${lever.toUpperCase()} to ${pctVal}%`,
         };
       }
     } else {
       const amount = parseIndianAmount(rawVal);
       if (amount !== null && amount >= 0) {
-        const readableLever = {
+        const readableLever: Record<OmnibarLeverKey, string> = {
           salary: 'Monthly Primary Salary',
           freelance: 'Monthly Freelance Inflow',
+          other: 'Monthly Other Inflow',
           sip: 'Monthly Step-Up SIP',
           rent: 'Monthly Rent / Housing EMI',
           groceries: 'Monthly Groceries & Essentials',
           utilities: 'Monthly Utilities & Transit',
+          transport: 'Monthly Commute & Transit',
           lifestyle: 'Monthly Discretionary Lifestyle',
-        }[leverName] || leverName;
+          insurance: 'Monthly Insurance Premiums',
+          cagr: 'CAGR',
+          stepup: 'Step-Up',
+          inflation: 'Inflation',
+          emergency: 'Emergency Liquid Reserve',
+          card: 'Revolving Credit Card Balance',
+          apr: 'APR',
+          payment: 'Monthly Debt Payment',
+          '80c': 'Section 80C Deductions',
+          '80d': 'Section 80D Health Premiums',
+          nps: 'Section 80CCD(1B) NPS Deductions',
+        };
 
         return {
           type: 'set_lever',
-          lever: leverName as 'salary' | 'freelance' | 'sip' | 'rent' | 'groceries' | 'utilities' | 'lifestyle',
+          lever,
           value: amount,
-          label: `Set ${readableLever} to ${formatINR(amount)}`,
+          label: `Set ${readableLever[lever]} to ${formatINR(amount)}`,
         };
       }
     }

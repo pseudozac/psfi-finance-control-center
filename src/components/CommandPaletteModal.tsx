@@ -273,6 +273,14 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
           }),
           'Maximized Section 80C deductions to ₹1,50,000 / yr'
         );
+      } else if (macro.type === 'max_80d') {
+        onUpdatePlan(
+          (prev) => ({
+            ...prev,
+            tax: { ...prev.tax, deductions80D: 25000 },
+          }),
+          'Maximized Section 80D health insurance to ₹25,000 / yr'
+        );
       } else if (macro.type === 'max_nps') {
         onUpdatePlan(
           (prev) => ({
@@ -289,9 +297,21 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
           }),
           'Cleared all revolving credit card balance to zero'
         );
+      } else if (macro.type === 'toggle_metro') {
+        onUpdatePlan(
+          (prev) => ({
+            ...prev,
+            tax: { ...prev.tax, isMetroCity: macro.isMetro },
+          }),
+          macro.label
+        );
+      } else if (macro.type === 'reset_defaults') {
+        onResetDefaults();
+      } else if (macro.type === 'load_demo') {
+        onLoadDemo();
       }
     },
-    [onUpdatePlan]
+    [onUpdatePlan, onResetDefaults, onLoadDemo]
   );
 
   // Construct dynamic action database
@@ -384,13 +404,40 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
           calcResult: parsed.result,
           execute: () => {},
         });
+      } else if (parsed.type === 'tax_calc') {
+        const { annualGross, result } = parsed;
+        list.push({
+          id: 'calc_tax_result',
+          category: 'Calculator',
+          title: `Tax on ${formatINR(annualGross)}: New Regime ${formatINR(result.newRegimeTax)} vs Old ${formatINR(result.oldRegimeTax)}`,
+          subtitle: `${result.recommended === 'new' ? 'New Regime saves ₹' + result.savings.toLocaleString('en-IN') : result.recommended === 'old' ? 'Old Regime saves ₹' + result.savings.toLocaleString('en-IN') : 'Equal statutory tax'} under TY 2026–27 (Income-tax Act, 2025)`,
+          keywords: 'tax regime income comparison 2026 2025 80c old new',
+          icon: <Scale size={15} className="text-solstice" />,
+          badge: 'Tax Engine',
+          execute: () => {
+            onViewChange('control');
+            setTimeout(() => document.getElementById('tour-tax')?.scrollIntoView({ behavior: 'smooth' }), 50);
+          },
+        });
+      } else if (parsed.type === 'math_calc') {
+        const { expression, result } = parsed.result;
+        list.push({
+          id: 'calc_math_result',
+          category: 'Calculator',
+          title: `${expression} = ${formatINR(result)} (${result.toLocaleString('en-IN')})`,
+          subtitle: 'Instant client-side arithmetic evaluation',
+          keywords: 'math calculate arithmetic evaluate',
+          icon: <Calculator size={15} className="text-emerald-400" />,
+          badge: 'Math',
+          execute: () => {},
+        });
       } else if (parsed.type === 'macro_action') {
         list.push({
           id: `macro_${parsed.macro.type}`,
           category: 'Macros',
           title: parsed.macro.label,
           subtitle: 'Execute instant multi-variable scenario macro across your balance sheet',
-          keywords: `macro ${parsed.macro.type} raise boost cut 80c nps debt`,
+          keywords: `macro ${parsed.macro.type} raise boost cut 80c 80d nps debt metro reset demo`,
           icon: <Zap size={15} className="text-solstice" />,
           badge: 'Run Macro',
           execute: () => handleExecuteMacro(parsed.macro),
@@ -410,16 +457,26 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
               const next = { ...prev };
               if (lever === 'salary') next.income = { ...next.income, salary: value };
               else if (lever === 'freelance') next.income = { ...next.income, freelance: value };
+              else if (lever === 'other') next.income = { ...next.income, other: value };
               else if (lever === 'sip') next.savings = { ...next.savings, monthlySip: value };
               else if (lever === 'rent') {
                 next.expenses = { ...next.expenses, housing: value };
                 next.tax = { ...next.tax, rentPaidMonthly: value };
               } else if (lever === 'groceries') next.expenses = { ...next.expenses, groceries: value };
               else if (lever === 'utilities') next.expenses = { ...next.expenses, utilities: value };
+              else if (lever === 'transport') next.expenses = { ...next.expenses, transport: value };
               else if (lever === 'lifestyle') next.expenses = { ...next.expenses, lifestyle: value };
+              else if (lever === 'insurance') next.expenses = { ...next.expenses, insurance: value };
               else if (lever === 'cagr') next.savings = { ...next.savings, expectedReturnPercent: value };
               else if (lever === 'stepup') next.savings = { ...next.savings, stepUpSipPercent: value };
               else if (lever === 'inflation') next.savings = { ...next.savings, inflationPercent: value };
+              else if (lever === 'emergency') next.savings = { ...next.savings, emergencyFundBalance: value };
+              else if (lever === 'card') next.debt = { ...next.debt, cardBalance: value };
+              else if (lever === 'apr') next.debt = { ...next.debt, aprPercent: value };
+              else if (lever === 'payment') next.debt = { ...next.debt, monthlyPayment: value };
+              else if (lever === '80c') next.tax = { ...next.tax, deductions80C: value };
+              else if (lever === '80d') next.tax = { ...next.tax, deductions80D: value };
+              else if (lever === 'nps') next.tax = { ...next.tax, deductionsNPS: value };
               return next;
             }, label);
           },
@@ -437,6 +494,17 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       icon: <Zap size={15} className="text-solstice" />,
       badge: 'Macro',
       execute: () => handleExecuteMacro({ type: 'max_80c', label: 'Maximized 80C to ₹1,50,000' }),
+    });
+
+    list.push({
+      id: 'macro_max_80d',
+      category: 'Macros',
+      title: 'Maximize Section 80D Health Insurance (₹25,000)',
+      subtitle: 'Set self/family health insurance premiums deduction for Old Tax Regime',
+      keywords: '80d health insurance medical premium tax deduction',
+      icon: <Zap size={15} className="text-emerald-400" />,
+      badge: 'Macro',
+      execute: () => handleExecuteMacro({ type: 'max_80d', label: 'Maximized 80D to ₹25,000' }),
     });
 
     list.push({
@@ -461,6 +529,21 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       execute: () => handleExecuteMacro({ type: 'zero_debt', label: 'Cleared credit card debt to ₹0' }),
     });
 
+    list.push({
+      id: 'macro_metro_toggle',
+      category: 'Macros',
+      title: currentPlan.tax?.isMetroCity ? 'Switch to Non-Metro City HRA (40%)' : 'Switch to Metro City HRA (50%)',
+      subtitle: currentPlan.tax?.isMetroCity ? 'Set HRA basic exemption cap to 40% (Tier-2/3)' : 'Set HRA basic exemption cap to 50% (Mumbai, Delhi, Kolkata, Chennai)',
+      keywords: 'metro non metro hra city exemption tax',
+      icon: <Zap size={15} className="text-pulsar" />,
+      badge: currentPlan.tax?.isMetroCity ? '50% Metro' : '40% Non-Metro',
+      execute: () => handleExecuteMacro({
+        type: 'toggle_metro',
+        isMetro: !currentPlan.tax?.isMetroCity,
+        label: !currentPlan.tax?.isMetroCity ? 'Switched to Metro City HRA (50%)' : 'Switched to Non-Metro City HRA (40%)',
+      }),
+    });
+
     // Navigation Actions
     list.push({
       id: 'nav_control',
@@ -471,6 +554,76 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       icon: <Sliders size={15} className={activeView === 'control' ? 'text-nebula' : 'text-muted'} />,
       badge: activeView === 'control' ? 'Current' : 'View',
       execute: () => onViewChange('control'),
+    });
+
+    list.push({
+      id: 'nav_pocket',
+      category: 'Navigation',
+      title: 'Jump to Daily Discretionary Pocket',
+      subtitle: 'Tactile daily burn allowance, 72h cooling chamber & impulse shield',
+      keywords: 'pocket daily discretionary impulse shield spend cooling allowance burn',
+      icon: <Zap size={15} className="text-corona" />,
+      badge: 'Widget',
+      execute: () => {
+        onViewChange('control');
+        setTimeout(() => document.getElementById('tour-impulse-shield')?.scrollIntoView({ behavior: 'smooth' }), 50);
+      },
+    });
+
+    list.push({
+      id: 'nav_tax',
+      category: 'Navigation',
+      title: 'Jump to Tax Engine & Regime Comparison',
+      subtitle: 'Statutory TY 2026–27 (Income-tax Act, 2025) vs Old Regime 80C/80D/HRA',
+      keywords: 'tax regime 2026 2025 80c 80d nps hra engine deductions comparison',
+      icon: <Scale size={15} className="text-solstice" />,
+      badge: 'Section',
+      execute: () => {
+        onViewChange('control');
+        setTimeout(() => document.getElementById('tour-tax')?.scrollIntoView({ behavior: 'smooth' }), 50);
+      },
+    });
+
+    list.push({
+      id: 'nav_debt',
+      category: 'Navigation',
+      title: 'Jump to Debt Elimination Engine',
+      subtitle: 'Revolving credit card balance, high APR interest leak & payoff horizon',
+      keywords: 'debt snowball avalanche credit card loan apr payoff interest leak',
+      icon: <ShieldAlert size={15} className="text-rose-400" />,
+      badge: 'Section',
+      execute: () => {
+        onViewChange('control');
+        setTimeout(() => document.getElementById('tour-tax')?.scrollIntoView({ behavior: 'smooth' }), 50);
+      },
+    });
+
+    list.push({
+      id: 'nav_cashflows',
+      category: 'Navigation',
+      title: 'Jump to Cashflow Architecture & 50/30/20',
+      subtitle: 'Needs vs Wants vs Compounding Savings ratio and discretionary burn',
+      keywords: 'cashflow architecture 50 30 20 budget needs wants savings balance',
+      icon: <Sliders size={15} className="text-quasar" />,
+      badge: 'Section',
+      execute: () => {
+        onViewChange('control');
+        setTimeout(() => document.getElementById('tour-cashflows')?.scrollIntoView({ behavior: 'smooth' }), 50);
+      },
+    });
+
+    list.push({
+      id: 'nav_survival',
+      category: 'Navigation',
+      title: 'Jump to Emergency Defense & FIRE Horizon',
+      subtitle: 'Liquid emergency fund runway months and exponential wealth trajectory',
+      keywords: 'emergency defense fire horizon runway months liquid safety wealth trajectory',
+      icon: <Flame size={15} className="text-solstice" />,
+      badge: 'Section',
+      execute: () => {
+        onViewChange('control');
+        setTimeout(() => document.getElementById('tour-survival')?.scrollIntoView({ behavior: 'smooth' }), 50);
+      },
     });
 
     list.push({
@@ -898,7 +1051,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
             ref={inputRef}
             type="text"
             className="palette-input font-mono"
-            placeholder="Type command, math or macro e.g. 'fire 60k', 'emi 40L 15y', 'raise 15%', 'double 12%'..."
+            placeholder="Type command, math or macro e.g. 'tax 18L', 'fire 60k', 'emi 40L 15y', '45k + 12k', 'raise 15%'..."
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
