@@ -349,7 +349,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
     <section className="hipuku-card impulse-shield-card flex-col justify-between" id="tour-impulse-shield">
       <div>
         {/* Modern Unified Header */}
-        <div className="card-header-row mb-3.5 flex items-center justify-between flex-wrap gap-2.5">
+        <div className="card-header-row mb-4 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-2 flex-wrap min-w-0">
             <span className="tag-pill tag-corona shrink-0 flex items-center gap-1 font-mono text-[11px] font-bold">
               <Zap size={11} className="text-corona" /> Impulse Shield
@@ -364,58 +364,56 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
             />
           </div>
 
-          <div className="flex items-center gap-2 shrink-0 flex-wrap">
-            <div className="pill-segmented flex gap-0.5 text-xs font-mono">
-              <button
-                type="button"
-                className={`py-1 px-3 flex items-center gap-1.5 text-[11px] font-semibold ${activeTab === 'burn_pocket' ? 'pill-active' : ''}`}
-                onClick={() => {
-                  setActiveTab('burn_pocket');
-                  playSynthesizerChime(480);
-                }}
-              >
-                <Zap size={12} className={activeTab === 'burn_pocket' ? 'text-solstice' : ''} />
-                <span>Today's Pocket</span>
-              </button>
-              <button
-                type="button"
-                className={`py-1 px-3 flex items-center gap-1.5 text-[11px] font-semibold ${activeTab === 'cooling_chamber' ? 'pill-active' : ''}`}
-                onClick={() => {
-                  setActiveTab('cooling_chamber');
-                  playSynthesizerChime(480);
-                }}
-              >
-                <Hourglass size={12} className={activeTab === 'cooling_chamber' ? 'text-quasar' : ''} />
-                <span>Cooling Chamber ({coolingItems.length})</span>
-              </button>
-            </div>
-
-            {/* Live Shield Status Badge */}
-            {burnState.isSipShieldActive ? (
-              <span className="tag-pill tag-flare flex items-center gap-1 animate-pulse font-mono text-[11px] font-bold">
-                <ShieldAlert size={12} /> SIP Fortress Engaged
-              </span>
-            ) : burnState.isOverspentToday > 0 ? (
-              <span className="tag-pill tag-solstice flex items-center gap-1 font-mono text-[11px] font-bold">
-                <AlertTriangle size={12} /> Recalibrated: -{formatINR(burnState.isOverspentToday)}
-              </span>
-            ) : (
-              <span className="tag-pill tag-nebula flex items-center gap-1 font-mono text-[11px] font-bold">
-                <ShieldCheck size={12} /> Safe Burn Active
-              </span>
-            )}
+          <div className="pill-segmented flex gap-0.5 text-xs font-mono shrink-0">
+            <button
+              type="button"
+              className={`py-1 px-3 flex items-center gap-1.5 text-[11px] font-semibold ${activeTab === 'burn_pocket' ? 'pill-active' : ''}`}
+              onClick={() => {
+                setActiveTab('burn_pocket');
+                playSynthesizerChime(480);
+              }}
+            >
+              <Zap size={12} className={activeTab === 'burn_pocket' ? 'text-solstice' : ''} />
+              <span>Today's Pocket</span>
+            </button>
+            <button
+              type="button"
+              className={`py-1 px-3 flex items-center gap-1.5 text-[11px] font-semibold ${activeTab === 'cooling_chamber' ? 'pill-active' : ''}`}
+              onClick={() => {
+                setActiveTab('cooling_chamber');
+                playSynthesizerChime(480);
+              }}
+            >
+              <Hourglass size={12} className={activeTab === 'cooling_chamber' ? 'text-quasar' : ''} />
+              <span>Cooling Chamber ({coolingItems.length})</span>
+            </button>
           </div>
         </div>
 
         {activeTab === 'burn_pocket' ? (
-          <div className="flex flex-col gap-3.5">
+          <div className="flex flex-col gap-4">
             {/* HERO COCKPIT: CLEAN ALLOWANCE & TELEMETRY CLUSTER */}
             <div className="daily-burn-hero">
               <div className="daily-burn-stat-row">
                 <div>
-                  <span className="text-[11px] font-mono text-muted uppercase tracking-wider block mb-1">
-                    Safe Daily Allowance
-                  </span>
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className="text-[11px] font-mono text-muted uppercase tracking-wider">
+                      Safe Daily Allowance
+                    </span>
+                    {burnState.isSipShieldActive ? (
+                      <span className="tag-pill tag-flare flex items-center gap-1 animate-pulse font-mono text-[10px] font-bold py-0.5 px-2">
+                        <ShieldAlert size={11} /> SIP Fortress Engaged
+                      </span>
+                    ) : burnState.isOverspentToday > 0 ? (
+                      <span className="tag-pill tag-solstice flex items-center gap-1 font-mono text-[10px] font-bold py-0.5 px-2">
+                        <AlertTriangle size={11} /> Recalibrated: -{formatINR(burnState.isOverspentToday)}
+                      </span>
+                    ) : (
+                      <span className="tag-pill tag-nebula flex items-center gap-1 font-mono text-[10px] font-bold py-0.5 px-2">
+                        <ShieldCheck size={11} /> Safe Burn Active
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-baseline gap-2.5">
                     <span
                       className={`font-mono text-3xl font-extrabold tracking-tight ${
@@ -841,22 +839,22 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
 
             {/* 30-DAY PAYDAY HORIZON RUNWAY */}
             <div className="p-3.5 rounded-2xl bg-surface-raised border border-subtle">
-              <div className="flex items-center justify-between text-xs font-mono text-muted mb-2 flex-wrap gap-2">
-                <div className="flex items-center gap-2 text-primary font-semibold">
+              <div className="flex items-center justify-between text-xs font-mono text-muted mb-2.5 flex-wrap gap-2">
+                <div className="flex items-center gap-2 text-primary font-semibold flex-wrap">
                   <CalendarDays size={13} className="text-quasar shrink-0" />
-                  <span className="whitespace-nowrap">Day {currentDayOfMonth} of {daysInCurrentMonth}</span>
+                  <span>Day {currentDayOfMonth} of {daysInCurrentMonth}</span>
                   <span className="text-muted font-normal">·</span>
-                  <span className="text-solstice font-normal whitespace-nowrap">
-                    {daysRemainingInMonth} Days to Next Salary Credit (Day 1)
+                  <span className="text-solstice font-normal">
+                    {daysRemainingInMonth} days to next salary credit
                   </span>
                 </div>
                 <span className="text-[10.5px] text-muted">
-                  Unspent daily balance automatically compounds into surplus pot
+                  Unspent daily balance compounds into surplus pot
                 </span>
               </div>
 
               {/* Day-by-Day Segmented Strip */}
-              <div className="pocket-payday-strip select-none">
+              <div className="pocket-payday-strip select-none" role="progressbar" aria-label="Monthly Payday Horizon">
                 {Array.from({ length: daysInCurrentMonth }, (_, i) => i + 1).map((dayNum) => {
                   const isPast = dayNum < currentDayOfMonth;
                   const isCurrent = dayNum === currentDayOfMonth;
@@ -865,21 +863,34 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                   return (
                     <div
                       key={dayNum}
-                      title={`Day ${dayNum}${isPayday ? ' · Salary Credit Day 💰' : ''}${isCurrent ? ' · Today (Active Pocket)' : isPast ? ' · Shield Maintained' : ''}`}
+                      title={`Day ${dayNum}${isPayday ? ' · Salary Credit Day 💰' : ''}${isCurrent ? ' · Today (Active Pocket)' : isPast ? ' · Shield Maintained' : ' · Planned Allowance'}`}
                       className={`pocket-day-node ${
                         isCurrent
-                          ? 'bg-amber-400 text-black font-extrabold ring-2 ring-amber-400/70 shadow-sm shadow-amber-400/50 scale-110 z-10'
+                          ? 'bg-amber-400 text-black font-extrabold ring-2 ring-amber-400/80 shadow-md shadow-amber-400/40 scale-110 z-10'
                           : isPayday
                           ? 'bg-emerald-400 text-black font-extrabold'
                           : isPast
-                          ? 'bg-purple-500/40 text-white/70'
-                          : 'bg-white/5 border border-white/10 text-muted/30'
+                          ? 'bg-purple-500/35 hover:bg-purple-500/50'
+                          : 'bg-white/5 border border-white/10 hover:bg-white/10'
                       }`}
                     >
-                      {isCurrent ? '●' : isPayday ? '₹' : dayNum}
+                      {isCurrent ? '●' : isPayday ? '₹' : null}
                     </div>
                   );
                 })}
+              </div>
+
+              {/* Payday Horizon Scale Benchmarks */}
+              <div className="flex justify-between items-center text-[10px] font-mono text-muted mt-1.5 px-0.5">
+                <span className="text-emerald-400 font-semibold">
+                  Day 1 (Salary Credit)
+                </span>
+                <span className="text-amber-400 font-semibold">
+                  Day {currentDayOfMonth} (Today)
+                </span>
+                <span className="text-muted">
+                  Day {daysInCurrentMonth} (Month End)
+                </span>
               </div>
             </div>
 
@@ -887,7 +898,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
             <div className="rounded-2xl bg-surface-raised border border-subtle overflow-hidden">
               <button
                 type="button"
-                className={`w-full py-2.5 px-3.5 text-xs flex items-center justify-between gap-2 transition-all cursor-pointer ${
+                className={`w-full py-2.5 px-3.5 text-xs flex items-center justify-between flex-wrap gap-2 transition-all cursor-pointer ${
                   showAffordCalculator
                     ? 'bg-quasar/15 text-primary border-b border-quasar/30'
                     : 'bg-surface-raised text-muted hover:text-primary'
@@ -897,11 +908,11 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                   playSynthesizerChime(520);
                 }}
               >
-                <span className="flex items-center gap-2 font-semibold text-primary">
+                <span className="flex items-center gap-2 font-semibold text-primary min-w-0 mr-3">
                   <Calculator size={14} className="text-quasar shrink-0" />
-                  <span>Can I Afford This Today? (Actuarial Impulse Scanner)</span>
+                  <span className="leading-snug">Can I Afford This Today? (Actuarial Impulse Scanner)</span>
                 </span>
-                <span className="text-[11px] font-mono text-quasar flex items-center gap-1 bg-quasar/15 px-2.5 py-0.5 rounded-full border border-quasar/30 shrink-0 font-semibold">
+                <span className="text-[11px] font-mono text-quasar flex items-center gap-1 bg-quasar/15 px-2.5 py-1 rounded-full border border-quasar/30 shrink-0 font-semibold ml-auto">
                   <span>{showAffordCalculator ? 'Close Radar ▲' : 'Open 1-Click Radar ▼'}</span>
                 </span>
               </button>
@@ -1044,39 +1055,39 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
               </div>
 
               {/* Add Item Form with Urge Intensity Meter */}
-              <form onSubmit={handleAddCoolingItem} className="flex flex-col gap-2 mt-2 pt-2 border-t border-subtle/50">
-                <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+              <form onSubmit={handleAddCoolingItem} className="flex flex-col gap-2.5 mt-3 pt-3 border-t border-subtle/50">
+                <div className="grid grid-cols-1 sm:grid-cols-[1fr_120px_auto] gap-2.5">
                   <input
                     type="text"
                     placeholder="e.g. Sony XM5, Mechanical Keyboard, Designer Jacket"
-                    className="hipuku-input text-xs flex-1 min-w-[180px] py-1.5 px-2.5"
+                    className="hipuku-input text-xs py-2 px-3"
                     value={newItemTitle}
                     onChange={(e) => setNewItemTitle(e.target.value)}
                   />
                   <input
                     type="number"
                     placeholder="Price (₹)"
-                    className="hipuku-input text-xs font-mono w-28 py-1.5 px-2.5"
+                    className="hipuku-input text-xs font-mono py-2 px-3"
                     value={newItemAmount}
                     onChange={(e) => setNewItemAmount(e.target.value)}
                   />
                   <button
                     type="submit"
-                    className="action-pill font-mono text-xs py-1.5 px-3 flex items-center gap-1 bg-solstice/20 text-solstice border-solstice/40 shrink-0 cursor-pointer font-bold"
+                    className="action-pill font-mono text-xs py-2 px-3.5 flex items-center justify-center gap-1.5 bg-solstice/20 text-solstice border-solstice/40 shrink-0 cursor-pointer font-bold"
                   >
                     <Plus size={12} /> Lock in Chamber
                   </button>
                 </div>
 
                 {/* Urge Selector */}
-                <div className="flex items-center gap-2 pt-1 flex-wrap">
-                  <span className="font-mono text-[10.5px] text-muted">Urge Intensity:</span>
-                  <div className="flex gap-1 flex-wrap">
+                <div className="flex items-center gap-2.5 pt-1.5 flex-wrap">
+                  <span className="font-mono text-[11px] text-muted shrink-0">Urge Intensity:</span>
+                  <div className="flex gap-1.5 flex-wrap">
                     {([1, 2, 3, 4] as const).map((level) => (
                       <button
                         key={level}
                         type="button"
-                        className={`action-pill text-[10px] py-0.5 px-2 font-mono cursor-pointer ${newItemUrge === level ? 'pill-active-mode' : ''}`}
+                        className={`action-pill text-[10.5px] py-1 px-2.5 font-mono cursor-pointer ${newItemUrge === level ? 'pill-active-mode' : ''}`}
                         onClick={() => setNewItemUrge(level)}
                       >
                         {'🔥'.repeat(level)} {level === 1 ? 'Mild' : level === 2 ? 'Moderate' : level === 3 ? 'Acute' : 'Retail Fever'}

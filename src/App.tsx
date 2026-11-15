@@ -123,6 +123,30 @@ export function App() {
   const toolsDropdownRef = useRef<HTMLDivElement>(null);
   const toolsMenuRef = useRef<HTMLDivElement>(null);
 
+  // Toast auto-dismiss and smooth fade transition
+  const [toastFading, setToastFading] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!statusMessage) {
+      setToastFading(false);
+      return;
+    }
+    setToastFading(false);
+    const fadeTimer = setTimeout(() => {
+      setToastFading(true);
+    }, 1500);
+
+    const removeTimer = setTimeout(() => {
+      setStatusMessage(null);
+      setToastFading(false);
+    }, 1850);
+
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(removeTimer);
+    };
+  }, [statusMessage, setStatusMessage]);
+
   // Incoming PIN-protected beam resolution states
   const [pendingBeamPayload, setPendingBeamPayload] = useState<string | null>(null);
   const [pendingBeamPin, setPendingBeamPin] = useState<string>('');
@@ -1091,10 +1115,17 @@ export function App() {
 
       {/* Toast Notification */}
       {statusMessage && (
-        <div className="hipuku-toast" role="status">
+        <div className={`hipuku-toast ${toastFading ? 'toast-fading' : ''}`} role="status">
           <CheckCircle2 size={15} className="text-nebula shrink-0" />
           <span>{statusMessage}</span>
-          <button type="button" onClick={() => setStatusMessage(null)} aria-label="Dismiss">
+          <button
+            type="button"
+            onClick={() => {
+              setToastFading(false);
+              setStatusMessage(null);
+            }}
+            aria-label="Dismiss"
+          >
             ×
           </button>
         </div>
