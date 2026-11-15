@@ -143,10 +143,17 @@ html, body {
   min-height: 100vh;
 }
 
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
 #root {
   width: 100%;
   max-width: 100vw;
-  overflow-x: clip;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 body {
@@ -177,7 +184,7 @@ body {
   margin: 0 auto;
   padding: 24px 24px 80px;
   box-sizing: border-box;
-  overflow-x: clip;
+  overflow-x: hidden;
 }
 
 /* --------------------------------------------------------------------------
@@ -2713,8 +2720,17 @@ body {
 
 /* Mobile Screens (Native Viewport <= 768px) */
 @media (max-width: 768px) {
+  html, body {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
   .app-shell {
-    padding: 12px 14px calc(env(safe-area-inset-bottom, 0px) + 110px) !important;
+    padding: 10px 12px calc(env(safe-area-inset-bottom, 0px) + 110px) !important;
+    max-width: 100vw !important;
+    width: 100% !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
   }
   .layout-mobile .hero-headline {
     font-size: clamp(20px, 5vw, 26px);
@@ -2745,6 +2761,21 @@ body {
   .layout-mobile .archetype-grid {
     grid-template-columns: 1fr !important;
   }
+  .main-stack,
+  .dashboard-section,
+  .dashboard-two-col-row,
+  .cockpit-grid,
+  .two-col-grid,
+  .hipuku-card {
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+  .hipuku-card {
+    padding: 16px 14px !important;
+  }
   /* Tour Active: hide mobile bottom dock completely so tour controls are 100% visible */
   .app-shell.tour-active .mobile-bottom-dock,
   body:has(.tour-backdrop) .mobile-bottom-dock,
@@ -2769,54 +2800,45 @@ body {
 
   .pill-tour {
     display: inline-flex !important;
-    padding: 3px 7px !important;
-    font-size: 10px !important;
+    padding: 2.5px 6px !important;
+    font-size: 9.5px !important;
     gap: 3px !important;
     flex-shrink: 0 !important;
   }
 
   .pill-tour svg {
-    width: 11px !important;
-    height: 11px !important;
-  }
-
-  @media (max-width: 380px) {
-    .pill-tour .pill-label {
-      display: none !important;
-    }
-    .vault-pill-name {
-      max-width: 55px !important;
-    }
+    width: 10px !important;
+    height: 10px !important;
   }
 
   .navbar-dock {
     position: sticky !important;
-    top: 8px !important;
+    top: 6px !important;
     display: flex !important;
     flex-direction: row !important;
     justify-content: space-between !important;
     align-items: center !important;
-    padding: 6px 10px !important;
-    gap: 6px !important;
-    margin-bottom: 16px !important;
+    padding: 5px 8px !important;
+    gap: 4px !important;
+    margin-bottom: 14px !important;
     border-radius: var(--radius-full) !important;
     width: 100% !important;
+    max-width: 100% !important;
     box-sizing: border-box !important;
-    overflow: visible !important;
+    overflow: hidden !important;
   }
 
   .brand-cluster {
     display: flex !important;
     align-items: center !important;
     width: auto !important;
-    gap: 6px !important;
+    gap: 5px !important;
     min-width: 0 !important;
     flex-shrink: 1 !important;
-    overflow: visible !important;
   }
 
   .brand-cluster .wordmark {
-    font-size: 17px !important;
+    font-size: 16px !important;
     letter-spacing: -0.04em !important;
     flex-shrink: 0 !important;
   }
@@ -2827,16 +2849,22 @@ body {
     min-width: 0 !important;
     flex-shrink: 1 !important;
     overflow: hidden !important;
-    padding: 3px 8px !important;
-    gap: 5px !important;
+    padding: 2.5px 6px !important;
+    gap: 4px !important;
   }
 
   .vault-pill-name {
-    max-width: 75px !important;
+    max-width: 48px !important;
     min-width: 0 !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
+  }
+
+  @media (max-width: 440px) {
+    .vault-pill-name {
+      display: none !important;
+    }
   }
 
   .dock-actions-cluster {
@@ -2846,31 +2874,31 @@ body {
     width: auto !important;
     border-top: none !important;
     padding-top: 0 !important;
-    gap: 4px !important;
+    gap: 2.5px !important;
     flex-wrap: nowrap !important;
     flex-shrink: 0 !important;
   }
 
   .period-switcher button {
-    padding: 3px 6px !important;
-    font-size: 9.5px !important;
+    padding: 2.5px 5.5px !important;
+    font-size: 9px !important;
     letter-spacing: -0.01em !important;
   }
 
   .dock-utility-icons {
     display: flex !important;
     align-items: center !important;
-    gap: 3px !important;
+    gap: 2px !important;
     border-left: 1px solid var(--border-subtle) !important;
-    padding-left: 5px !important;
+    padding-left: 3px !important;
     margin-left: 0 !important;
     width: auto !important;
     flex-shrink: 0 !important;
   }
 
   .dock-utility-icons .icon-pill {
-    width: 27px !important;
-    height: 27px !important;
+    width: 25px !important;
+    height: 25px !important;
   }
 
   /* Mobile Toast Notification: Float cleanly at top of screen to prevent any dock or commit slider overlap */
@@ -7759,8 +7787,7 @@ body {
   align-items: center;
   gap: 3px;
   width: 100%;
-  overflow-x: hidden;
-  padding: 6px 2px;
+  padding: 6px 0;
   box-sizing: border-box;
 }
 
@@ -7773,21 +7800,78 @@ body {
 .pocket-day-node {
   flex: 1;
   min-width: 0;
-  height: 18px;
+  height: 22px;
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-mono);
-  font-size: 8px;
-  transition: all 0.2s ease;
+  font-size: 8.5px;
+  font-weight: 700;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   position: relative;
+  user-select: none;
+  box-sizing: border-box;
 }
 
-.pocket-day-node:hover {
-  transform: scale(1.15);
+.pocket-day-node.node-future {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--ink-muted);
+}
+
+.pocket-day-node.node-future:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  transform: translateY(-2px);
   z-index: 5;
+}
+
+.pocket-day-node.node-past {
+  background: rgba(168, 85, 247, 0.18);
+  border: 1px solid rgba(168, 85, 247, 0.38);
+  color: #d8b4fe;
+}
+
+.pocket-day-node.node-past:hover {
+  background: rgba(168, 85, 247, 0.32);
+  border-color: rgba(168, 85, 247, 0.65);
+  transform: translateY(-2px);
+  z-index: 5;
+}
+
+.pocket-day-node.node-payday {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: 1px solid #34d399;
+  color: #000000;
+  font-weight: 900;
+  font-size: 10px;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.45);
+}
+
+.pocket-day-node.node-payday:hover {
+  transform: translateY(-2px) scale(1.1);
+  z-index: 6;
+}
+
+.pocket-day-node.node-today {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  border: 2px solid #fbbf24;
+  color: #000000;
+  font-weight: 900;
+  font-size: 10px;
+  transform: scale(1.18);
+  z-index: 10;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.65);
+}
+
+@media (max-width: 480px) {
+  .pocket-day-node.node-future,
+  .pocket-day-node.node-past {
+    font-size: 0;
+  }
 }
 
 .tag-flare {
@@ -7819,6 +7903,811 @@ body {
   border: none;
   cursor: pointer;
   text-align: left;
+}
+
+/* ==========================================================================
+   Cybernetic Tactile Daily Discretionary Pocket System
+   ========================================================================== */
+
+/* 1. End-of-Day Surplus Sweep Banner */
+.pocket-sweep-banner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, rgba(6, 78, 59, 0.35) 0%, var(--surface-overlay) 55%, rgba(120, 53, 15, 0.25) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  box-sizing: border-box;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.pocket-sweep-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.pocket-sweep-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-lg);
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pocket-sweep-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pocket-sweep-headline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pocket-sweep-amount {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 800;
+  color: #34d399;
+  letter-spacing: -0.02em;
+}
+
+.pocket-sweep-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(52, 211, 153, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pocket-sweep-desc {
+  font-size: 11px;
+  color: var(--ink-secondary);
+  line-height: 1.4;
+}
+
+.pocket-sweep-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  color: #a7f3d0;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-smooth);
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+.pocket-sweep-btn:hover {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.35) 0%, rgba(5, 150, 105, 0.45) 100%);
+  border-color: rgba(52, 211, 153, 0.7);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.pocket-sweep-btn:active {
+  transform: translateY(0);
+}
+
+/* 2. Smart Quick-Spend Omnibar Inside Pocket */
+.pocket-smart-logger {
+  width: 100%;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+}
+
+.pocket-smart-input-box {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  background: var(--surface-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-xl);
+  padding: 4px 6px 4px 38px;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.pocket-smart-input-box:focus-within {
+  border-color: var(--colour-quasar);
+  box-shadow: 0 0 0 3px rgba(191, 159, 241, 0.15), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.pocket-smart-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--colour-corona);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pocket-smart-field {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--ink-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 6px 0;
+  box-sizing: border-box;
+}
+
+.pocket-smart-field::placeholder {
+  color: var(--ink-muted);
+}
+
+.pocket-smart-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: var(--radius-lg);
+  background: rgba(191, 159, 241, 0.15);
+  border: 1px solid rgba(191, 159, 241, 0.35);
+  color: var(--colour-quasar);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.pocket-smart-submit:hover {
+  background: rgba(191, 159, 241, 0.25);
+  border-color: var(--colour-quasar);
+  color: #ffffff;
+}
+
+/* 3. Fast Expense Envelopes */
+.pocket-envelope-card {
+  background: var(--surface-overlay);
+  border: var(--hair) solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  box-sizing: border-box;
+  transition: all 0.2s var(--ease-smooth);
+}
+
+.pocket-envelope-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.pocket-envelope-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pocket-envelope-tag {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.pocket-chips-row {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.pocket-spend-chip {
+  flex: 1;
+  padding: 6px 4px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-align: center;
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  border: var(--hair) solid var(--border-subtle);
+  color: var(--ink-primary);
+  cursor: pointer;
+  min-width: 0;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.pocket-spend-chip:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.pocket-spend-chip:active {
+  transform: translateY(1px);
+}
+
+/* Category Accent Variants */
+.pocket-envelope-amber {
+  border-left: 3px solid rgba(245, 158, 11, 0.6);
+}
+.pocket-envelope-amber .pocket-envelope-title { color: #f59e0b; }
+.pocket-envelope-amber .pocket-spend-chip:hover { border-color: #f59e0b; color: #fbbf24; background: rgba(245, 158, 11, 0.15); }
+
+.pocket-envelope-purple {
+  border-left: 3px solid rgba(168, 85, 247, 0.6);
+}
+.pocket-envelope-purple .pocket-envelope-title { color: #a855f7; }
+.pocket-envelope-purple .pocket-spend-chip:hover { border-color: #a855f7; color: #c084fc; background: rgba(168, 85, 247, 0.15); }
+
+.pocket-envelope-rose {
+  border-left: 3px solid rgba(244, 63, 94, 0.6);
+}
+.pocket-envelope-rose .pocket-envelope-title { color: #f43f5e; }
+.pocket-envelope-rose .pocket-spend-chip:hover { border-color: #f43f5e; color: #fb7185; background: rgba(244, 63, 94, 0.15); }
+
+.pocket-envelope-emerald {
+  border-left: 3px solid rgba(16, 185, 129, 0.6);
+}
+.pocket-envelope-emerald .pocket-envelope-title { color: #10b981; }
+.pocket-envelope-emerald .pocket-spend-chip:hover { border-color: #10b981; color: #34d399; background: rgba(16, 185, 129, 0.15); }
+
+/* 4. Category Spend Distribution Meter */
+.pocket-category-meter {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-xl);
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.pocket-category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.pocket-category-track {
+  width: 100%;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--surface-overlay);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+  display: flex;
+  box-sizing: border-box;
+}
+
+.pocket-category-segment {
+  height: 100%;
+  transition: width 0.3s var(--ease-smooth);
+}
+
+.pocket-category-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+}
+
+.pocket-category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pocket-category-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* 5. Payday Runway Deck */
+.pocket-runway-deck {
+  padding: 14px 16px;
+  border-radius: var(--radius-xl);
+  background: var(--surface-raised);
+  border: var(--hair) solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+}
+
+.pocket-runway-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.pocket-runway-milestones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  box-sizing: border-box;
+}
+
+.milestone-badge {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+}
+
+.milestone-payday {
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.milestone-today {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.milestone-end {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--ink-muted);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 480px) {
+  .milestone-badge {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
+}
+
+/* 6. Actuarial Impulse Radar Deck */
+.afford-radar-card {
+  width: 100%;
+  border-radius: var(--radius-xl);
+  background: var(--surface-raised);
+  border: var(--hair) solid var(--border-subtle);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.afford-radar-toggle {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
+  padding: 14px 18px !important;
+  box-sizing: border-box !important;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.afford-radar-toggle:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.afford-radar-body {
+  padding: 16px 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--surface-overlay);
+  border-top: 1px solid var(--border-subtle);
+  box-sizing: border-box;
+}
+
+.afford-inputs-row {
+  display: grid;
+  grid-template-columns: 1fr 160px;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+  .afford-inputs-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.afford-input-box {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  background: var(--surface-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg);
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.afford-input-box:focus-within {
+  border-color: var(--colour-quasar);
+  box-shadow: 0 0 0 3px rgba(191, 159, 241, 0.15);
+}
+
+.afford-input-prefix {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-muted);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.afford-input-control {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--ink-primary);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  padding: 10px 12px 10px 34px;
+  box-sizing: border-box;
+}
+
+.afford-input-control::placeholder {
+  color: var(--ink-muted);
+}
+
+/* 7. Quick-Test 5-Column Preset Chips Grid */
+.afford-preset-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-secondary);
+}
+
+.afford-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .afford-preset-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .afford-preset-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.afford-preset-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 8px 6px;
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--ink-primary);
+  cursor: pointer;
+  transition: all 0.2s var(--ease-smooth);
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.afford-preset-chip:hover {
+  background: rgba(191, 159, 241, 0.12);
+  border-color: var(--colour-quasar);
+  transform: translateY(-1px);
+}
+
+.afford-preset-chip.active {
+  background: rgba(191, 159, 241, 0.2);
+  border-color: var(--colour-quasar);
+  box-shadow: 0 0 0 1px var(--colour-quasar);
+}
+
+.afford-preset-amount {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--colour-solstice);
+}
+
+.afford-preset-label {
+  font-size: 10px;
+  color: var(--ink-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* 8. Assessment Verdict Display Card */
+.afford-verdict-box {
+  padding: 14px 16px;
+  border-radius: var(--radius-xl);
+  border: 1px solid;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+.afford-verdict-box.verdict-safe {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.afford-verdict-box.verdict-caution {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.afford-verdict-box.verdict-hazard {
+  background: rgba(244, 63, 94, 0.08);
+  border-color: rgba(244, 63, 94, 0.35);
+}
+
+.afford-verdict-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 540px) {
+  .afford-verdict-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+.afford-verdict-stat-pill {
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.afford-verdict-stat-label {
+  font-size: 9.5px;
+  font-family: var(--font-mono);
+  color: var(--ink-muted);
+  text-transform: uppercase;
+}
+
+.afford-verdict-stat-val {
+  font-size: 13px;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  color: var(--ink-primary);
+}
+
+.afford-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* 9. Dual-Telemetry Rescued Capital Deck */
+.rescued-capital-deck {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, rgba(6, 78, 59, 0.3) 0%, var(--surface-raised) 50%, rgba(120, 53, 15, 0.2) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  box-sizing: border-box;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.rescued-capital-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.rescued-capital-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-lg);
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.rescued-capital-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rescued-capital-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rescued-capital-val {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 800;
+  color: #34d399;
+}
+
+.rescued-capital-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(52, 211, 153, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.rescued-capital-sub {
+  font-size: 11px;
+  color: var(--ink-secondary);
+  line-height: 1.35;
+}
+
+.rescued-capital-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+@media (max-width: 580px) {
+  .rescued-capital-right {
+    align-items: flex-start;
+    width: 100%;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-subtle);
+  }
+}
+
+.rescued-capital-compounded-label {
+  font-size: 10px;
+  color: var(--ink-muted);
+}
+
+.rescued-capital-compounded-val {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--colour-solstice);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* 10. Cooling Chamber Grid Styles */
+.chamber-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 140px auto;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 580px) {
+  .chamber-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chamber-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: var(--radius-lg);
+  background: var(--surface-overlay);
+  border: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+@media (max-width: 580px) {
+  .chamber-stats-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ==========================================================================

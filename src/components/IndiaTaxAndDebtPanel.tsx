@@ -125,7 +125,7 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
           </div>
 
           {/* Statutory Transition Note & Authority Links */}
-          <div className="p-2.5 px-3 rounded-xl bg-surface-overlay border border-subtle mb-3 text-[11px] leading-relaxed">
+          <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-lg)', background: 'var(--surface-overlay)', border: '1px solid var(--border-subtle)', marginBottom: '14px', fontSize: '11.5px', lineHeight: 1.5 }}>
             <div className="flex items-center justify-between gap-2 flex-wrap text-muted">
               <span className="text-secondary font-medium">
                 🏛️ <strong>Statutory Distinction:</strong> TY 2026–27 uses <em>Income-tax Act, 2025</em>; prior years remain under the 1961 Act.

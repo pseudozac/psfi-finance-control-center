@@ -651,50 +651,51 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
 
             {/* END-OF-DAY SURPLUS SWEEP BANNER */}
             {unspentToday > 0 && (
-              <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-950/30 via-surface-card to-amber-950/20 border border-emerald-500/30 flex items-center justify-between gap-3 flex-wrap">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/35 flex items-center justify-center shrink-0">
-                    <Sparkles size={16} className="text-emerald-400" />
+              <div className="pocket-sweep-banner">
+                <div className="pocket-sweep-left">
+                  <div className="pocket-sweep-icon-box">
+                    <Sparkles size={18} className="text-emerald-400" />
                   </div>
-                  <div className="flex flex-col min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono text-sm sm:text-base font-extrabold text-emerald-400">
+                  <div className="pocket-sweep-content">
+                    <div className="pocket-sweep-headline">
+                      <span className="pocket-sweep-amount">
                         {formatINR(unspentToday)} Unspent Allowance
                       </span>
-                      <span className="tag-pill tag-nebula text-[10px] font-mono py-0.5 px-2 font-bold">
-                        Surplus Sweep Ready
+                      <span className="pocket-sweep-tag">
+                        ✦ Surplus Sweep Ready
                       </span>
                     </div>
-                    <span className="text-[11px] text-muted truncate">
-                      Sweep into {surplusDestination === 'weekend_pot' ? 'Weekend Pot' : 'Bonus SIP'} and advance your streak!
+                    <span className="pocket-sweep-desc">
+                      Discipline rewarded: Transfer remaining allowance to your {surplusDestination === 'weekend_pot' ? 'Weekend Pot' : 'Bonus SIP'} and advance your streak!
                     </span>
                   </div>
                 </div>
 
                 <button
                   type="button"
-                  className="action-pill text-xs py-2 px-3.5 bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30 font-mono font-bold flex items-center gap-1.5 cursor-pointer rounded-xl transition-all shadow-sm"
+                  className="pocket-sweep-btn"
                   onClick={handleSweepUnspentSurplus}
                   title="Sweep unspent daily allowance into banked surplus pot"
                 >
-                  <Sparkles size={12} className="text-emerald-400" />
+                  <Sparkles size={13} className="text-emerald-300" />
                   <span>Bank Surplus (+1 🔥)</span>
                 </button>
               </div>
             )}
 
             {/* 1-TAP TACTILE MICRO-ENVELOPES (PHYSICAL FINTECH PAD) */}
-            <div className="p-3.5 sm:p-4 rounded-2xl bg-surface-raised border border-subtle">
-              <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-                <span className="font-mono text-xs font-bold text-primary flex items-center gap-1.5">
-                  <Zap size={13} className="text-solstice" /> 1-Tap Fast Expense Envelopes
+            <div className="hipuku-card" style={{ padding: '16px 18px', background: 'var(--surface-raised)', borderRadius: 'var(--radius-xl)', border: 'var(--hair) solid var(--border-subtle)' }}>
+              <div className="flex-between mb-3 flex-wrap" style={{ gap: '8px' }}>
+                <span className="font-mono text-xs font-bold text-primary flex-align" style={{ gap: '6px' }}>
+                  <Zap size={14} className="text-solstice" /> 1-Tap Fast Expense Envelopes
                 </span>
 
-                <div className="flex items-center gap-2">
+                <div className="flex-align" style={{ gap: '8px' }}>
                   {lastLoggedEntry && (
                     <button
                       type="button"
-                      className="action-pill font-mono text-[11px] py-1 px-2.5 text-rose-300 border-rose-500/40 bg-rose-500/10 flex items-center gap-1 hover:bg-rose-500/20 cursor-pointer animate-pulse"
+                      className="action-pill font-mono text-[11px] py-1 px-2.5 text-rose-300 border-rose-500/40 bg-rose-500/10 flex-align cursor-pointer animate-pulse"
+                      style={{ gap: '4px' }}
                       onClick={handleUndoLastSpend}
                       title={`Undo last logged transaction: ${lastLoggedEntry.title} (${formatINR(lastLoggedEntry.amount)})`}
                     >
@@ -704,7 +705,8 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                   {todaySpendLog.length > 0 && (
                     <button
                       type="button"
-                      className="text-[11px] font-mono text-muted hover:text-rose-400 flex items-center gap-1 cursor-pointer"
+                      className="text-[11px] font-mono text-muted hover:text-rose-400 flex-align cursor-pointer"
+                      style={{ gap: '4px' }}
                       onClick={handleResetToday}
                       title="Clear all today's transactions"
                     >
@@ -715,12 +717,14 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
               </div>
 
               {/* SMART QUICK-LOGGER INPUT */}
-              <div className="mb-3.5">
-                <div className="relative flex items-center">
-                  <Zap size={13} className="absolute left-3 text-corona pointer-events-none" />
+              <div className="pocket-smart-logger">
+                <div className="pocket-smart-input-box">
+                  <span className="pocket-smart-icon">
+                    <Zap size={14} />
+                  </span>
                   <input
                     type="text"
-                    className="w-full pl-8 pr-20 py-2 text-xs font-mono bg-surface-overlay border border-subtle rounded-xl text-primary placeholder:text-muted focus:border-quasar/60 focus:outline-none transition-all"
+                    className="pocket-smart-field"
                     placeholder="Quick spend: 'Swiggy 350', 'Chai 40', 'Uber 180', 'Metro 50', '250'..."
                     value={quickSpendText}
                     onChange={(e) => setQuickSpendText(e.target.value)}
@@ -733,10 +737,10 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                   />
                   <button
                     type="button"
-                    className="absolute right-1.5 top-1 bottom-1 px-3 text-[11px] font-mono font-bold bg-quasar/20 text-quasar hover:bg-quasar/30 border border-quasar/30 rounded-lg flex items-center gap-1 cursor-pointer transition-all"
+                    className="pocket-smart-submit"
                     onClick={handleSmartQuickSpend}
                   >
-                    <Plus size={11} /> Log
+                    <Plus size={11} /> Log Spend ↵
                   </button>
                 </div>
               </div>
@@ -744,17 +748,17 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
               {/* 4 Envelopes */}
               <div className="pocket-envelopes-grid">
                 {/* Envelope 1: Chai & Quick Snack */}
-                <div className="pocket-envelope-card">
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 text-xs font-mono font-bold text-amber-300">
+                <div className="pocket-envelope-card pocket-envelope-amber">
+                  <div className="pocket-envelope-header">
+                    <span className="pocket-envelope-title">
                       <Coffee size={13} /> Chai & Snacks
                     </span>
-                    <span className="text-[10px] font-mono text-muted">Daily Fuel</span>
+                    <span className="pocket-envelope-tag">Daily Fuel</span>
                   </div>
-                  <div className="flex gap-1.5">
+                  <div className="pocket-chips-row">
                     <button
                       type="button"
-                      className="pocket-spend-chip hover:text-amber-300"
+                      className="pocket-spend-chip"
                       onClick={() => handleLogSpend('chai_quick', 'Cutting Chai / Quick Bite', 50)}
                       title="Log ₹50 for tea or quick street bite"
                     >
@@ -762,7 +766,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                     </button>
                     <button
                       type="button"
-                      className="pocket-spend-chip hover:text-amber-300"
+                      className="pocket-spend-chip"
                       onClick={() => handleLogSpend('chai_quick', 'Quick Grocery Snack / Zepto', 150)}
                       title="Log ₹150 for quick snack or quick commerce delivery"
                     >
@@ -770,7 +774,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                     </button>
                     <button
                       type="button"
-                      className="pocket-spend-chip hover:text-amber-300"
+                      className="pocket-spend-chip"
                       onClick={() => handleLogSpend('chai_quick', 'Artisan Coffee / Bakery', 300)}
                       title="Log ₹300 for premium specialty coffee"
                     >
@@ -780,17 +784,17 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                 </div>
 
                 {/* Envelope 2: Dining & Social */}
-                <div className="pocket-envelope-card">
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 text-xs font-mono font-bold text-purple-300">
+                <div className="pocket-envelope-card pocket-envelope-purple">
+                  <div className="pocket-envelope-header">
+                    <span className="pocket-envelope-title">
                       <Utensils size={13} /> Dining & Social
                     </span>
-                    <span className="text-[10px] font-mono text-muted">Outings</span>
+                    <span className="pocket-envelope-tag">Outings</span>
                   </div>
-                  <div className="flex gap-1.5">
+                  <div className="pocket-chips-row">
                     <button
                       type="button"
-                      className="pocket-spend-chip hover:text-purple-300"
+                      className="pocket-spend-chip"
                       onClick={() => handleLogSpend('dining_night', 'Work Lunch / Cafe', 400)}
                       title="Log ₹400 for lunch or casual cafe meal"
                     >
@@ -798,7 +802,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                     </button>
                     <button
                       type="button"
-                      className="pocket-spend-chip hover:text-purple-300"
+                      className="pocket-spend-chip"
                       onClick={() => handleLogSpend('dining_night', 'Dinner with Friends', 850)}
                       title="Log ₹850 for social dinner with friends"
                     >
@@ -806,7 +810,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                     </button>
                     <button
                       type="button"
-                      className="pocket-spend-chip hover:text-purple-300"
+                      className="pocket-spend-chip"
                       onClick={() => handleLogSpend('dining_night', 'Weekend Splurge Dinner', 1800)}
                       title="Log ₹1,800 for weekend luxury dining"
                     >
@@ -816,17 +820,17 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                 </div>
 
                 {/* Envelope 3: Retail & Shopping */}
-                <div className="pocket-envelope-card">
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 text-xs font-mono font-bold text-rose-300">
+                <div className="pocket-envelope-card pocket-envelope-rose">
+                  <div className="pocket-envelope-header">
+                    <span className="pocket-envelope-title">
                       <ShoppingBag size={13} /> Retail & Shopping
                     </span>
-                    <span className="text-[10px] font-mono text-muted">Discretionary</span>
+                    <span className="pocket-envelope-tag">Discretionary</span>
                   </div>
-                  <div className="flex gap-1.5">
+                  <div className="pocket-chips-row">
                     <button
                       type="button"
-                      className="pocket-spend-chip hover:text-rose-300"
+                      className="pocket-spend-chip"
                       onClick={() => handleLogSpend('retail_impulse', 'Online E-commerce Cart', 1000)}
                       title="Log ₹1,000 for retail cart purchase"
                     >
@@ -834,7 +838,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                     </button>
                     <button
                       type="button"
-                      className="pocket-spend-chip hover:text-rose-300"
+                      className="pocket-spend-chip"
                       onClick={() => handleLogSpend('retail_impulse', 'Apparel & Footwear', 2500)}
                       title="Log ₹2,500 for clothing or accessories"
                     >
@@ -842,7 +846,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                     </button>
                     <button
                       type="button"
-                      className="pocket-spend-chip hover:text-rose-300"
+                      className="pocket-spend-chip"
                       onClick={() => handleLogSpend('retail_impulse', 'Electronics / Gadget Purchase', 5000)}
                       title="Log ₹5,000 for tech or gadget splurge"
                     >
@@ -852,17 +856,17 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                 </div>
 
                 {/* Envelope 4: Commute & Transit */}
-                <div className="pocket-envelope-card">
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-300">
+                <div className="pocket-envelope-card pocket-envelope-emerald">
+                  <div className="pocket-envelope-header">
+                    <span className="pocket-envelope-title">
                       <Car size={13} /> Commute & Cabs
                     </span>
-                    <span className="text-[10px] font-mono text-muted">Transit</span>
+                    <span className="pocket-envelope-tag">Transit</span>
                   </div>
-                  <div className="flex gap-1.5">
+                  <div className="pocket-chips-row">
                     <button
                       type="button"
-                      className="pocket-spend-chip hover:text-emerald-300"
+                      className="pocket-spend-chip"
                       onClick={() => handleLogSpend('other', 'Auto / Metro Smart Card', 150)}
                       title="Log ₹150 for auto or metro transit"
                     >
@@ -870,7 +874,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                     </button>
                     <button
                       type="button"
-                      className="pocket-spend-chip hover:text-emerald-300"
+                      className="pocket-spend-chip"
                       onClick={() => handleLogSpend('other', 'City Cab / Uber Ride', 350)}
                       title="Log ₹350 for standard city cab ride"
                     >
@@ -878,7 +882,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                     </button>
                     <button
                       type="button"
-                      className="pocket-spend-chip hover:text-emerald-300"
+                      className="pocket-spend-chip"
                       onClick={() => handleLogSpend('other', 'Airport / Intercity Cab', 750)}
                       title="Log ₹750 for long distance or airport ride"
                     >
@@ -889,22 +893,24 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
               </div>
 
               {/* Custom Spend Bar */}
-              <div className="mt-3 pt-2.5 border-t border-subtle/50 flex items-center justify-between gap-2 flex-wrap text-xs">
+              <div className="flex-between mt-3 pt-2.5 flex-wrap" style={{ borderTop: '1px solid var(--border-subtle)', gap: '8px' }}>
                 {!showCustomInput ? (
                   <button
                     type="button"
-                    className="text-xs font-mono text-muted hover:text-primary flex items-center gap-1.5 cursor-pointer py-1"
+                    className="text-xs font-mono text-muted hover:text-primary flex-align cursor-pointer py-1"
+                    style={{ gap: '6px' }}
                     onClick={() => setShowCustomInput(true)}
                   >
                     <Plus size={12} className="text-solstice" />
                     <span>Log Custom Amount</span>
                   </button>
                 ) : (
-                  <div className="flex items-center gap-2 flex-wrap w-full bg-surface-overlay p-2 rounded-xl border border-subtle">
+                  <div className="flex-align flex-wrap w-full p-2 rounded-xl" style={{ gap: '8px', background: 'var(--surface-overlay)', border: '1px solid var(--border-subtle)' }}>
                     <input
                       type="number"
                       placeholder="Amount (₹)"
-                      className="hipuku-input text-xs font-mono w-28 py-1 px-2.5"
+                      className="hipuku-input text-xs font-mono py-1 px-2.5"
+                      style={{ width: '110px' }}
                       value={customSpendVal}
                       onChange={(e) => setCustomSpendVal(e.target.value)}
                       onKeyDown={(e) => {
@@ -961,63 +967,63 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
 
               {/* CATEGORY SPEND ALLOCATION METER */}
               {categoryBreakdown && spentToday > 0 && (
-                <div className="mt-3 p-2.5 rounded-xl bg-surface-overlay border border-subtle flex flex-col gap-2">
-                  <div className="flex items-center justify-between text-[10.5px] font-mono text-muted">
-                    <span className="font-bold text-primary">Today's Spend Allocation:</span>
-                    <span>Total: {formatINR(spentToday)}</span>
+                <div className="pocket-category-meter">
+                  <div className="pocket-category-header">
+                    <span className="text-primary font-bold">Today's Category Spend Allocation:</span>
+                    <span className="text-muted">Total: {formatINR(spentToday)}</span>
                   </div>
-                  <div className="w-full h-2 rounded-full bg-surface-card overflow-hidden flex">
+                  <div className="pocket-category-track">
                     {categoryBreakdown.chai.amount > 0 && (
                       <div
-                        style={{ width: `${categoryBreakdown.chai.pct}%` }}
-                        className="bg-amber-400 transition-all duration-300"
+                        style={{ width: `${categoryBreakdown.chai.pct}%`, background: '#f59e0b' }}
+                        className="pocket-category-segment"
                         title={`Chai & Snacks: ${formatINR(categoryBreakdown.chai.amount)} (${categoryBreakdown.chai.pct}%)`}
                       />
                     )}
                     {categoryBreakdown.dining.amount > 0 && (
                       <div
-                        style={{ width: `${categoryBreakdown.dining.pct}%` }}
-                        className="bg-purple-400 transition-all duration-300"
+                        style={{ width: `${categoryBreakdown.dining.pct}%`, background: '#a855f7' }}
+                        className="pocket-category-segment"
                         title={`Dining & Social: ${formatINR(categoryBreakdown.dining.amount)} (${categoryBreakdown.dining.pct}%)`}
                       />
                     )}
                     {categoryBreakdown.retail.amount > 0 && (
                       <div
-                        style={{ width: `${categoryBreakdown.retail.pct}%` }}
-                        className="bg-rose-400 transition-all duration-300"
+                        style={{ width: `${categoryBreakdown.retail.pct}%`, background: '#f43f5e' }}
+                        className="pocket-category-segment"
                         title={`Retail & Shopping: ${formatINR(categoryBreakdown.retail.amount)} (${categoryBreakdown.retail.pct}%)`}
                       />
                     )}
                     {categoryBreakdown.other.amount > 0 && (
                       <div
-                        style={{ width: `${categoryBreakdown.other.pct}%` }}
-                        className="bg-emerald-400 transition-all duration-300"
+                        style={{ width: `${categoryBreakdown.other.pct}%`, background: '#10b981' }}
+                        className="pocket-category-segment"
                         title={`Transit & Other: ${formatINR(categoryBreakdown.other.amount)} (${categoryBreakdown.other.pct}%)`}
                       />
                     )}
                   </div>
-                  <div className="flex items-center gap-2.5 flex-wrap text-[10px] font-mono">
+                  <div className="pocket-category-legend">
                     {categoryBreakdown.chai.amount > 0 && (
-                      <span className="inline-flex items-center gap-1 text-amber-300">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                      <span className="pocket-category-chip" style={{ color: '#fbbf24' }}>
+                        <span className="pocket-category-dot" style={{ background: '#f59e0b' }} />
                         <span>Chai {formatINR(categoryBreakdown.chai.amount)} ({categoryBreakdown.chai.pct}%)</span>
                       </span>
                     )}
                     {categoryBreakdown.dining.amount > 0 && (
-                      <span className="inline-flex items-center gap-1 text-purple-300">
-                        <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                      <span className="pocket-category-chip" style={{ color: '#c084fc' }}>
+                        <span className="pocket-category-dot" style={{ background: '#a855f7' }} />
                         <span>Dining {formatINR(categoryBreakdown.dining.amount)} ({categoryBreakdown.dining.pct}%)</span>
                       </span>
                     )}
                     {categoryBreakdown.retail.amount > 0 && (
-                      <span className="inline-flex items-center gap-1 text-rose-300">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                      <span className="pocket-category-chip" style={{ color: '#fb7185' }}>
+                        <span className="pocket-category-dot" style={{ background: '#f43f5e' }} />
                         <span>Retail {formatINR(categoryBreakdown.retail.amount)} ({categoryBreakdown.retail.pct}%)</span>
                       </span>
                     )}
                     {categoryBreakdown.other.amount > 0 && (
-                      <span className="inline-flex items-center gap-1 text-emerald-300">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      <span className="pocket-category-chip" style={{ color: '#34d399' }}>
+                        <span className="pocket-category-dot" style={{ background: '#10b981' }} />
                         <span>Transit {formatINR(categoryBreakdown.other.amount)} ({categoryBreakdown.other.pct}%)</span>
                       </span>
                     )}
@@ -1027,33 +1033,34 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
 
               {/* Itemized Transactions Log */}
               {todaySpendLog.length > 0 && (
-                <div className="mt-2.5 pt-2 border-t border-subtle/40 flex flex-col gap-1.5 max-h-36 overflow-y-auto pr-1">
+                <div className="mt-2.5 pt-2 flex-col" style={{ display: 'flex', gap: '6px', borderTop: '1px solid var(--border-subtle)', maxHeight: '150px', overflowY: 'auto' }}>
                   {todaySpendLog.map((entry) => (
                     <div
                       key={entry.id}
-                      className="p-1.5 px-2.5 rounded-lg bg-surface-overlay border border-subtle flex items-center justify-between text-xs"
+                      className="flex-between p-2 rounded-lg"
+                      style={{ background: 'var(--surface-overlay)', border: '1px solid var(--border-subtle)', fontSize: '12px' }}
                     >
-                      <div className="flex items-center gap-2 truncate">
+                      <div className="flex-align truncate" style={{ gap: '8px' }}>
                         {entry.category === 'chai_quick' ? (
-                          <Coffee size={12} className="text-amber-400 shrink-0" />
+                          <Coffee size={13} className="text-amber-400 shrink-0" />
                         ) : entry.category === 'dining_night' ? (
-                          <Utensils size={12} className="text-purple-400 shrink-0" />
+                          <Utensils size={13} className="text-purple-400 shrink-0" />
                         ) : entry.category === 'retail_impulse' ? (
-                          <ShoppingBag size={12} className="text-rose-400 shrink-0" />
+                          <ShoppingBag size={13} className="text-rose-400 shrink-0" />
                         ) : (
-                          <Car size={12} className="text-emerald-400 shrink-0" />
+                          <Car size={13} className="text-emerald-400 shrink-0" />
                         )}
                         <span className="text-primary truncate font-medium">{entry.title}</span>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="font-mono font-semibold text-primary">{formatINR(entry.amount)}</span>
+                      <div className="flex-align shrink-0" style={{ gap: '8px' }}>
+                        <span className="font-mono font-bold text-primary">{formatINR(entry.amount)}</span>
                         <button
                           type="button"
                           className="text-muted hover:text-rose-400 p-0.5 cursor-pointer"
                           onClick={() => handleDeleteSpendEntry(entry.id)}
                           title="Delete transaction"
                         >
-                          <Trash2 size={11} />
+                          <Trash2 size={12} />
                         </button>
                       </div>
                     </div>
@@ -1063,17 +1070,17 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
             </div>
 
             {/* 30-DAY PAYDAY HORIZON RUNWAY */}
-            <div className="p-3.5 rounded-2xl bg-surface-raised border border-subtle">
-              <div className="flex items-center justify-between text-xs font-mono text-muted mb-2.5 flex-wrap gap-2">
-                <div className="flex items-center gap-2 text-primary font-semibold flex-wrap">
-                  <CalendarDays size={13} className="text-quasar shrink-0" />
-                  <span>Day {currentDayOfMonth} of {daysInCurrentMonth}</span>
+            <div className="pocket-runway-deck">
+              <div className="pocket-runway-header">
+                <div className="flex-align" style={{ gap: '8px' }}>
+                  <CalendarDays size={14} className="text-quasar shrink-0" />
+                  <span className="text-primary font-bold">Day {currentDayOfMonth} of {daysInCurrentMonth}</span>
                   <span className="text-muted font-normal">·</span>
-                  <span className="text-solstice font-normal">
+                  <span className="text-solstice font-semibold">
                     {daysRemainingInMonth} days to next salary credit
                   </span>
                 </div>
-                <span className="text-[10.5px] text-muted">
+                <span className="text-[11px] text-muted">
                   Unspent daily balance compounds into surplus pot
                 </span>
               </div>
@@ -1091,89 +1098,86 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                       title={`Day ${dayNum}${isPayday ? ' · Salary Credit Day 💰' : ''}${isCurrent ? ' · Today (Active Pocket)' : isPast ? ' · Shield Maintained' : ' · Planned Allowance'}`}
                       className={`pocket-day-node ${
                         isCurrent
-                          ? 'bg-amber-400 text-black font-extrabold ring-2 ring-amber-400/80 shadow-md shadow-amber-400/40 scale-110 z-10'
+                          ? 'node-today'
                           : isPayday
-                          ? 'bg-emerald-400 text-black font-extrabold'
+                          ? 'node-payday'
                           : isPast
-                          ? 'bg-purple-500/35 hover:bg-purple-500/50'
-                          : 'bg-white/5 border border-white/10 hover:bg-white/10'
+                          ? 'node-past'
+                          : 'node-future'
                       }`}
                     >
-                      {isCurrent ? '●' : isPayday ? '₹' : null}
+                      {isCurrent ? '●' : isPayday ? '₹' : dayNum}
                     </div>
                   );
                 })}
               </div>
 
               {/* Payday Horizon Scale Benchmarks */}
-              <div className="flex justify-between items-center text-[10px] font-mono text-muted mt-1.5 px-0.5">
-                <span className="text-emerald-400 font-semibold">
+              <div className="pocket-runway-milestones">
+                <span className="milestone-badge milestone-payday">
                   Day 1 (Salary Credit)
                 </span>
-                <span className="text-amber-400 font-semibold">
+                <span className="milestone-badge milestone-today">
                   Day {currentDayOfMonth} (Today)
                 </span>
-                <span className="text-muted">
+                <span className="milestone-badge milestone-end">
                   Day {daysInCurrentMonth} (Month End)
                 </span>
               </div>
             </div>
 
             {/* "CAN I AFFORD THIS TODAY?" ACTUARIAL WEALTH SCANNER */}
-            <div className="afford-radar-card rounded-2xl bg-surface-raised border border-subtle overflow-hidden w-full" style={{ width: '100%' }}>
+            <div className="afford-radar-card" style={{ width: '100%' }}>
               <button
                 type="button"
-                className={`afford-radar-toggle w-full p-3.5 sm:p-4 text-xs flex items-center justify-between gap-3 transition-all cursor-pointer ${
-                  showAffordCalculator
-                    ? 'bg-quasar/15 text-primary border-b border-quasar/30'
-                    : 'bg-surface-raised text-muted hover:text-primary'
-                }`}
-                style={{ width: '100%' }}
+                className="afford-radar-toggle"
                 onClick={() => {
                   setShowAffordCalculator(!showAffordCalculator);
                   playSynthesizerChime(520);
                 }}
               >
-                <div className="flex items-center gap-2.5 min-w-0 text-left">
-                  <div className="w-8 h-8 rounded-xl bg-quasar/15 border border-quasar/30 flex items-center justify-center shrink-0">
-                    <Calculator size={15} className="text-quasar" />
+                <div className="flex-align" style={{ gap: '12px' }}>
+                  <div className="pocket-sweep-icon-box" style={{ background: 'rgba(191, 159, 241, 0.15)', borderColor: 'rgba(191, 159, 241, 0.35)' }}>
+                    <Calculator size={17} className="text-quasar" />
                   </div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="font-bold text-primary text-xs sm:text-sm tracking-tight">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'left' }}>
+                    <span className="font-bold text-primary" style={{ fontSize: '13.5px', letterSpacing: '-0.01em' }}>
                       Can I Afford This Today?
                     </span>
-                    <span className="text-[10px] font-mono text-muted truncate">
+                    <span className="font-mono text-muted" style={{ fontSize: '10.5px' }}>
                       Instant Actuarial Impulse Radar
                     </span>
                   </div>
                 </div>
 
-                <span className="text-[11px] font-mono text-quasar flex items-center gap-1.5 bg-quasar/15 hover:bg-quasar/25 px-3 py-1.5 rounded-full border border-quasar/30 shrink-0 font-bold transition-all shadow-sm">
-                  <span>{showAffordCalculator ? 'Close Radar' : 'Open Radar'}</span>
-                  <span className="text-[9px]">{showAffordCalculator ? '▲' : '▼'}</span>
+                <span className="action-pill font-mono" style={{ padding: '6px 14px', borderRadius: 'var(--radius-full)', background: 'rgba(191, 159, 241, 0.15)', borderColor: 'rgba(191, 159, 241, 0.35)', color: 'var(--colour-quasar)', fontWeight: 700, fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <span>{showAffordCalculator ? 'Close Radar' : 'Open 1-Click Radar'}</span>
+                  <span>{showAffordCalculator ? '▲' : '▼'}</span>
                 </span>
               </button>
 
               {showAffordCalculator && (
-                <div className="p-4 sm:p-4.5 flex flex-col gap-4 bg-surface-overlay">
+                <div className="afford-radar-body">
                   {/* Two Inputs in Clean Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_150px] gap-2.5">
-                    <div className="relative flex items-center">
-                      <ShoppingBag size={13} className="absolute left-3 text-muted pointer-events-none" />
+                  <div className="afford-inputs-row">
+                    <div className="afford-input-box">
+                      <span className="afford-input-prefix">
+                        <ShoppingBag size={14} className="text-muted" />
+                      </span>
                       <input
                         type="text"
                         placeholder="Item description (e.g. Swiggy, Shoes, Gadget)"
-                        className="hipuku-input text-xs w-full pl-8 py-2 px-3 rounded-xl border border-subtle bg-surface-base focus:border-quasar/50 focus:ring-1 focus:ring-quasar/30"
+                        className="afford-input-control"
                         value={affordQueryName}
                         onChange={(e) => setAffordQueryName(e.target.value)}
                       />
                     </div>
-                    <div className="relative flex items-center">
-                      <span className="absolute left-3 text-muted font-mono text-xs font-bold pointer-events-none">₹</span>
+                    <div className="afford-input-box">
+                      <span className="afford-input-prefix">₹</span>
                       <input
                         type="number"
                         placeholder="Price"
-                        className="hipuku-input text-xs font-mono w-full pl-7 py-2 px-3 rounded-xl border border-subtle bg-surface-base focus:border-quasar/50 focus:ring-1 focus:ring-quasar/30"
+                        className="afford-input-control"
                         value={affordQueryAmount}
                         onChange={(e) => setAffordQueryAmount(e.target.value)}
                       />
@@ -1181,11 +1185,13 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                   </div>
 
                   {/* Tactile Quick-Test Presets */}
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-muted">
-                      Quick-Test Presets
-                    </span>
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div className="afford-preset-header">
+                      <span style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
+                        Quick-Test Presets (1-Click Fill)
+                      </span>
+                    </div>
+                    <div className="afford-preset-grid">
                       {[
                         { amt: 250, label: 'Coffee / Snack' },
                         { amt: 600, label: 'Food Delivery' },
@@ -1198,19 +1204,15 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                           <button
                             key={preset.amt}
                             type="button"
-                            className={`flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all cursor-pointer ${
-                              isSelected
-                                ? 'bg-quasar/25 border-quasar text-quasar shadow-sm ring-1 ring-quasar/40'
-                                : 'bg-surface-raised border-subtle text-primary hover:border-quasar/40 hover:bg-surface-base'
-                            }`}
+                            className={`afford-preset-chip ${isSelected ? 'active' : ''}`}
                             onClick={() => {
                               setAffordQueryAmount(String(preset.amt));
                               setAffordQueryName(preset.label);
                               playSynthesizerChime(480);
                             }}
                           >
-                            <span className="font-mono text-xs font-bold tracking-tight">₹{preset.amt.toLocaleString('en-IN')}</span>
-                            <span className="text-[9.5px] text-muted truncate w-full">{preset.label}</span>
+                            <span className="afford-preset-amount">₹{preset.amt.toLocaleString('en-IN')}</span>
+                            <span className="afford-preset-label">{preset.label}</span>
                           </button>
                         );
                       })}
@@ -1218,34 +1220,41 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                   </div>
 
                   {affordAssessment && (
-                    <div className={`p-4 rounded-2xl border flex flex-col gap-3 transition-all shadow-md ${affordAssessment.colorClass}`}>
-                      <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <span className="font-mono text-xs font-extrabold tracking-wide flex items-center gap-1.5">
+                    <div className={`afford-verdict-box verdict-${affordAssessment.verdict}`}>
+                      <div className="flex-between flex-wrap" style={{ gap: '8px' }}>
+                        <span className="font-mono text-xs font-extrabold flex-align" style={{ gap: '6px' }}>
                           {affordAssessment.badge}
                         </span>
-                        <span className="tag-pill font-mono text-[10.5px] font-semibold bg-surface-card border-subtle">
+                        <span className="tag-pill font-mono text-[10.5px] font-semibold">
                           Consumes <strong>{affordAssessment.daysConsumed} days</strong> of pocket
                         </span>
                       </div>
                       <p className="text-xs m-0 leading-relaxed text-secondary font-sans">
                         {affordAssessment.summary}
                       </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2.5 border-t border-subtle/50 font-mono text-[11px]">
-                        <div className="flex items-center justify-between p-2 rounded-xl bg-surface-base/50">
-                          <span className="text-muted">Today's Remaining:</span>
-                          <strong className="text-primary">{formatINR(burnState.remainingBurnToday)}</strong>
+                      <div className="afford-verdict-stats">
+                        <div className="afford-verdict-stat-pill">
+                          <span className="afford-verdict-stat-label">Today's Remaining:</span>
+                          <span className="afford-verdict-stat-val">{formatINR(burnState.remainingBurnToday)}</span>
                         </div>
-                        <div className="flex items-center justify-between p-2 rounded-xl bg-surface-base/50">
-                          <span className="text-muted">10-Yr Compounded Cost:</span>
-                          <strong className="text-solstice font-bold">₹{affordAssessment.tenYearValue.toLocaleString('en-IN')}</strong>
+                        <div className="afford-verdict-stat-pill">
+                          <span className="afford-verdict-stat-label">Daily Allowance Cap:</span>
+                          <span className="afford-verdict-stat-val">{formatINR(burnState.effectiveDailyBurnToday)}</span>
+                        </div>
+                        <div className="afford-verdict-stat-pill">
+                          <span className="afford-verdict-stat-label">10-Yr Compounded Cost:</span>
+                          <span className="afford-verdict-stat-val" style={{ color: 'var(--colour-solstice)' }}>
+                            ₹{affordAssessment.tenYearValue.toLocaleString('en-IN')}
+                          </span>
                         </div>
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="flex items-center gap-2.5 pt-1 flex-wrap">
+                      <div className="afford-actions-row">
                         <button
                           type="button"
-                          className="action-pill text-xs py-2 px-3.5 bg-nebula/20 text-nebula border-nebula/40 hover:bg-nebula/30 flex items-center gap-1.5 cursor-pointer font-bold rounded-xl"
+                          className="action-pill text-xs py-2 px-4 bg-nebula/20 text-nebula border-nebula/40 hover:bg-nebula/30 flex-align cursor-pointer font-bold rounded-xl"
+                          style={{ gap: '6px' }}
                           onClick={() => {
                             handleLogSpend('other', affordQueryName.trim() || 'Discretionary Purchase', affordQueryParsedAmt);
                             setAffordQueryAmount('');
@@ -1253,11 +1262,12 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                             setShowAffordCalculator(false);
                           }}
                         >
-                          <Zap size={12} /> Deduct from Today's Pocket
+                          <Zap size={13} /> Deduct from Today's Pocket
                         </button>
                         <button
                           type="button"
-                          className="action-pill text-xs py-2 px-3.5 bg-solstice/20 text-solstice border-solstice/40 hover:bg-solstice/30 flex items-center gap-1.5 cursor-pointer font-bold rounded-xl"
+                          className="action-pill text-xs py-2 px-4 bg-solstice/20 text-solstice border-solstice/40 hover:bg-solstice/30 flex-align cursor-pointer font-bold rounded-xl"
+                          style={{ gap: '6px' }}
                           onClick={() => {
                             const item = createCoolingOffItem(
                               affordQueryName.trim() || 'Impulse Wishlist Item',
@@ -1272,7 +1282,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                             setActiveTab('cooling_chamber');
                           }}
                         >
-                          <Hourglass size={12} /> Park in 72h Chamber
+                          <Hourglass size={13} /> Park in 72h Chamber
                         </button>
                       </div>
                     </div>
@@ -1282,32 +1292,32 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
             </div>
 
             {/* RESCUED WEALTH FOOTER TALLY */}
-            <div className="p-4 sm:p-4.5 rounded-2xl bg-gradient-to-r from-emerald-950/25 via-surface-raised to-amber-950/20 border border-emerald-500/25 flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                  <Award size={18} className="text-emerald-400" />
+            <div className="rescued-capital-deck">
+              <div className="rescued-capital-left">
+                <div className="rescued-capital-icon-box">
+                  <Award size={20} className="text-emerald-400" />
                 </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-sm sm:text-base font-extrabold text-emerald-400">
+                <div className="rescued-capital-content">
+                  <div className="rescued-capital-title-row">
+                    <span className="rescued-capital-val">
                       ₹{lifetimeRescued.toLocaleString('en-IN')}
                     </span>
-                    <span className="tag-pill tag-nebula text-[10px] font-mono py-0.5 px-2 font-bold">
+                    <span className="rescued-capital-badge">
                       Capital Rescued
                     </span>
                   </div>
-                  <span className="text-[11px] text-muted font-sans truncate">
+                  <span className="rescued-capital-sub">
                     Shielded from impulsive desires & unneeded splurges
                   </span>
                 </div>
               </div>
 
-              <div className="flex flex-col items-start sm:items-end justify-center font-mono shrink-0 pl-1 sm:pl-0 border-l sm:border-l-0 border-subtle">
-                <span className="text-[10px] text-muted">
-                  10-Yr Wealth Compounded:
+              <div className="rescued-capital-right">
+                <span className="rescued-capital-compounded-label">
+                  10-Yr Wealth Compounded (12% CAGR):
                 </span>
-                <span className="text-sm sm:text-base font-extrabold text-solstice flex items-center gap-1">
-                  <TrendingUp size={13} className="text-solstice" />
+                <span className="rescued-capital-compounded-val">
+                  <TrendingUp size={14} className="text-solstice" />
                   ₹{Math.round(lifetimeRescued * 3.106).toLocaleString('en-IN')}
                 </span>
               </div>
@@ -1315,8 +1325,8 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
           </div>
         ) : (
           /* TAB 2: 72-HOUR COOLING-OFF CHAMBER */
-          <div className="flex flex-col gap-3">
-            <div className="p-3.5 rounded-2xl bg-surface-raised border border-subtle">
+          <div className="flex flex-col" style={{ gap: '14px' }}>
+            <div className="hipuku-card" style={{ padding: '16px 18px', background: 'var(--surface-raised)', borderRadius: 'var(--radius-xl)' }}>
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div>
                   <h4 className="font-bold text-xs text-primary m-0 flex items-center gap-1.5">
@@ -1332,8 +1342,8 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
               </div>
 
               {/* Add Item Form with Urge Intensity Meter */}
-              <form onSubmit={handleAddCoolingItem} className="flex flex-col gap-2.5 mt-3 pt-3 border-t border-subtle/50">
-                <div className="grid grid-cols-1 sm:grid-cols-[1fr_120px_auto] gap-2.5">
+              <form onSubmit={handleAddCoolingItem} className="flex flex-col gap-2.5 mt-3 pt-3 border-t border-subtle">
+                <div className="chamber-form-grid">
                   <input
                     type="text"
                     placeholder="e.g. Sony XM5, Mechanical Keyboard, Designer Jacket"
@@ -1350,7 +1360,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                   />
                   <button
                     type="submit"
-                    className="action-pill font-mono text-xs py-2 px-3.5 flex items-center justify-center gap-1.5 bg-solstice/20 text-solstice border-solstice/40 shrink-0 cursor-pointer font-bold"
+                    className="action-pill font-mono text-xs py-2 px-3.5 flex items-center justify-center gap-1.5 bg-solstice/20 text-solstice border-solstice/40 shrink-0 cursor-pointer font-bold rounded-xl"
                   >
                     <Plus size={12} /> Lock in Chamber
                   </button>
@@ -1364,7 +1374,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                       <button
                         key={level}
                         type="button"
-                        className={`action-pill text-[10.5px] py-1 px-2.5 font-mono cursor-pointer ${newItemUrge === level ? 'pill-active-mode' : ''}`}
+                        className={`action-pill text-[10.5px] py-1 px-2.5 font-mono cursor-pointer rounded-lg ${newItemUrge === level ? 'pill-active-mode' : ''}`}
                         onClick={() => setNewItemUrge(level)}
                       >
                         {'🔥'.repeat(level)} {level === 1 ? 'Mild' : level === 2 ? 'Moderate' : level === 3 ? 'Acute' : 'Retail Fever'}
@@ -1377,7 +1387,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
 
             {/* List of Active Cooling Items */}
             {coolingItems.length === 0 ? (
-              <div className="p-8 rounded-2xl bg-surface-raised border border-dashed border-subtle text-center text-xs text-muted">
+              <div className="p-8 rounded-2xl bg-surface-raised border border-dashed border-subtle text-center text-xs text-muted" style={{ padding: '28px 16px', borderRadius: 'var(--radius-xl)' }}>
                 <ShieldCheck size={28} className="text-emerald-400 mx-auto mb-2 opacity-80" />
                 <p className="m-0 font-medium text-secondary">The Cooling Chamber is empty.</p>
                 <p className="m-0 mt-0.5 text-[11px]">
@@ -1395,7 +1405,8 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                   return (
                     <div
                       key={item.id}
-                      className="p-3.5 rounded-2xl bg-surface-raised border border-subtle flex flex-col gap-2.5"
+                      className="hipuku-card flex flex-col gap-2.5"
+                      style={{ padding: '14px 16px', background: 'var(--surface-raised)', borderRadius: 'var(--radius-xl)' }}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>
@@ -1426,7 +1437,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                       </div>
 
                       {/* Opportunity Cost Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 font-mono text-[11px] p-2 rounded-xl bg-surface-overlay border border-subtle">
+                      <div className="chamber-stats-grid">
                         <div>
                           <span className="text-[10px] text-muted block">Discretionary Days:</span>
                           <strong className="text-secondary">{item.burnEquivalentDays} Days of Living</strong>
@@ -1444,10 +1455,10 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                       </div>
 
                       {/* Decisions */}
-                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-subtle/50 flex-wrap">
+                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-subtle flex-wrap">
                         <button
                           type="button"
-                          className="action-pill font-mono text-xs py-1.5 px-3 flex items-center gap-1.5 bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25 cursor-pointer font-bold"
+                          className="action-pill font-mono text-xs py-1.5 px-3 flex items-center gap-1.5 bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25 cursor-pointer font-bold rounded-xl"
                           onClick={() => handleAbandonCoolingItem(item)}
                           title="Abandon this purchase! Bank the money and protect future wealth"
                         >
