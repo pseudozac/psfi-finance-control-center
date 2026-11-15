@@ -7796,6 +7796,31 @@ body {
   border: 1px solid rgba(225, 94, 66, 0.35);
 }
 
+.w-full {
+  width: 100% !important;
+}
+
+.afford-radar-card {
+  width: 100%;
+  border-radius: var(--radius-xl);
+  background: var(--surface-raised);
+  border: var(--hair) solid var(--border-subtle);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.afford-radar-toggle {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  box-sizing: border-box !important;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
 /* ==========================================================================
    Kinetic Constellation Tech Tree & Upgraded Skill Tree
    ========================================================================== */

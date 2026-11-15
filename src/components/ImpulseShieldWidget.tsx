@@ -349,25 +349,29 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
     <section className="hipuku-card impulse-shield-card flex-col justify-between" id="tour-impulse-shield">
       <div>
         {/* Modern Unified Header */}
-        <div className="card-header-row mb-4 flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-2 flex-wrap min-w-0">
-            <span className="tag-pill tag-corona shrink-0 flex items-center gap-1 font-mono text-[11px] font-bold">
-              <Zap size={11} className="text-corona" /> Impulse Shield
-            </span>
-            <span className="card-title whitespace-nowrap text-base sm:text-lg font-bold">
-              Daily Discretionary Pocket
-            </span>
-            <InfoTooltip
-              title="Tactile Daily Burn & SIP Shield"
-              explanation="Calculates your mathematically safe discretionary spending allowance per day after subtracting fixed living expenses and committed mutual fund SIPs. Overspending today dynamically recalibrates future days to guarantee your SIP is never broken."
-              benchmark="Rule of thumb: Maintain a daily discretionary burn that preserves at least a 20%+ compounding savings rate."
-            />
+        <div className="card-header-row mb-5 flex items-start sm:items-center justify-between flex-wrap gap-3.5">
+          <div className="flex flex-col gap-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="tag-pill tag-corona font-mono text-[10.5px] font-bold tracking-wider inline-flex items-center gap-1.5 py-0.5 px-2.5">
+                <Zap size={11} className="text-corona" /> Impulse Shield
+              </span>
+            </div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <h3 className="card-title text-base sm:text-lg font-bold text-primary m-0 tracking-tight">
+                Daily Discretionary Pocket
+              </h3>
+              <InfoTooltip
+                title="Tactile Daily Burn & SIP Shield"
+                explanation="Calculates your mathematically safe discretionary spending allowance per day after subtracting fixed living expenses and committed mutual fund SIPs. Overspending today dynamically recalibrates future days to guarantee your SIP is never broken."
+                benchmark="Rule of thumb: Maintain a daily discretionary burn that preserves at least a 20%+ compounding savings rate."
+              />
+            </div>
           </div>
 
-          <div className="pill-segmented flex gap-0.5 text-xs font-mono shrink-0">
+          <div className="pill-segmented flex gap-0.5 text-xs font-mono shrink-0 self-start sm:self-center">
             <button
               type="button"
-              className={`py-1 px-3 flex items-center gap-1.5 text-[11px] font-semibold ${activeTab === 'burn_pocket' ? 'pill-active' : ''}`}
+              className={`py-1.5 px-3 flex items-center gap-1.5 text-[11px] font-semibold transition-all ${activeTab === 'burn_pocket' ? 'pill-active' : ''}`}
               onClick={() => {
                 setActiveTab('burn_pocket');
                 playSynthesizerChime(480);
@@ -378,7 +382,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
             </button>
             <button
               type="button"
-              className={`py-1 px-3 flex items-center gap-1.5 text-[11px] font-semibold ${activeTab === 'cooling_chamber' ? 'pill-active' : ''}`}
+              className={`py-1.5 px-3 flex items-center gap-1.5 text-[11px] font-semibold transition-all ${activeTab === 'cooling_chamber' ? 'pill-active' : ''}`}
               onClick={() => {
                 setActiveTab('cooling_chamber');
                 playSynthesizerChime(480);
@@ -895,97 +899,132 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
             </div>
 
             {/* "CAN I AFFORD THIS TODAY?" ACTUARIAL WEALTH SCANNER */}
-            <div className="rounded-2xl bg-surface-raised border border-subtle overflow-hidden">
+            <div className="afford-radar-card rounded-2xl bg-surface-raised border border-subtle overflow-hidden w-full" style={{ width: '100%' }}>
               <button
                 type="button"
-                className={`w-full py-2.5 px-3.5 text-xs flex items-center justify-between flex-wrap gap-2 transition-all cursor-pointer ${
+                className={`afford-radar-toggle w-full p-3.5 sm:p-4 text-xs flex items-center justify-between gap-3 transition-all cursor-pointer ${
                   showAffordCalculator
                     ? 'bg-quasar/15 text-primary border-b border-quasar/30'
                     : 'bg-surface-raised text-muted hover:text-primary'
                 }`}
+                style={{ width: '100%' }}
                 onClick={() => {
                   setShowAffordCalculator(!showAffordCalculator);
                   playSynthesizerChime(520);
                 }}
               >
-                <span className="flex items-center gap-2 font-semibold text-primary min-w-0 mr-3">
-                  <Calculator size={14} className="text-quasar shrink-0" />
-                  <span className="leading-snug">Can I Afford This Today? (Actuarial Impulse Scanner)</span>
-                </span>
-                <span className="text-[11px] font-mono text-quasar flex items-center gap-1 bg-quasar/15 px-2.5 py-1 rounded-full border border-quasar/30 shrink-0 font-semibold ml-auto">
-                  <span>{showAffordCalculator ? 'Close Radar ▲' : 'Open 1-Click Radar ▼'}</span>
+                <div className="flex items-center gap-2.5 min-w-0 text-left">
+                  <div className="w-8 h-8 rounded-xl bg-quasar/15 border border-quasar/30 flex items-center justify-center shrink-0">
+                    <Calculator size={15} className="text-quasar" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-bold text-primary text-xs sm:text-sm tracking-tight">
+                      Can I Afford This Today?
+                    </span>
+                    <span className="text-[10px] font-mono text-muted truncate">
+                      Instant Actuarial Impulse Radar
+                    </span>
+                  </div>
+                </div>
+
+                <span className="text-[11px] font-mono text-quasar flex items-center gap-1.5 bg-quasar/15 hover:bg-quasar/25 px-3 py-1.5 rounded-full border border-quasar/30 shrink-0 font-bold transition-all shadow-sm">
+                  <span>{showAffordCalculator ? 'Close Radar' : 'Open Radar'}</span>
+                  <span className="text-[9px]">{showAffordCalculator ? '▲' : '▼'}</span>
                 </span>
               </button>
 
               {showAffordCalculator && (
-                <div className="p-3.5 flex flex-col gap-3 bg-surface-overlay">
-                  <div className="flex gap-2 flex-wrap sm:flex-nowrap">
-                    <input
-                      type="text"
-                      placeholder="Item Name (e.g. Swiggy Splurge, Watch, Weekend Trip)"
-                      className="hipuku-input text-xs flex-1 min-w-[180px] py-1.5 px-2.5"
-                      value={affordQueryName}
-                      onChange={(e) => setAffordQueryName(e.target.value)}
-                    />
-                    <input
-                      type="number"
-                      placeholder="Price (₹)"
-                      className="hipuku-input text-xs font-mono w-32 py-1.5 px-2.5"
-                      value={affordQueryAmount}
-                      onChange={(e) => setAffordQueryAmount(e.target.value)}
-                    />
+                <div className="p-4 sm:p-4.5 flex flex-col gap-4 bg-surface-overlay">
+                  {/* Two Inputs in Clean Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_150px] gap-2.5">
+                    <div className="relative flex items-center">
+                      <ShoppingBag size={13} className="absolute left-3 text-muted pointer-events-none" />
+                      <input
+                        type="text"
+                        placeholder="Item description (e.g. Swiggy, Shoes, Gadget)"
+                        className="hipuku-input text-xs w-full pl-8 py-2 px-3 rounded-xl border border-subtle bg-surface-base focus:border-quasar/50 focus:ring-1 focus:ring-quasar/30"
+                        value={affordQueryName}
+                        onChange={(e) => setAffordQueryName(e.target.value)}
+                      />
+                    </div>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-3 text-muted font-mono text-xs font-bold pointer-events-none">₹</span>
+                      <input
+                        type="number"
+                        placeholder="Price"
+                        className="hipuku-input text-xs font-mono w-full pl-7 py-2 px-3 rounded-xl border border-subtle bg-surface-base focus:border-quasar/50 focus:ring-1 focus:ring-quasar/30"
+                        value={affordQueryAmount}
+                        onChange={(e) => setAffordQueryAmount(e.target.value)}
+                      />
+                    </div>
                   </div>
 
-                  {/* Quick Presets */}
-                  <div className="flex items-center gap-1.5 flex-wrap text-[11px] font-mono">
-                    <span className="text-muted text-[10px]">Presets:</span>
-                    {[250, 600, 1500, 4500, 12000].map((preset) => (
-                      <button
-                        key={preset}
-                        type="button"
-                        className="action-pill text-[10.5px] py-0.5 px-2 font-mono hover:text-quasar cursor-pointer"
-                        onClick={() => {
-                          setAffordQueryAmount(String(preset));
-                          if (!affordQueryName) {
-                            setAffordQueryName(
-                              preset === 250
-                                ? 'Coffee & Snack'
-                                : preset === 600
-                                ? 'Food Delivery'
-                                : preset === 1500
-                                ? 'Casual Dinner'
-                                : preset === 4500
-                                ? 'Retail Apparel'
-                                : 'Weekend Getaway'
-                            );
-                          }
-                          playSynthesizerChime(480);
-                        }}
-                      >
-                        ₹{preset.toLocaleString('en-IN')}
-                      </button>
-                    ))}
+                  {/* Tactile Quick-Test Presets */}
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-muted">
+                      Quick-Test Presets
+                    </span>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                      {[
+                        { amt: 250, label: 'Coffee / Snack' },
+                        { amt: 600, label: 'Food Delivery' },
+                        { amt: 1500, label: 'Casual Dinner' },
+                        { amt: 4500, label: 'Retail Apparel' },
+                        { amt: 12000, label: 'Tech Splurge' },
+                      ].map((preset) => {
+                        const isSelected = affordQueryAmount === String(preset.amt);
+                        return (
+                          <button
+                            key={preset.amt}
+                            type="button"
+                            className={`flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all cursor-pointer ${
+                              isSelected
+                                ? 'bg-quasar/25 border-quasar text-quasar shadow-sm ring-1 ring-quasar/40'
+                                : 'bg-surface-raised border-subtle text-primary hover:border-quasar/40 hover:bg-surface-base'
+                            }`}
+                            onClick={() => {
+                              setAffordQueryAmount(String(preset.amt));
+                              setAffordQueryName(preset.label);
+                              playSynthesizerChime(480);
+                            }}
+                          >
+                            <span className="font-mono text-xs font-bold tracking-tight">₹{preset.amt.toLocaleString('en-IN')}</span>
+                            <span className="text-[9.5px] text-muted truncate w-full">{preset.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   {affordAssessment && (
-                    <div className={`p-3 rounded-xl border flex flex-col gap-2 ${affordAssessment.colorClass}`}>
+                    <div className={`p-4 rounded-2xl border flex flex-col gap-3 transition-all shadow-md ${affordAssessment.colorClass}`}>
                       <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <span className="font-mono text-xs font-bold tracking-wider">{affordAssessment.badge}</span>
-                        <span className="font-mono text-[11px]">
-                          Consumes <strong>{affordAssessment.daysConsumed} days</strong> of daily pocket
+                        <span className="font-mono text-xs font-extrabold tracking-wide flex items-center gap-1.5">
+                          {affordAssessment.badge}
+                        </span>
+                        <span className="tag-pill font-mono text-[10.5px] font-semibold bg-surface-card border-subtle">
+                          Consumes <strong>{affordAssessment.daysConsumed} days</strong> of pocket
                         </span>
                       </div>
-                      <p className="text-xs m-0 leading-relaxed text-secondary font-sans">{affordAssessment.summary}</p>
-                      <div className="flex items-center justify-between font-mono text-[11px] pt-1.5 border-t border-subtle">
-                        <span className="text-muted">10-Yr Compounded Cost in Nifty 50 (12% CAGR):</span>
-                        <strong className="text-solstice">₹{affordAssessment.tenYearValue.toLocaleString('en-IN')}</strong>
+                      <p className="text-xs m-0 leading-relaxed text-secondary font-sans">
+                        {affordAssessment.summary}
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2.5 border-t border-subtle/50 font-mono text-[11px]">
+                        <div className="flex items-center justify-between p-2 rounded-xl bg-surface-base/50">
+                          <span className="text-muted">Today's Remaining:</span>
+                          <strong className="text-primary">{formatINR(burnState.remainingBurnToday)}</strong>
+                        </div>
+                        <div className="flex items-center justify-between p-2 rounded-xl bg-surface-base/50">
+                          <span className="text-muted">10-Yr Compounded Cost:</span>
+                          <strong className="text-solstice font-bold">₹{affordAssessment.tenYearValue.toLocaleString('en-IN')}</strong>
+                        </div>
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="flex items-center gap-2 pt-1 flex-wrap">
+                      <div className="flex items-center gap-2.5 pt-1 flex-wrap">
                         <button
                           type="button"
-                          className="action-pill text-xs py-1 px-3 bg-nebula/20 text-nebula border-nebula/40 flex items-center gap-1 cursor-pointer font-bold"
+                          className="action-pill text-xs py-2 px-3.5 bg-nebula/20 text-nebula border-nebula/40 hover:bg-nebula/30 flex items-center gap-1.5 cursor-pointer font-bold rounded-xl"
                           onClick={() => {
                             handleLogSpend('other', affordQueryName.trim() || 'Discretionary Purchase', affordQueryParsedAmt);
                             setAffordQueryAmount('');
@@ -993,11 +1032,11 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                             setShowAffordCalculator(false);
                           }}
                         >
-                          <Zap size={11} /> Deduct from Today's Pocket
+                          <Zap size={12} /> Deduct from Today's Pocket
                         </button>
                         <button
                           type="button"
-                          className="action-pill text-xs py-1 px-3 bg-solstice/20 text-solstice border-solstice/40 flex items-center gap-1 cursor-pointer font-bold"
+                          className="action-pill text-xs py-2 px-3.5 bg-solstice/20 text-solstice border-solstice/40 hover:bg-solstice/30 flex items-center gap-1.5 cursor-pointer font-bold rounded-xl"
                           onClick={() => {
                             const item = createCoolingOffItem(
                               affordQueryName.trim() || 'Impulse Wishlist Item',
@@ -1012,7 +1051,7 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                             setActiveTab('cooling_chamber');
                           }}
                         >
-                          <Hourglass size={11} /> Park in 72h Chamber
+                          <Hourglass size={12} /> Park in 72h Chamber
                         </button>
                       </div>
                     </div>
@@ -1022,18 +1061,35 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
             </div>
 
             {/* RESCUED WEALTH FOOTER TALLY */}
-            <div className="p-3 rounded-2xl bg-surface-raised border border-subtle flex items-center justify-between gap-2 flex-wrap text-xs">
-              <div className="flex items-center gap-2">
-                <span className="tag-pill tag-nebula flex items-center gap-1.5 font-mono text-[11px] font-bold py-1 px-2.5">
-                  <Award size={13} /> ₹{lifetimeRescued.toLocaleString('en-IN')} Capital Rescued
+            <div className="p-4 sm:p-4.5 rounded-2xl bg-gradient-to-r from-emerald-950/25 via-surface-raised to-amber-950/20 border border-emerald-500/25 flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                  <Award size={18} className="text-emerald-400" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono text-sm sm:text-base font-extrabold text-emerald-400">
+                      ₹{lifetimeRescued.toLocaleString('en-IN')}
+                    </span>
+                    <span className="tag-pill tag-nebula text-[10px] font-mono py-0.5 px-2 font-bold">
+                      Capital Rescued
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-muted font-sans truncate">
+                    Shielded from impulsive desires & unneeded splurges
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-col items-start sm:items-end justify-center font-mono shrink-0 pl-1 sm:pl-0 border-l sm:border-l-0 border-subtle">
+                <span className="text-[10px] text-muted">
+                  10-Yr Wealth Compounded:
                 </span>
-                <span className="text-[11px] text-muted hidden sm:inline font-sans">
-                  Shielded from impulsive desire
+                <span className="text-sm sm:text-base font-extrabold text-solstice flex items-center gap-1">
+                  <TrendingUp size={13} className="text-solstice" />
+                  ₹{Math.round(lifetimeRescued * 3.106).toLocaleString('en-IN')}
                 </span>
               </div>
-              <span className="font-mono text-[11px] text-secondary">
-                Protecting <strong className="text-solstice font-bold">₹{Math.round(lifetimeRescued * 3.106).toLocaleString('en-IN')}</strong> in 10-Yr Compounded Wealth
-              </span>
             </div>
           </div>
         ) : (
