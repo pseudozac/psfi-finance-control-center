@@ -1,14 +1,19 @@
 import { describe, it, expect } from 'vitest';
-import { encodeVaultBeam, decodeVaultBeam } from './vaultBeam';
+import {
+  encodeVaultBeam,
+  decodeVaultBeam,
+  encodeVaultBeamSecure,
+  decodeVaultBeamSecure,
+} from './vaultBeam';
 import { DEFAULT_PLAN } from './finance';
 
 describe('vaultBeam compact compression and decryption', () => {
-  it('encodes and decodes a FinancePlan with exact fidelity', () => {
+  it('encodes and decodes a FinancePlan with exact fidelity (legacy sync)', () => {
     const original = DEFAULT_PLAN;
     const encoded = encodeVaultBeam(original, 'Test Vault');
 
     expect(encoded.startsWith('psfi:')).toBe(true);
-    expect(encoded.length).toBeLessThan(450); // Under 450 chars for high-speed QR blocks!
+    expect(encoded.length).toBeLessThan(450);
 
     const decoded = decodeVaultBeam(encoded);
     expect(decoded.success).toBe(true);
@@ -18,7 +23,7 @@ describe('vaultBeam compact compression and decryption', () => {
     expect(decoded.plan?.savings.monthlySip).toBe(original.savings.monthlySip);
   });
 
-  it('correctly handles optional 4-digit PIN protection', () => {
+  it('correctly handles optional 4-digit PIN protection (legacy sync)', () => {
     const original = DEFAULT_PLAN;
     const pin = '4821';
     const encoded = encodeVaultBeam(original, 'Secret Vault', pin);
@@ -62,5 +67,38 @@ describe('vaultBeam compact compression and decryption', () => {
     expect(decoded.success).toBe(true);
     expect(decoded.vaultName).toBe('Mobile Beam');
     expect(decoded.plan?.income.salary).toBe(original.income.salary);
+  });
+
+  it('encodes and decodes authenticated AES-256-GCM v3 beams securely', async () => {
+    const original = DEFAULT_PLAN;
+    const secret = 'fortress-pin-9912';
+    const secureBeam = await encodeVaultBeamSecure(original, 'Sovereign Vault', secret);
+
+    expect(secureBeam.startsWith('psfi:v3:')).toBe(true);
+
+    // Decode without secret
+    const withoutSecret = await decodeVaultBeamSecure(secureBeam);
+    expect(withoutSecret.success).toBe(false);
+    expect(withoutSecret.needsPin).toBe(true);
+
+    // Decode with wrong secret
+    const wrongSecret = await decodeVaultBeamSecure(secureBeam, 'wrong-secret-1234');
+    expect(wrongSecret.success).toBe(false);
+
+    // Decode with correct secret
+    const correctSecret = await decodeVaultBeamSecure(secureBeam, secret);
+    expect(correctSecret.success).toBe(true);
+    expect(correctSecret.vaultName).toBe('Sovereign Vault');
+    expect(correctSecret.plan?.income.salary).toBe(original.income.salary);
+  });
+
+  it('encodes unencrypted v3 plain beams seamlessly', async () => {
+    const original = DEFAULT_PLAN;
+    const plainBeam = await encodeVaultBeamSecure(original, 'Open Vault');
+
+    expect(plainBeam.startsWith('psfi:v3:plain:')).toBe(true);
+    const decoded = await decodeVaultBeamSecure(plainBeam);
+    expect(decoded.success).toBe(true);
+    expect(decoded.vaultName).toBe('Open Vault');
   });
 });

@@ -2,15 +2,14 @@ import { describe, it, expect } from 'vitest';
 import {
   encodePayloadToPixels,
   decodePayloadFromPixels,
+  encodeSecurePayloadToPixels,
+  decodeSecurePayloadFromPixels,
   createDecoyPlan,
 } from './steganography';
 
 describe('Sovereign Steganography Engine', () => {
-  it('correctly injects and recovers a hidden JSON payload in an RGBA buffer', () => {
-    // 100 x 100 pixel buffer = 10,000 pixels * 4 = 40,000 bytes
-    // 10,000 pixels * 3 usable bits = 30,000 bits = 3,750 bytes payload capacity
+  it('correctly injects and recovers a hidden JSON payload in an RGBA buffer (legacy v1)', () => {
     const pixels = new Uint8ClampedArray(100 * 100 * 4);
-    // Fill with arbitrary pseudo-image pixel values
     for (let i = 0; i < pixels.length; i++) {
       pixels[i] = (i * 37) % 256;
     }
@@ -43,7 +42,6 @@ describe('Sovereign Steganography Engine', () => {
   });
 
   it('fails safely if buffer is too small for payload', () => {
-    // 2 x 2 pixels = 4 pixels * 3 bits = 12 bits (cannot even fit 17-byte header)
     const tinyBuffer = new Uint8ClampedArray(2 * 2 * 4);
     const success = encodePayloadToPixels(tinyBuffer, 'Large secret message');
     expect(success).toBe(false);
@@ -56,5 +54,36 @@ describe('Sovereign Steganography Engine', () => {
     expect(decoy.savings.emergencyFundBalance).toBe(65000);
     expect(decoy.debt.cardBalance).toBe(14500);
     expect(decoy.schemaVersion).toBe(2);
+  });
+
+  it('embeds and extracts authenticated AES-256-GCM v2 steganographic payloads', async () => {
+    const pixels = new Uint8ClampedArray(120 * 120 * 4);
+    for (let i = 0; i < pixels.length; i++) {
+      pixels[i] = (i * 41) % 256;
+    }
+
+    const confidentialData = JSON.stringify({
+      vault: 'Secret Off-Grid Assets',
+      goldGrams: 250,
+      emergencyCash: 1200000,
+    });
+    const passphrase = 'celestial-stego-pass';
+
+    const success = await encodeSecurePayloadToPixels(pixels, confidentialData, passphrase);
+    expect(success).toBe(true);
+
+    // Extraction without passphrase
+    const noSecretResult = await decodeSecurePayloadFromPixels(pixels);
+    expect(noSecretResult.success).toBe(false);
+    expect(noSecretResult.needsSecret).toBe(true);
+
+    // Extraction with wrong passphrase
+    const wrongSecretResult = await decodeSecurePayloadFromPixels(pixels, 'wrong-password-999');
+    expect(wrongSecretResult.success).toBe(false);
+
+    // Extraction with correct passphrase
+    const correctResult = await decodeSecurePayloadFromPixels(pixels, passphrase);
+    expect(correctResult.success).toBe(true);
+    expect(correctResult.payload).toBe(confidentialData);
   });
 });
