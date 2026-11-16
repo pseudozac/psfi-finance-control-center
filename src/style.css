@@ -11999,6 +11999,205 @@ body {
   }
 }
 
+/* ==========================================================================
+   REVERSE MONTE CARLO & STOCHASTIC STRESS SIMULATOR (UPGRADED UI)
+   ========================================================================== */
+
+.monte-carlo-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50000;
+  background: rgba(3, 7, 18, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.monte-carlo-modal-window {
+  width: 100%;
+  max-width: 1080px;
+  background: linear-gradient(180deg, #090e1a 0%, #050811 100%);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8),
+              0 0 40px -10px rgba(6, 182, 212, 0.15);
+  position: relative;
+  color: #f1f5f9;
+  overflow: hidden;
+  margin: auto;
+}
+
+.monte-carlo-scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.8), rgba(168, 85, 247, 0.8), transparent);
+  pointer-events: none;
+}
+
+.monte-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-sans, system-ui);
+  transition: all 0.18s ease;
+  border: 1px solid transparent;
+  cursor: pointer;
+  background: transparent;
+  color: #94a3b8;
+}
+
+.monte-tab-btn:hover {
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.monte-tab-btn.active {
+  color: #38bdf8;
+  background: rgba(6, 182, 212, 0.12);
+  border-color: rgba(56, 189, 248, 0.35);
+  box-shadow: 0 0 16px -4px rgba(6, 182, 212, 0.25);
+}
+
+.monte-gauge-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+}
+
+.monte-chart-canvas-wrap {
+  position: relative;
+  background: radial-gradient(circle at 50% 30%, rgba(15, 23, 42, 0.6) 0%, #030712 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 12px;
+  overflow: hidden;
+}
+
+.monte-chart-hud-box {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(10, 15, 29, 0.92);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  border-radius: 10px;
+  padding: 8px 12px;
+  pointer-events: none;
+  z-index: 10;
+  transition: opacity 0.15s ease;
+}
+
+.scenario-chip-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: left;
+  border-radius: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.4);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.scenario-chip-card:hover {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.scenario-chip-card.active {
+  background: linear-gradient(145deg, rgba(8, 47, 73, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%);
+  border-color: rgba(56, 189, 248, 0.6);
+  box-shadow: 0 0 20px -5px rgba(6, 182, 212, 0.35);
+}
+
+.wedge-tier-box {
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  transition: border-color 0.18s ease;
+}
+
+.wedge-tier-box:hover {
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.swr-interactive-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.swr-interactive-row:hover {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.swr-interactive-row.selected {
+  background: rgba(6, 182, 212, 0.12);
+  border-color: rgba(56, 189, 248, 0.6);
+  box-shadow: 0 0 14px -3px rgba(6, 182, 212, 0.3);
+}
+
+.tactile-lever-card {
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tactile-preset-btn {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tactile-preset-btn:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.tactile-preset-btn.active {
+  color: #38bdf8;
+  background: rgba(6, 182, 212, 0.15);
+  border-color: rgba(56, 189, 248, 0.4);
+  font-weight: 700;
+}
+
+
 
 
 
