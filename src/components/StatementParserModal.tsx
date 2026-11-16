@@ -18,14 +18,18 @@ import {
   X,
   Layers,
   ArrowRight,
+  Tag,
 } from 'lucide-react';
 import type { FinancePlan } from '../types/finance';
 import {
   parseFinancialDocument,
   applyParsedParameters,
+  applyParsedTransactionsToCustomExpenses,
   formatINR,
   type StatementParseResult,
   type ExtractedFinancialParam,
+  type ParsedTransaction,
+  type TransactionEnvelope,
 } from '../lib/statementParser';
 import { extractTextFromPDF } from '../lib/pdfReader';
 
@@ -67,6 +71,8 @@ Account Number: 50100458923412
 10/10/2026 SWIGGY BANGALORE: INR 750.00
 14/10/2026 ZOMATO RESTAURANT: INR 1,450.00
 20/10/2026 AMAZON PAYMENTS INDIA: INR 4,500.00
+22/10/2026 ICICI LOMBARD HEALTH INSURANCE: INR 14,200.00
+25/10/2026 ZERODHA COIN MUTUAL FUND SIP: INR 15,000.00
 31/10/2026 Closing Balance: INR 4,85,000.00`,
   },
   card: {
@@ -79,7 +85,14 @@ Total Amount Due: INR 38,400.00
 Minimum Amount Due: INR 2,800.00
 Payment Due Date: 05 Nov 2026
 Credit Limit: INR 3,50,000.00
-Available Credit Limit: INR 3,11,600.00`,
+Available Credit Limit: INR 3,11,600.00
+Transaction Details:
+18/09/2026 BLINKIT GROCERY BANGALORE: INR 2,450.00
+22/09/2026 SWIGGY RESTAURANT: INR 880.00
+26/09/2026 NETFLIX SUBSCRIPTION: INR 649.00
+02/10/2026 ZARA RETAIL BANGALORE: INR 4,800.00
+06/10/2026 APOLLO PHARMACY BANGALORE: INR 1,120.00
+10/10/2026 MARUTI SUZUKI ANNUAL SERVICE: INR 6,800.00`,
   },
   payslip: {
     name: 'Corporate Salary Payslip',
@@ -157,6 +170,11 @@ export const StatementParserModal: React.FC<StatementParserModalProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [parseResult, setParseResult] = useState<StatementParseResult | null>(null);
   const [editableParams, setEditableParams] = useState<ExtractedFinancialParam[]>([]);
+  const [resultTab, setResultTab] = useState<'params' | 'transactions'>('params');
+  const [editableTransactions, setEditableTransactions] = useState<ParsedTransaction[]>([]);
+  const [txEnvelopeFilter, setTxEnvelopeFilter] = useState<
+    'all' | 'needs' | 'wants' | 'sinking' | 'investment' | 'income'
+  >('all');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // PDF password handling
@@ -187,8 +205,14 @@ export const StatementParserModal: React.FC<StatementParserModalProps> = ({
       const result = parseFinancialDocument(text, filename);
       setParseResult(result);
       setEditableParams(result.params);
-      if (result.params.length === 0) {
-        setErrorMsg('No standard financial parameters could be automatically identified from this text.');
+      setEditableTransactions(result.transactions || []);
+      if (result.transactions && result.transactions.length > 0 && result.params.length === 0) {
+        setResultTab('transactions');
+      } else {
+        setResultTab('params');
+      }
+      if (result.params.length === 0 && (!result.transactions || result.transactions.length === 0)) {
+        setErrorMsg('No standard financial parameters or transactions could be identified from this text.');
       } else {
         playSound('success');
       }
@@ -303,9 +327,48 @@ export const StatementParserModal: React.FC<StatementParserModalProps> = ({
     playSound('click');
     setParseResult(null);
     setEditableParams([]);
+    setEditableTransactions([]);
+    setResultTab('params');
+    setTxEnvelopeFilter('all');
     setPastedText('');
     setErrorMsg(null);
     setPendingPdfBuffer(null);
+  };
+
+  const toggleTxSelection = (id: string) => {
+    playSound('click');
+    setEditableTransactions((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, selected: !t.selected } : t))
+    );
+  };
+
+  const toggleSelectAllTxs = (select: boolean) => {
+    playSound('click');
+    setEditableTransactions((prev) =>
+      prev.map((t) => ({ ...t, selected: select }))
+    );
+  };
+
+  const updateTxEnvelope = (id: string, envelope: TransactionEnvelope) => {
+    playSound('click');
+    setEditableTransactions((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, envelope } : t))
+    );
+  };
+
+  const handleImportTransactionsToCustomExpenses = () => {
+    const selectedTxs = editableTransactions.filter((t) => t.selected && t.type === 'debit');
+    if (selectedTxs.length === 0) return;
+
+    const updatedPlan = applyParsedTransactionsToCustomExpenses(currentPlan, selectedTxs);
+    const totalImportedAmount = selectedTxs.reduce((sum, t) => sum + t.amount, 0);
+
+    playSound('success');
+    onApplyPlan(
+      updatedPlan,
+      `Imported ${selectedTxs.length} line-item transaction(s) (${formatINR(totalImportedAmount)}) directly into Custom Outflows with envelope tags!`
+    );
+    onClose();
   };
 
   const renderBadgeIcon = (type: string) => {
@@ -321,6 +384,23 @@ export const StatementParserModal: React.FC<StatementParserModalProps> = ({
       default:
         return <FileText size={16} className="text-muted" />;
     }
+  };
+
+  const filteredTxs = editableTransactions.filter((t) => {
+    if (txEnvelopeFilter === 'all') return true;
+    return t.envelope === txEnvelopeFilter;
+  });
+
+  const selectedDebitTxs = editableTransactions.filter((t) => t.selected && t.type === 'debit');
+  const selectedDebitSum = selectedDebitTxs.reduce((sum, t) => sum + t.amount, 0);
+
+  const envelopeCounts = {
+    all: editableTransactions.length,
+    needs: editableTransactions.filter((t) => t.envelope === 'needs').length,
+    wants: editableTransactions.filter((t) => t.envelope === 'wants').length,
+    sinking: editableTransactions.filter((t) => t.envelope === 'sinking').length,
+    investment: editableTransactions.filter((t) => t.envelope === 'investment').length,
+    income: editableTransactions.filter((t) => t.envelope === 'income').length,
   };
 
   return (
@@ -392,92 +472,332 @@ export const StatementParserModal: React.FC<StatementParserModalProps> = ({
                 <p className="statement-doc-summary-text">{parseResult.summaryText}</p>
               </div>
 
-              {/* Extracted Parameters Section */}
-              <div className="statement-params-header">
-                <span className="statement-params-title">
-                  Identified Financial Parameters ({editableParams.filter((p) => p.selected).length} selected)
-                </span>
-                <span className="statement-params-hint">
-                  Review values before applying to your plan. You can edit any figure directly.
-                </span>
-              </div>
-
-              <div className="statement-params-list">
-                {editableParams.map((param, idx) => (
-                  <div
-                    key={param.key}
-                    className={`statement-param-row ${param.selected ? 'statement-param-selected' : ''}`}
-                    onClick={() => toggleParam(idx)}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={param.selected}
-                      onChange={() => toggleParam(idx)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="statement-param-checkbox"
-                    />
-
-                    <div className="statement-param-info flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="statement-param-label">{param.label}</span>
-                        <span className={`statement-category-tag tag-${param.category}`}>
-                          {param.category}
-                        </span>
-                        <span className={`statement-confidence-pill conf-${param.confidence}`}>
-                          {param.confidence}
-                        </span>
-                      </div>
-                      <span className="statement-param-source">{param.sourceHint}</span>
-                    </div>
-
-                    <div className="statement-param-value-box" onClick={(e) => e.stopPropagation()}>
-                      <span className="statement-currency-prefix">₹</span>
-                      <input
-                        type="number"
-                        value={param.detectedValue}
-                        onChange={(e) => updateParamValue(idx, parseFloat(e.target.value) || 0)}
-                        className="statement-param-input"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Bottom Actions */}
-              <div className="statement-actions-bar">
+              {/* Result Mode Switcher Strip */}
+              <div className="statement-result-mode-strip">
                 <button
                   type="button"
-                  className="statement-shred-btn"
-                  onClick={resetAll}
-                  title="Purge document buffer from memory"
+                  className={`statement-mode-tab ${resultTab === 'params' ? 'mode-tab-active' : ''}`}
+                  onClick={() => {
+                    playSound('click');
+                    setResultTab('params');
+                  }}
                 >
-                  <Trash2 size={13} />
-                  <span>Shred Memory</span>
+                  <Sparkles size={14} className="text-solstice" />
+                  <span>Plan Parameters ({editableParams.filter((p) => p.selected).length})</span>
                 </button>
 
-                <div className="flex items-center gap-2">
-                  {onCreateVault && (
-                    <button
-                      type="button"
-                      className="statement-vault-btn"
-                      onClick={handleSaveAsVault}
-                    >
-                      <Layers size={13} />
-                      <span>Save as New Vault</span>
-                    </button>
-                  )}
-
+                {editableTransactions.length > 0 && (
                   <button
                     type="button"
-                    className="statement-apply-btn"
-                    onClick={handleApplyToActivePlan}
+                    className={`statement-mode-tab ${resultTab === 'transactions' ? 'mode-tab-active' : ''}`}
+                    onClick={() => {
+                      playSound('click');
+                      setResultTab('transactions');
+                    }}
                   >
-                    <Sparkles size={14} className="text-solstice" />
-                    <span>Apply to Active Plan</span>
-                    <ArrowRight size={14} />
+                    <Layers size={14} className="text-quasar" />
+                    <span>Envelope Transactions ({editableTransactions.length})</span>
+                    <span className="statement-tab-badge">
+                      {selectedDebitTxs.length} selected
+                    </span>
                   </button>
-                </div>
+                )}
               </div>
+
+              {resultTab === 'transactions' ? (
+                /* Envelope Transactions Mode */
+                <div className="statement-tx-mode-container">
+                  {/* Summary Grid */}
+                  {parseResult.envelopeSummary && (
+                    <div className="statement-envelope-summary-grid">
+                      <div className="statement-envelope-card card-needs">
+                        <div className="flex items-center justify-between">
+                          <span className="env-title">Needs</span>
+                          <span className="env-tag env-tag-needs">Needs</span>
+                        </div>
+                        <span className="env-val">{formatINR(parseResult.envelopeSummary.needsTotal)}</span>
+                        <span className="env-sub">Housing, bills, groceries</span>
+                      </div>
+
+                      <div className="statement-envelope-card card-wants">
+                        <div className="flex items-center justify-between">
+                          <span className="env-title">Wants</span>
+                          <span className="env-tag env-tag-wants">Wants</span>
+                        </div>
+                        <span className="env-val">{formatINR(parseResult.envelopeSummary.wantsTotal)}</span>
+                        <span className="env-sub">Dining, shopping, travel</span>
+                      </div>
+
+                      <div className="statement-envelope-card card-sinking">
+                        <div className="flex items-center justify-between">
+                          <span className="env-title">Sinking Funds</span>
+                          <span className="env-tag env-tag-sinking">Sinking</span>
+                        </div>
+                        <span className="env-val">{formatINR(parseResult.envelopeSummary.sinkingTotal)}</span>
+                        <span className="env-sub">Insurance, repairs, AMC</span>
+                      </div>
+
+                      <div className="statement-envelope-card card-investments">
+                        <div className="flex items-center justify-between">
+                          <span className="env-title">Investments</span>
+                          <span className="env-tag env-tag-investment">Invest</span>
+                        </div>
+                        <span className="env-val">{formatINR(parseResult.envelopeSummary.investmentTotal)}</span>
+                        <span className="env-sub">SIPs & mutual funds</span>
+                      </div>
+
+                      <div className="statement-envelope-card card-income">
+                        <div className="flex items-center justify-between">
+                          <span className="env-title">Inflow</span>
+                          <span className="env-tag env-tag-income">Inflow</span>
+                        </div>
+                        <span className="env-val">{formatINR(parseResult.envelopeSummary.incomeTotal)}</span>
+                        <span className="env-sub">Salary & credits</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Filter & Selection Controls */}
+                  <div className="statement-tx-controls">
+                    <div className="statement-tx-filters">
+                      {(['all', 'needs', 'wants', 'sinking', 'investment', 'income'] as const).map((cat) => (
+                        <button
+                          key={cat}
+                          type="button"
+                          className={`statement-tx-filter-chip ${txEnvelopeFilter === cat ? 'filter-chip-active' : ''}`}
+                          onClick={() => {
+                            playSound('click');
+                            setTxEnvelopeFilter(cat);
+                          }}
+                        >
+                          <span className="capitalize">{cat}</span>
+                          <span className="chip-count">({envelopeCounts[cat]})</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        className="statement-tx-select-btn"
+                        onClick={() => toggleSelectAllTxs(true)}
+                      >
+                        Select All
+                      </button>
+                      <button
+                        type="button"
+                        className="statement-tx-select-btn"
+                        onClick={() => toggleSelectAllTxs(false)}
+                      >
+                        Deselect All
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Transaction List */}
+                  <div className="statement-tx-list">
+                    {filteredTxs.length === 0 ? (
+                      <div className="text-center py-8 text-xs text-muted">
+                        No transactions found matching this envelope filter.
+                      </div>
+                    ) : (
+                      filteredTxs.map((tx) => (
+                        <div
+                          key={tx.id}
+                          className={`statement-tx-row ${tx.selected ? 'statement-tx-selected' : ''}`}
+                          onClick={() => toggleTxSelection(tx.id)}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={!!tx.selected}
+                            onChange={() => toggleTxSelection(tx.id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="statement-param-checkbox"
+                          />
+
+                          <div className="statement-tx-date-badge">
+                            {tx.date}
+                          </div>
+
+                          <div className="statement-tx-info flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="statement-tx-merchant truncate">{tx.merchant}</span>
+                              <span className={`statement-type-pill pill-${tx.type}`}>
+                                {tx.type === 'debit' ? 'Dr' : 'Cr'}
+                              </span>
+                            </div>
+                            <span className="statement-tx-desc">{tx.description}</span>
+                          </div>
+
+                          <div className="statement-tx-envelope-box" onClick={(e) => e.stopPropagation()}>
+                            <select
+                              value={tx.envelope}
+                              onChange={(e) => updateTxEnvelope(tx.id, e.target.value as TransactionEnvelope)}
+                              className={`statement-envelope-dropdown env-select-${tx.envelope}`}
+                            >
+                              <option value="needs">Needs</option>
+                              <option value="wants">Wants</option>
+                              <option value="sinking">Sinking</option>
+                              <option value="investment">Invest</option>
+                              <option value="income">Income</option>
+                            </select>
+                          </div>
+
+                          <div className="statement-tx-amount-box">
+                            <span className={`statement-tx-amount ${tx.type === 'debit' ? 'amount-debit' : 'amount-credit'}`}>
+                              {tx.type === 'debit' ? '-' : '+'}{formatINR(tx.amount)}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Actions for Transactions Mode */}
+                  <div className="statement-actions-bar">
+                    <button
+                      type="button"
+                      className="statement-shred-btn"
+                      onClick={resetAll}
+                      title="Purge document buffer from memory"
+                    >
+                      <Trash2 size={13} />
+                      <span>Shred Memory</span>
+                    </button>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="statement-vault-btn"
+                        onClick={() => {
+                          playSound('click');
+                          setResultTab('params');
+                        }}
+                      >
+                        <Sparkles size={13} />
+                        <span>Plan Parameters ({editableParams.filter((p) => p.selected).length})</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={selectedDebitTxs.length === 0}
+                        className="statement-apply-btn"
+                        onClick={handleImportTransactionsToCustomExpenses}
+                        title="Import selected debit transactions into Custom Outflows with envelope categories"
+                      >
+                        <Tag size={14} />
+                        <span>
+                          Import Outflows ({selectedDebitTxs.length} • {formatINR(selectedDebitSum)})
+                        </span>
+                        <ArrowRight size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Plan Parameters Mode */
+                <div className="statement-params-mode-container">
+                  <div className="statement-params-header">
+                    <span className="statement-params-title">
+                      Identified Financial Parameters ({editableParams.filter((p) => p.selected).length} selected)
+                    </span>
+                    <span className="statement-params-hint">
+                      Review values before applying to your plan. You can edit any figure directly.
+                    </span>
+                  </div>
+
+                  <div className="statement-params-list">
+                    {editableParams.map((param, idx) => (
+                      <div
+                        key={param.key}
+                        className={`statement-param-row ${param.selected ? 'statement-param-selected' : ''}`}
+                        onClick={() => toggleParam(idx)}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={param.selected}
+                          onChange={() => toggleParam(idx)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="statement-param-checkbox"
+                        />
+
+                        <div className="statement-param-info flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="statement-param-label">{param.label}</span>
+                            <span className={`statement-category-tag tag-${param.category}`}>
+                              {param.category}
+                            </span>
+                            <span className={`statement-confidence-pill conf-${param.confidence}`}>
+                              {param.confidence}
+                            </span>
+                          </div>
+                          <span className="statement-param-source">{param.sourceHint}</span>
+                        </div>
+
+                        <div className="statement-param-value-box" onClick={(e) => e.stopPropagation()}>
+                          <span className="statement-currency-prefix">₹</span>
+                          <input
+                            type="number"
+                            value={param.detectedValue}
+                            onChange={(e) => updateParamValue(idx, parseFloat(e.target.value) || 0)}
+                            className="statement-param-input"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Bottom Actions for Parameters Mode */}
+                  <div className="statement-actions-bar">
+                    <button
+                      type="button"
+                      className="statement-shred-btn"
+                      onClick={resetAll}
+                      title="Purge document buffer from memory"
+                    >
+                      <Trash2 size={13} />
+                      <span>Shred Memory</span>
+                    </button>
+
+                    <div className="flex items-center gap-2">
+                      {editableTransactions.length > 0 && (
+                        <button
+                          type="button"
+                          className="statement-vault-btn"
+                          onClick={() => {
+                            playSound('click');
+                            setResultTab('transactions');
+                          }}
+                        >
+                          <Layers size={13} />
+                          <span>View Envelope Transactions ({editableTransactions.length})</span>
+                        </button>
+                      )}
+
+                      {onCreateVault && (
+                        <button
+                          type="button"
+                          className="statement-vault-btn"
+                          onClick={handleSaveAsVault}
+                        >
+                          <Layers size={13} />
+                          <span>Save as New Vault</span>
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        className="statement-apply-btn"
+                        onClick={handleApplyToActivePlan}
+                      >
+                        <Sparkles size={14} className="text-solstice" />
+                        <span>Apply to Active Plan</span>
+                        <ArrowRight size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             /* Upload / Paste / Samples View */

@@ -8,6 +8,11 @@ import {
   parseHoldings,
   parseFinancialDocument,
   applyParsedParameters,
+  extractMerchantName,
+  classifyTransactionEnvelope,
+  computeEnvelopeSummary,
+  applyParsedTransactionsToCustomExpenses,
+  type ParsedTransaction,
 } from './statementParser';
 import type { FinancePlan } from '../types/finance';
 
@@ -229,11 +234,192 @@ describe('statementParser - Classification & Ingestion', () => {
     expect(updatedPlan.savings.stepUpSipPercent).toBe(basePlan.savings.stepUpSipPercent);
   });
 
+  it('computes envelope summary directly from transaction list', () => {
+    const txs: ParsedTransaction[] = [
+      {
+        id: '1',
+        date: '01/10/2026',
+        description: 'SALARY',
+        merchant: 'Salary',
+        amount: 100000,
+        type: 'credit',
+        envelope: 'income',
+        confidence: 'high',
+        rawLine: 'SALARY 100000',
+      },
+      {
+        id: '2',
+        date: '02/10/2026',
+        description: 'RENT',
+        merchant: 'Rent',
+        amount: 30000,
+        type: 'debit',
+        envelope: 'needs',
+        confidence: 'high',
+        rawLine: 'RENT 30000',
+      },
+      {
+        id: '3',
+        date: '05/10/2026',
+        description: 'DINING',
+        merchant: 'Dining',
+        amount: 5000,
+        type: 'debit',
+        envelope: 'wants',
+        confidence: 'high',
+        rawLine: 'DINING 5000',
+      },
+    ];
+
+    const summary = computeEnvelopeSummary(txs);
+    expect(summary.totalCredit).toBe(100000);
+    expect(summary.totalDebit).toBe(35000);
+    expect(summary.needsTotal).toBe(30000);
+    expect(summary.wantsTotal).toBe(5000);
+    expect(summary.transactionCount).toBe(3);
+  });
+
   it('master dispatcher parseFinancialDocument handles any supported document', () => {
     const casDoc = parseFinancialDocument('CAMS Consolidated Account Statement Total Valuation: INR 5,00,000');
     expect(casDoc.statementType).toBe('cas');
 
     const cardDoc = parseFinancialDocument('Credit Card Statement Total Amount Due: INR 12,000 Minimum Amount Due: 1000');
     expect(cardDoc.statementType).toBe('credit_card');
+  });
+
+  it('correctly extracts and cleans Indian merchant names', () => {
+    expect(extractMerchantName('01/10/2026 ACH-CR-TECHCORP INDIA PAYROLL SALARY: INR 1,75,000.00')).toBe('Techcorp India Payroll Salary');
+    expect(extractMerchantName('03/10/2026 NACH-HDFC HOME LOAN EMI: INR 45,000.00')).toBe('HDFC Home Loan EMI');
+    expect(extractMerchantName('05/10/2026 BESCOM BANGALORE ELECTRICITY: INR 2,200.00')).toBe('Bescom Bangalore Electricity');
+    expect(extractMerchantName('10/10/2026 SWIGGY BANGALORE: INR 750.00')).toBe('Swiggy Bangalore');
+    expect(extractMerchantName('22/10/2026 ICICI LOMBARD HEALTH INSURANCE: INR 14,200.00')).toBe('ICICI Lombard Health Insurance');
+  });
+
+  it('correctly classifies transactions into envelope buckets', () => {
+    // Inflow
+    expect(classifyTransactionEnvelope('ACH-CR-TECHCORP PAYROLL SALARY', 'credit')).toBe('income');
+    expect(classifyTransactionEnvelope('DIVIDEND CREDIT TCS', 'credit')).toBe('investment');
+
+    // Needs
+    expect(classifyTransactionEnvelope('NACH-HDFC HOME LOAN EMI', 'debit')).toBe('needs');
+    expect(classifyTransactionEnvelope('BESCOM ELECTRICITY BILL', 'debit')).toBe('needs');
+    expect(classifyTransactionEnvelope('AIRTEL BROADBAND', 'debit')).toBe('needs');
+    expect(classifyTransactionEnvelope('BLINKIT GROCERY DELIVERY', 'debit')).toBe('needs');
+    expect(classifyTransactionEnvelope('APOLLO PHARMACY MEDICAL', 'debit')).toBe('needs');
+
+    // Wants
+    expect(classifyTransactionEnvelope('SWIGGY RESTAURANT ORDER', 'debit')).toBe('wants');
+    expect(classifyTransactionEnvelope('ZOMATO BANGALORE', 'debit')).toBe('wants');
+    expect(classifyTransactionEnvelope('AMAZON PAYMENTS INDIA', 'debit')).toBe('wants');
+    expect(classifyTransactionEnvelope('NETFLIX SUBSCRIPTION', 'debit')).toBe('wants');
+    expect(classifyTransactionEnvelope('STARBUCKS COFFEE', 'debit')).toBe('wants');
+
+    // Sinking funds
+    expect(classifyTransactionEnvelope('ICICI LOMBARD HEALTH INSURANCE', 'debit')).toBe('sinking');
+    expect(classifyTransactionEnvelope('MARUTI CAR SERVICE AMC', 'debit')).toBe('sinking');
+    expect(classifyTransactionEnvelope('ADVANCE TAX PAYMENT', 'debit')).toBe('sinking');
+    expect(classifyTransactionEnvelope('DPS SCHOOL ANNUAL TUITION FEE', 'debit')).toBe('sinking');
+
+    // Investments
+    expect(classifyTransactionEnvelope('SYSTEMATIC INVESTMENT PURCHASE NIFTY 50', 'debit')).toBe('investment');
+    expect(classifyTransactionEnvelope('ZERODHA COIN MUTUAL FUND SIP', 'debit')).toBe('investment');
+  });
+
+  it('extracts itemized transactions and computes envelope summary from bank statement', () => {
+    const statement = `
+      HDFC BANK LIMITED
+      Statement of Account: 01/10/2026 to 31/10/2026
+      01/10/2026 ACH-CR-TECHCORP INDIA PAYROLL SALARY: INR 1,75,000.00
+      03/10/2026 NACH-HDFC HOME LOAN EMI: INR 45,000.00
+      05/10/2026 BESCOM BANGALORE ELECTRICITY: INR 2,200.00
+      10/10/2026 SWIGGY BANGALORE: INR 750.00
+      14/10/2026 ZOMATO RESTAURANT: INR 1,450.00
+      22/10/2026 ICICI LOMBARD HEALTH INSURANCE: INR 14,200.00
+      25/10/2026 ZERODHA COIN MUTUAL FUND SIP: INR 15,000.00
+      31/10/2026 Closing Balance: INR 4,85,000.00
+    `;
+
+    const parsed = parseBankStatement(statement);
+    expect(parsed.transactions).toBeDefined();
+    expect(parsed.transactions?.length).toBe(7); // 7 transactions (closing balance excluded)
+
+    const summary = parsed.envelopeSummary;
+    expect(summary).toBeDefined();
+    expect(summary?.incomeTotal).toBe(175000);
+    expect(summary?.needsTotal).toBe(45000 + 2200); // 47200
+    expect(summary?.wantsTotal).toBe(750 + 1450); // 2200
+    expect(summary?.sinkingTotal).toBe(14200);
+    expect(summary?.investmentTotal).toBe(15000);
+    expect(summary?.totalDebit).toBe(47200 + 2200 + 14200 + 15000); // 78600
+  });
+
+  it('imports selected debit transactions into custom expenses with envelope category tags', () => {
+    const mockTxs: ParsedTransaction[] = [
+      {
+        id: 'tx-1',
+        date: '03/10/2026',
+        description: 'NACH-HDFC HOME LOAN EMI',
+        merchant: 'HDFC Home Loan EMI',
+        amount: 45000,
+        type: 'debit',
+        envelope: 'needs',
+        confidence: 'high',
+        rawLine: '03/10/2026 NACH-HDFC HOME LOAN EMI: INR 45,000.00',
+        selected: true,
+      },
+      {
+        id: 'tx-2',
+        date: '10/10/2026',
+        description: 'SWIGGY BANGALORE',
+        merchant: 'Swiggy',
+        amount: 750,
+        type: 'debit',
+        envelope: 'wants',
+        confidence: 'high',
+        rawLine: '10/10/2026 SWIGGY BANGALORE: INR 750.00',
+        selected: true,
+      },
+      {
+        id: 'tx-3',
+        date: '22/10/2026',
+        description: 'ICICI LOMBARD HEALTH INSURANCE',
+        merchant: 'ICICI Lombard Insurance',
+        amount: 14200,
+        type: 'debit',
+        envelope: 'sinking',
+        confidence: 'high',
+        rawLine: '22/10/2026 ICICI LOMBARD HEALTH INSURANCE: INR 14,200.00',
+        selected: true,
+      },
+      {
+        id: 'tx-4',
+        date: '01/10/2026',
+        description: 'SALARY CREDIT',
+        merchant: 'Techcorp Salary',
+        amount: 175000,
+        type: 'credit',
+        envelope: 'income',
+        confidence: 'high',
+        rawLine: '01/10/2026 SALARY CREDIT: INR 1,75,000.00',
+        selected: true,
+      },
+    ];
+
+    const updated = applyParsedTransactionsToCustomExpenses(basePlan, mockTxs);
+    expect(updated.expenses.custom).toBeDefined();
+    // Only 3 debits should be converted to custom expenses
+    expect(updated.expenses.custom?.length).toBe(3);
+
+    const needsItem = updated.expenses.custom?.find((i) => i.category === 'needs');
+    expect(needsItem?.amount).toBe(45000);
+    expect(needsItem?.name).toBe('HDFC Home Loan EMI');
+
+    const wantsItem = updated.expenses.custom?.find((i) => i.category === 'wants');
+    expect(wantsItem?.amount).toBe(750);
+    expect(wantsItem?.name).toBe('Swiggy');
+
+    const sinkingItem = updated.expenses.custom?.find((i) => i.category === 'sinking');
+    expect(sinkingItem?.amount).toBe(14200);
+    expect(sinkingItem?.name).toBe('ICICI Lombard Insurance');
   });
 });
