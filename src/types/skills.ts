@@ -39,6 +39,27 @@ export interface RankPerk {
   lore: string;
 }
 
+export interface SovereignBadge {
+  id: string;
+  title: string;
+  category: 'defense' | 'velocity' | 'autonomy' | 'discipline';
+  icon: string;
+  tagline: string;
+  requirement: string;
+  isUnlocked: boolean;
+  unlockedAtLabel?: string;
+  progressPercent: number;
+  currentValueLabel: string;
+  targetValueLabel: string;
+  xpReward: number;
+  tier: 1 | 2 | 3;
+  suggestedAction?: {
+    field: string;
+    targetValue: number;
+    description: string;
+  };
+}
+
 export interface SkillTreeState {
   nodes: SkillNode[];
   overallMasteryPercent: number;
@@ -51,6 +72,15 @@ export interface SkillTreeState {
   tier1MasteredCount: number;
   tier2MasteredCount: number;
   tier3MasteredCount: number;
+  // Sovereign XP & Progression Level System
+  totalXP: number;
+  maxPossibleXP: number;
+  level: number;
+  levelTitle: string;
+  nextLevelXP: number;
+  currentLevelProgressPercent: number;
+  badges: SovereignBadge[];
+  unlockedBadgesCount: number;
 }
 
 export type SpendCategory = 'chai_quick' | 'dining_night' | 'retail_impulse' | 'other';

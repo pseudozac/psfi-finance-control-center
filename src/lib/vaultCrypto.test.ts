@@ -12,6 +12,7 @@ import {
   decryptEncryptedEnvelope,
   bytesToBase64,
   base64ToBytes,
+  BIP39_WORDLIST,
 } from './vaultCrypto';
 
 describe('Sovereign Vault Cryptography Core (vaultCrypto)', () => {
@@ -42,11 +43,19 @@ describe('Sovereign Vault Cryptography Core (vaultCrypto)', () => {
       )
     ).toBe(false);
 
-    // Valid words but corrupted checksum
+    // Valid words but corrupted checksum (12 'abandon's has invalid checksum)
+    expect(
+      await validateMnemonic(
+        'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon'
+      )
+    ).toBe(false);
+
+    // Guaranteed checksum bit corruption on randomly generated mnemonic
     const valid = await generateMnemonic12();
     const words = valid.split(' ');
-    // Swap last word with another dictionary word (violates checksum)
-    words[11] = words[11] === 'abandon' ? 'ability' : 'abandon';
+    const lastWordIndex = BIP39_WORDLIST.indexOf(words[11]);
+    // Flipping the lowest bit (bit 131) flips the checksum while leaving the 128 entropy bits untouched
+    words[11] = BIP39_WORDLIST[lastWordIndex ^ 1];
     const corrupted = words.join(' ');
     expect(await validateMnemonic(corrupted)).toBe(false);
   });

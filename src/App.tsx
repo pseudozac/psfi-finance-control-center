@@ -40,6 +40,7 @@ import {
   calculateSummary,
   estimateIndianIncomeTax,
 } from './lib/finance';
+import { calculateSkillTree } from './lib/skillTree';
 import { useFinancePlan } from './hooks/useFinancePlan';
 import { IntroLoader } from './components/IntroLoader';
 import { GatewayScreen } from './components/GatewayScreen';
@@ -59,6 +60,7 @@ import { QRVaultSyncModal } from './components/QRVaultSyncModal';
 import { CommandPaletteModal } from './components/CommandPaletteModal';
 import { StatementParserModal } from './components/StatementParserModal';
 import { SovereignSkillTreeModal } from './components/SovereignSkillTreeModal';
+import { SovereignMilestoneRibbon } from './components/SovereignMilestoneRibbon';
 import { ImpulseShieldWidget } from './components/ImpulseShieldWidget';
 import { ExcelCamouflageOverlay } from './components/ExcelCamouflageOverlay';
 import { SteganographyModal } from './components/SteganographyModal';
@@ -362,6 +364,15 @@ export function App() {
       ),
     [summary.monthlyIncome, plan.tax]
   );
+
+  const optimalTaxSavings = useMemo(() => {
+    if (!taxComparison) return 0;
+    return taxComparison.savings ?? Math.abs(taxComparison.oldRegimeTax - taxComparison.newRegimeTax);
+  }, [taxComparison]);
+
+  const skillTreeState = useMemo(() => {
+    return calculateSkillTree(plan, summary, optimalTaxSavings);
+  }, [plan, summary, optimalTaxSavings]);
 
   const handleSelectPreset = (presetPlan: FinancePlan, name: string) => {
     setPlan(presetPlan);
@@ -997,10 +1008,10 @@ export function App() {
             id="tour-skills"
             className="action-pill pill-skills"
             onClick={() => setShowSkillTree(true)}
-            title="Sovereign Wealth RPG Skill Tree (Gamified Financial Freedom)"
+            title={`Sovereign Wealth RPG Skill Tree · Lvl ${skillTreeState.level} (${skillTreeState.levelTitle})`}
           >
             <Crown size={12} className="text-solstice" />
-            <span className="font-mono text-xs pill-label">skills</span>
+            <span className="font-mono text-xs pill-label">skills · Lvl {skillTreeState.level}</span>
           </button>
 
           {/* Unified Tools Dropdown Menu */}
@@ -1147,6 +1158,12 @@ export function App() {
         <main className="main-stack">
           {/* Archetypes Persona Bar */}
           <PersonaPresetBar currentPlan={plan} onSelectPreset={handleSelectPreset} />
+
+          {/* Sovereign Wealth Mastery & Milestones Ribbon */}
+          <SovereignMilestoneRibbon
+            skillTree={skillTreeState}
+            onOpenSkillTree={() => setShowSkillTree(true)}
+          />
 
           {/* Key Vitals Telemetry */}
           <SummaryCards summary={summary} debtPayoff={debtPayoff} period={period} />

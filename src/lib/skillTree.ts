@@ -1,5 +1,5 @@
 import type { FinancePlan, FinanceSummary } from '../types/finance';
-import type { SkillNode, SkillTreeState, SkillStatus } from '../types/skills';
+import type { SkillNode, SkillTreeState, SkillStatus, SovereignBadge } from '../types/skills';
 import { formatINR } from './finance';
 
 export const RANK_LORE_PERKS: Record<string, { perks: string[]; lore: string }> = {
@@ -90,6 +90,382 @@ export function generateCurvedPath(x1: number, y1: number, x2: number, y2: numbe
   const cx2 = x2 - dx * 0.15;
   const cy2 = y2 - dy * 0.35;
   return `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`;
+}
+
+export interface SovereignLevelInfo {
+  level: number;
+  title: string;
+  minXP: number;
+  maxXP: number;
+}
+
+export const SOVEREIGN_LEVELS: SovereignLevelInfo[] = [
+  { level: 1, title: 'Novice Explorer', minXP: 0, maxXP: 500 },
+  { level: 2, title: 'Apprentice Saver', minXP: 500, maxXP: 1100 },
+  { level: 3, title: 'Prudent Guardian', minXP: 1100, maxXP: 1850 },
+  { level: 4, title: 'Fortress Builder', minXP: 1850, maxXP: 2750 },
+  { level: 5, title: 'Capital Shield', minXP: 2750, maxXP: 3800 },
+  { level: 6, title: 'Velocity Compounder', minXP: 3800, maxXP: 4950 },
+  { level: 7, title: 'Wealth Strategist', minXP: 4950, maxXP: 6100 },
+  { level: 8, title: 'Financial Sovereign', minXP: 6100, maxXP: 7200 },
+  { level: 9, title: 'FIRE Vanguard', minXP: 7200, maxXP: 8100 },
+  { level: 10, title: 'Sovereign Titan Grandmaster', minXP: 8100, maxXP: 8250 },
+];
+
+export function computeSovereignBadges(
+  plan: FinancePlan,
+  summary: FinanceSummary,
+  optimalTaxSavings: number = 0
+): SovereignBadge[] {
+  const monthlyExpenses = summary.monthlyExpenses ?? 0;
+  const monthlyInflow = summary.monthlyIncome ?? 0;
+  const annualExpenses = monthlyExpenses * 12;
+  const annualIncome = monthlyInflow * 12;
+  const currentSavings = plan.savings.emergencyFundBalance ?? 0;
+  const debtBalance = plan.debt.cardBalance ?? 0;
+  const savingsRate = summary.savingsRatePercent ?? 0;
+  const runwayMonths = summary.emergencyRunwayMonths ?? 0;
+  const stepUpRate = plan.savings.stepUpSipPercent ?? 0;
+
+  const isDebtFree = debtBalance === 0;
+  const isRunway3m = runwayMonths >= 3;
+  const isRunway6m = runwayMonths >= 6;
+  const isCatastrophicShield = plan.expenses.insurance > 0 || plan.tax.deductions80D > 0;
+  const is503020 = savingsRate >= 20;
+  const isVelocity30 = savingsRate >= 30;
+  const isStepUp10 = stepUpRate >= 10;
+  const isTaxArbitrage = true;
+  const isFirstMillion = currentSavings >= 1_000_000;
+  const isQuarterCrore = currentSavings >= 2_500_000;
+  const isCoastFire = currentSavings >= annualExpenses * 15 && annualExpenses > 0;
+  const isHalfCrore = currentSavings >= 5_000_000;
+  const isSovereignFire = currentSavings >= annualExpenses * 25 && annualExpenses > 0;
+  const isAntifragileDynasty = currentSavings >= annualExpenses * 50 && annualExpenses > 0;
+
+  return [
+    {
+      id: 'debt_free_fortress',
+      title: 'Debt-Free Bastion',
+      category: 'defense',
+      icon: 'ShieldAlert',
+      tagline: 'Zero High-APR Revolving Debt Drag',
+      requirement: 'Eliminate all revolving credit card and personal debt (₹0 balance)',
+      isUnlocked: isDebtFree,
+      unlockedAtLabel: isDebtFree ? 'Active: ₹0 Debt' : undefined,
+      progressPercent: isDebtFree ? 100 : Math.max(5, Math.round(100 - (debtBalance / (monthlyInflow || 1)) * 50)),
+      currentValueLabel: isDebtFree ? '₹0 Debt' : `${formatINR(debtBalance)} Balance`,
+      targetValueLabel: '₹0 Debt',
+      xpReward: 450,
+      tier: 1,
+      suggestedAction: {
+        field: 'debt.cardBalance',
+        targetValue: 0,
+        description: 'Zero out revolving credit card debt',
+      },
+    },
+    {
+      id: 'sentinel_runway_3m',
+      title: 'Sentinel Runway (3M)',
+      category: 'defense',
+      icon: 'ShieldCheck',
+      tagline: '3-Month Liquid Survival Core',
+      requirement: 'Fund at least 3.0 months of basic living expenses in liquid reserves',
+      isUnlocked: isRunway3m,
+      unlockedAtLabel: isRunway3m ? `${runwayMonths.toFixed(1)} Mos Runway` : undefined,
+      progressPercent: Math.min(100, Math.round((runwayMonths / 3) * 100)),
+      currentValueLabel: `${runwayMonths.toFixed(1)} Mos Runway`,
+      targetValueLabel: '3.0 Mos Buffer',
+      xpReward: 350,
+      tier: 1,
+      suggestedAction: {
+        field: 'savings.emergencyFundBalance',
+        targetValue: Math.round(3 * monthlyExpenses),
+        description: `Set emergency fund to 3 months (${formatINR(Math.round(3 * monthlyExpenses))})`,
+      },
+    },
+    {
+      id: 'iron_fortress_6m',
+      title: 'Iron Fortress (6M)',
+      category: 'defense',
+      icon: 'Castle',
+      tagline: 'The Golden Actuarial Benchmark',
+      requirement: 'Fund 6.0 full months of living expenses in emergency reserves',
+      isUnlocked: isRunway6m,
+      unlockedAtLabel: isRunway6m ? `${runwayMonths.toFixed(1)} Mos Runway` : undefined,
+      progressPercent: Math.min(100, Math.round((runwayMonths / 6) * 100)),
+      currentValueLabel: `${runwayMonths.toFixed(1)} Mos Runway`,
+      targetValueLabel: '6.0 Mos Buffer',
+      xpReward: 500,
+      tier: 1,
+      suggestedAction: {
+        field: 'savings.emergencyFundBalance',
+        targetValue: Math.round(6 * monthlyExpenses),
+        description: `Expand liquid fortress to 6 full months (${formatINR(Math.round(6 * monthlyExpenses))})`,
+      },
+    },
+    {
+      id: 'catastrophic_shield',
+      title: 'Catastrophic Armor',
+      category: 'defense',
+      icon: 'Umbrella',
+      tagline: 'Term Life & Independent Health Protection',
+      requirement: 'Log pure term life insurance and comprehensive health cover',
+      isUnlocked: isCatastrophicShield,
+      unlockedAtLabel: isCatastrophicShield ? 'Shield Active' : undefined,
+      progressPercent: (plan.expenses.insurance > 0 && plan.tax.deductions80D > 0) ? 100 : isCatastrophicShield ? 65 : 20,
+      currentValueLabel: plan.expenses.insurance > 0 ? `${formatINR(plan.expenses.insurance)}/mo Cover` : 'No Cover Logged',
+      targetValueLabel: 'Term + Health Shield',
+      xpReward: 350,
+      tier: 1,
+      suggestedAction: {
+        field: 'expenses.insurance',
+        targetValue: Math.max(1500, Math.round(annualIncome * 0.003 / 12)),
+        description: 'Add standard term life insurance premium allocation',
+      },
+    },
+    {
+      id: 'equilibrium_50_30_20',
+      title: '50/30/20 Equilibrium',
+      category: 'discipline',
+      icon: 'PieChart',
+      tagline: 'Actuarial Balance Standard',
+      requirement: 'Maintain at least a 20% net savings rate',
+      isUnlocked: is503020,
+      unlockedAtLabel: is503020 ? `${savingsRate.toFixed(0)}% Savings Rate` : undefined,
+      progressPercent: Math.min(100, Math.round((savingsRate / 20) * 100)),
+      currentValueLabel: `${savingsRate.toFixed(0)}% Savings Rate`,
+      targetValueLabel: '≥ 20% Savings Rate',
+      xpReward: 450,
+      tier: 1,
+      suggestedAction: {
+        field: 'savings.monthlySip',
+        targetValue: Math.round(monthlyInflow * 0.2),
+        description: `Set monthly SIP to 20% of inflow (${formatINR(Math.round(monthlyInflow * 0.2))})`,
+      },
+    },
+    {
+      id: 'velocity_30_club',
+      title: '30% Velocity Club',
+      category: 'velocity',
+      icon: 'Zap',
+      tagline: 'High-Speed Compounding',
+      requirement: 'Achieve a net savings rate ≥ 30% of monthly income',
+      isUnlocked: isVelocity30,
+      unlockedAtLabel: isVelocity30 ? `${savingsRate.toFixed(0)}% Velocity` : undefined,
+      progressPercent: Math.min(100, Math.round((savingsRate / 30) * 100)),
+      currentValueLabel: `${savingsRate.toFixed(0)}% Savings Rate`,
+      targetValueLabel: '≥ 30% Savings Rate',
+      xpReward: 550,
+      tier: 2,
+      suggestedAction: {
+        field: 'savings.monthlySip',
+        targetValue: Math.round(monthlyInflow * 0.35),
+        description: `Boost monthly SIP to 35% (${formatINR(Math.round(monthlyInflow * 0.35))})`,
+      },
+    },
+    {
+      id: 'step_up_accelerator',
+      title: 'Compounding Accelerator',
+      category: 'velocity',
+      icon: 'TrendingUp',
+      tagline: 'Annual SIP Step-Up ≥ 10%',
+      requirement: 'Commit to stepping up monthly SIPs by at least 10% annually',
+      isUnlocked: isStepUp10,
+      unlockedAtLabel: isStepUp10 ? `${stepUpRate}% Step-Up` : undefined,
+      progressPercent: Math.min(100, Math.round((stepUpRate / 10) * 100)),
+      currentValueLabel: `${stepUpRate}% Step-Up`,
+      targetValueLabel: '≥ 10% Step-Up Rate',
+      xpReward: 450,
+      tier: 2,
+      suggestedAction: {
+        field: 'savings.stepUpSipPercent',
+        targetValue: 12,
+        description: 'Lock in a 12% annual step-up protocol',
+      },
+    },
+    {
+      id: 'tax_arbitrage_master',
+      title: 'Tax Arbitrage Master',
+      category: 'discipline',
+      icon: 'Scale',
+      tagline: 'Zero Leakage to the Exchequer',
+      requirement: 'Audit tax regime across 80C, 80D, and NPS for optimal tax efficiency',
+      isUnlocked: isTaxArbitrage,
+      unlockedAtLabel: 'Regime Audited',
+      progressPercent: 100,
+      currentValueLabel: optimalTaxSavings > 0 ? `₹${optimalTaxSavings.toLocaleString('en-IN')} Saved` : 'Fully Audited',
+      targetValueLabel: 'Optimal Net Tax',
+      xpReward: 400,
+      tier: 2,
+      suggestedAction: {
+        field: 'tax.deductions80D',
+        targetValue: 25000,
+        description: 'Audit Section 80D health deduction for optimal tax regime delta',
+      },
+    },
+    {
+      id: 'first_million_10l',
+      title: 'The First Million (₹10L)',
+      category: 'autonomy',
+      icon: 'Coins',
+      tagline: 'The Psychological Compounding Barrier',
+      requirement: 'Accumulate ₹10,00,000 in liquid investment/emergency reserves',
+      isUnlocked: isFirstMillion,
+      unlockedAtLabel: isFirstMillion ? formatINR(currentSavings) : undefined,
+      progressPercent: Math.min(100, Math.round((currentSavings / 1_000_000) * 100)),
+      currentValueLabel: formatINR(currentSavings),
+      targetValueLabel: '₹10,00,000 Liquid Core',
+      xpReward: 600,
+      tier: 2,
+      suggestedAction: {
+        field: 'savings.emergencyFundBalance',
+        targetValue: 1_000_000,
+        description: 'Fund liquid portfolio to ₹10,00,000 milestone',
+      },
+    },
+    {
+      id: 'quarter_crore_25l',
+      title: 'Quarter-Crore Pivot (₹25L)',
+      category: 'autonomy',
+      icon: 'Rocket',
+      tagline: 'Gains Rivaling Fresh Inflows',
+      requirement: 'Cross ₹25,00,000 liquid portfolio',
+      isUnlocked: isQuarterCrore,
+      unlockedAtLabel: isQuarterCrore ? formatINR(currentSavings) : undefined,
+      progressPercent: Math.min(100, Math.round((currentSavings / 2_500_000) * 100)),
+      currentValueLabel: formatINR(currentSavings),
+      targetValueLabel: '₹25,00,000 Corpus',
+      xpReward: 700,
+      tier: 2,
+      suggestedAction: {
+        field: 'savings.emergencyFundBalance',
+        targetValue: 2_500_000,
+        description: 'Simulate reaching the ₹25,00,000 Quarter-Crore Hub',
+      },
+    },
+    {
+      id: 'coast_fire_achiever',
+      title: 'Coast FIRE Sentinel',
+      category: 'autonomy',
+      icon: 'Anchor',
+      tagline: 'Retirement Mathematically Locked',
+      requirement: 'Invested net worth ≥ 15x annual living expenses',
+      isUnlocked: isCoastFire,
+      unlockedAtLabel: isCoastFire ? `${((currentSavings / Math.max(1, annualExpenses * 15)) * 100).toFixed(0)}% Coast` : undefined,
+      progressPercent: Math.min(100, Math.round((currentSavings / Math.max(1, annualExpenses * 15)) * 100)),
+      currentValueLabel: `${((currentSavings / Math.max(1, annualExpenses * 15)) * 100).toFixed(0)}% Coast Core`,
+      targetValueLabel: '15.0x Annual Expenses',
+      xpReward: 750,
+      tier: 3,
+      suggestedAction: {
+        field: 'savings.emergencyFundBalance',
+        targetValue: Math.round(annualExpenses * 15),
+        description: `Fund 15x annual burn for Coast FIRE (${formatINR(Math.round(annualExpenses * 15))})`,
+      },
+    },
+    {
+      id: 'half_crore_50l',
+      title: 'Half-Crore Inflection (₹50L)',
+      category: 'autonomy',
+      icon: 'Flame',
+      tagline: 'Capital Earnings Outpace Active Labor',
+      requirement: 'Cross ₹50,00,000 liquid portfolio',
+      isUnlocked: isHalfCrore,
+      unlockedAtLabel: isHalfCrore ? formatINR(currentSavings) : undefined,
+      progressPercent: Math.min(100, Math.round((currentSavings / 5_000_000) * 100)),
+      currentValueLabel: formatINR(currentSavings),
+      targetValueLabel: '₹50,00,000 Milestone',
+      xpReward: 800,
+      tier: 3,
+      suggestedAction: {
+        field: 'savings.emergencyFundBalance',
+        targetValue: 5_000_000,
+        description: 'Simulate Half-Crore milestone (₹50 Lakhs)',
+      },
+    },
+    {
+      id: 'full_sovereign_fire',
+      title: 'Full Sovereign FIRE (25x)',
+      category: 'autonomy',
+      icon: 'Crown',
+      tagline: 'Complete Financial Independence',
+      requirement: 'Accumulate ≥ 25x annual living expenses (4% Bengen Rule)',
+      isUnlocked: isSovereignFire,
+      unlockedAtLabel: isSovereignFire ? `${(currentSavings / Math.max(1, annualExpenses)).toFixed(1)}x Burn` : undefined,
+      progressPercent: Math.min(100, Math.round((currentSavings / Math.max(1, annualExpenses * 25)) * 100)),
+      currentValueLabel: `${(currentSavings / Math.max(1, annualExpenses)).toFixed(1)}x Annual Burn`,
+      targetValueLabel: '25.0x Annual Expenses',
+      xpReward: 900,
+      tier: 3,
+      suggestedAction: {
+        field: 'savings.emergencyFundBalance',
+        targetValue: Math.round(annualExpenses * 25),
+        description: `Fund 25x annual burn for FIRE (${formatINR(Math.round(annualExpenses * 25))})`,
+      },
+    },
+    {
+      id: 'antifragile_dynasty_50x',
+      title: 'Antifragile Dynasty (50x)',
+      category: 'autonomy',
+      icon: 'Sparkles',
+      tagline: 'Generational Sovereign Endowment',
+      requirement: 'Accumulate ≥ 50x annual burn for dynastic resilience',
+      isUnlocked: isAntifragileDynasty,
+      unlockedAtLabel: isAntifragileDynasty ? `${(currentSavings / Math.max(1, annualExpenses)).toFixed(1)}x Burn` : undefined,
+      progressPercent: Math.min(100, Math.round((currentSavings / Math.max(1, annualExpenses * 50)) * 100)),
+      currentValueLabel: `${(currentSavings / Math.max(1, annualExpenses)).toFixed(1)}x Annual Burn`,
+      targetValueLabel: '50.0x Annual Burn',
+      xpReward: 1000,
+      tier: 3,
+      suggestedAction: {
+        field: 'savings.emergencyFundBalance',
+        targetValue: Math.round(annualExpenses * 50),
+        description: `Fund 50x annual burn for generational endowment (${formatINR(Math.round(annualExpenses * 50))})`,
+      },
+    },
+  ];
+}
+
+export function computeSovereignLevel(badges: SovereignBadge[]) {
+  let totalXP = 0;
+  for (const badge of badges) {
+    if (badge.isUnlocked) {
+      totalXP += badge.xpReward;
+    } else if (badge.progressPercent > 0) {
+      totalXP += Math.round(badge.xpReward * (badge.progressPercent / 100) * 0.5);
+    }
+  }
+  const maxPossibleXP = badges.reduce((acc, b) => acc + b.xpReward, 0);
+
+  let currentLevel = SOVEREIGN_LEVELS[0];
+  for (const lvl of SOVEREIGN_LEVELS) {
+    if (totalXP >= lvl.minXP) {
+      currentLevel = lvl;
+    }
+  }
+
+  let nextLevelXP = currentLevel.maxXP;
+  let currentLevelProgressPercent = 100;
+  if (currentLevel.level < 10) {
+    const span = currentLevel.maxXP - currentLevel.minXP;
+    const gained = Math.max(0, Math.min(span, totalXP - currentLevel.minXP));
+    currentLevelProgressPercent = Math.round((gained / span) * 100);
+  } else {
+    currentLevelProgressPercent = 100;
+    nextLevelXP = maxPossibleXP;
+  }
+
+  const unlockedBadgesCount = badges.filter((b) => b.isUnlocked).length;
+
+  return {
+    totalXP,
+    maxPossibleXP,
+    level: currentLevel.level,
+    levelTitle: currentLevel.title,
+    nextLevelXP,
+    currentLevelProgressPercent,
+    unlockedBadgesCount,
+  };
 }
 
 export function calculateSkillTree(
@@ -600,6 +976,9 @@ export function calculateSkillTree(
 
   const nextRankPerks = RANK_LORE_PERKS[nextRank]?.perks || ['Sovereign Autonomy'];
 
+  const badges = computeSovereignBadges(plan, summary, optimalTaxSavings);
+  const levelInfo = computeSovereignLevel(badges);
+
   return {
     nodes,
     overallMasteryPercent: masteryPercent,
@@ -612,5 +991,13 @@ export function calculateSkillTree(
     tier1MasteredCount: tier1Mastered,
     tier2MasteredCount: tier2Mastered,
     tier3MasteredCount: tier3Mastered,
+    totalXP: levelInfo.totalXP,
+    maxPossibleXP: levelInfo.maxPossibleXP,
+    level: levelInfo.level,
+    levelTitle: levelInfo.levelTitle,
+    nextLevelXP: levelInfo.nextLevelXP,
+    currentLevelProgressPercent: levelInfo.currentLevelProgressPercent,
+    badges,
+    unlockedBadgesCount: levelInfo.unlockedBadgesCount,
   };
 }

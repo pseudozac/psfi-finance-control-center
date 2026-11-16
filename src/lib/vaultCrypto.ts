@@ -10,6 +10,7 @@
  * - Versioned Secure Envelope Packaging
  */
 
+export { BIP39_WORDLIST } from './bip39Wordlist';
 import { BIP39_WORDLIST } from './bip39Wordlist';
 
 export const CURRENT_CRYPTO_VERSION = 3;

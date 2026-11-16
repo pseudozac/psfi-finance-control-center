@@ -11275,5 +11275,561 @@ body {
   }
 }
 
+/* --------------------------------------------------------------------------
+   Sovereign Wealth Milestone Ribbon & RPG Trophy Hall
+   -------------------------------------------------------------------------- */
+.sovereign-milestone-ribbon {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 18px;
+  background: rgba(13, 17, 29, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg, 14px);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  margin-bottom: 20px;
+  transition: all 0.2s ease;
+}
+
+.sovereign-milestone-ribbon:hover {
+  border-color: rgba(245, 158, 11, 0.25);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 20px rgba(245, 158, 11, 0.08);
+}
+
+.ribbon-glow-ambient {
+  position: absolute;
+  top: -30px;
+  left: 20px;
+  width: 140px;
+  height: 90px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+  filter: blur(20px);
+}
+
+.ribbon-level-stack {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.ribbon-avatar-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(168, 85, 247, 0.15) 100%);
+  border: 1.5px solid rgba(245, 158, 11, 0.45);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
+}
+
+.ribbon-lvl-num {
+  font-size: 9px;
+  font-weight: 800;
+  color: #fbbf24;
+  line-height: 1;
+  margin-top: 1px;
+}
+
+.ribbon-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ribbon-title-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ribbon-rank-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.ribbon-rank-badge {
+  font-size: 10px;
+  padding: 1.5px 6px;
+  border-radius: 9999px;
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  color: #c084fc;
+}
+
+.ribbon-xp-track-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ribbon-xp-track {
+  width: 110px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.ribbon-xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, #ec4899);
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+.ribbon-xp-label {
+  font-size: 10.5px;
+  color: var(--ink-muted, #94a3b8);
+}
+
+.ribbon-milestones-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 2px 0;
+}
+
+.ribbon-milestones-row::-webkit-scrollbar {
+  display: none;
+}
+
+.ribbon-milestone-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--ink-secondary, #cbd5e1);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.ribbon-milestone-chip:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.ribbon-milestone-chip.chip-unlocked {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #34d399;
+}
+
+.ribbon-milestone-chip.chip-in-progress {
+  background: rgba(168, 85, 247, 0.1);
+  border-color: rgba(168, 85, 247, 0.25);
+  color: #d8b4fe;
+}
+
+.ribbon-milestone-chip.chip-locked {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.05);
+  color: var(--ink-muted, #64748b);
+}
+
+.ribbon-chip-icon {
+  flex-shrink: 0;
+}
+
+.ribbon-chip-label {
+  font-size: 11px;
+}
+
+.ribbon-chip-status {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.ribbon-action-wrapper {
+  flex-shrink: 0;
+}
+
+.ribbon-hall-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 9999px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.ribbon-hall-btn:hover {
+  background: rgba(245, 158, 11, 0.22);
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
+  transform: translateY(-1px);
+}
+
+.skill-level-pill {
+  padding: 2.5px 8px;
+  font-size: 11px;
+  border-radius: 9999px;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   Trophy Hall & Badges View Styling
+   -------------------------------------------------------------------------- */
+.trophy-hall-container {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+  max-height: calc(88vh - 120px);
+}
+
+.trophy-hero-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 22px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(168, 85, 247, 0.08) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 14px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.trophy-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.trophy-level-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  background: rgba(245, 158, 11, 0.18);
+  border: 2px solid #f59e0b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.3);
+  flex-shrink: 0;
+}
+
+.trophy-level-number {
+  font-size: 11px;
+  font-weight: 800;
+  color: #fbbf24;
+}
+
+.trophy-rank-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.trophy-tier-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1.5px 6px;
+  border-radius: 4px;
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  letter-spacing: 0.06em;
+}
+
+.trophy-title-text {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.trophy-xp-line {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trophy-sep {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.trophy-hero-right {
+  min-width: 200px;
+}
+
+.trophy-xp-gauge {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.trophy-xp-gauge-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--ink-secondary, #cbd5e1);
+}
+
+.trophy-xp-gauge-bar {
+  width: 100%;
+  height: 7px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.trophy-xp-gauge-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, #ec4899);
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+.trophy-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.trophy-hall-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 16px;
+}
+
+.trophy-badge-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.trophy-badge-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+}
+
+.trophy-badge-card.badge-unlocked {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: linear-gradient(145deg, rgba(16, 185, 129, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%);
+  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.12);
+}
+
+.trophy-badge-card.badge-unlocked:hover {
+  border-color: rgba(16, 185, 129, 0.6);
+  box-shadow: 0 8px 26px rgba(16, 185, 129, 0.2);
+}
+
+.trophy-badge-card.badge-in-progress {
+  border-color: rgba(168, 85, 247, 0.35);
+  background: linear-gradient(145deg, rgba(168, 85, 247, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+}
+
+.trophy-badge-card.badge-locked {
+  opacity: 0.72;
+}
+
+.trophy-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.trophy-badge-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.trophy-card-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.trophy-category-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.trophy-xp-tag {
+  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 9999px;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+}
+
+.trophy-card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.trophy-card-tagline {
+  color: var(--colour-quasar, #06b6d4);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.trophy-card-req {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--ink-secondary, #94a3b8);
+  min-height: 34px;
+}
+
+.trophy-progress-section {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.trophy-progress-metrics {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: #e2e8f0;
+}
+
+.trophy-progress-track {
+  width: 100%;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.trophy-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.trophy-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
+.trophy-status-pill {
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.trophy-status-pill.status-unlocked {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+}
+
+.trophy-status-pill.status-progress {
+  background: rgba(168, 85, 247, 0.2);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #c084fc;
+}
+
+.trophy-status-pill.status-locked {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--ink-muted, #64748b);
+}
+
+.trophy-simulate-btn {
+  padding: 4px 10px;
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+  cursor: pointer;
+}
+
+.trophy-simulate-btn:hover {
+  background: rgba(245, 158, 11, 0.22);
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 820px) {
+  .sovereign-milestone-ribbon {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px 14px;
+  }
+
+  .ribbon-level-stack {
+    justify-content: space-between;
+  }
+
+  .ribbon-action-wrapper {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .trophy-hero-banner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .trophy-hero-right {
+    min-width: 0;
+  }
+}
+
+
 
 

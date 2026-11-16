@@ -35,7 +35,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import type { FinancePlan, FinanceSummary } from '../types/finance';
-import type { SkillTier, SkillNode } from '../types/skills';
+import type { SkillTier, SkillNode, SovereignBadge } from '../types/skills';
 import {
   calculateSkillTree,
   RANK_LORE_PERKS,
@@ -54,7 +54,7 @@ interface SovereignSkillTreeModalProps {
   onApplySimulatedPlan?: (updated: FinancePlan) => void;
 }
 
-type ViewMode = 'visual_tree' | 'matrix' | 'character_sheet';
+type ViewMode = 'visual_tree' | 'matrix' | 'badges' | 'character_sheet';
 
 const ICON_MAP: Record<string, React.ReactNode> = {
   ShieldAlert: <ShieldAlert size={18} className="text-corona" />,
@@ -136,6 +136,7 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
   onApplySimulatedPlan,
 }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('visual_tree');
+  const [badgeFilter, setBadgeFilter] = useState<'all' | 'unlocked' | 'in_progress' | 'locked'>('all');
   const [selectedTier, setSelectedTier] = useState<SkillTier | 'all'>('all');
   const [selectedNodeId, setSelectedNodeId] = useState<string>('debt_elimination');
   const [simulatedPlan, setSimulatedPlan] = useState<FinancePlan | null>(null);
@@ -376,6 +377,28 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
     return treeState.nodes.filter((n) => n.tier === selectedTier);
   }, [treeState.nodes, selectedTier]);
 
+  const filteredBadges = useMemo(() => {
+    if (badgeFilter === 'unlocked') return treeState.badges.filter((b) => b.isUnlocked);
+    if (badgeFilter === 'in_progress') return treeState.badges.filter((b) => !b.isUnlocked && b.progressPercent > 0);
+    if (badgeFilter === 'locked') return treeState.badges.filter((b) => !b.isUnlocked && b.progressPercent === 0);
+    return treeState.badges;
+  }, [treeState.badges, badgeFilter]);
+
+  // Simulate unlock action for a badge
+  const handleSimulateBadge = (badge: SovereignBadge) => {
+    if (!badge.suggestedAction) return;
+    const cloned: FinancePlan = JSON.parse(JSON.stringify(plan));
+    const [section, field] = badge.suggestedAction.field.split('.');
+
+    if (section && field) {
+      // @ts-expect-error dynamic path assignment for simulation
+      if (cloned[section]) cloned[section][field] = badge.suggestedAction.targetValue;
+    }
+
+    setSimulatedPlan(cloned);
+    playFanfare();
+  };
+
   // Simulate unlock action for the active node
   const handleSimulateUnlock = (node: SkillNode) => {
     if (!node.suggestedAction) return;
@@ -448,6 +471,9 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                 <span className="skill-rank-badge">
                   {treeState.currentRank}
                 </span>
+                <span className="skill-level-pill font-mono">
+                  ⭐ Lvl {treeState.level} · {treeState.levelTitle}
+                </span>
                 {simulatedPlan && (
                   <span className="skill-sim-pill font-mono">
                     🧪 What-If Active (+{treeState.overallMasteryPercent - realTreeState.overallMasteryPercent}%)
@@ -457,6 +483,8 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
 
               <div className="skill-tree-stats-row font-mono">
                 <span className="stat-pill">Mastered: <strong className="text-nebula">{treeState.unlockedCount}</strong>/15 ({treeState.overallMasteryPercent}%)</span>
+                <span className="stat-pill">🏆 Badges: <strong className="text-solstice">{treeState.unlockedBadgesCount}</strong>/14</span>
+                <span className="stat-pill">✨ XP: <strong className="text-solstice">{treeState.totalXP}</strong>/{treeState.nextLevelXP}</span>
                 <span className="stat-pill">🛡️ Moat: <strong>{treeState.tier1MasteredCount}/5</strong></span>
                 <span className="stat-pill">⚡ Velocity: <strong>{treeState.tier2MasteredCount}/5</strong></span>
                 <span className="stat-pill">👑 Autonomy: <strong>{treeState.tier3MasteredCount}/5</strong></span>
@@ -510,6 +538,17 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
             >
               <Grid size={13} />
               <span>Actuarial Matrix</span>
+            </button>
+            <button
+              type="button"
+              className={`px-3 py-1 flex items-center gap-1.5 ${viewMode === 'badges' ? 'pill-active' : ''}`}
+              onClick={() => {
+                setViewMode('badges');
+                playChime(520);
+              }}
+            >
+              <Award size={13} />
+              <span>Trophy Hall ({treeState.unlockedBadgesCount}/{treeState.badges.length})</span>
             </button>
             <button
               type="button"
@@ -1164,7 +1203,178 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
           </div>
         )}
 
-        {/* 5. VIEW MODE 3: RPG CHARACTER PERKS & LORE */}
+        {/* 5. VIEW MODE: TROPHY HALL & MILESTONE BADGES */}
+        {viewMode === 'badges' && (
+          <div className="trophy-hall-container">
+            {/* Level & XP Hero Header */}
+            <div className="trophy-hero-banner">
+              <div className="trophy-hero-left">
+                <div className="trophy-level-avatar">
+                  <Award size={26} className="text-solstice" />
+                  <span className="trophy-level-number font-mono">{treeState.level}</span>
+                </div>
+                <div>
+                  <div className="trophy-rank-line">
+                    <span className="trophy-tier-tag font-mono">SOVEREIGN ARCHETYPE</span>
+                    <span className="trophy-title-text font-bold text-base text-white">{treeState.levelTitle}</span>
+                  </div>
+                  <div className="trophy-xp-line font-mono text-xs text-muted">
+                    Total XP: <strong className="text-white">{treeState.totalXP}</strong> / {treeState.nextLevelXP} XP
+                    <span className="trophy-sep">·</span>
+                    Unlocked: <strong className="text-nebula">{treeState.unlockedBadgesCount}</strong> / {treeState.badges.length} Badges
+                  </div>
+                </div>
+              </div>
+
+              <div className="trophy-hero-right">
+                <div className="trophy-xp-gauge">
+                  <div className="trophy-xp-gauge-header font-mono text-xs">
+                    <span>Rank Progression (Lvl {treeState.level})</span>
+                    <span className="text-solstice font-bold">{treeState.currentLevelProgressPercent}%</span>
+                  </div>
+                  <div className="trophy-xp-gauge-bar">
+                    <div
+                      className="trophy-xp-gauge-fill"
+                      style={{ width: `${treeState.currentLevelProgressPercent}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Filter Chips Bar */}
+            <div className="trophy-filter-bar">
+              <div className="pill-segmented flex flex-wrap gap-1" role="tablist">
+                <button
+                  type="button"
+                  className={`py-1 px-3 font-mono text-xs ${badgeFilter === 'all' ? 'pill-active' : ''}`}
+                  onClick={() => {
+                    setBadgeFilter('all');
+                    playChime(480);
+                  }}
+                >
+                  All Milestones ({treeState.badges.length})
+                </button>
+                <button
+                  type="button"
+                  className={`py-1 px-3 font-mono text-xs ${badgeFilter === 'unlocked' ? 'pill-active' : ''}`}
+                  onClick={() => {
+                    setBadgeFilter('unlocked');
+                    playChime(520);
+                  }}
+                >
+                  🏆 Unlocked ({treeState.unlockedBadgesCount})
+                </button>
+                <button
+                  type="button"
+                  className={`py-1 px-3 font-mono text-xs ${badgeFilter === 'in_progress' ? 'pill-active' : ''}`}
+                  onClick={() => {
+                    setBadgeFilter('in_progress');
+                    playChime(440);
+                  }}
+                >
+                  ⏳ In Progress ({treeState.badges.filter((b) => !b.isUnlocked && b.progressPercent > 0).length})
+                </button>
+                <button
+                  type="button"
+                  className={`py-1 px-3 font-mono text-xs ${badgeFilter === 'locked' ? 'pill-active' : ''}`}
+                  onClick={() => {
+                    setBadgeFilter('locked');
+                    playChime(380);
+                  }}
+                >
+                  🔒 Locked ({treeState.badges.filter((b) => !b.isUnlocked && b.progressPercent === 0).length})
+                </button>
+              </div>
+            </div>
+
+            {/* Trophy Hall Grid */}
+            <div className="trophy-hall-grid">
+              {filteredBadges.map((badge) => {
+                const isUnlocked = badge.isUnlocked;
+                const isInProgress = !isUnlocked && badge.progressPercent > 0;
+                const categoryColor = badge.category === 'defense'
+                  ? 'var(--colour-nebula)'
+                  : badge.category === 'velocity'
+                  ? 'var(--colour-quasar)'
+                  : badge.category === 'autonomy'
+                  ? 'var(--colour-solstice)'
+                  : 'var(--colour-pulsar)';
+
+                return (
+                  <div
+                    key={badge.id}
+                    className={`trophy-badge-card ${isUnlocked ? 'badge-unlocked' : isInProgress ? 'badge-in-progress' : 'badge-locked'}`}
+                  >
+                    <div className="trophy-card-header">
+                      <div
+                        className="trophy-badge-icon"
+                        style={{
+                          color: isUnlocked ? categoryColor : isInProgress ? 'var(--colour-pulsar)' : 'var(--ink-muted)',
+                        }}
+                      >
+                        {ICON_MAP[badge.icon] || <Award size={18} />}
+                      </div>
+
+                      <div className="trophy-card-header-meta">
+                        <span className="trophy-category-tag font-mono" style={{ color: categoryColor }}>
+                          {badge.category.toUpperCase()} · TIER {badge.tier}
+                        </span>
+                        <span className="trophy-xp-tag font-mono">
+                          +{badge.xpReward} XP
+                        </span>
+                      </div>
+                    </div>
+
+                    <h4 className="trophy-card-title text-white font-bold">{badge.title}</h4>
+                    <div className="trophy-card-tagline text-xs font-mono">{badge.tagline}</div>
+                    <p className="trophy-card-req text-xs text-muted">{badge.requirement}</p>
+
+                    <div className="trophy-progress-section">
+                      <div className="trophy-progress-metrics font-mono text-xs">
+                        <span>{badge.currentValueLabel}</span>
+                        <span className="text-muted">Target: {badge.targetValueLabel}</span>
+                      </div>
+                      <div className="trophy-progress-track">
+                        <div
+                          className="trophy-progress-fill"
+                          style={{
+                            width: `${badge.progressPercent}%`,
+                            background: isUnlocked
+                              ? 'var(--colour-nebula)'
+                              : 'linear-gradient(90deg, var(--colour-pulsar), var(--colour-quasar))',
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="trophy-card-footer">
+                      <span
+                        className={`trophy-status-pill font-mono text-xs ${isUnlocked ? 'status-unlocked' : isInProgress ? 'status-progress' : 'status-locked'}`}
+                      >
+                        {isUnlocked ? '✓ Unlocked' : `${badge.progressPercent}% Completed`}
+                      </span>
+
+                      {!isUnlocked && badge.suggestedAction && (
+                        <button
+                          type="button"
+                          className="action-pill font-mono text-xs trophy-simulate-btn"
+                          onClick={() => handleSimulateBadge(badge)}
+                          title={badge.suggestedAction.description}
+                        >
+                          <Sparkles size={11} className="text-solstice" />
+                          <span>Simulate</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 6. VIEW MODE 4: RPG CHARACTER PERKS & LORE */}
         {viewMode === 'character_sheet' && (
           <div className="skill-perks-container">
             <div className="skill-perks-hero">
