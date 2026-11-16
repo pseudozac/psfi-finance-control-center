@@ -1,5 +1,7 @@
 import type {
   BudgetRuleAnalysis,
+  CashflowWaterfallAnalysis,
+  CashflowWaterfallStep,
   CrossoverPointResult,
   CustomExpenseItem,
   DebtPayoffResult,
@@ -154,6 +156,132 @@ export function calculateSummary(plan: FinancePlan): FinanceSummary {
     monthlySurplus,
     savingsRatePercent,
     emergencyRunwayMonths,
+  };
+}
+
+export function calculateCashflowWaterfall(plan: FinancePlan): CashflowWaterfallAnalysis {
+  const totalIncome = Math.max(0, plan.income.salary + plan.income.freelance + plan.income.other);
+  const safeIncome = Math.max(1, totalIncome);
+
+  const customItems = plan.expenses.custom ?? [];
+  let customNeeds = 0;
+  let customWants = 0;
+  for (const c of customItems) {
+    if (c.category === 'needs' || c.category === 'sinking') {
+      customNeeds += c.amount;
+    } else {
+      customWants += c.amount;
+    }
+  }
+
+  const essentialNeeds =
+    plan.expenses.housing +
+    plan.expenses.groceries +
+    plan.expenses.utilities +
+    plan.expenses.transport +
+    plan.expenses.insurance +
+    customNeeds;
+
+  const debtObligations = Math.max(0, plan.debt.monthlyPayment);
+  const discretionaryWants = plan.expenses.lifestyle + customWants;
+  const investmentsAndSavings = Math.max(0, plan.savings.monthlySavings + plan.savings.monthlySip);
+
+  const totalCommitted = essentialNeeds + debtObligations + discretionaryWants + investmentsAndSavings;
+  const unallocatedSurplus = totalIncome - totalCommitted;
+
+  const dailyLivingBurn = Math.round((essentialNeeds + debtObligations + discretionaryWants) / 30.4);
+  const dailyDiscretionaryPocket = Math.round(discretionaryWants / 30.4);
+  const fixedObligationsDay =
+    totalIncome > 0
+      ? Math.min(30, Math.max(1, Math.ceil(((essentialNeeds + debtObligations) / totalIncome) * 30)))
+      : 0;
+
+  let running = totalIncome;
+  const steps: CashflowWaterfallStep[] = [
+    {
+      id: 'gross_inflow',
+      label: 'Gross Monthly Inflow',
+      amount: totalIncome,
+      remaining: running,
+      percentOfIncome: 100,
+      type: 'inflow',
+      color: '#5ec491',
+    },
+  ];
+
+  if (essentialNeeds > 0) {
+    running -= essentialNeeds;
+    steps.push({
+      id: 'essential_needs',
+      label: 'Essential Needs (Housing, Food, Bills)',
+      amount: essentialNeeds,
+      remaining: Math.max(0, running),
+      percentOfIncome: Number(((essentialNeeds / safeIncome) * 100).toFixed(1)),
+      type: 'outflow',
+      color: '#bf9ff1',
+    });
+  }
+
+  if (debtObligations > 0) {
+    running -= debtObligations;
+    steps.push({
+      id: 'debt_servicing',
+      label: 'Debt Servicing & Card EMIs',
+      amount: debtObligations,
+      remaining: Math.max(0, running),
+      percentOfIncome: Number(((debtObligations / safeIncome) * 100).toFixed(1)),
+      type: 'outflow',
+      color: '#f78d2c',
+    });
+  }
+
+  if (discretionaryWants > 0) {
+    running -= discretionaryWants;
+    steps.push({
+      id: 'discretionary_wants',
+      label: 'Lifestyle, Dining & Discretionary',
+      amount: discretionaryWants,
+      remaining: Math.max(0, running),
+      percentOfIncome: Number(((discretionaryWants / safeIncome) * 100).toFixed(1)),
+      type: 'outflow',
+      color: '#f28bad',
+    });
+  }
+
+  if (investmentsAndSavings > 0) {
+    running -= investmentsAndSavings;
+    steps.push({
+      id: 'savings_investments',
+      label: 'Monthly SIP & Liquid Savings',
+      amount: investmentsAndSavings,
+      remaining: Math.max(0, running),
+      percentOfIncome: Number(((investmentsAndSavings / safeIncome) * 100).toFixed(1)),
+      type: 'outflow',
+      color: '#7193ed',
+    });
+  }
+
+  steps.push({
+    id: 'unallocated_surplus',
+    label: unallocatedSurplus >= 0 ? 'Unallocated Freedom Buffer' : 'Cashflow Deficit',
+    amount: Math.abs(unallocatedSurplus),
+    remaining: unallocatedSurplus,
+    percentOfIncome: Number(((Math.abs(unallocatedSurplus) / safeIncome) * 100).toFixed(1)),
+    type: 'surplus',
+    color: unallocatedSurplus >= 0 ? '#10b981' : '#f43f5e',
+  });
+
+  return {
+    totalIncome,
+    essentialNeeds,
+    debtObligations,
+    discretionaryWants,
+    investmentsAndSavings,
+    unallocatedSurplus,
+    dailyLivingBurn,
+    dailyDiscretionaryPocket,
+    fixedObligationsDay,
+    steps,
   };
 }
 
@@ -586,11 +714,16 @@ export function validateImportedPlan(raw: unknown): FinancePlan {
   if (Array.isArray(exp.custom)) {
     customExpenses = exp.custom
       .filter((c) => c && typeof c === 'object')
-      .map((c) => ({
-        id: String(c.id ?? Math.random().toString(36).substring(2, 7)),
-        name: String(c.name ?? 'Custom Expense'),
-        amount: finiteNonNeg(c.amount, 0),
-      }));
+      .map((c) => {
+        const cat = (c as Record<string, unknown>).category;
+        const validCategory = cat === 'needs' || cat === 'wants' || cat === 'sinking' ? cat : undefined;
+        return {
+          id: String((c as Record<string, unknown>).id ?? Math.random().toString(36).substring(2, 7)),
+          name: String((c as Record<string, unknown>).name ?? 'Custom Expense'),
+          amount: finiteNonNeg((c as Record<string, unknown>).amount, 0),
+          category: validCategory,
+        };
+      });
   }
 
   return {

@@ -3,6 +3,7 @@ import {
   DEFAULT_PLAN,
   PLAN_PRESETS,
   calculateBudgetRule,
+  calculateCashflowWaterfall,
   calculateCrossoverPoint,
   calculateDebtPayoff,
   calculateProjections,
@@ -62,6 +63,20 @@ describe('finance calculations', () => {
     expect(comparison.currentCorpus).toBeGreaterThan(comparison.flatCorpus);
     expect(comparison.difference).toBeGreaterThan(0);
     expect(comparison.differencePercent).toBeGreaterThan(0);
+  });
+
+  it('computes cashflow waterfall stages and daily burn rates', () => {
+    const waterfall = calculateCashflowWaterfall(DEFAULT_PLAN);
+    expect(waterfall.totalIncome).toBe(140_000);
+    expect(waterfall.essentialNeeds).toBe(56_000);
+    expect(waterfall.debtObligations).toBe(8_000);
+    expect(waterfall.discretionaryWants).toBe(10_000);
+    expect(waterfall.investmentsAndSavings).toBe(40_000);
+    expect(waterfall.unallocatedSurplus).toBe(26_000);
+    expect(waterfall.dailyLivingBurn).toBeGreaterThan(0);
+    expect(waterfall.dailyDiscretionaryPocket).toBeGreaterThan(0);
+    expect(waterfall.fixedObligationsDay).toBe(14); // ceil(((56k + 8k) / 140k) * 30) = ceil(13.71) = 14
+    expect(waterfall.steps.length).toBeGreaterThanOrEqual(4);
   });
 
   it('handles debt payoff edge cases cleanly', () => {

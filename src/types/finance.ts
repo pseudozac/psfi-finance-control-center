@@ -4,6 +4,30 @@ export interface CustomExpenseItem {
   id: string;
   name: string;
   amount: number;
+  category?: 'needs' | 'wants' | 'sinking';
+}
+
+export interface CashflowWaterfallStep {
+  id: string;
+  label: string;
+  amount: number;
+  remaining: number;
+  percentOfIncome: number;
+  type: 'inflow' | 'outflow' | 'surplus';
+  color: string;
+}
+
+export interface CashflowWaterfallAnalysis {
+  totalIncome: number;
+  essentialNeeds: number;
+  debtObligations: number;
+  discretionaryWants: number;
+  investmentsAndSavings: number;
+  unallocatedSurplus: number;
+  dailyLivingBurn: number;
+  dailyDiscretionaryPocket: number;
+  fixedObligationsDay: number;
+  steps: CashflowWaterfallStep[];
 }
 
 export interface IncomeBreakdown {
