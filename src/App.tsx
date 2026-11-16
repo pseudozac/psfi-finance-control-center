@@ -1163,6 +1163,7 @@ export function App() {
               debtPayoff={debtPayoff}
               taxComparison={taxComparison}
               onChange={setPlan}
+              onOpenLoanArbitrage={() => setShowLoanArbitrage(true)}
             />
           </section>
 

@@ -4,6 +4,7 @@ import type {
   CashflowWaterfallStep,
   CrossoverPointResult,
   CustomExpenseItem,
+  DebtItem,
   DebtPayoffResult,
   EmergencyStressTestResult,
   ExpenseBreakdown,
@@ -12,9 +13,11 @@ import type {
   FireAnalysis,
   FireMilestone,
   MonthlyProjectionPoint,
+  MultiDebtComparisonResult,
   PlanPreset,
   StepUpComparisonResult,
   TaxComparisonResult,
+  TaxSlabBreakdown,
 } from '../types/finance';
 
 export const DEFAULT_PLAN: FinancePlan = {
@@ -593,22 +596,6 @@ export function calculateDebtPayoff(
   };
 }
 
-function computeSlabs(income: number, slabs: [number, number][]): number {
-  let tax = 0;
-  let previousLimit = 0;
-
-  for (const [limit, rate] of slabs) {
-    if (income > previousLimit) {
-      const taxableInSlab = Math.min(income, limit) - previousLimit;
-      tax += taxableInSlab * rate;
-      previousLimit = limit;
-    } else {
-      break;
-    }
-  }
-  return tax;
-}
-
 /**
  * Estimates Indian personal income tax comparing:
  * - Current-year statutory planning under Income-tax Act, 2025 (Tax Year 2026–27 Default Simplified Schedule)
@@ -628,17 +615,45 @@ export function estimateIndianIncomeTax(
 
   // New Regime: Rs 75,000 standard deduction; rebate u/s 87A if taxable <= Rs 7,00,000
   const newTaxable = Math.max(0, gross - 75_000);
-  let newBaseTax =
-    newTaxable <= 700_000
-      ? 0
-      : computeSlabs(newTaxable, [
-          [300_000, 0],
-          [700_000, 0.05],
-          [1_000_000, 0.1],
-          [1_200_000, 0.15],
-          [1_500_000, 0.2],
-          [Infinity, 0.3],
-        ]);
+  const newSlabConfigs = [
+    { label: '₹0 – ₹3,00,000', limit: 300_000, rate: 0, rateLabel: '0%' },
+    { label: '₹3,00,001 – ₹7,00,000', limit: 700_000, rate: 0.05, rateLabel: '5%' },
+    { label: '₹7,00,001 – ₹10,00,000', limit: 1_000_000, rate: 0.1, rateLabel: '10%' },
+    { label: '₹10,00,001 – ₹12,00,000', limit: 1_200_000, rate: 0.15, rateLabel: '15%' },
+    { label: '₹12,00,001 – ₹15,00,000', limit: 1_500_000, rate: 0.2, rateLabel: '20%' },
+    { label: 'Above ₹15,00,000', limit: Infinity, rate: 0.3, rateLabel: '30%' },
+  ];
+
+  let newBaseTax = 0;
+  const newRegimeSlabs: TaxSlabBreakdown[] = [];
+  let prevNewLimit = 0;
+
+  for (const slab of newSlabConfigs) {
+    if (newTaxable > prevNewLimit) {
+      const taxableInSlab = Math.min(newTaxable, slab.limit) - prevNewLimit;
+      const taxForSlab = Math.round(taxableInSlab * slab.rate);
+      newBaseTax += taxForSlab;
+      newRegimeSlabs.push({
+        slab: slab.label,
+        rate: slab.rateLabel,
+        taxableAmount: taxableInSlab,
+        tax: taxForSlab,
+      });
+      prevNewLimit = slab.limit;
+    } else {
+      newRegimeSlabs.push({
+        slab: slab.label,
+        rate: slab.rateLabel,
+        taxableAmount: 0,
+        tax: 0,
+      });
+    }
+  }
+
+  // Section 87A Rebate for New Regime if taxable <= 7 Lakhs
+  if (newTaxable <= 700_000) {
+    newBaseTax = 0;
+  }
   const newRegimeTax = Math.round(newBaseTax * 1.04); // 4% Health & Education Cess
 
   // Old Regime: Rs 50,000 standard deduction + 80C (1.5L) + 80D (75k) + NPS 80CCD(1B) (50k) + HRA
@@ -659,20 +674,52 @@ export function estimateIndianIncomeTax(
     0,
     gross - 50_000 - capped80C - capped80D - cappedNPS - hraExemption
   );
-  let oldBaseTax =
-    oldTaxable <= 500_000
-      ? 0
-      : computeSlabs(oldTaxable, [
-          [250_000, 0],
-          [500_000, 0.05],
-          [1_000_000, 0.2],
-          [Infinity, 0.3],
-        ]);
+
+  const oldSlabConfigs = [
+    { label: '₹0 – ₹2,50,000', limit: 250_000, rate: 0, rateLabel: '0%' },
+    { label: '₹2,50,001 – ₹5,00,000', limit: 500_000, rate: 0.05, rateLabel: '5%' },
+    { label: '₹5,00,001 – ₹10,00,000', limit: 1_000_000, rate: 0.2, rateLabel: '20%' },
+    { label: 'Above ₹10,00,000', limit: Infinity, rate: 0.3, rateLabel: '30%' },
+  ];
+
+  let oldBaseTax = 0;
+  const oldRegimeSlabs: TaxSlabBreakdown[] = [];
+  let prevOldLimit = 0;
+
+  for (const slab of oldSlabConfigs) {
+    if (oldTaxable > prevOldLimit) {
+      const taxableInSlab = Math.min(oldTaxable, slab.limit) - prevOldLimit;
+      const taxForSlab = Math.round(taxableInSlab * slab.rate);
+      oldBaseTax += taxForSlab;
+      oldRegimeSlabs.push({
+        slab: slab.label,
+        rate: slab.rateLabel,
+        taxableAmount: taxableInSlab,
+        tax: taxForSlab,
+      });
+      prevOldLimit = slab.limit;
+    } else {
+      oldRegimeSlabs.push({
+        slab: slab.label,
+        rate: slab.rateLabel,
+        taxableAmount: 0,
+        tax: 0,
+      });
+    }
+  }
+
+  // Section 87A Rebate for Old Regime if taxable <= 5 Lakhs
+  if (oldTaxable <= 500_000) {
+    oldBaseTax = 0;
+  }
   const oldRegimeTax = Math.round(oldBaseTax * 1.04);
 
   const diff = Math.abs(oldRegimeTax - newRegimeTax);
   const recommended =
     newRegimeTax < oldRegimeTax ? 'new' : oldRegimeTax < newRegimeTax ? 'old' : 'tie';
+
+  const effectiveRateNew = gross > 0 ? Number(((newRegimeTax / gross) * 100).toFixed(1)) : 0;
+  const effectiveRateOld = gross > 0 ? Number(((oldRegimeTax / gross) * 100).toFixed(1)) : 0;
 
   return {
     annualGrossIncome: Math.round(gross),
@@ -682,6 +729,142 @@ export function estimateIndianIncomeTax(
     savings: diff,
     hraExemption,
     npsDeduction: cappedNPS,
+    newRegimeTaxableIncome: Math.round(newTaxable),
+    oldRegimeTaxableIncome: Math.round(oldTaxable),
+    effectiveRateNew,
+    effectiveRateOld,
+    newRegimeSlabs,
+    oldRegimeSlabs,
+    ltcgExemptionLimit: 125_000,
+    ltcgRatePercent: 12.5,
+    stcgRatePercent: 20.0,
+  };
+}
+
+export function calculateMultiDebtPayoff(
+  debts: DebtItem[],
+  totalMonthlyPayment: number
+): MultiDebtComparisonResult {
+  if (!debts || debts.length === 0) {
+    return {
+      hasMultipleLiabilities: false,
+      totalBalance: 0,
+      totalMonthlyPayment,
+      avalanche: { monthsToDebtFree: 0, totalInterestPaid: 0, totalAmountPaid: 0, payoffOrder: [] },
+      snowball: { monthsToDebtFree: 0, totalInterestPaid: 0, totalAmountPaid: 0, payoffOrder: [], quickestWinMonths: null, quickestWinName: null },
+      interestSavedByAvalanche: 0,
+      monthsDifference: 0,
+    };
+  }
+
+  const activeDebts = debts.filter((d) => d.balance > 0);
+  const totalBalance = activeDebts.reduce((sum, d) => sum + d.balance, 0);
+
+  if (activeDebts.length === 0) {
+    return {
+      hasMultipleLiabilities: false,
+      totalBalance: 0,
+      totalMonthlyPayment,
+      avalanche: { monthsToDebtFree: 0, totalInterestPaid: 0, totalAmountPaid: 0, payoffOrder: [] },
+      snowball: { monthsToDebtFree: 0, totalInterestPaid: 0, totalAmountPaid: 0, payoffOrder: [], quickestWinMonths: null, quickestWinName: null },
+      interestSavedByAvalanche: 0,
+      monthsDifference: 0,
+    };
+  }
+
+  const simulatePayoff = (sortFn: (a: DebtItem, b: DebtItem) => number) => {
+    const list = activeDebts.map((d) => ({ ...d }));
+    list.sort(sortFn);
+
+    const minPaymentsTotal = list.reduce((sum, d) => sum + d.minMonthlyPayment, 0);
+    const budget = Math.max(minPaymentsTotal, totalMonthlyPayment);
+
+    let months = 0;
+    let totalInterest = 0;
+    let totalPaid = 0;
+    const payoffOrder: string[] = [];
+    let quickestWinMonths: number | null = null;
+    let quickestWinName: string | null = null;
+
+    const maxSimulationMonths = 360;
+
+    while (list.some((d) => d.balance > 0) && months < maxSimulationMonths) {
+      months++;
+      let extraCash = budget;
+
+      // 1. Accrue monthly interest & pay minimums
+      for (const d of list) {
+        if (d.balance > 0) {
+          const monthlyRate = d.aprPercent / 12 / 100;
+          const interest = d.balance * monthlyRate;
+          d.balance += interest;
+          totalInterest += interest;
+
+          const minPay = Math.min(d.balance, d.minMonthlyPayment);
+          d.balance -= minPay;
+          totalPaid += minPay;
+          extraCash -= minPay;
+
+          if (d.balance <= 0.01 && !payoffOrder.includes(d.name)) {
+            d.balance = 0;
+            payoffOrder.push(d.name);
+            if (!quickestWinName) {
+              quickestWinMonths = months;
+              quickestWinName = d.name;
+            }
+          }
+        }
+      }
+
+      // 2. Cascade remaining extraCash to target debts according to sort order
+      for (const d of list) {
+        if (extraCash <= 0) break;
+        if (d.balance > 0) {
+          const payment = Math.min(d.balance, extraCash);
+          d.balance -= payment;
+          totalPaid += payment;
+          extraCash -= payment;
+
+          if (d.balance <= 0.01 && !payoffOrder.includes(d.name)) {
+            d.balance = 0;
+            payoffOrder.push(d.name);
+            if (!quickestWinName) {
+              quickestWinMonths = months;
+              quickestWinName = d.name;
+            }
+          }
+        }
+      }
+    }
+
+    const allClear = list.every((d) => d.balance <= 0.01);
+    return {
+      monthsToDebtFree: allClear ? months : null,
+      totalInterestPaid: Math.round(totalInterest),
+      totalAmountPaid: Math.round(totalPaid),
+      payoffOrder,
+      quickestWinMonths,
+      quickestWinName,
+    };
+  };
+
+  const avalanche = simulatePayoff((a, b) => b.aprPercent - a.aprPercent);
+  const snowball = simulatePayoff((a, b) => a.balance - b.balance);
+
+  const interestSaved = Math.max(0, snowball.totalInterestPaid - avalanche.totalInterestPaid);
+  const monthsDiff =
+    snowball.monthsToDebtFree !== null && avalanche.monthsToDebtFree !== null
+      ? snowball.monthsToDebtFree - avalanche.monthsToDebtFree
+      : 0;
+
+  return {
+    hasMultipleLiabilities: activeDebts.length > 1,
+    totalBalance: Math.round(totalBalance),
+    totalMonthlyPayment,
+    avalanche,
+    snowball,
+    interestSavedByAvalanche: interestSaved,
+    monthsDifference: monthsDiff,
   };
 }
 
@@ -762,6 +945,20 @@ export function validateImportedPlan(raw: unknown): FinancePlan {
       cardBalance: finiteNonNeg(debt.cardBalance, DEFAULT_PLAN.debt.cardBalance),
       aprPercent: finiteNonNeg(debt.aprPercent, DEFAULT_PLAN.debt.aprPercent),
       monthlyPayment: finiteNonNeg(debt.monthlyPayment, DEFAULT_PLAN.debt.monthlyPayment),
+      liabilities: Array.isArray(debt.liabilities)
+        ? debt.liabilities
+            .filter((l) => l && typeof l === 'object')
+            .map((l) => {
+              const obj = l as Record<string, unknown>;
+              return {
+                id: String(obj.id ?? Math.random().toString(36).substring(2, 7)),
+                name: String(obj.name ?? 'Liability'),
+                balance: finiteNonNeg(obj.balance, 0),
+                aprPercent: finiteNonNeg(obj.aprPercent, 0),
+                minMonthlyPayment: finiteNonNeg(obj.minMonthlyPayment, 0),
+              };
+            })
+        : undefined,
     },
     tax: {
       deductions80C: finiteNonNeg(tax.deductions80C, DEFAULT_PLAN.tax.deductions80C),

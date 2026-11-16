@@ -6,6 +6,7 @@ import {
   calculateCashflowWaterfall,
   calculateCrossoverPoint,
   calculateDebtPayoff,
+  calculateMultiDebtPayoff,
   calculateProjections,
   calculateStepUpComparison,
   calculateSummary,
@@ -107,6 +108,36 @@ describe('finance calculations', () => {
     const highIncomeWithDeductions = estimateIndianIncomeTax(1_800_000, 150_000, 50_000);
     expect(highIncomeWithDeductions.newRegimeTax).toBeGreaterThan(0);
     expect(highIncomeWithDeductions.oldRegimeTax).toBeGreaterThan(0);
+  });
+
+  it('simulates multi-debt avalanche vs snowball strategies', () => {
+    const debts = [
+      { id: 'card1', name: 'Premium Card', balance: 50_000, aprPercent: 42, minMonthlyPayment: 2_500 },
+      { id: 'card2', name: 'Store Card', balance: 15_000, aprPercent: 18, minMonthlyPayment: 1_000 },
+      { id: 'loan1', name: 'Personal Loan', balance: 100_000, aprPercent: 14, minMonthlyPayment: 4_000 },
+    ];
+    const result = calculateMultiDebtPayoff(debts, 15_000);
+    expect(result.hasMultipleLiabilities).toBe(true);
+    expect(result.totalBalance).toBe(165_000);
+    expect(result.avalanche.monthsToDebtFree).not.toBeNull();
+    expect(result.snowball.monthsToDebtFree).not.toBeNull();
+    // Avalanche pays off highest APR (Premium Card 42%) first
+    expect(result.avalanche.payoffOrder[0]).toBe('Premium Card');
+    // Snowball pays off lowest balance (Store Card 15k) first
+    expect(result.snowball.payoffOrder[0]).toBe('Store Card');
+    // Avalanche saves more or equal interest compared to snowball
+    expect(result.avalanche.totalInterestPaid).toBeLessThanOrEqual(result.snowball.totalInterestPaid);
+  });
+
+  it('provides detailed tax slab breakdowns and capital gains details', () => {
+    const res = estimateIndianIncomeTax(1_500_000, 150_000, 50_000);
+    expect(res.newRegimeSlabs?.length).toBe(6);
+    expect(res.oldRegimeSlabs?.length).toBe(4);
+    expect(res.effectiveRateNew).toBeGreaterThan(0);
+    expect(res.effectiveRateOld).toBeGreaterThan(0);
+    expect(res.ltcgExemptionLimit).toBe(125_000);
+    expect(res.ltcgRatePercent).toBe(12.5);
+    expect(res.stcgRatePercent).toBe(20.0);
   });
 
   it('validates imported JSON plans and rejects malformed payloads', () => {

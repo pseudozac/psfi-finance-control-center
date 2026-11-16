@@ -46,6 +46,14 @@ export interface ExpenseBreakdown {
   custom?: CustomExpenseItem[];
 }
 
+export interface DebtItem {
+  id: string;
+  name: string;
+  balance: number;
+  aprPercent: number;
+  minMonthlyPayment: number;
+}
+
 export interface FinancePlan {
   schemaVersion: 2;
   income: IncomeBreakdown;
@@ -64,6 +72,7 @@ export interface FinancePlan {
     cardBalance: number;
     aprPercent: number;
     monthlyPayment: number;
+    liabilities?: DebtItem[];
   };
   tax: {
     deductions80C: number;
@@ -121,6 +130,13 @@ export interface DebtPayoffResult {
   warning: string | null;
 }
 
+export interface TaxSlabBreakdown {
+  slab: string;
+  rate: string;
+  taxableAmount: number;
+  tax: number;
+}
+
 export interface TaxComparisonResult {
   annualGrossIncome: number;
   oldRegimeTax: number;
@@ -129,6 +145,37 @@ export interface TaxComparisonResult {
   savings: number;
   hraExemption?: number;
   npsDeduction?: number;
+  newRegimeTaxableIncome?: number;
+  oldRegimeTaxableIncome?: number;
+  effectiveRateNew?: number;
+  effectiveRateOld?: number;
+  newRegimeSlabs?: TaxSlabBreakdown[];
+  oldRegimeSlabs?: TaxSlabBreakdown[];
+  ltcgExemptionLimit?: number;
+  ltcgRatePercent?: number;
+  stcgRatePercent?: number;
+}
+
+export interface MultiDebtComparisonResult {
+  hasMultipleLiabilities: boolean;
+  totalBalance: number;
+  totalMonthlyPayment: number;
+  avalanche: {
+    monthsToDebtFree: number | null;
+    totalInterestPaid: number;
+    totalAmountPaid: number;
+    payoffOrder: string[];
+  };
+  snowball: {
+    monthsToDebtFree: number | null;
+    totalInterestPaid: number;
+    totalAmountPaid: number;
+    payoffOrder: string[];
+    quickestWinMonths: number | null;
+    quickestWinName: string | null;
+  };
+  interestSavedByAvalanche: number;
+  monthsDifference: number;
 }
 
 export interface BudgetRuleAnalysis {
