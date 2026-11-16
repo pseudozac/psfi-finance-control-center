@@ -15,6 +15,7 @@ import {
   createNewAccount,
   removeAccount,
   loadOrCreateDemoAccount,
+  syncEncryptedVault,
 } from '../lib/accountStorage';
 
 export function useFinancePlan() {
@@ -43,10 +44,25 @@ export function useFinancePlan() {
     return JSON.stringify(plan) !== JSON.stringify(committedPlan);
   }, [plan, committedPlan]);
 
-  // Seamless continuous auto-save to localStorage — user modifications are NEVER lost
+  // Seamless continuous auto-save to encrypted IndexedDB — user modifications are NEVER lost
   useEffect(() => {
     saveAllAccounts(accounts);
   }, [accounts]);
+
+  // Synchronize on boot with encrypted IndexedDB storage
+  useEffect(() => {
+    let mounted = true;
+    syncEncryptedVault()
+      .then((secureAccounts) => {
+        if (mounted && secureAccounts && secureAccounts.length > 0) {
+          setAccounts(secureAccounts);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const setPlan = useCallback(
     (nextPlan: FinancePlan) => {

@@ -1,14 +1,24 @@
 import type { UserAccount, AccountAvatarColor } from '../types/account';
 import type { FinancePlan } from '../types/finance';
 import { DEFAULT_PLAN, SCRATCH_PLAN, validateImportedPlan } from './finance';
+import {
+  ensureActiveMasterKey,
+  saveAccountEncrypted,
+  loadAllAccountsEncrypted,
+  deleteAccountEncrypted,
+} from './encryptedVaultStorage';
 
 const STORAGE_KEY_ACCOUNTS = 'psfi_accounts_v1';
 const STORAGE_KEY_ACTIVE = 'psfi_active_account_id';
+const STORAGE_KEY_SESSION_ACCOUNTS = 'psfi_session_accounts';
 const LEGACY_STORAGE_KEY = 'psfi_finance_plan_v2';
 const LEGACY_BASELINE_KEY = 'psfi_finance_baseline_v2';
 
+let cachedAccounts: UserAccount[] | null = null;
+
 function loadLegacyPlan(): FinancePlan | null {
   try {
+    if (typeof window === 'undefined' || !window.localStorage) return null;
     const raw = window.localStorage.getItem(LEGACY_STORAGE_KEY);
     if (!raw) return null;
     return validateImportedPlan(JSON.parse(raw));
@@ -19,6 +29,7 @@ function loadLegacyPlan(): FinancePlan | null {
 
 function loadLegacyBaseline(): FinancePlan | null {
   try {
+    if (typeof window === 'undefined' || !window.localStorage) return null;
     const raw = window.localStorage.getItem(LEGACY_BASELINE_KEY);
     if (!raw) return null;
     return validateImportedPlan(JSON.parse(raw));
@@ -32,30 +43,57 @@ function isOldSamplePlan(plan: FinancePlan): boolean {
 }
 
 export function loadAllAccounts(): UserAccount[] {
+  if (cachedAccounts && cachedAccounts.length > 0) {
+    return cachedAccounts;
+  }
+
+  // 1. Check ephemeral session cache
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY_ACCOUNTS);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.map((acc) => {
-          const validated = validateImportedPlan(acc.plan);
-          // If the primary vault was seeded with the old static sample data, initialize it cleanly with zeroes
-          const finalPlan = (acc.id === 'vault_default' && isOldSamplePlan(validated))
-            ? structuredClone(SCRATCH_PLAN)
-            : validated;
-          return {
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      const sessionRaw = window.sessionStorage.getItem(STORAGE_KEY_SESSION_ACCOUNTS);
+      if (sessionRaw) {
+        const parsed = JSON.parse(sessionRaw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          cachedAccounts = parsed.map((acc) => ({
             ...acc,
-            plan: finalPlan,
+            plan: validateImportedPlan(acc.plan),
             baseline: acc.baseline ? validateImportedPlan(acc.baseline) : null,
-          };
-        });
+          }));
+          return cachedAccounts;
+        }
       }
     }
   } catch {
-    // fallback to legacy or default
+    // Fall through
   }
 
-  // Migrate legacy data if available, or create initial "Primary Vault" starting clean with zeroes
+  // 2. Check persistent storage / legacy storage
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const raw = window.localStorage.getItem(STORAGE_KEY_ACCOUNTS);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          cachedAccounts = parsed.map((acc) => {
+            const validated = validateImportedPlan(acc.plan);
+            const finalPlan = (acc.id === 'vault_default' && isOldSamplePlan(validated))
+              ? structuredClone(SCRATCH_PLAN)
+              : validated;
+            return {
+              ...acc,
+              plan: finalPlan,
+              baseline: acc.baseline ? validateImportedPlan(acc.baseline) : null,
+            };
+          });
+          return cachedAccounts;
+        }
+      }
+    }
+  } catch {
+    // Fall through
+  }
+
+  // 3. Fallback to initial "Primary Vault" clean state
   const legacyPlan = loadLegacyPlan();
   const legacyBaseline = loadLegacyBaseline();
   const initialPlan = legacyPlan && !isOldSamplePlan(legacyPlan) ? legacyPlan : structuredClone(SCRATCH_PLAN);
@@ -70,23 +108,67 @@ export function loadAllAccounts(): UserAccount[] {
     baseline: legacyBaseline,
   };
 
+  cachedAccounts = [initialAccount];
   saveAllAccounts([initialAccount]);
   setActiveAccountId(initialAccount.id);
   return [initialAccount];
 }
 
-export function saveAllAccounts(accounts: UserAccount[]): void {
+/**
+ * Asynchronously synchronizes the UI with the encrypted IndexedDB vault.
+ */
+export async function syncEncryptedVault(): Promise<UserAccount[]> {
   try {
-    window.localStorage.setItem(STORAGE_KEY_ACCOUNTS, JSON.stringify(accounts));
+    const { masterKey } = await ensureActiveMasterKey();
+    const accounts = await loadAllAccountsEncrypted(masterKey);
+    if (accounts.length > 0) {
+      cachedAccounts = accounts;
+      try {
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          window.sessionStorage.setItem(STORAGE_KEY_SESSION_ACCOUNTS, JSON.stringify(accounts));
+        }
+      } catch {
+        // Ignore
+      }
+      return accounts;
+    }
+  } catch {
+    // Ignore error in offline or headless mode
+  }
+  return cachedAccounts || loadAllAccounts();
+}
+
+/**
+ * Saves all accounts into memory cache, ephemeral session storage, and encrypted IndexedDB.
+ */
+export function saveAllAccounts(accounts: UserAccount[]): void {
+  cachedAccounts = accounts;
+
+  // Ephemeral tab-level session cache
+  try {
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      window.sessionStorage.setItem(STORAGE_KEY_SESSION_ACCOUNTS, JSON.stringify(accounts));
+    }
   } catch {
     // Ignore quota errors in private browsing
   }
+
+  // Asynchronous encrypted persistence to IndexedDB (AES-256-GCM)
+  ensureActiveMasterKey()
+    .then(({ masterKey }) => {
+      for (const acc of accounts) {
+        saveAccountEncrypted(masterKey, acc).catch(() => {});
+      }
+    })
+    .catch(() => {});
 }
 
 export function getActiveAccountId(): string {
   try {
-    const active = window.localStorage.getItem(STORAGE_KEY_ACTIVE);
-    if (active) return active;
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const active = window.localStorage.getItem(STORAGE_KEY_ACTIVE);
+      if (active) return active;
+    }
   } catch {
     // Ignore
   }
@@ -95,7 +177,9 @@ export function getActiveAccountId(): string {
 
 export function setActiveAccountId(id: string): void {
   try {
-    window.localStorage.setItem(STORAGE_KEY_ACTIVE, id);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(STORAGE_KEY_ACTIVE, id);
+    }
   } catch {
     // Ignore
   }
@@ -194,7 +278,6 @@ export function removeAccount(id: string): UserAccount[] {
   const accounts = loadAllAccounts();
   const filtered = accounts.filter((acc) => acc.id !== id);
   if (filtered.length === 0) {
-    // Always keep at least one account
     const fresh: UserAccount = {
       id: 'vault_default',
       name: 'Primary Vault',
@@ -210,6 +293,7 @@ export function removeAccount(id: string): UserAccount[] {
   }
 
   saveAllAccounts(filtered);
+  deleteAccountEncrypted(id).catch(() => {});
   const activeId = getActiveAccountId();
   if (activeId === id) {
     setActiveAccountId(filtered[0].id);

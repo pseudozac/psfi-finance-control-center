@@ -403,3 +403,71 @@ export async function migrateLegacyAccountsToEncrypted(
 
   return { success: true, accountsCount: verified.length, mnemonic, masterKey };
 }
+
+
+// ============================================================================
+// Active Session Key & Recovery Management
+// ============================================================================
+
+let liveSessionMasterKey: CryptoKey | null = null;
+let liveSessionMnemonic: string | null = null;
+
+export function setLiveSessionKey(key: CryptoKey, mnemonic?: string): void {
+  liveSessionMasterKey = key;
+  if (mnemonic) {
+    liveSessionMnemonic = mnemonic;
+    try {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        window.sessionStorage.setItem('psfi_session_recovery_mnemonic', mnemonic);
+      }
+    } catch {
+      // Ignore storage errors in private browsing
+    }
+  }
+}
+
+export function getLiveSessionKey(): CryptoKey | null {
+  return liveSessionMasterKey;
+}
+
+export function getLiveSessionMnemonic(): string | null {
+  if (liveSessionMnemonic) return liveSessionMnemonic;
+  try {
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      const saved = window.sessionStorage.getItem('psfi_session_recovery_mnemonic');
+      if (saved) {
+        liveSessionMnemonic = saved;
+        return saved;
+      }
+    }
+  } catch {
+    // Ignore storage errors
+  }
+  return null;
+}
+
+/**
+ * Ensures an active Master Vault Key is ready.
+ * Reconnects in-memory session key, unlocks via session token, or triggers non-destructive migration.
+ */
+export async function ensureActiveMasterKey(): Promise<{ masterKey: CryptoKey; mnemonic: string }> {
+  if (liveSessionMasterKey && liveSessionMnemonic) {
+    return { masterKey: liveSessionMasterKey, mnemonic: liveSessionMnemonic };
+  }
+
+  const sessionMnemonic = getLiveSessionMnemonic();
+  if (sessionMnemonic && (await isVaultInitialized())) {
+    try {
+      const masterKey = await unlockVaultWithSecret(sessionMnemonic);
+      setLiveSessionKey(masterKey, sessionMnemonic);
+      return { masterKey, mnemonic: sessionMnemonic };
+    } catch {
+      // Re-initialize if unlock fails
+    }
+  }
+
+  // Migrate or initialize
+  const result = await migrateLegacyAccountsToEncrypted();
+  setLiveSessionKey(result.masterKey, result.mnemonic);
+  return { masterKey: result.masterKey, mnemonic: result.mnemonic };
+}

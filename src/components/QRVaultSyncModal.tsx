@@ -18,7 +18,7 @@ import {
 import QRCode from 'qrcode';
 import jsQR from 'jsqr';
 import type { FinancePlan } from '../types/finance';
-import { encodeVaultBeam, decodeVaultBeam } from '../lib/vaultBeam';
+import { encodeVaultBeamSecure, decodeVaultBeamSecure } from '../lib/vaultBeam';
 
 interface QRVaultSyncModalProps {
   isOpen: boolean;
@@ -81,14 +81,22 @@ export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const animFrameIdRef = useRef<number | null>(null);
 
-  // Generate compact, high-speed beam payload
-  const activePin = pinProtection && beamPin.length >= 4 ? beamPin : undefined;
-  const beamString = encodeVaultBeam(plan, activeAccountName, activePin);
-  const directUrl = `${window.location.origin}${window.location.pathname}#beam=${beamString}`;
+  // Generate compact, high-speed authenticated beam payload
+  const [beamString, setBeamString] = useState<string>('');
+  useEffect(() => {
+    const activePin = pinProtection && beamPin.length >= 4 ? beamPin : undefined;
+    encodeVaultBeamSecure(plan, activeAccountName, activePin)
+      .then(setBeamString)
+      .catch(() => {});
+  }, [plan, activeAccountName, pinProtection, beamPin]);
+
+  const directUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}${window.location.pathname}#beam=${beamString}`
+    : '';
 
   // Render high-contrast, clean QR code canvas
   useEffect(() => {
-    if (!isOpen || activeTab !== 'beam' || !qrCanvasRef.current) return;
+    if (!isOpen || activeTab !== 'beam' || !qrCanvasRef.current || !directUrl) return;
 
     QRCode.toCanvas(
       qrCanvasRef.current,
@@ -130,8 +138,8 @@ export const QRVaultSyncModal: React.FC<QRVaultSyncModalProps> = ({
   }, [isOpen, activeTab]);
 
   // Handle incoming decoded beam payload
-  const handlePayloadString = (rawText: string, pinToUse?: string) => {
-    const result = decodeVaultBeam(rawText, pinToUse);
+  const handlePayloadString = async (rawText: string, pinToUse?: string) => {
+    const result = await decodeVaultBeamSecure(rawText, pinToUse);
 
     if (result.needsPin) {
       setScannedRaw(rawText);

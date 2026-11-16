@@ -68,7 +68,7 @@ import { VaultSecurityModal } from './components/VaultSecurityModal';
 import { LoanPrepaymentArbitrageModal } from './components/LoanPrepaymentArbitrageModal';
 import { TactileCommitSlider } from './components/TactileCommitSlider';
 import { ExecutivePrintableStatement } from './components/ExecutivePrintableStatement';
-import { decodeVaultBeam } from './lib/vaultBeam';
+import { decodeVaultBeamSecure } from './lib/vaultBeam';
 
 type AppPhase = 'loading' | 'gateway' | 'dashboard';
 
@@ -240,11 +240,11 @@ export function App() {
 
   // Listen for incoming #beam= URL hash transfers
   useEffect(() => {
-    const handleHash = () => {
+    const handleHash = async () => {
       const hash = window.location.hash;
       if (hash && hash.startsWith('#beam=')) {
         const payload = hash.slice(6);
-        const result = decodeVaultBeam(payload);
+        const result = await decodeVaultBeamSecure(payload);
         if (result.success && result.plan) {
           setPlan(result.plan);
           setAppPhase('dashboard');
@@ -262,13 +262,13 @@ export function App() {
     return () => window.removeEventListener('hashchange', handleHash);
   }, [setPlan, setStatusMessage]);
 
-  const handleUnlockPendingBeam = (e?: React.FormEvent) => {
+  const handleUnlockPendingBeam = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!pendingBeamPayload || pendingBeamPin.length < 4) {
       setPendingBeamError('Please enter a 4-digit PIN.');
       return;
     }
-    const result = decodeVaultBeam(pendingBeamPayload, pendingBeamPin);
+    const result = await decodeVaultBeamSecure(pendingBeamPayload, pendingBeamPin);
     if (result.success && result.plan) {
       setPlan(result.plan);
       setAppPhase('dashboard');
@@ -278,7 +278,7 @@ export function App() {
       setPendingBeamError(null);
       window.history.replaceState(null, '', window.location.pathname);
     } else {
-      setPendingBeamError('Incorrect 4-digit PIN. Please try again.');
+      setPendingBeamError(result.error || 'Incorrect 4-digit PIN. Please try again.');
       setPendingBeamPin('');
     }
   };

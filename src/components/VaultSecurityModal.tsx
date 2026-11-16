@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Lock,
-  Unlock,
   CheckCircle,
   AlertTriangle,
   X,
@@ -14,10 +13,13 @@ import {
   ArrowLeft,
   Delete,
   Zap,
+  Copy,
+  Download,
 } from 'lucide-react';
 import type { UserAccount } from '../types/account';
 import { generatePinSalt, hashVaultPin, verifyVaultPin } from '../lib/vaultSecurity';
 import { setAccountPin, removeAccountPin } from '../lib/accountStorage';
+import { ensureActiveMasterKey, getLiveSessionMnemonic } from '../lib/encryptedVaultStorage';
 
 interface VaultSecurityModalProps {
   isOpen: boolean;
@@ -46,6 +48,66 @@ export const VaultSecurityModal: React.FC<VaultSecurityModalProps> = ({
   const [success, setSuccess] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [shake, setShake] = useState(false);
+
+  const [mnemonicPhrase, setMnemonicPhrase] = useState<string | null>(null);
+  const [showMnemonic, setShowMnemonic] = useState(false);
+  const [copiedMnemonic, setCopiedMnemonic] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      const existing = getLiveSessionMnemonic();
+      if (existing) {
+        setMnemonicPhrase(existing);
+      } else {
+        ensureActiveMasterKey()
+          .then(({ mnemonic }) => {
+            setMnemonicPhrase(mnemonic);
+          })
+          .catch(() => {});
+      }
+    }
+  }, [isOpen]);
+
+  const handleCopyMnemonic = useCallback(() => {
+    if (!mnemonicPhrase) return;
+    navigator.clipboard.writeText(mnemonicPhrase);
+    setCopiedMnemonic(true);
+    setTimeout(() => setCopiedMnemonic(false), 2000);
+  }, [mnemonicPhrase]);
+
+  const handleDownloadRecoveryKit = useCallback(() => {
+    if (!mnemonicPhrase) return;
+    const content = `================================================================================
+PSFI PERSONAL FINANCE CONTROL CENTER — SOVEREIGN RECOVERY KIT
+================================================================================
+
+Vault Name: ${activeAccount.name}
+Generated At: ${new Date().toISOString()}
+Encryption: AES-256-GCM (W3C SubtleCrypto)
+Key Derivation: PBKDF2-HMAC-SHA256 (600,000 rounds)
+
+12-WORD BIP-39 RECOVERY MNEMONIC:
+${mnemonicPhrase}
+
+--------------------------------------------------------------------------------
+INSTRUCTIONS FOR RESTORATION:
+1. Open PsFi (https://pseudo-fi.vercel.app or local offline instance).
+2. If your device is replaced or browser storage wiped, import your vault or
+   use this 12-word recovery mnemonic to reconstruct your Master Vault Key.
+3. Keep this file offline on a secure encrypted drive or paper backup.
+4. Never share this recovery kit with anyone. Zero servers store your key.
+================================================================================`;
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `psfi-recovery-kit-${activeAccount.name.toLowerCase().replace(/\s+/g, '-')}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [mnemonicPhrase, activeAccount.name]);
 
   const hiddenInputRef = useRef<HTMLInputElement>(null);
 
@@ -351,33 +413,94 @@ export const VaultSecurityModal: React.FC<VaultSecurityModalProps> = ({
         {mode === 'overview' && (
           <div>
             {/* Status HUD Card */}
-            <div className={`vault-status-hud-card ${isProtected ? 'status-active' : ''}`}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <div className="vault-status-hud-card status-active">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {isProtected ? (
-                    <Lock size={16} className="text-solstice" />
-                  ) : (
-                    <Unlock size={16} style={{ color: '#f87171' }} />
-                  )}
-                  <span style={{ fontSize: 13, fontWeight: 700, color: isProtected ? '#fef3c7' : '#fecaca' }}>
-                    {isProtected ? 'SHA-256 Client Enclave Active' : 'Unencrypted Local Storage'}
+                  <ShieldCheck size={16} className="text-nebula" />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#34d399' }}>
+                    AES-256-GCM Sovereign Enclave Active
                   </span>
                 </div>
 
-                {/* Defense Meter */}
-                <div className="vault-meter-dots">
-                  <div className={`vault-meter-bar ${isProtected ? 'active-emerald' : 'active-amber'}`} />
-                  <div className={`vault-meter-bar ${isProtected ? 'active-emerald' : ''}`} />
-                  <div className={`vault-meter-bar ${isProtected ? 'active-emerald' : ''}`} />
-                  <div className={`vault-meter-bar ${isProtected ? 'active-emerald' : ''}`} />
-                </div>
+                <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', padding: '2px 8px', borderRadius: 10, background: 'rgba(52, 211, 153, 0.15)', border: '1px solid rgba(52, 211, 153, 0.4)', color: '#34d399' }}>
+                  INDEXEDDB ENCRYPTED
+                </span>
               </div>
 
               <p style={{ margin: 0, fontSize: 11.5, color: 'var(--ink-secondary)', lineHeight: 1.5 }}>
-                {isProtected
-                  ? 'Your net worth, income, investments, and fire projections are shielded behind your 4-digit master PIN. The vault auto-locks on refresh or inactivity.'
-                  : 'Anyone with access to this browser tab can view your net worth, salary, and assets. Arm a 4-digit master PIN to secure your financial records.'}
+                All accounts, salaries, emergency funds, and liabilities are encrypted at rest with an isolated 256-bit Master Vault Key. Zero servers, 100% offline.
               </p>
+            </div>
+
+            {/* 12-Word BIP-39 Recovery Seed Section */}
+            <div style={{ padding: '12px 14px', borderRadius: 'var(--radius-xl)', background: 'var(--surface-overlay)', border: '1px solid var(--border-subtle)', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showMnemonic ? 10 : 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <KeyRound size={14} className="text-solstice" />
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-primary)', fontFamily: 'var(--font-mono)' }}>
+                    12-Word Sovereign Recovery Seed
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="link-btn font-mono"
+                  style={{ fontSize: 11, cursor: 'pointer' }}
+                  onClick={() => setShowMnemonic(!showMnemonic)}
+                >
+                  {showMnemonic ? 'Hide Seed' : 'Reveal Seed'}
+                </button>
+              </div>
+
+              {showMnemonic && mnemonicPhrase && (
+                <div style={{ marginTop: 8 }}>
+                  <p style={{ margin: '0 0 10px 0', fontSize: 11, color: 'var(--ink-muted)', lineHeight: 1.4 }}>
+                    Write down these 12 words or download your recovery kit. This seed phrase allows complete disaster recovery across any device without a cloud account.
+                  </p>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginBottom: 10 }}>
+                    {mnemonicPhrase.split(' ').map((word, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          padding: '6px 8px',
+                          borderRadius: 8,
+                          background: 'var(--surface-card)',
+                          border: '1px solid var(--border-subtle)',
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: 11,
+                        }}
+                      >
+                        <span style={{ color: 'var(--ink-muted)', fontSize: 10, width: 16 }}>{idx + 1}.</span>
+                        <strong style={{ color: 'var(--ink-primary)' }}>{word}</strong>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      type="button"
+                      className="btn-secondary flex-1"
+                      style={{ fontSize: 11, padding: '7px 10px', justifyContent: 'center', gap: 6 }}
+                      onClick={handleCopyMnemonic}
+                    >
+                      <Copy size={12} />
+                      <span>{copiedMnemonic ? 'Copied Seed!' : 'Copy 12 Words'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-secondary flex-1"
+                      style={{ fontSize: 11, padding: '7px 10px', justifyContent: 'center', gap: 6 }}
+                      onClick={handleDownloadRecoveryKit}
+                    >
+                      <Download size={12} />
+                      <span>Download Kit (.txt)</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* 3 Tactical Feature Highlights */}

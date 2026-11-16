@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   X,
   Image as ImageIcon,
@@ -8,11 +8,13 @@ import {
   EyeOff,
   Check,
   FileCheck,
+  Lock,
+  KeyRound,
 } from 'lucide-react';
 import type { FinancePlan } from '../types/finance';
 import {
-  encodePayloadToPixels,
-  decodePayloadFromPixels,
+  encodeSecurePayloadToPixels,
+  decodeSecurePayloadFromPixels,
   createSyntheticStegoCanvas,
   createDecoyPlan,
 } from '../lib/steganography';
@@ -33,45 +35,54 @@ export const SteganographyModal: React.FC<SteganographyModalProps> = ({
   const [activeTab, setActiveTab] = useState<'encode' | 'decode' | 'decoy'>('encode');
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [encodeStatus, setEncodeStatus] = useState<string>('');
+  const [encodeSecret, setEncodeSecret] = useState<string>('');
   const [decodeStatus, setDecodeStatus] = useState<string>('');
+  const [decodeSecret, setDecodeSecret] = useState<string>('');
+  const [needsSecretForDecode, setNeedsSecretForDecode] = useState<boolean>(false);
   const [decodedPlan, setDecodedPlan] = useState<FinancePlan | null>(null);
   const [appliedDecoy, setAppliedDecoy] = useState<boolean>(false);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadedPixelsRef = useRef<Uint8ClampedArray | null>(null);
 
-  // Generate default synthetic canvas when encode tab opens
+  const generateSyntheticStego = useCallback(async (secret: string) => {
+    const targetCanvas = previewCanvasRef.current;
+    if (!targetCanvas) return;
+
+    const sourceCanvas = createSyntheticStegoCanvas(640, 480);
+    targetCanvas.width = 640;
+    targetCanvas.height = 480;
+    const ctx = targetCanvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.drawImage(sourceCanvas, 0, 0);
+
+    // Perform steganographic injection
+    const imgData = ctx.getImageData(0, 0, 640, 480);
+    const jsonPayload = JSON.stringify(plan);
+    const success = await encodeSecurePayloadToPixels(imgData.data, jsonPayload, secret.trim() || undefined);
+
+    if (success) {
+      ctx.putImageData(imgData, 0, 0);
+      const dataUrl = targetCanvas.toDataURL('image/png');
+      setDownloadUrl(dataUrl);
+      const mode = secret.trim() ? 'AES-256-GCM Encrypted (v2)' : 'Plaintext LSB (v1)';
+      setEncodeStatus(`Vault successfully embedded [${mode}]! Payload: ${(jsonPayload.length / 1024).toFixed(1)} KB.`);
+    } else {
+      setEncodeStatus('Error: Payload exceeds image capacity.');
+    }
+  }, [plan]);
+
+  // Generate default synthetic canvas when encode tab opens or secret changes
   useEffect(() => {
     if (!isOpen || activeTab !== 'encode') return;
 
     const timer = setTimeout(() => {
-      const targetCanvas = previewCanvasRef.current;
-      if (!targetCanvas) return;
-
-      const sourceCanvas = createSyntheticStegoCanvas(640, 480);
-      targetCanvas.width = 640;
-      targetCanvas.height = 480;
-      const ctx = targetCanvas.getContext('2d');
-      if (!ctx) return;
-
-      ctx.drawImage(sourceCanvas, 0, 0);
-
-      // Perform steganographic injection
-      const imgData = ctx.getImageData(0, 0, 640, 480);
-      const jsonPayload = JSON.stringify(plan);
-      const success = encodePayloadToPixels(imgData.data, jsonPayload);
-
-      if (success) {
-        ctx.putImageData(imgData, 0, 0);
-        const dataUrl = targetCanvas.toDataURL('image/png');
-        setDownloadUrl(dataUrl);
-        setEncodeStatus(`Vault successfully embedded! Payload: ${(jsonPayload.length / 1024).toFixed(1)} KB (occupies ~0.8% of pixel depth).`);
-      } else {
-        setEncodeStatus('Error: Payload exceeds image capacity.');
-      }
+      generateSyntheticStego(encodeSecret);
     }, 50);
 
     return () => clearTimeout(timer);
-  }, [isOpen, activeTab, plan]);
+  }, [isOpen, activeTab, encodeSecret, generateSyntheticStego]);
 
   // Handle uploaded custom image for encoding
   const handleCustomImageForEncode = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,7 +93,7 @@ export const SteganographyModal: React.FC<SteganographyModalProps> = ({
     const reader = new FileReader();
 
     reader.onload = (event) => {
-      img.onload = () => {
+      img.onload = async () => {
         const targetCanvas = previewCanvasRef.current;
         if (!targetCanvas) return;
 
@@ -94,12 +105,13 @@ export const SteganographyModal: React.FC<SteganographyModalProps> = ({
         ctx.drawImage(img, 0, 0);
         const imgData = ctx.getImageData(0, 0, img.width, img.height);
         const jsonPayload = JSON.stringify(plan);
-        const success = encodePayloadToPixels(imgData.data, jsonPayload);
+        const success = await encodeSecurePayloadToPixels(imgData.data, jsonPayload, encodeSecret.trim() || undefined);
 
         if (success) {
           ctx.putImageData(imgData, 0, 0);
           setDownloadUrl(targetCanvas.toDataURL('image/png'));
-          setEncodeStatus(`Custom wallpaper encoded! Size: ${img.width}x${img.height}. Zero visual artifacts.`);
+          const mode = encodeSecret.trim() ? 'AES-256-GCM Encrypted (v2)' : 'Plaintext LSB (v1)';
+          setEncodeStatus(`Custom wallpaper encoded [${mode}]! Size: ${img.width}x${img.height}. Zero visual artifacts.`);
         } else {
           setEncodeStatus('Error: Image resolution too small for payload.');
         }
@@ -109,6 +121,30 @@ export const SteganographyModal: React.FC<SteganographyModalProps> = ({
     reader.readAsDataURL(file);
   };
 
+  const processDecodeWithSecret = async (pixels: Uint8ClampedArray, secret?: string) => {
+    setDecodeStatus('Decrypting and extracting hidden vault...');
+    const res = await decodeSecurePayloadFromPixels(pixels, secret);
+    if (res.success && res.payload) {
+      try {
+        const parsed = JSON.parse(res.payload) as FinancePlan;
+        if (parsed.income && parsed.expenses) {
+          setDecodedPlan(parsed);
+          setNeedsSecretForDecode(false);
+          setDecodeStatus(`Success! Hidden vault extracted: Primary monthly salary ₹${parsed.income.salary?.toLocaleString('en-IN')}, Emergency Fund ₹${parsed.savings.emergencyFundBalance?.toLocaleString('en-IN')}.`);
+        } else {
+          setDecodeStatus('Vault extracted but payload structure does not match a valid PsFi portfolio.');
+        }
+      } catch {
+        setDecodeStatus('Payload decoded but could not be parsed as valid JSON.');
+      }
+    } else if (res.needsSecret) {
+      setNeedsSecretForDecode(true);
+      setDecodeStatus(res.error || 'This image is protected with AES-256-GCM. Please enter PIN or recovery key.');
+    } else {
+      setDecodeStatus(res.error || 'Failed to extract hidden vault.');
+    }
+  };
+
   // Handle image upload for extraction/decoding
   const handleImageForDecode = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -116,12 +152,13 @@ export const SteganographyModal: React.FC<SteganographyModalProps> = ({
 
     setDecodeStatus('Scanning image pixel buffer for hidden PsFi vault signature...');
     setDecodedPlan(null);
+    setNeedsSecretForDecode(false);
 
     const img = new Image();
     const reader = new FileReader();
 
     reader.onload = (event) => {
-      img.onload = () => {
+      img.onload = async () => {
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = img.width;
         tempCanvas.height = img.height;
@@ -133,24 +170,8 @@ export const SteganographyModal: React.FC<SteganographyModalProps> = ({
 
         ctx.drawImage(img, 0, 0);
         const imgData = ctx.getImageData(0, 0, img.width, img.height);
-        const recoveredJson = decodePayloadFromPixels(imgData.data);
-
-        if (!recoveredJson) {
-          setDecodeStatus('No hidden PsFi vault found. Ensure the image was saved as lossless PNG and has not been compressed by social media (e.g. WhatsApp/Instagram compress PNGs to lossy JPEGs).');
-          return;
-        }
-
-        try {
-          const parsed = JSON.parse(recoveredJson) as FinancePlan;
-          if (parsed.income && parsed.expenses) {
-            setDecodedPlan(parsed);
-            setDecodeStatus(`Success! Hidden vault extracted: Primary monthly salary ₹${parsed.income.salary?.toLocaleString('en-IN')}, Emergency Fund ₹${parsed.savings.emergencyFundBalance?.toLocaleString('en-IN')}.`);
-          } else {
-            setDecodeStatus('Vault extracted but payload structure does not match a valid PsFi portfolio.');
-          }
-        } catch {
-          setDecodeStatus('Payload decoded but could not be parsed as valid JSON.');
-        }
+        uploadedPixelsRef.current = imgData.data;
+        await processDecodeWithSecret(imgData.data, decodeSecret.trim() || undefined);
       };
       img.src = event.target?.result as string;
     };
@@ -237,6 +258,24 @@ export const SteganographyModal: React.FC<SteganographyModalProps> = ({
               PsFi modifies only the Least Significant Bit of image pixels. The resulting image looks completely indistinguishable from an ordinary abstract twilight desktop wallpaper to anyone viewing it.
             </p>
 
+            {/* Encryption Key Input */}
+            <div className="p-3 bg-slate-900/60 rounded-xl border border-subtle flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Lock size={15} className="text-purple-400 shrink-0" />
+                <div>
+                  <span className="text-xs font-semibold block text-primary">AES-256-GCM Password / PIN Protection</span>
+                  <span className="text-[10px] text-muted block">Optional: encrypt payload with a secret or recovery seed</span>
+                </div>
+              </div>
+              <input
+                type="password"
+                value={encodeSecret}
+                onChange={(e) => setEncodeSecret(e.target.value)}
+                placeholder="Leave blank for unencrypted LSB"
+                className="w-full sm:w-60 bg-slate-950 border border-subtle rounded-lg px-2.5 py-1 text-xs text-primary font-mono focus:border-purple-500 focus:outline-none"
+              />
+            </div>
+
             {/* Canvas Preview */}
             <div className="relative rounded-xl overflow-hidden border border-subtle bg-black/40 flex flex-col items-center justify-center p-2">
               <canvas
@@ -304,6 +343,41 @@ export const SteganographyModal: React.FC<SteganographyModalProps> = ({
               <span className="text-xs font-semibold block text-primary">Click to select Stego PNG</span>
               <span className="text-[11px] text-muted block mt-1">Must be an uncompressed .png file</span>
             </div>
+
+            {needsSecretForDecode && (
+              <div className="p-3.5 rounded-xl bg-purple-950/20 border border-purple-800/40 space-y-2.5 animate-fadeIn">
+                <div className="flex items-center gap-2 text-xs font-semibold text-purple-300">
+                  <Lock size={14} />
+                  <span>Encrypted Stego Vault Detected (PSFI_STEGO_V2)</span>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="password"
+                    value={decodeSecret}
+                    onChange={(e) => setDecodeSecret(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && uploadedPixelsRef.current) {
+                        processDecodeWithSecret(uploadedPixelsRef.current, decodeSecret.trim());
+                      }
+                    }}
+                    placeholder="Enter 4-digit PIN or Recovery Seed"
+                    className="flex-1 bg-slate-900 border border-subtle rounded-lg px-3 py-1.5 text-xs text-primary font-mono focus:border-purple-500 focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (uploadedPixelsRef.current) {
+                        processDecodeWithSecret(uploadedPixelsRef.current, decodeSecret.trim());
+                      }
+                    }}
+                    className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
+                  >
+                    <KeyRound size={13} />
+                    <span>Decrypt</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {decodeStatus && (
               <div className={`text-xs font-mono rounded-lg p-3 border ${
