@@ -622,9 +622,14 @@ export const IncomeExpensePanel: React.FC<IncomeExpensePanelProps> = ({ plan, pe
                   <Sparkles size={14} className="text-purple-400" />
                   <span>Fixed Obligations Freedom Day</span>
                 </span>
-                <span className="font-mono text-purple-300 font-bold">
-                  Day {waterfall.fixedObligationsDay} of 30
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                    [BUDGETED PROJECTION]
+                  </span>
+                  <span className="font-mono text-purple-300 font-bold">
+                    Day {waterfall.fixedObligationsDay} of 30
+                  </span>
+                </div>
               </div>
 
               {/* Monthly 30-Day Progress Bar */}
@@ -636,7 +641,7 @@ export const IncomeExpensePanel: React.FC<IncomeExpensePanelProps> = ({ plan, pe
               </div>
 
               <p className="text-[11.5px] text-muted font-sans leading-relaxed m-0">
-                By <strong className="text-white">Day {waterfall.fixedObligationsDay}</strong> of each month, your primary fixed obligations (Housing, Groceries, Utilities &amp; EMIs of {formatINR(waterfall.essentialNeeds + waterfall.debtObligations)}) are 100% satisfied. The remaining <strong className="text-emerald-300">{30 - waterfall.fixedObligationsDay} days</strong> of work generate pure positive surplus and wealth compounding!
+                <strong className="text-amber-300 font-mono text-[11px]">[BUDGETED PROJECTION]</strong> Under your monthly cashflow plan, <strong className="text-white">Day {waterfall.fixedObligationsDay}</strong> represents the projected milestone where cumulative monthly earnings equal your fixed budgeted obligations (Housing, Groceries, Utilities &amp; EMIs totaling {formatINR(waterfall.essentialNeeds + waterfall.debtObligations)}). <em>Note: This models planned income pacing, not reconciled or cleared bank account transactions.</em> The remaining <strong className="text-emerald-300">{30 - waterfall.fixedObligationsDay} days</strong> model projected discretionary cashflow and wealth compounding!
               </p>
             </div>
 

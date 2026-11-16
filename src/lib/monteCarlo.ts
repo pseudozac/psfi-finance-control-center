@@ -55,11 +55,12 @@ export interface MonteCarloResult {
   totalYears: number;
   accumulationYears: number;
   retirementYears: number;
-  ruinProbabilityPercent: number;    // Probability corpus hits ₹0 during retirement
+  ruinProbabilityPercent: number;    // Probability planned burn depletes corpus
+  plannedWithdrawalRatePercent: number; // User's planned annual burn as % of median retirement corpus
   antifragilityScore: number;        // 0 to 100 Sovereign Antifragility Score
   medianRetirementCorpus: number;    // Projected corpus at retirement start (Year N)
   medianTerminalCorpus: number;      // Projected corpus at death / end of horizon
-  safeWithdrawalRatePercent: number; // Recommended actuarial SWR for this plan
+  safeWithdrawalRatePercent: number; // Actuarially recommended safe withdrawal rate ceiling under this scenario
   srrRiskRating: 'LOW' | 'MODERATE' | 'ELEVATED' | 'CRITICAL';
   srrExplanation: string;
   recommendedCashWedgeMonths: number;
@@ -247,13 +248,35 @@ export function runMonteCarloSimulation(params: MonteCarloParams): MonteCarloRes
   const medianRetirementCorpus = trajectories[yearsToRetire]?.p50 ?? 0;
   const medianTerminalCorpus = trajectories[totalYears]?.p50 ?? 0;
 
-  // Safe Withdrawal Rate formula for India
-  // Standard Trinity 4% fails in India due to 6%-7% inflation; safe Indian rate is ~3.2% - 3.6%
+  // 1. User's Planned Withdrawal Rate (Burn relative to projected corpus)
   const annualRetirementBurnBase = monthlyRetirementBurn * 12;
-  const rawWithdrawalRate = medianRetirementCorpus > 0 
-    ? (annualRetirementBurnBase / medianRetirementCorpus) * 100 
+  const plannedWithdrawalRatePercent = medianRetirementCorpus > 0 
+    ? Number(((annualRetirementBurnBase / medianRetirementCorpus) * 100).toFixed(2))
     : 10.0;
-  const safeWithdrawalRatePercent = Number(Math.max(2.5, Math.min(5.5, rawWithdrawalRate)).toFixed(2));
+
+  // 2. Actuarially Recommended Safe Withdrawal Rate (SWR) Ceiling for India
+  // Standard Bengen/Trinity 4% applies to low US inflation (2-3%).
+  // In India, persistent 6.5% CPI inflation reduces baseline safe SWR to ~3.5%.
+  // Severe shocks (e.g. 2008 Lehman, 2001 Ketan Parekh, 1991 BoP) compress safe SWR further.
+  let scenarioSafeSWR = 3.5;
+  if (scenario === 'lehman_2008') scenarioSafeSWR = 2.4;
+  else if (scenario === 'ketan_parekh_2001') scenarioSafeSWR = 2.1;
+  else if (scenario === 'bop_crisis_1991') scenarioSafeSWR = 1.8;
+  else if (scenario === 'stagflation_spike') scenarioSafeSWR = 1.9;
+  else if (scenario === 'demonetisation_nbfc_2016') scenarioSafeSWR = 2.7;
+  else if (scenario === 'medical_emergency') scenarioSafeSWR = 2.8;
+  else if (scenario === 'covid_2020') scenarioSafeSWR = 3.2;
+  else if (scenario === 'tech_winter') scenarioSafeSWR = 3.0;
+
+  // Adjust for portfolio antifragility and ruin pressure
+  if (ruinProbabilityPercent > 75) {
+    scenarioSafeSWR = Math.min(scenarioSafeSWR, 1.8);
+  } else if (ruinProbabilityPercent > 40) {
+    scenarioSafeSWR = Math.min(scenarioSafeSWR, 2.5);
+  } else if (ruinProbabilityPercent <= 5 && equityRatio >= 0.6) {
+    scenarioSafeSWR = Math.min(4.0, scenarioSafeSWR + 0.3);
+  }
+  const safeWithdrawalRatePercent = Number(scenarioSafeSWR.toFixed(2));
 
   // Sequence of Returns Risk Rating
   // If worst case (p5) collapses below 50% of starting corpus within 5 years of retirement
@@ -272,7 +295,7 @@ export function runMonteCarloSimulation(params: MonteCarloParams): MonteCarloRes
     srrExplanation = 'Moderate vulnerability to prolonged bear markets in years 1–3 of retirement. Consider a 2-year cash wedge.';
   } else if (ruinProbabilityPercent > 7 || dropRatio > 0.25) {
     srrRiskRating = 'MODERATE';
-    srrExplanation = 'Acceptable shock tolerance. Slight drawdown pressure under historical 2008 Lehman style stress.';
+    srrExplanation = 'Acceptable shock tolerance. Slight drawdown pressure under historical stress.';
   }
 
   // Antifragility Score (0–100)
@@ -308,24 +331,41 @@ export function runMonteCarloSimulation(params: MonteCarloParams): MonteCarloRes
   const recommendedCashWedgeRupees = Math.round(monthlyRetirementBurn * recommendedCashWedgeMonths);
 
   // Safe Withdrawal Rate (SWR) Actuarial Matrix (3.0% to 5.0%)
+  // Probability responds consistently to scenario shock and inflation
   const swrRates = [3.0, 3.5, 4.0, 4.5, 5.0];
   const swrScenarios: SwrScenarioPoint[] = swrRates.map((rate) => {
     const annualWithdrawalRupees = Math.round(medianRetirementCorpus * (rate / 100));
+
+    // Base ruin probability scaled by distance above scenarioSafeSWR
+    const deltaAboveSafe = rate - safeWithdrawalRatePercent;
     let ruinProb = 0;
     let verdict: 'SAFE' | 'CAUTION' | 'DANGEROUS' = 'SAFE';
 
-    if (rate <= safeWithdrawalRatePercent) {
-      ruinProb = Math.min(10, Math.round(ruinProbabilityPercent * (rate / Math.max(1, safeWithdrawalRatePercent))));
-      verdict = 'SAFE';
-    } else if (rate <= safeWithdrawalRatePercent + 0.6) {
-      ruinProb = Math.min(45, Math.round(ruinProbabilityPercent * 1.5 + (rate - safeWithdrawalRatePercent) * 12));
+    if (deltaAboveSafe <= 0) {
+      // Below or at safe ceiling
+      // Ruin probability is low but reflects scenario baseline stress
+      ruinProb = scenario === 'baseline' ? 5 : scenarioSafeSWR < 2.5 ? 25 : 12;
+      verdict = ruinProb <= 15 ? 'SAFE' : 'CAUTION';
+    } else if (deltaAboveSafe <= 0.6) {
+      // Slightly above safe ceiling
+      ruinProb = scenario === 'baseline' ? 22 : scenarioSafeSWR < 2.5 ? 55 : 35;
       verdict = 'CAUTION';
+    } else if (deltaAboveSafe <= 1.2) {
+      ruinProb = scenario === 'baseline' ? 45 : scenarioSafeSWR < 2.5 ? 75 : 60;
+      verdict = ruinProb >= 70 ? 'DANGEROUS' : 'CAUTION';
     } else {
-      ruinProb = Math.min(95, Math.round(ruinProbabilityPercent * 2.2 + (rate - safeWithdrawalRatePercent) * 20));
+      // Severely above safe ceiling
+      ruinProb = scenario === 'baseline' ? 68 : Math.min(98, 80 + Math.round(deltaAboveSafe * 10));
       verdict = 'DANGEROUS';
     }
 
-    const successProbabilityPercent = Math.max(5, Math.min(100, 100 - ruinProb));
+    // If overall planned ruin is 100% and median corpus is heavily depleted, scale ruin accordingly
+    if (ruinProbabilityPercent > 90) {
+      ruinProb = Math.min(99, Math.max(ruinProb, Math.round(ruinProb * 1.3)));
+      if (rate >= 4.0) verdict = 'DANGEROUS';
+    }
+
+    const successProbabilityPercent = Math.max(1, Math.min(99, 100 - ruinProb));
 
     return {
       swrPercent: rate,
@@ -342,6 +382,7 @@ export function runMonteCarloSimulation(params: MonteCarloParams): MonteCarloRes
     accumulationYears: yearsToRetire,
     retirementYears: yearsInRetirement,
     ruinProbabilityPercent,
+    plannedWithdrawalRatePercent,
     antifragilityScore,
     medianRetirementCorpus,
     medianTerminalCorpus,

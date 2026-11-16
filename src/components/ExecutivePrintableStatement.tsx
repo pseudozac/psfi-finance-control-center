@@ -240,7 +240,7 @@ export const ExecutivePrintableStatement: React.FC<ExecutivePrintableStatementPr
 
         {/* Right Column: Indian Statutory Tax Engine */}
         <div className="exec-sub-col">
-          <div className="exec-section-heading">03 // STATUTORY TAX AUDIT (TY 2026–27 INCOME-TAX ACT, 2025)</div>
+          <div className="exec-section-heading">03 // STATUTORY TAX AUDIT: FY 2025–26 (AY 2026–27) &amp; TY 2026–27</div>
           <table className="exec-table">
             <thead>
               <tr>
@@ -253,8 +253,8 @@ export const ExecutivePrintableStatement: React.FC<ExecutivePrintableStatementPr
             <tbody>
               <tr className={taxComparison.recommended === 'new' ? 'row-recommended' : ''}>
                 <td>
-                  <strong>Simplified Regime (Income-tax Act, 2025)</strong>
-                  <div className="text-[9px] text-slate-500">TY 2026–27 Default · ₹75k Std Ded · Sec 87A Rebate &le; ₹7L</div>
+                  <strong>New Default (Sec 115BAC / TY 2026–27 Framework)</strong>
+                  <div className="text-[9px] text-slate-500">FY 2025–26 (AY 2026–27) Default · ₹75k Std Ded · Sec 87A Rebate &le; ₹7L</div>
                 </td>
                 <td className="text-right font-mono font-bold text-slate-900">
                   {formatINR(taxComparison.newRegimeTax)}
@@ -270,8 +270,8 @@ export const ExecutivePrintableStatement: React.FC<ExecutivePrintableStatementPr
               </tr>
               <tr className={taxComparison.recommended === 'old' ? 'row-recommended' : ''}>
                 <td>
-                  <strong>Prior Act 1961 (Itemized 80C / 80D / HRA)</strong>
-                  <div className="text-[9px] text-slate-500">Historical comparison with itemized deductions</div>
+                  <strong>Prior Act 1961 (Old Itemized Opt-Out)</strong>
+                  <div className="text-[9px] text-slate-500">Same-year FY 2025–26 opt-out with itemized 80C / 80D / HRA deductions</div>
                 </td>
                 <td className="text-right font-mono">
                   {formatINR(taxComparison.oldRegimeTax)}
@@ -291,7 +291,7 @@ export const ExecutivePrintableStatement: React.FC<ExecutivePrintableStatementPr
             <span className="font-bold text-slate-800">Tax Optimization: </span>
             <span>
               {taxComparison.recommended === 'new'
-                ? `Opting for Simplified Regime (Income-tax Act, 2025) saves ${formatINR(taxComparison.savings)}/year vs Prior Act.`
+                ? `New Default Regime (Sec 115BAC / TY 2026–27) saves ${formatINR(taxComparison.savings)}/year vs Prior Act itemized opt-out.`
                 : taxComparison.recommended === 'old'
                 ? `Prior Act 1961 with itemized deductions saves ${formatINR(taxComparison.savings)}/year.`
                 : 'Both regimes yield equivalent statutory liability.'}

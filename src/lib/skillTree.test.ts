@@ -227,4 +227,41 @@ describe('Sovereign Skill Tree Actuarial Engine', () => {
     expect(directLevel.level).toBe(tree.level);
     expect(directLevel.totalXP).toBe(tree.totalXP);
   });
+
+  it('accurately separates recorded facts from plan assumptions and labels evidence types', () => {
+    // Test with default plan (which has an 18% APR debt)
+    const summary = calculateSummary(DEFAULT_PLAN);
+    const tree = calculateSkillTree(DEFAULT_PLAN, summary, 12500);
+
+    // 1. Debt elimination node reflects 18% APR dynamically without assuming 36%-42%
+    const debtNode = tree.nodes.find((n) => n.id === 'debt_elimination')!;
+    expect(debtNode).toBeDefined();
+    expect(debtNode.currentMetricLabel).toContain('18% APR');
+    expect(debtNode.actuarialPrinciple).toContain('18% APR');
+    expect(debtNode.actuarialPrinciple).not.toContain('36%–42%');
+    expect(debtNode.evidenceType).toBe('budgeted');
+    expect(debtNode.evidenceDescription).toContain('[BUDGET ALLOCATION]');
+
+    // 2. Insurance milestones have policy details and require verification
+    const termNode = tree.nodes.find((n) => n.id === 'term_life_shield')!;
+    expect(termNode).toBeDefined();
+    expect(termNode.evidenceType).toBe('budgeted');
+    expect(termNode.policyDetails).toBeDefined();
+    expect(termNode.policyDetails?.verifiedStatus).toBe(false);
+    expect(termNode.policyDetails?.targetCoverage).toContain('10x');
+    expect(termNode.status).toBe('in_progress'); // Not falsely claimed as mastered without policy schedule
+
+    const healthNode = tree.nodes.find((n) => n.id === 'health_insurance_armor')!;
+    expect(healthNode).toBeDefined();
+    expect(healthNode.evidenceType).toBe('budgeted');
+    expect(healthNode.policyDetails).toBeDefined();
+    expect(healthNode.policyDetails?.verifiedStatus).toBe(false);
+    expect(healthNode.status).toBe('in_progress');
+
+    // 3. All 15 nodes possess valid evidenceType and evidenceDescription
+    tree.nodes.forEach((node) => {
+      expect(['budgeted', 'assumed', 'verified']).toContain(node.evidenceType);
+      expect(node.evidenceDescription.length).toBeGreaterThan(10);
+    });
+  });
 });

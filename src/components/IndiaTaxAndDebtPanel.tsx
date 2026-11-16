@@ -10,6 +10,7 @@ import {
   Coins,
   Scale,
   Sparkles,
+  Info,
 } from 'lucide-react';
 import type {
   DebtItem,
@@ -41,6 +42,7 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
 }) => {
   const [debtMode, setDebtMode] = useState<'single' | 'multi'>('single');
   const [taxTab, setTaxTab] = useState<'verdict' | 'slabs' | 'capital_gains'>('verdict');
+  const totalAnnualIncome = (plan.income.salary + plan.income.freelance + plan.income.other) * 12;
 
   const updateDebt = (key: keyof FinancePlan['debt'], val: number) => {
     onChange({ ...plan, debt: { ...plan.debt, [key]: val } });
@@ -361,12 +363,12 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
             <div className="flex items-center gap-2 min-w-0 flex-wrap">
               <span className="tag-pill tag-quasar shrink-0 text-[11px]">tax engine</span>
               <h3 className="card-title m-0 text-base font-bold flex items-center gap-1.5 flex-wrap">
-                <span>Tax Year 2026–27 (Income-tax Act, 2025)</span>
+                <span>FY 2025–26 (AY 2026–27) &amp; TY 2026–27 Tax Engine</span>
                 <InfoTooltip
-                  title="Tax Year 2026–27 Statutory Audit"
-                  explanation="Distinguishes current-year planning under the newly enacted Income-tax Act, 2025 (TY 2026–27) from historical comparisons under the prior Income-tax Act, 1961 (FY 2024-25 & FY 2025-26). The 2025 Act establishes the Simplified Regime as default (₹75k standard deduction, 87A rebate with zero tax up to ₹7.75L). Prior Act 1961 allows itemized 80C, 80D, 80CCD, and HRA deductions."
+                  title="Statutory Period & Legislative Framework"
+                  explanation="The Income Tax Department distinguishes AY 2026–27 (covering income earned in FY 2025–26 under the Income-tax Act, 1961 as amended by Finance Act 2024) from Tax Year (TY) 2026–27 (covering FY 2026–27 under the newly proposed Income-tax Act, 2025). This engine performs a same-year statutory audit comparing the default Simplified Regime (Section 115BAC / TY 2026–27 framework with ₹75k standard deduction and full 87A rebate up to ₹7L) against the historical Prior Act 1961 Old Regime (itemized 80C, 80D, 80CCD, and HRA deductions)."
                   formula="Tax Liability = Slab Computation − Rebate 87A + 4% Health & Edu Cess"
-                  benchmark="PsFi audits both acts to highlight your mathematically optimal regime and exact rupee savings delta."
+                  benchmark="PsFi audits both legislative paths on your identical income structure to identify your mathematically optimal regime and exact rupee savings delta."
                 />
               </h3>
             </div>
@@ -394,6 +396,21 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
               >
                 Capital Gains
               </button>
+            </div>
+          </div>
+
+          {/* Statutory Tax Period & Law Explainer Banner */}
+          <div className="p-2.5 rounded-xl bg-slate-900/60 border border-white/5 mb-3 text-[11px] text-muted flex items-start gap-2">
+            <Info size={14} className="text-cyan-400 shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <span className="text-slate-200 font-semibold font-mono text-[10.5px] block">
+                Statutory Period Alignment: Same-Year Comparison with Legislative Cross-Audit
+              </span>
+              <p className="text-[10.5px] leading-relaxed text-slate-400">
+                • <strong>Current Operative Law:</strong> <em>FY 2025–26 (Assessment Year 2026–27)</em> under the Income-tax Act, 1961 (amended by Finance (No. 2) Act, 2024). Default Section 115BAC features ₹75,000 standard deduction and ₹7 Lakh rebate.<br />
+                • <strong>Prospective New Code:</strong> <em>Tax Year (TY) 2026–27</em> under the proposed Income-tax Act, 2025 adopts the Tax Year nomenclature for FY 2026–27 earnings.<br />
+                • <strong>Comparison Scope:</strong> Both regimes evaluate your <em>identical current annual income</em> ({formatINR(totalAnnualIncome)}) to determine whether opting out of default 115BAC into the 1961 Itemized Old Regime saves tax.
+              </p>
             </div>
           </div>
 
@@ -458,10 +475,10 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
               </div>
 
               <div className="tax-regime-grid mt-3">
-                {/* Income-tax Act, 2025 Card */}
+                {/* Simplified Default Regime Card */}
                 <div className={`tax-compare-card ${taxComparison.recommended === 'new' ? 'winner-card' : ''}`}>
                   <div className="tax-compare-head">
-                    <span className="tax-name">Income-tax Act, 2025</span>
+                    <span className="tax-name">New Default (Sec 115BAC / TY 2026–27)</span>
                     {taxComparison.recommended === 'new' && (
                       <span className="winner-badge">
                         <CheckCircle2 size={11} /> OPTIMAL
@@ -471,13 +488,13 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
                   <div className="tax-amount font-mono">
                     {formatINR(taxComparison.newRegimeTax)}
                   </div>
-                  <span className="tax-note">TY 2026–27 Default · ₹75k Std Ded · Effective {taxComparison.effectiveRateNew}%</span>
+                  <span className="tax-note">FY 2025–26 (AY 2026–27) Default · ₹75k Std Ded · Effective {taxComparison.effectiveRateNew}%</span>
                 </div>
 
-                {/* Prior Act 1961 Card */}
+                {/* Prior Act 1961 Itemized Card */}
                 <div className={`tax-compare-card ${taxComparison.recommended === 'old' ? 'winner-card' : ''}`}>
                   <div className="tax-compare-head">
-                    <span className="tax-name">Prior Act 1961</span>
+                    <span className="tax-name">Prior Act 1961 (Old Itemized Opt-Out)</span>
                     {taxComparison.recommended === 'old' && (
                       <span className="winner-badge">
                         <CheckCircle2 size={11} /> OPTIMAL
@@ -487,7 +504,7 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
                   <div className="tax-amount font-mono">
                     {formatINR(taxComparison.oldRegimeTax)}
                   </div>
-                  <span className="tax-note">Itemized · ₹50k Std + 80C + 80D + HRA · Effective {taxComparison.effectiveRateOld}%</span>
+                  <span className="tax-note">Same-Year FY 2025–26 Opt-Out · ₹50k Std + 80C + 80D + HRA · Effective {taxComparison.effectiveRateOld}%</span>
                 </div>
               </div>
             </div>
@@ -498,11 +515,11 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
             <div className="space-y-3 font-mono text-xs">
               <div className="grid grid-cols-2 gap-3 text-muted text-[11px] pb-1 border-b border-subtle">
                 <div>
-                  <strong className="text-purple-300 block font-sans">2025 Act Slabs (TY 26–27)</strong>
+                  <strong className="text-purple-300 block font-sans">New Default Slabs (Sec 115BAC / TY 26–27)</strong>
                   <span>Taxable: {formatINR(taxComparison.newRegimeTaxableIncome ?? 0)}</span>
                 </div>
                 <div>
-                  <strong className="text-solstice block font-sans">Prior Act 1961 Slabs</strong>
+                  <strong className="text-solstice block font-sans">Prior Act 1961 Old Slabs (Same-Year Opt-Out)</strong>
                   <span>Taxable: {formatINR(taxComparison.oldRegimeTaxableIncome ?? 0)}</span>
                 </div>
               </div>
@@ -551,12 +568,12 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
                 <div className="flex items-center justify-between font-bold text-purple-200">
                   <span className="flex items-center gap-1.5">
                     <Sparkles size={14} className="text-purple-400" />
-                    <span>Budget 2024–25 Capital Gains Framework</span>
+                    <span>Capital Gains Framework (Finance Act 2024 · FY 2025–26 / AY 2026–27 &amp; TY 2026–27)</span>
                   </span>
                   <span className="font-mono text-emerald-400">12.5% LTCG</span>
                 </div>
                 <p className="text-[11.5px] text-muted m-0 leading-relaxed font-sans">
-                  Long-Term Capital Gains on equity funds and stocks held &gt; 12 months are taxed at a flat <strong className="text-white">12.5%</strong>. You enjoy an annual tax-free exemption of <strong className="text-emerald-300 font-mono">₹1,25,000</strong> per financial year.
+                  Effective 23 July 2024 under the Finance (No. 2) Act, 2024, Long-Term Capital Gains on equity funds and listed equities held &gt; 12 months are taxed at <strong className="text-white">12.5%</strong> with a ₹1,25,000 annual exemption under Section 112A. This applies identically across FY 2025–26 (AY 2026–27) and prospective TY 2026–27.
                 </p>
               </div>
 
@@ -576,7 +593,7 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
               <div className="p-2.5 rounded-lg bg-slate-900/30 border border-subtle text-[11px] text-muted flex items-start gap-1.5">
                 <Coins size={14} className="text-solstice shrink-0 mt-0.5" />
                 <span>
-                  <strong>Tax-Gain Harvesting Tip:</strong> Redeem and immediately re-buy equity mutual fund units each financial year up to ₹1.25 Lakh of profit. This resets your purchase cost basis to zero out future capital gains liability permanently.
+                  <strong>Tax-Gain Harvesting Clarification:</strong> Redeeming and reinvesting equity mutual fund units each financial year allows you to utilize the annual ₹1.25 Lakh Section 112A LTCG tax-free threshold. Reinvesting resets your purchase cost basis to the current repurchase price, shielding the harvested gains from tax. However, it does <em>not</em> eliminate future tax permanently: all future capital gains beyond the new cost basis remain taxable upon subsequent sale.
                 </span>
               </div>
             </div>
@@ -591,7 +608,7 @@ export const IndiaTaxAndDebtPanel: React.FC<IndiaTaxAndDebtPanelProps> = ({
             ) : (
               <div className="flex-align gap-2 text-xs flex-wrap">
                 <span className="text-nebula font-bold font-mono">
-                  {taxComparison.recommended === 'new' ? 'INCOME-TAX ACT, 2025 (TY 2026–27)' : 'PRIOR ACT 1961 (ITEMIZED)'} RECOMMENDED
+                  {taxComparison.recommended === 'new' ? 'NEW DEFAULT (SEC 115BAC / TY 2026–27 FRAMEWORK)' : 'PRIOR ACT 1961 (OLD ITEMIZED OPT-OUT)'} RECOMMENDED
                 </span>
                 <ArrowRight size={13} className="text-muted shrink-0" />
                 <span>

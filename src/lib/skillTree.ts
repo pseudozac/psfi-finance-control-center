@@ -479,6 +479,7 @@ export function calculateSkillTree(
   const annualIncome = monthlyInflow * 12;
   const currentSavings = plan.savings.emergencyFundBalance ?? 0;
   const debtBalance = plan.debt.cardBalance ?? 0;
+  const debtAPR = plan.debt.aprPercent || 18;
   const savingsRate = summary.savingsRatePercent ?? 0;
   const runwayMonths = summary.emergencyRunwayMonths ?? 0;
   const stepUpRate = plan.savings.stepUpSipPercent ?? 0;
@@ -495,14 +496,22 @@ export function calculateSkillTree(
       badge: 'DEFENSE I',
       category: 'defense',
       description: 'Eradicate all credit card balances, personal loans, and revolving debt to prevent wealth bleed.',
-      actuarialPrinciple: 'Revolving credit card debt at 36%–42% APR mathematically destroys any 12% equity investment.',
+      actuarialPrinciple: debtBalance > 0
+        ? `Unsecured debt at ${debtAPR}% APR mathematically creates severe drag against compounding wealth (~12% CAGR). Eradicating high-cost debt (${debtAPR}% APR) delivers an unconditional, guaranteed post-tax return.`
+        : 'Zero high-interest debt frees 100% of cashflow surplus to compound into wealth assets.',
       iconName: 'ShieldAlert',
       requiredParentIds: [],
-      currentMetricLabel: debtBalance === 0 ? '₹0 Revolving Debt' : `${formatINR(debtBalance)} Balance`,
+      currentMetricLabel: debtBalance === 0 ? '₹0 Debt' : `${formatINR(debtBalance)} @ ${debtAPR}% APR`,
       targetMetricLabel: '₹0 Balance',
       progressPercent: debtBalance === 0 ? 100 : Math.max(5, Math.round(100 - (debtBalance / (monthlyInflow || 1)) * 50)),
       gapRupeesOrMonths: debtBalance > 0 ? `Pay off ${formatINR(debtBalance)}` : undefined,
-      actionableStep: debtBalance > 0 ? 'Direct all surplus cashflow into clearing this revolving principal immediately.' : 'Fortress established: Zero high-interest debt dragging cashflow.',
+      actionableStep: debtBalance > 0
+        ? `Direct surplus cashflow into clearing this ${debtAPR}% APR principal immediately.`
+        : 'Fortress established: Zero high-interest debt dragging cashflow.',
+      evidenceType: debtBalance > 0 ? 'budgeted' : 'assumed',
+      evidenceDescription: debtBalance > 0
+        ? `[BUDGET ALLOCATION]: Profile contains ${formatINR(debtBalance)} balance at ${debtAPR}% APR with ₹${(plan.debt.monthlyPayment || 0).toLocaleString('en-IN')}/mo payment. Unverified: Requires credit bureau pull or loan statement upload.`
+        : 'Assumed zero debt balance based on self-reported profile inputs.',
       gridColumn: 1,
       gridRow: 1,
       treeX: 680,
@@ -511,7 +520,7 @@ export function calculateSkillTree(
       suggestedAction: {
         field: 'debt.cardBalance',
         targetValue: 0,
-        description: 'Zero out revolving credit card debt',
+        description: 'Zero out revolving debt balance',
       },
     },
     {
@@ -529,6 +538,8 @@ export function calculateSkillTree(
       progressPercent: Math.min(100, Math.round((runwayMonths / 3) * 100)),
       gapRupeesOrMonths: runwayMonths < 3 ? `${formatINR(Math.max(0, 3 * monthlyExpenses - currentSavings))} needed` : undefined,
       actionableStep: runwayMonths < 3 ? `Park ${formatINR(Math.max(0, 3 * monthlyExpenses - currentSavings))} in liquid funds.` : '3-Month survival baseline fully secured.',
+      evidenceType: 'budgeted',
+      evidenceDescription: `[BUDGET ALLOCATION]: Self-reported liquid emergency balance of ${formatINR(currentSavings)} against monthly living expenses of ${formatINR(monthlyExpenses)}. Unverified: Pending bank account statement reconciliation.`,
       gridColumn: 2,
       gridRow: 1,
       treeX: 420,
@@ -547,14 +558,29 @@ export function calculateSkillTree(
       badge: 'DEFENSE III',
       category: 'defense',
       description: 'Ensure dedicated life term protection (10x–15x annual income) to shield family dependents.',
-      actuarialPrinciple: 'Pure term insurance is risk-transfer, not an investment. Avoid endowment and ULIP traps.',
+      actuarialPrinciple: `Pure term insurance is risk-transfer, not an investment. Target cover is 10x–15x gross annual income (Sum Assured: ${formatINR(annualIncome * 10)}). Avoid endowment and ULIP traps.`,
       iconName: 'Umbrella',
       requiredParentIds: ['liquidity_3m'],
-      currentMetricLabel: plan.expenses.insurance > 0 ? `${formatINR(plan.expenses.insurance)}/mo premium` : 'No Term Cover Logged',
-      targetMetricLabel: '10x Annual Income Cover',
-      progressPercent: plan.expenses.insurance > 0 ? 100 : 20,
-      gapRupeesOrMonths: plan.expenses.insurance === 0 ? `Target cover: ${formatINR(annualIncome * 10)}` : undefined,
-      actionableStep: plan.expenses.insurance === 0 ? 'Secure a pure term insurance policy with zero return of premium.' : 'Family life protection verified and active.',
+      currentMetricLabel: plan.expenses.insurance > 0 ? `${formatINR(plan.expenses.insurance)}/mo Budgeted Premium` : 'No Term Cover Logged',
+      targetMetricLabel: `10x Income Term Cover (${formatINR(annualIncome * 10)})`,
+      progressPercent: plan.expenses.insurance > 0 ? 60 : 15,
+      gapRupeesOrMonths: plan.expenses.insurance > 0 ? 'Policy certificate unverified' : `Target cover: ${formatINR(annualIncome * 10)}`,
+      actionableStep: plan.expenses.insurance > 0
+        ? `Monthly budget allocation of ${formatINR(plan.expenses.insurance)} logged [BUDGET ALLOCATION]. To achieve [VERIFIED] milestone status, verify active pure term policy schedule confirming Sum Assured >= ${formatINR(annualIncome * 10)}.`
+        : `Secure a pure term insurance policy with zero return of premium (target 10x income: ${formatINR(annualIncome * 10)}).`,
+      evidenceType: plan.expenses.insurance > 0 ? 'budgeted' : 'assumed',
+      evidenceDescription: plan.expenses.insurance > 0
+        ? `[BUDGET ALLOCATION]: ${formatINR(plan.expenses.insurance)}/mo allocated under expense budget. Unverified: Requires active term policy certificate confirming Sum Assured ≥ ${formatINR(annualIncome * 10)}.`
+        : 'Assumed no active term life cover logged in profile.',
+      policyDetails: {
+        policyType: 'Pure Term Life Insurance (Zero Return-of-Premium)',
+        targetCoverage: `${formatINR(annualIncome * 10)} (10x Annual Gross Income)`,
+        verifiedStatus: false,
+        verificationRequirements: 'Requires active insurer policy schedule confirming minimum 10x annual gross income sum assured with family nominee designation and pure term structure (no ULIP/endowment).',
+        evidenceNotes: plan.expenses.insurance > 0
+          ? `Plan includes ${formatINR(plan.expenses.insurance)}/mo in budgeted premiums. Policy documents and coverage multiple remain unverified.`
+          : 'No term insurance policy or premium logged.',
+      },
       gridColumn: 3,
       gridRow: 1,
       treeX: 220,
@@ -573,14 +599,31 @@ export function calculateSkillTree(
       badge: 'DEFENSE IV',
       category: 'defense',
       description: 'Independent family health cover with zero room-rent capping and adequate super top-up.',
-      actuarialPrinciple: 'Corporate group insurance ends the day you leave your job. Personal health cover is non-negotiable.',
+      actuarialPrinciple: 'Corporate group insurance ends the day you leave your job. Personal health cover with no room-rent limits is non-negotiable.',
       iconName: 'HeartPulse',
       requiredParentIds: ['term_life_shield'],
-      currentMetricLabel: (plan.tax.deductions80D > 0 || plan.expenses.insurance > 0) ? `${formatINR(plan.tax.deductions80D || plan.expenses.insurance)} Cover/Ded` : 'No Health Cover Logged',
-      targetMetricLabel: 'Independent Family Policy',
-      progressPercent: (plan.tax.deductions80D > 0 || plan.expenses.insurance > 0) ? 100 : 25,
-      gapRupeesOrMonths: (!plan.tax.deductions80D && !plan.expenses.insurance) ? 'Missing Personal Health Cover' : undefined,
-      actionableStep: (!plan.tax.deductions80D && !plan.expenses.insurance) ? 'Acquire a personal base cover + super top-up policy with zero room cap.' : 'Personal health defense fortified.',
+      currentMetricLabel: (plan.tax.deductions80D > 0 || plan.expenses.insurance > 0)
+        ? `${formatINR(plan.tax.deductions80D || plan.expenses.insurance)} Cover/Ded`
+        : 'No Health Cover Logged',
+      targetMetricLabel: 'Verified Family Policy + Super Top-Up',
+      progressPercent: (plan.tax.deductions80D > 0 || plan.expenses.insurance > 0) ? 60 : 25,
+      gapRupeesOrMonths: (!plan.tax.deductions80D && !plan.expenses.insurance) ? 'Missing Personal Health Cover' : 'Policy schedule unverified',
+      actionableStep: (plan.tax.deductions80D > 0 || plan.expenses.insurance > 0)
+        ? 'Budget allocation logged [BUDGET ALLOCATION]. To achieve [VERIFIED] status, confirm independent policy schedule: Base cover (₹5L–₹10L) + Super Top-up (₹20L–₹50L) with zero room rent cap.'
+        : 'Acquire an independent base cover + super top-up policy with zero room cap.',
+      evidenceType: (plan.tax.deductions80D > 0 || plan.expenses.insurance > 0) ? 'budgeted' : 'assumed',
+      evidenceDescription: (plan.tax.deductions80D > 0 || plan.expenses.insurance > 0)
+        ? `[BUDGET ALLOCATION]: Claimed via Section 80D (₹${(plan.tax.deductions80D || 0).toLocaleString('en-IN')}) or health expense budget. Unverified: Requires active family policy schedule with zero room-rent copay.`
+        : 'Assumed no independent family health cover logged in profile.',
+      policyDetails: {
+        policyType: 'Independent Comprehensive Health + Super Top-Up',
+        targetCoverage: '₹25,00,000+ Family Floater (Zero Room Rent Copay)',
+        verifiedStatus: false,
+        verificationRequirements: 'Requires active personal/family floater policy schedule separate from employer group cover, with zero room-rent sub-limit and cashless hospital network.',
+        evidenceNotes: (plan.tax.deductions80D > 0 || plan.expenses.insurance > 0)
+          ? `Tax deduction / expense budget of ${formatINR(plan.tax.deductions80D || plan.expenses.insurance)} logged. Policy terms, exclusions, and sub-limits remain unverified without insurance certificate upload.`
+          : 'No health insurance premium or Section 80D deduction logged.',
+      },
       gridColumn: 4,
       gridRow: 1,
       treeX: 460,
@@ -607,6 +650,8 @@ export function calculateSkillTree(
       progressPercent: Math.min(100, Math.round((runwayMonths / 6) * 100)),
       gapRupeesOrMonths: runwayMonths < 6 ? `${formatINR(Math.max(0, 6 * monthlyExpenses - currentSavings))} needed` : undefined,
       actionableStep: runwayMonths < 6 ? `Build up reserves by ${formatINR(Math.max(0, 6 * monthlyExpenses - currentSavings))}.` : 'Iron Fortress unlocked: Immune to short-term economic shocks.',
+      evidenceType: 'budgeted',
+      evidenceDescription: `[BUDGET ALLOCATION]: Self-reported emergency reserves (${formatINR(currentSavings)}) vs 6 months living expenses (${formatINR(6 * monthlyExpenses)}). Unverified via bank account clearing.`,
       gridColumn: 5,
       gridRow: 1,
       treeX: 220,
@@ -637,6 +682,8 @@ export function calculateSkillTree(
       progressPercent: Math.min(100, Math.round((savingsRate / 20) * 100)),
       gapRupeesOrMonths: savingsRate < 20 ? `${(20 - savingsRate).toFixed(1)}% gap to equilibrium` : undefined,
       actionableStep: savingsRate < 20 ? 'Trim non-essential wants or increase inflows to restore the 20% investment baseline.' : 'Equilibrium achieved: Your balance sheet compounds naturally.',
+      evidenceType: 'budgeted',
+      evidenceDescription: `[BUDGET ALLOCATION]: Calculated from self-reported monthly income and expense category budgets (${savingsRate.toFixed(0)}% savings rate).`,
       gridColumn: 1,
       gridRow: 2,
       treeX: 680,
@@ -663,6 +710,8 @@ export function calculateSkillTree(
       progressPercent: Math.min(100, Math.round((savingsRate / 30) * 100)),
       gapRupeesOrMonths: savingsRate < 30 ? `${(30 - savingsRate).toFixed(1)}% gap` : undefined,
       actionableStep: savingsRate < 30 ? 'Step up SIP contributions or monetize freelance secondary inflows.' : 'Elite compounding: 30%+ cashflow velocity achieved.',
+      evidenceType: 'budgeted',
+      evidenceDescription: `[BUDGET ALLOCATION]: Calculated from self-reported monthly net cashflow velocity (${savingsRate.toFixed(0)}% savings rate).`,
       gridColumn: 2,
       gridRow: 2,
       treeX: 800,
@@ -689,6 +738,8 @@ export function calculateSkillTree(
       progressPercent: Math.min(100, Math.round((currentSavings / 1_000_000) * 100)),
       gapRupeesOrMonths: currentSavings < 1_000_000 ? `${formatINR(1_000_000 - currentSavings)} to go` : undefined,
       actionableStep: currentSavings < 1_000_000 ? 'Maintain aggressive monthly SIPs to cross the 7-digit psychological threshold.' : 'Milestone crushed: First ₹10L compounding core is generating organic momentum.',
+      evidenceType: 'budgeted',
+      evidenceDescription: `[BUDGET ALLOCATION]: Based on self-reported liquid emergency balance of ${formatINR(currentSavings)}.`,
       gridColumn: 3,
       gridRow: 2,
       treeX: 360,
@@ -714,6 +765,8 @@ export function calculateSkillTree(
       targetMetricLabel: 'Optimal Net Regime',
       progressPercent: 100, // Always audited by PsFi's integrated engine
       actionableStep: 'Keep regime deductions synced to maintain zero unneeded rupee leakage to the exchequer.',
+      evidenceType: 'assumed',
+      evidenceDescription: '[STATUTORY ASSUMPTION]: Evaluated under Income-tax Act, 1961 vs Income-tax Act, 2025 applied to self-reported gross salary.',
       gridColumn: 4,
       gridRow: 2,
       treeX: 580,
@@ -740,6 +793,8 @@ export function calculateSkillTree(
       progressPercent: Math.min(100, Math.round((stepUpRate / 10) * 100)),
       gapRupeesOrMonths: stepUpRate < 10 ? `${10 - stepUpRate}% step-up delta` : undefined,
       actionableStep: stepUpRate < 10 ? 'Increase your annual step-up lever to at least 10% to outrun lifestyle inflation.' : 'Exponential curve locked in: Step-up protocol active.',
+      evidenceType: 'assumed',
+      evidenceDescription: `[PLAN ASSUMPTION]: Assumed annual step-up rate of ${stepUpRate}% configured in compounding plan.`,
       gridColumn: 5,
       gridRow: 2,
       treeX: 760,
@@ -770,6 +825,8 @@ export function calculateSkillTree(
       progressPercent: Math.min(100, Math.round((currentSavings / 2_500_000) * 100)),
       gapRupeesOrMonths: currentSavings < 2_500_000 ? `${formatINR(2_500_000 - currentSavings)} to go` : undefined,
       actionableStep: currentSavings < 2_500_000 ? `Maintain SIPs to bridge ${formatINR(2_500_000 - currentSavings)}.` : 'Crucial milestone crossed: Organic returns are now accelerating your net worth.',
+      evidenceType: 'budgeted',
+      evidenceDescription: `[BUDGET ALLOCATION]: Based on self-reported liquid portfolio balance (${formatINR(currentSavings)}).`,
       gridColumn: 1,
       gridRow: 3,
       treeX: 640,
@@ -796,6 +853,8 @@ export function calculateSkillTree(
       progressPercent: Math.min(100, Math.round((currentSavings / Math.max(1, annualExpenses * 15)) * 100)),
       gapRupeesOrMonths: currentSavings < annualExpenses * 15 ? `${formatINR(Math.max(0, annualExpenses * 15 - currentSavings))} needed` : undefined,
       actionableStep: currentSavings < annualExpenses * 15 ? 'Accumulate 15x annual expenses to unlock permanent career flexibility.' : 'Coast FIRE unlocked: You can take low-stress jobs or sabbaticals without endangering retirement.',
+      evidenceType: 'assumed',
+      evidenceDescription: '[ACTUARIAL ASSUMPTION]: Projection based on 15x annual expenses and 12% equity CAGR assumptions.',
       gridColumn: 2,
       gridRow: 3,
       treeX: 920,
@@ -822,6 +881,8 @@ export function calculateSkillTree(
       progressPercent: Math.min(100, Math.round((currentSavings / 5_000_000) * 100)),
       gapRupeesOrMonths: currentSavings < 5_000_000 ? `${formatINR(5_000_000 - currentSavings)} to go` : undefined,
       actionableStep: currentSavings < 5_000_000 ? `Stay the course; ${formatINR(5_000_000 - currentSavings)} to reach the Half-Crore mark.` : 'Half-Crore inflection secured: Financial gravity works in your favor.',
+      evidenceType: 'budgeted',
+      evidenceDescription: `[BUDGET ALLOCATION]: Based on self-reported liquid net worth (${formatINR(currentSavings)}).`,
       gridColumn: 3,
       gridRow: 3,
       treeX: 1020,
@@ -848,6 +909,8 @@ export function calculateSkillTree(
       progressPercent: Math.min(100, Math.round((currentSavings / Math.max(1, annualExpenses * 25)) * 100)),
       gapRupeesOrMonths: currentSavings < annualExpenses * 25 ? `${formatINR(Math.max(0, annualExpenses * 25 - currentSavings))} remaining` : undefined,
       actionableStep: currentSavings < annualExpenses * 25 ? `Target corpus: ${formatINR(annualExpenses * 25)}. Compounding will close this gap.` : 'Complete Sovereign Independence: Working is now 100% optional.',
+      evidenceType: 'assumed',
+      evidenceDescription: '[ACTUARIAL ASSUMPTION]: Bengen/Trinity model assuming 3.5%–4.0% SWR against reported annual expenses.',
       gridColumn: 4,
       gridRow: 3,
       treeX: 1100,
@@ -874,6 +937,8 @@ export function calculateSkillTree(
       progressPercent: Math.min(100, Math.round((currentSavings / Math.max(1, annualExpenses * 50)) * 100)),
       gapRupeesOrMonths: currentSavings < annualExpenses * 50 ? `${formatINR(Math.max(0, annualExpenses * 50 - currentSavings))} remaining` : undefined,
       actionableStep: currentSavings < annualExpenses * 50 ? 'Scale enterprise equity and asset diversification to establish a generational endowment.' : 'Sovereign Pinnacle: Antifragile dynastic wealth achieved.',
+      evidenceType: 'assumed',
+      evidenceDescription: '[ACTUARIAL ASSUMPTION]: Endowment model assuming 50x annual living burn.',
       gridColumn: 5,
       gridRow: 3,
       treeX: 1220,

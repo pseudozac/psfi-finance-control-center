@@ -21,7 +21,10 @@ export interface YearlyMilestone {
   year: number;
   loanBalanceStandard: number;
   loanBalancePrepay: number;
-  sipPortfolioValue: number;
+  sipPortfolioValue: number; // Gross SIP portfolio value
+  sipPortfolioValueGross: number; // Gross compounding at expected CAGR
+  sipPortfolioValueNet: number; // Post-12.5% LTCG tax on cumulative gains
+  estimatedLtcgTax: number; // Cumulative estimated LTCG tax
   interestSavedCumulative: number;
   isVirtualDebtFree: boolean; // True when SIP Portfolio >= Standard Outstanding Balance
 }
@@ -38,7 +41,9 @@ export interface HybridArbitrageResult {
 export interface TaxAdjustmentDetails {
   effectiveLoanRate: number; // Post-tax cost of debt
   annualTaxSavingsSec24b: number; // Maximum ₹2 Lakh deduction in Old Regime
-  postTaxEquityCagr: number; // Post-12.5% LTCG tax return
+  postTaxEquityCagr: number; // Post-12.5% LTCG tax return equivalent
+  ltcgTaxRatePercent: number; // 12.5% under Finance Act 2024 / Section 112A
+  annualLtcgExemption: number; // ₹1,25,000 exemption limit
 }
 
 export interface LoanArbitrageResult {
@@ -56,15 +61,21 @@ export interface LoanArbitrageResult {
   totalPrepaymentOutflow: number;
 
   // Path B: Equity SIP Compounding (investing the same prepayment amount)
-  sipFutureValue: number;
+  sipFutureValue: number; // Gross SIP portfolio value (pre-tax)
+  grossSipFutureValue: number; // Explicit gross pre-tax terminal corpus
   sipInvestedPrincipal: number;
-  sipNetWealthGain: number;
+  sipNetWealthGain: number; // Gross wealth created before tax
+  grossSipNetGain: number; // Gross wealth created before tax
+  estimatedLtcgTax: number; // Statutory 12.5% LTCG tax on gains exceeding ₹1.25L
+  postTaxSipFutureValue: number; // Net terminal corpus after 12.5% LTCG tax
+  postTaxSipNetGain: number; // Net wealth gain after tax and principal
 
   // Path C: Smart 50/50 Hybrid Strategy
   hybrid: HybridArbitrageResult;
 
   // Actuarial Arbitrage Delta & Crossover
-  netArbitrageAdvantage: number; // Wealth created by SIP over and above interest saved
+  grossArbitrageAdvantage: number; // Gross wealth created by SIP over and above interest saved (Pre-Tax)
+  netArbitrageAdvantage: number; // Post-tax wealth created by SIP over and above interest saved (Net Post-Tax)
   recommendedStrategy: 'invest_sip' | 'prepay_debt' | 'balanced_split';
   breakEvenCagr: number; // Market return rate at which both paths produce identical financial benefit
   virtualDebtFreeYear: number | null; // Exact year where SIP corpus overtakes remaining loan principal
@@ -117,6 +128,8 @@ export function calculateLoanArbitrage(inputs: LoanArbitrageInputs): LoanArbitra
   // Equity LTCG tax under Budget 2024 is 12.5% on gains over ₹1.25L.
   // Effective post-tax CAGR discount factor is approximately 0.90x
   const postTaxEquityCagr = Number((sipExpectedCagr * 0.90).toFixed(2));
+  const ltcgTaxRatePercent = 12.5;
+  const annualLtcgExemption = 125000;
 
   // 2. Baseline Amortization (Monthly)
   let baselineBalance = loanAmount;
@@ -177,7 +190,14 @@ export function calculateLoanArbitrage(inputs: LoanArbitrageInputs): LoanArbitra
   }
 
   const sipInvestedPrincipal = (lumpSumPrepayment || 0) + (extraMonthlyPrepayment || 0) * totalMonths;
-  const sipNetWealthGain = Math.max(0, sipFutureValue - sipInvestedPrincipal);
+  const grossSipFutureValue = sipFutureValue;
+  const grossSipNetGain = Math.max(0, grossSipFutureValue - sipInvestedPrincipal);
+
+  // Section 112A LTCG Tax: 12.5% on capital gains exceeding ₹1.25 Lakhs
+  const taxableGains = Math.max(0, grossSipNetGain - annualLtcgExemption);
+  const estimatedLtcgTax = Math.round(taxableGains * (ltcgTaxRatePercent / 100));
+  const postTaxSipFutureValue = Math.round(grossSipFutureValue - estimatedLtcgTax);
+  const postTaxSipNetGain = Math.max(0, postTaxSipFutureValue - sipInvestedPrincipal);
 
   // 5. Path C: Smart 50/50 Hybrid Strategy
   // 50% prepays debt, 50% invests in SIP
@@ -240,7 +260,14 @@ export function calculateLoanArbitrage(inputs: LoanArbitrageInputs): LoanArbitra
     // Cumulative interest saved by this year
     const yrIntSaved = Math.max(0, (loanAmount - prepayBal) - (loanAmount - standardBal));
 
-    const isVirtualDebtFree = yrSipValue >= standardBal && standardBal > 0;
+    // Post-tax portfolio valuation at this milestone
+    const yrInvestedPrincipal = (lumpSumPrepayment || 0) + (extraMonthlyPrepayment || 0) * monthIdx;
+    const yrGrossGain = Math.max(0, yrSipValue - yrInvestedPrincipal);
+    const yrTaxableGain = Math.max(0, yrGrossGain - annualLtcgExemption);
+    const yrEstTax = Math.round(yrTaxableGain * (ltcgTaxRatePercent / 100));
+    const yrNetSipValue = Math.round(yrSipValue - yrEstTax);
+
+    const isVirtualDebtFree = yrNetSipValue >= standardBal && standardBal > 0;
     if (isVirtualDebtFree && virtualDebtFreeYear === null) {
       virtualDebtFreeYear = yr;
     }
@@ -250,19 +277,25 @@ export function calculateLoanArbitrage(inputs: LoanArbitrageInputs): LoanArbitra
       loanBalanceStandard: Math.round(standardBal),
       loanBalancePrepay: Math.round(prepayBal),
       sipPortfolioValue: Math.round(yrSipValue),
+      sipPortfolioValueGross: Math.round(yrSipValue),
+      sipPortfolioValueNet: yrNetSipValue,
+      estimatedLtcgTax: yrEstTax,
       interestSavedCumulative: Math.round(yrIntSaved),
       isVirtualDebtFree,
     });
   }
 
   // 7. Arbitrage Decision Verdict
-  const netArbitrageAdvantage = Math.round(sipNetWealthGain - interestSaved);
+  // Gross Advantage: Gross wealth created over interest saved
+  const grossArbitrageAdvantage = Math.round(grossSipNetGain - interestSaved);
+  // Net Advantage: Post-tax wealth created over interest saved
+  const netArbitrageAdvantage = Math.round(postTaxSipNetGain - interestSaved);
   const breakEvenCagr = Number((effectiveLoanRate * 1.05).toFixed(2));
 
   let recommendedStrategy: 'invest_sip' | 'prepay_debt' | 'balanced_split' = 'invest_sip';
-  if (sipExpectedCagr < effectiveLoanRate + 1.0) {
+  if (postTaxEquityCagr < effectiveLoanRate || netArbitrageAdvantage <= 0) {
     recommendedStrategy = 'prepay_debt';
-  } else if (sipExpectedCagr <= effectiveLoanRate + 3.0) {
+  } else if (postTaxEquityCagr <= effectiveLoanRate + 2.0) {
     recommendedStrategy = 'balanced_split';
   } else {
     recommendedStrategy = 'invest_sip';
@@ -278,9 +311,14 @@ export function calculateLoanArbitrage(inputs: LoanArbitrageInputs): LoanArbitra
     prepayTotalInterest: Math.round(prepayTotalInterest),
     interestSaved: Math.round(interestSaved),
     totalPrepaymentOutflow: Math.round(totalPrepaymentOutflow),
-    sipFutureValue: Math.round(sipFutureValue),
+    sipFutureValue: Math.round(grossSipFutureValue),
+    grossSipFutureValue: Math.round(grossSipFutureValue),
     sipInvestedPrincipal: Math.round(sipInvestedPrincipal),
-    sipNetWealthGain: Math.round(sipNetWealthGain),
+    sipNetWealthGain: Math.round(grossSipNetGain),
+    grossSipNetGain: Math.round(grossSipNetGain),
+    estimatedLtcgTax,
+    postTaxSipFutureValue,
+    postTaxSipNetGain,
     hybrid: {
       newTenureMonths: hybridTenureMonths,
       monthsSaved: hybridMonthsSaved,
@@ -289,6 +327,7 @@ export function calculateLoanArbitrage(inputs: LoanArbitrageInputs): LoanArbitra
       sipNetWealthGain: Math.round(hybridSipNetGain),
       totalCombinedBenefit: Math.round(hybridInterestSaved + hybridSipNetGain),
     },
+    grossArbitrageAdvantage,
     netArbitrageAdvantage,
     recommendedStrategy,
     breakEvenCagr,
@@ -297,6 +336,8 @@ export function calculateLoanArbitrage(inputs: LoanArbitrageInputs): LoanArbitra
       effectiveLoanRate,
       annualTaxSavingsSec24b: Math.round(annualTaxSavingsSec24b),
       postTaxEquityCagr,
+      ltcgTaxRatePercent,
+      annualLtcgExemption,
     },
     yearlySchedule,
   };

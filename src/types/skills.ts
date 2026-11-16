@@ -2,6 +2,16 @@ export type SkillTier = 'tier1_survival' | 'tier2_velocity' | 'tier3_autonomy';
 
 export type SkillStatus = 'locked' | 'in_progress' | 'mastered';
 
+export type EvidenceType = 'budgeted' | 'assumed' | 'verified';
+
+export interface PolicyCoverageDetails {
+  policyType: string;
+  targetCoverage: string;
+  verifiedStatus: boolean;
+  verificationRequirements: string;
+  evidenceNotes?: string;
+}
+
 export interface SkillNode {
   id: string;
   tier: SkillTier;
@@ -18,6 +28,10 @@ export interface SkillNode {
   status: SkillStatus;
   gapRupeesOrMonths?: string;
   actionableStep: string;
+  // Evidence Classification and Integrity Audit
+  evidenceType: EvidenceType;
+  evidenceDescription: string;
+  policyDetails?: PolicyCoverageDetails;
   // Kinetic Constellation layout coordinates (percentage 0-100)
   gridColumn: number; // 1 to 5
   gridRow: number; // 1 to 3

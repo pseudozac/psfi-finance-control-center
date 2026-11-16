@@ -648,21 +648,51 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                     </button>
                   </div>
 
-                  {/* Status Banner */}
+                  {/* Status & Evidence Banner */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '8px 0', flexWrap: 'wrap', gap: '6px' }}>
-                    <span style={{
-                      fontSize: '10px',
-                      fontFamily: 'monospace',
-                      fontWeight: 700,
-                      padding: '3px 9px',
-                      borderRadius: '9999px',
-                      textTransform: 'uppercase',
-                      background: activeNode.status === 'mastered' ? 'rgba(16, 185, 129, 0.2)' : activeNode.status === 'in_progress' ? 'rgba(168, 85, 247, 0.2)' : 'rgba(255, 255, 255, 0.06)',
-                      color: activeNode.status === 'mastered' ? '#34d399' : activeNode.status === 'in_progress' ? '#c084fc' : 'var(--ink-muted)',
-                      border: `1px solid ${activeNode.status === 'mastered' ? 'rgba(16, 185, 129, 0.4)' : activeNode.status === 'in_progress' ? 'rgba(168, 85, 247, 0.4)' : 'rgba(255, 255, 255, 0.1)'}`,
-                    }}>
-                      {activeNode.status === 'mastered' ? '✓ Mastered' : activeNode.status === 'in_progress' ? `In Flight (${activeNode.progressPercent}%)` : '🔒 Locked'}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                      <span style={{
+                        fontSize: '10px',
+                        fontFamily: 'monospace',
+                        fontWeight: 700,
+                        padding: '3px 9px',
+                        borderRadius: '9999px',
+                        textTransform: 'uppercase',
+                        background: activeNode.status === 'mastered' ? 'rgba(16, 185, 129, 0.2)' : activeNode.status === 'in_progress' ? 'rgba(168, 85, 247, 0.2)' : 'rgba(255, 255, 255, 0.06)',
+                        color: activeNode.status === 'mastered' ? '#34d399' : activeNode.status === 'in_progress' ? '#c084fc' : 'var(--ink-muted)',
+                        border: `1px solid ${activeNode.status === 'mastered' ? 'rgba(16, 185, 129, 0.4)' : activeNode.status === 'in_progress' ? 'rgba(168, 85, 247, 0.4)' : 'rgba(255, 255, 255, 0.1)'}`,
+                      }}>
+                        {activeNode.status === 'mastered' ? '✓ Mastered' : activeNode.status === 'in_progress' ? `In Flight (${activeNode.progressPercent}%)` : '🔒 Locked'}
+                      </span>
+
+                      {/* Evidence Integrity Badge */}
+                      <span style={{
+                        fontSize: '9px',
+                        fontFamily: 'monospace',
+                        fontWeight: 700,
+                        padding: '2px 7px',
+                        borderRadius: '4px',
+                        textTransform: 'uppercase',
+                        background: activeNode.evidenceType === 'verified'
+                          ? 'rgba(16, 185, 129, 0.15)'
+                          : activeNode.evidenceType === 'budgeted'
+                          ? 'rgba(245, 158, 11, 0.15)'
+                          : 'rgba(6, 182, 212, 0.15)',
+                        color: activeNode.evidenceType === 'verified'
+                          ? '#34d399'
+                          : activeNode.evidenceType === 'budgeted'
+                          ? '#fbbf24'
+                          : '#22d3ee',
+                        border: `1px solid ${activeNode.evidenceType === 'verified'
+                          ? 'rgba(16, 185, 129, 0.35)'
+                          : activeNode.evidenceType === 'budgeted'
+                          ? 'rgba(245, 158, 11, 0.35)'
+                          : 'rgba(6, 182, 212, 0.35)'}`,
+                      }}>
+                        [{activeNode.evidenceType.toUpperCase()}]
+                      </span>
+                    </div>
+
                     <span style={{ fontFamily: 'monospace', fontSize: '11px', fontWeight: 600, color: '#f2f3f7' }}>
                       {activeNode.currentMetricLabel}
                     </span>
@@ -711,6 +741,64 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                     <strong style={{ color: '#f2f3f7', display: 'block', marginBottom: '2px' }}>Strategic Playbook:</strong>
                     {activeNode.actionableStep}
                   </div>
+
+                  {/* Evidence & Verification Audit */}
+                  <div style={{ padding: '9px 11px', borderRadius: '10px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-subtle)', margin: '8px 0', fontSize: '11px', color: 'var(--ink-secondary)', lineHeight: 1.4 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '10px', fontFamily: 'monospace', fontWeight: 700, color: '#f2f3f7', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        Evidence &amp; Audit Trail
+                      </span>
+                      <span style={{
+                        fontSize: '9px',
+                        fontFamily: 'monospace',
+                        fontWeight: 700,
+                        padding: '1px 6px',
+                        borderRadius: '4px',
+                        textTransform: 'uppercase',
+                        background: activeNode.evidenceType === 'verified'
+                          ? 'rgba(16, 185, 129, 0.15)'
+                          : activeNode.evidenceType === 'budgeted'
+                          ? 'rgba(245, 158, 11, 0.15)'
+                          : 'rgba(6, 182, 212, 0.15)',
+                        color: activeNode.evidenceType === 'verified'
+                          ? '#34d399'
+                          : activeNode.evidenceType === 'budgeted'
+                          ? '#fbbf24'
+                          : '#22d3ee',
+                        border: `1px solid ${activeNode.evidenceType === 'verified'
+                          ? 'rgba(16, 185, 129, 0.35)'
+                          : activeNode.evidenceType === 'budgeted'
+                          ? 'rgba(245, 158, 11, 0.35)'
+                          : 'rgba(6, 182, 212, 0.35)'}`,
+                      }}>
+                        [{activeNode.evidenceType.toUpperCase()}]
+                      </span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: '10.5px', color: 'var(--ink-muted)' }}>
+                      {activeNode.evidenceDescription}
+                    </p>
+                  </div>
+
+                  {/* Insurance Policy Coverage Details (when present) */}
+                  {activeNode.policyDetails && (
+                    <div style={{ padding: '9px 11px', borderRadius: '10px', background: 'rgba(168, 85, 247, 0.06)', border: '1px solid rgba(168, 85, 247, 0.25)', margin: '8px 0', fontSize: '11px', lineHeight: 1.4 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                        <strong style={{ color: '#c084fc', fontSize: '10.5px', fontFamily: 'monospace', textTransform: 'uppercase' }}>
+                          Policy Coverage Specifications
+                        </strong>
+                        <span style={{ fontSize: '9px', fontFamily: 'monospace', color: '#fbbf24', background: 'rgba(245, 158, 11, 0.15)', padding: '1px 5px', borderRadius: '3px' }}>
+                          UNVERIFIED POLICY SCHEDULE
+                        </span>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '3px', fontSize: '10.5px', color: 'var(--ink-secondary)', fontFamily: 'monospace' }}>
+                        <div><span style={{ color: 'var(--ink-muted)' }}>Required Type: </span><span style={{ color: '#f2f3f7' }}>{activeNode.policyDetails.policyType}</span></div>
+                        <div><span style={{ color: 'var(--ink-muted)' }}>Target Coverage: </span><span style={{ color: '#34d399', fontWeight: 700 }}>{activeNode.policyDetails.targetCoverage}</span></div>
+                      </div>
+                      <p style={{ margin: '6px 0 0', fontSize: '10px', color: 'var(--ink-muted)', lineHeight: 1.3 }}>
+                        <strong>Integrity Verification: </strong>{activeNode.policyDetails.verificationRequirements}
+                      </p>
+                    </div>
+                  )}
 
                   {/* Interactive What-If Simulation Button */}
                   {activeNode.suggestedAction && (
@@ -1165,19 +1253,46 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                           </span>
                         </div>
                       </div>
-                      <span style={{
-                        fontSize: '9.5px',
-                        fontFamily: 'monospace',
-                        fontWeight: 700,
-                        padding: '2px 8px',
-                        borderRadius: '9999px',
-                        textTransform: 'uppercase',
-                        background: isMastered ? 'rgba(16, 185, 129, 0.2)' : node.status === 'in_progress' ? 'rgba(168, 85, 247, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                        color: isMastered ? '#34d399' : node.status === 'in_progress' ? '#c084fc' : 'var(--ink-muted)',
-                        border: `1px solid ${isMastered ? 'rgba(16, 185, 129, 0.4)' : node.status === 'in_progress' ? 'rgba(168, 85, 247, 0.4)' : 'rgba(255, 255, 255, 0.1)'}`,
-                      }}>
-                        {isMastered ? '✓ Mastered' : `${node.progressPercent}%`}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <span style={{
+                          fontSize: '8.5px',
+                          fontFamily: 'monospace',
+                          fontWeight: 700,
+                          padding: '1px 5px',
+                          borderRadius: '4px',
+                          textTransform: 'uppercase',
+                          background: node.evidenceType === 'verified'
+                            ? 'rgba(16, 185, 129, 0.15)'
+                            : node.evidenceType === 'budgeted'
+                            ? 'rgba(245, 158, 11, 0.15)'
+                            : 'rgba(6, 182, 212, 0.15)',
+                          color: node.evidenceType === 'verified'
+                            ? '#34d399'
+                            : node.evidenceType === 'budgeted'
+                            ? '#fbbf24'
+                            : '#22d3ee',
+                          border: `1px solid ${node.evidenceType === 'verified'
+                            ? 'rgba(16, 185, 129, 0.35)'
+                            : node.evidenceType === 'budgeted'
+                            ? 'rgba(245, 158, 11, 0.35)'
+                            : 'rgba(6, 182, 212, 0.35)'}`,
+                        }}>
+                          [{node.evidenceType.toUpperCase()}]
+                        </span>
+                        <span style={{
+                          fontSize: '9.5px',
+                          fontFamily: 'monospace',
+                          fontWeight: 700,
+                          padding: '2px 8px',
+                          borderRadius: '9999px',
+                          textTransform: 'uppercase',
+                          background: isMastered ? 'rgba(16, 185, 129, 0.2)' : node.status === 'in_progress' ? 'rgba(168, 85, 247, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                          color: isMastered ? '#34d399' : node.status === 'in_progress' ? '#c084fc' : 'var(--ink-muted)',
+                          border: `1px solid ${isMastered ? 'rgba(16, 185, 129, 0.4)' : node.status === 'in_progress' ? 'rgba(168, 85, 247, 0.4)' : 'rgba(255, 255, 255, 0.1)'}`,
+                        }}>
+                          {isMastered ? '✓ Mastered' : `${node.progressPercent}%`}
+                        </span>
+                      </div>
                     </div>
 
                     <h4 style={{ margin: '0 0 6px', fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>{node.title}</h4>

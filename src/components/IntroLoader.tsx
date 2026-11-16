@@ -39,7 +39,7 @@ const FEATURES = [
   {
     icon: <Landmark size={18} className="text-corona" />,
     badge: 'TAX ENGINE',
-    title: 'FY 2025–26 & FY 2024–25 Regime Engine',
+    title: 'FY 2025–26 (AY 2026–27) & TY 2026–27 Regime Engine',
     desc: 'Automated tax rebate calculator incorporating the ₹75,000 standard deduction, Sec 87A rebate, and 80C/80D optimizations.',
     color: 'corona',
   },

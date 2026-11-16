@@ -521,11 +521,11 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
               </span>
             </div>
 
-            {/* Probability of Ruin */}
+            {/* Probability of Ruin (Planned Burn) */}
             <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-3.5 relative overflow-hidden flex flex-col justify-between">
               <div className="flex items-center justify-between">
                 <span className="text-[10.5px] font-mono text-slate-400 uppercase tracking-wider">
-                  Probability of Ruin
+                  Planned Burn Ruin Risk
                 </span>
                 <span className={`text-[9.5px] font-mono font-bold px-1.5 py-0.5 rounded ${
                   result.ruinProbabilityPercent <= 5 ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/30' :
@@ -542,6 +542,9 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                 }`}>
                   {result.ruinProbabilityPercent}%
                 </span>
+                <span className="text-[10px] font-mono text-slate-400">
+                  ({result.plannedWithdrawalRatePercent}%/yr burn)
+                </span>
               </div>
               {/* Progress Bar */}
               <div className="w-full bg-slate-800/80 rounded-full h-1.5 overflow-hidden">
@@ -555,7 +558,7 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                 />
               </div>
               <span className="text-[10px] text-slate-400 mt-1.5 truncate">
-                {result.ruinProbabilityPercent <= 5 ? 'Target < 5% safe survival rate met' : 'Corpus prematurely depleted before horizon'}
+                Planned burn: {formatINR(monthlyRetirementBurn)}/mo in {activeScenarioMeta.label}
               </span>
             </div>
 
@@ -598,14 +601,18 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
               </span>
             </div>
 
-            {/* Safe Withdrawal Rate */}
+            {/* Scenario Safe Withdrawal Rate Ceiling */}
             <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-3.5 relative overflow-hidden flex flex-col justify-between">
               <div className="flex items-center justify-between">
                 <span className="text-[10.5px] font-mono text-slate-400 uppercase tracking-wider">
-                  Recommended SWR
+                  Scenario Safe SWR
                 </span>
-                <span className="text-[9.5px] font-mono font-bold px-1.5 py-0.5 rounded bg-purple-950/60 text-purple-300 border border-purple-500/30">
-                  INDIAN CPI CALIBRATED
+                <span className={`text-[9.5px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                  result.plannedWithdrawalRatePercent <= result.safeWithdrawalRatePercent
+                    ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/30'
+                    : 'bg-rose-950/60 text-rose-300 border border-rose-500/30'
+                }`}>
+                  {result.plannedWithdrawalRatePercent <= result.safeWithdrawalRatePercent ? 'WITHIN SAFE CEILING' : 'EXCEEDS SAFE CEILING'}
                 </span>
               </div>
               <div className="flex items-baseline gap-1.5 my-1.5">
@@ -621,8 +628,23 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                 />
               </div>
               <span className="text-[10px] text-slate-400 mt-1.5 truncate">
-                vs Trinity 4.0% US rule (discounted for 6.5% Indian CPI)
+                Max safe rate for &ge; 90% survival under {activeScenarioMeta.label}
               </span>
+            </div>
+          </div>
+
+          {/* Actuarial Reconciliation & Success Criteria Banner */}
+          <div className="p-3 rounded-xl bg-slate-900/60 border border-white/5 text-[11px] text-slate-300 flex items-start gap-2.5">
+            <Info size={15} className="text-cyan-400 shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <span className="font-mono font-bold text-slate-200 block text-[10.5px]">
+                Actuarial Telemetry Reconciliation &amp; Assumptions
+              </span>
+              <p className="text-[10.5px] text-slate-400 leading-relaxed">
+                • <strong>Why Ruin Risk may be high while SWR has safe tiers:</strong> The top card ({result.ruinProbabilityPercent}% Ruin Risk) tests your <em>actual planned withdrawal</em> of {formatINR(monthlyRetirementBurn)}/mo ({result.plannedWithdrawalRatePercent}% of median corpus). Under severe shocks like {activeScenarioMeta.label}, your corpus is depressed, making {formatINR(monthlyRetirementBurn)}/mo unsustainable.<br />
+                • <strong>Safe Withdrawal Rate ({result.safeWithdrawalRatePercent}%):</strong> Shows the maximum percentage rate that <em>would survive</em> &ge; 90% of paths in this specific crisis. If you lower your withdrawal to {formatINR(Math.round(result.medianRetirementCorpus * (result.safeWithdrawalRatePercent / 100) / 12))}/mo, portfolio survival is restored.<br />
+                • <strong>Success Criterion:</strong> A 30-year trajectory is successful if portfolio net worth remains positive (&gt; ₹0) through Year {result.totalYears} after living costs compounded at 6.5% Indian CPI inflation.
+              </p>
             </div>
           </div>
 

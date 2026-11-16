@@ -381,17 +381,17 @@ export function LoanPrepaymentArbitrageModal({
               </div>
               <div className="space-y-1.5 pt-1">
                 <div>
-                  <span className="text-[10.5px] text-muted block font-mono">SIP Future Value</span>
-                  <strong className="text-lg font-bold font-mono text-nebula">{formatLakhs(result.sipFutureValue)}</strong>
+                  <span className="text-[10.5px] text-muted block font-mono">Gross SIP Future Value</span>
+                  <strong className="text-lg font-bold font-mono text-nebula">{formatLakhs(result.grossSipFutureValue)}</strong>
                 </div>
                 <div>
-                  <span className="text-[10.5px] text-muted block font-mono">Net Wealth Gain</span>
-                  <span className="text-sm font-semibold font-mono text-ink-primary">
-                    {formatLakhs(result.sipNetWealthGain)}
+                  <span className="text-[10.5px] text-muted block font-mono">Net Post-Tax Corpus (Sec 112A)</span>
+                  <span className="text-sm font-semibold font-mono text-emerald-400">
+                    {formatLakhs(result.postTaxSipFutureValue)} <span className="text-[10px] text-muted">(-{formatLakhs(result.estimatedLtcgTax)} tax)</span>
                   </span>
                 </div>
                 <div className="pt-1 border-t border-subtle/50 text-[11px] text-muted">
-                  Net wealth delta: +{formatLakhs(result.netArbitrageAdvantage)} over prepay
+                  Net post-tax delta: <strong className="text-nebula">+{formatLakhs(result.netArbitrageAdvantage)}</strong> (Gross: +{formatLakhs(result.grossArbitrageAdvantage)})
                 </div>
               </div>
             </div>
@@ -423,6 +423,120 @@ export function LoanPrepaymentArbitrageModal({
                 </div>
                 <div className="pt-1 border-t border-subtle/50 text-[11px] text-muted">
                   50% to Prepay ({formatLakhs(extraMonthlyPrepayment / 2)}/mo), 50% to SIP
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Actuarial Calculation Breakdown & Reconciliation Ledger */}
+          <div className="p-4 rounded-xl bg-surface-raised/40 border border-subtle/80 space-y-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <Scale size={15} className="text-solstice" />
+                <h3 className="text-xs font-mono font-bold text-ink-primary tracking-tight m-0">
+                  ACTUARIAL ARBITRAGE RECONCILIATION &amp; MATHEMATICAL LEDGER
+                </h3>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-surface-base border border-subtle text-muted">
+                Section 112A (12.5% LTCG) · Gross vs. Post-Tax Audit
+              </span>
+            </div>
+
+            <p className="text-xs text-ink-secondary leading-relaxed m-0">
+              Traces step-by-step how the <strong>{annualInterestRate}%</strong> loan interest saved, the <strong>{sipExpectedCagr}%</strong> gross equity compounding, the <strong>{result.taxDetails.postTaxEquityCagr}%</strong> post-tax equity yield, and statutory capital gains taxes combine to produce both the gross (+{formatLakhs(result.grossArbitrageAdvantage)}) and post-tax (+{formatLakhs(result.netArbitrageAdvantage)}) arbitrage advantages.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+              {/* Box 1: Path A Debt Prepayment */}
+              <div className="p-3 rounded-lg bg-surface-base border border-solstice/30 space-y-2">
+                <div className="flex items-center justify-between text-solstice font-bold border-b border-subtle/40 pb-1.5">
+                  <span className="flex items-center gap-1.5">
+                    <ShieldCheck size={13} /> Path A: Guaranteed Prepayment
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-solstice/15">RISK-FREE</span>
+                </div>
+                <div className="space-y-1 text-[11px] text-ink-secondary">
+                  <div className="flex justify-between">
+                    <span>Baseline Interest ({result.baselineTenureMonths}m):</span>
+                    <span className="text-ink-primary">{formatLakhs(result.baselineTotalInterest)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Prepay Interest ({result.newTenureMonths}m):</span>
+                    <span className="text-ink-primary">{formatLakhs(result.prepayTotalInterest)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Tenure Acceleration:</span>
+                    <span className="text-solstice font-semibold">Shaves {Math.floor(result.monthsSaved / 12)}y {result.monthsSaved % 12}m</span>
+                  </div>
+                  <div className="flex justify-between pt-1 border-t border-subtle/40 text-solstice font-bold">
+                    <span>Guaranteed Interest Saved:</span>
+                    <span>{formatLakhs(result.interestSaved)}</span>
+                  </div>
+                </div>
+                <span className="text-[10px] text-muted block">
+                  * Prepayment delivers an unconditional post-tax return equal to your effective borrowing rate ({result.taxDetails.effectiveLoanRate}%).
+                </span>
+              </div>
+
+              {/* Box 2: Path B Gross vs Post-Tax Equity SIP */}
+              <div className="p-3 rounded-lg bg-surface-base border border-nebula/30 space-y-2">
+                <div className="flex items-center justify-between text-nebula font-bold border-b border-subtle/40 pb-1.5">
+                  <span className="flex items-center gap-1.5">
+                    <TrendingUp size={13} /> Path B: Equity SIP Compounding
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-nebula/15">MARKET COMPOUNDING</span>
+                </div>
+                <div className="space-y-1 text-[11px] text-ink-secondary">
+                  <div className="flex justify-between">
+                    <span>Total Invested Principal ({tenureYears}y):</span>
+                    <span className="text-ink-primary">{formatLakhs(result.sipInvestedPrincipal)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Gross Terminal Corpus (@ {sipExpectedCagr}% CAGR):</span>
+                    <span className="text-ink-primary font-bold">{formatLakhs(result.grossSipFutureValue)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Gross Wealth Gain (Pre-Tax):</span>
+                    <span className="text-nebula">{formatLakhs(result.grossSipNetGain)}</span>
+                  </div>
+                  <div className="flex justify-between text-rose-400">
+                    <span>Sec 112A LTCG Tax (12.5% over ₹1.25L):</span>
+                    <span>-{formatLakhs(result.estimatedLtcgTax)}</span>
+                  </div>
+                  <div className="flex justify-between pt-1 border-t border-subtle/40 text-emerald-400 font-bold">
+                    <span>Net Post-Tax Corpus (Net Gain {formatLakhs(result.postTaxSipNetGain)}):</span>
+                    <span>{formatLakhs(result.postTaxSipFutureValue)}</span>
+                  </div>
+                </div>
+                <span className="text-[10px] text-muted block">
+                  * Post-tax equity CAGR equivalent is ~{result.taxDetails.postTaxEquityCagr}% after statutory LTCG tax deduction.
+                </span>
+              </div>
+            </div>
+
+            {/* Reconciliation Comparison Row */}
+            <div className="p-3 rounded-lg bg-surface-base border border-subtle/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono">
+              <div className="space-y-0.5">
+                <span className="text-[10.5px] uppercase tracking-wider text-muted font-bold block">
+                  Reconciliation of Advantage Over Prepayment:
+                </span>
+                <span className="text-[11px] text-ink-secondary">
+                  Arbitrage Delta = Equity Wealth Gain minus Guaranteed Debt Interest Saved
+                </span>
+              </div>
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="text-right">
+                  <span className="text-[10px] text-muted block">Gross Advantage (Pre-Tax):</span>
+                  <span className="text-xs font-bold text-ink-primary">
+                    {formatLakhs(result.grossSipNetGain)} - {formatLakhs(result.interestSaved)} = <strong className="text-nebula">+{formatLakhs(result.grossArbitrageAdvantage)}</strong>
+                  </span>
+                </div>
+                <div className="h-6 w-px bg-subtle/60 hidden sm:block" />
+                <div className="text-right">
+                  <span className="text-[10px] text-muted block">Net Advantage (Post-12.5% Tax):</span>
+                  <span className="text-xs font-bold text-emerald-400">
+                    {formatLakhs(result.postTaxSipNetGain)} - {formatLakhs(result.interestSaved)} = <strong>+{formatLakhs(result.netArbitrageAdvantage)}</strong>
+                  </span>
                 </div>
               </div>
             </div>
@@ -612,9 +726,11 @@ export function LoanPrepaymentArbitrageModal({
                   <thead>
                     <tr className="border-b border-subtle text-muted text-[10px]">
                       <th className="py-2 px-2">Year</th>
-                      <th className="py-2 px-2">Standard Loan Balance</th>
-                      <th className="py-2 px-2">Prepay Loan Balance</th>
-                      <th className="py-2 px-2">SIP Corpus (Path B)</th>
+                      <th className="py-2 px-2">Standard Balance</th>
+                      <th className="py-2 px-2">Prepay Balance</th>
+                      <th className="py-2 px-2">SIP Gross (@ {sipExpectedCagr}%)</th>
+                      <th className="py-2 px-2">SIP Net (Post-Tax)</th>
+                      <th className="py-2 px-2">Est. LTCG Tax</th>
                       <th className="py-2 px-2">Interest Saved</th>
                       <th className="py-2 px-2">Milestone</th>
                     </tr>
@@ -630,7 +746,9 @@ export function LoanPrepaymentArbitrageModal({
                         <td className="py-1.5 px-2 font-bold">Yr {row.year}</td>
                         <td className="py-1.5 px-2">{formatLakhs(row.loanBalanceStandard)}</td>
                         <td className="py-1.5 px-2 text-solstice">{formatLakhs(row.loanBalancePrepay)}</td>
-                        <td className="py-1.5 px-2 text-nebula">{formatLakhs(row.sipPortfolioValue)}</td>
+                        <td className="py-1.5 px-2 text-nebula font-medium">{formatLakhs(row.sipPortfolioValueGross)}</td>
+                        <td className="py-1.5 px-2 text-emerald-400 font-semibold">{formatLakhs(row.sipPortfolioValueNet)}</td>
+                        <td className="py-1.5 px-2 text-rose-400/90">{row.estimatedLtcgTax > 0 ? `-${formatLakhs(row.estimatedLtcgTax)}` : '₹0'}</td>
                         <td className="py-1.5 px-2 text-muted">{formatLakhs(row.interestSavedCumulative)}</td>
                         <td className="py-1.5 px-2">
                           {row.isVirtualDebtFree ? (

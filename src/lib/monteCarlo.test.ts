@@ -142,4 +142,26 @@ describe('Reverse Monte Carlo FIRE Stress-Testing Engine', () => {
     });
     expect(bop1991.simulationsRun).toBe(300);
   });
+
+  it('reconciles scenario stress with safe withdrawal rates and SWR matrix survival', () => {
+    const lehman = runMonteCarloSimulation({
+      currentCorpus: 1500000,
+      monthlySavings: 35000,
+      monthlyRetirementBurn: 50000,
+      yearsToRetire: 10,
+      yearsInRetirement: 30,
+      scenario: 'lehman_2008',
+      numSimulations: 500,
+      randomSeed: 42,
+    });
+
+    // Safe withdrawal rate ceiling should be compressed under Lehman shock
+    expect(lehman.safeWithdrawalRatePercent).toBeLessThanOrEqual(2.5);
+    expect(lehman.plannedWithdrawalRatePercent).toBeGreaterThan(0);
+
+    // 5.0% SWR must be marked DANGEROUS with high ruin probability
+    const swr5 = lehman.swrScenarios.find((s) => s.swrPercent === 5.0);
+    expect(swr5?.verdict).toBe('DANGEROUS');
+    expect(swr5?.ruinProbabilityPercent).toBeGreaterThanOrEqual(70);
+  });
 });

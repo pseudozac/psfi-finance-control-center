@@ -1088,7 +1088,9 @@ export function App() {
 
         <div className="hero-cyber-badge">
           <span className="cyber-pulse-dot" />
-          <span className="cyber-badge-tag">TY 2026–27</span>
+          <span className="cyber-badge-tag" title="Income-tax Act, 1961 (FY 2025–26 / AY 2026–27) &amp; Income-tax Act, 2025 (TY 2026–27)">
+            FY 2025–26 (AY 2026–27) · TY 2026–27
+          </span>
           <span className="cyber-badge-sep">·</span>
           <span className="cyber-badge-secure">🛡️ OFFLINE / PRIVATE</span>
         </div>
@@ -1141,7 +1143,7 @@ export function App() {
             onClick={() => {
               document.getElementById('tour-tax')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }}
-            title="Jump to Indian Tax Engine (FY 2025–26 & FY 2024–25)"
+            title="Jump to Indian Tax Engine (FY 2025–26 / AY 2026–27 vs TY 2026–27)"
           >
             <span className="quick-pill-dot" />
             <span>Tax Regimes</span>
