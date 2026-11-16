@@ -6,6 +6,9 @@ import {
   Dices,
   RotateCcw,
   Info,
+  ShieldCheck,
+  Copy,
+  Check,
 } from 'lucide-react';
 import type { FinancePlan, FinanceSummary } from '../types/finance';
 import {
@@ -29,6 +32,9 @@ const SCENARIOS: { id: StressScenario; label: string; desc: string; icon: string
   { id: 'tech_winter', label: 'Tech Layoff Freeze', desc: '18 months of zero active monthly SIP additions due to tech hiring freeze', icon: '❄️' },
   { id: 'medical_emergency', label: 'Medical Catastrophe', desc: 'Sudden ₹15 Lakh out-of-pocket hospital shock in Year 2 of retirement', icon: '🏥' },
   { id: 'stagflation_spike', label: '11% Stagflation Spike', desc: 'Persistent 11.5% inflation with 4.5% depressed equity returns for 4 years', icon: '🔥' },
+  { id: 'ketan_parekh_2001', label: '2001 Ketan Parekh Crash', desc: '-45% tech collapse followed by a 4-year sideways grind', icon: '💥' },
+  { id: 'demonetisation_nbfc_2016', label: '2016 NBFC Credit Freeze', desc: 'IL&FS liquidity crisis: debt yields compressed, equity sideways', icon: '🏦' },
+  { id: 'bop_crisis_1991', label: '1991 BOP Currency Crisis', desc: '13.8% runaway CPI inflation spike with severe rupee devaluation shock', icon: '🚨' },
 ];
 
 export const ReverseMonteCarloModal: React.FC<ReverseMonteCarloModalProps> = ({
@@ -43,6 +49,7 @@ export const ReverseMonteCarloModal: React.FC<ReverseMonteCarloModalProps> = ({
   const [randomSeed, setRandomSeed] = useState<number>(42);
   const [customRetireYears, setCustomRetireYears] = useState<number>(10);
   const [customHorizonYears, setCustomHorizonYears] = useState<number>(30);
+  const [copiedReport, setCopiedReport] = useState<boolean>(false);
 
   // Current capital metrics
   const currentCorpus = plan.savings.emergencyFundBalance * 4 || 1500000;
@@ -73,6 +80,35 @@ export const ReverseMonteCarloModal: React.FC<ReverseMonteCarloModalProps> = ({
     scenario,
     randomSeed,
   ]);
+
+  const handleCopyReport = () => {
+    const activeScenario = SCENARIOS.find((s) => s.id === scenario);
+    const text = `=== PSFI SEQUENCE-OF-RETURNS & STOCHASTIC STRESS REPORT ===
+Scenario: ${activeScenario?.label || scenario} (${activeScenario?.desc})
+Simulations: ${result.simulationsRun.toLocaleString()} runs | Horizon: ${result.accumulationYears}y accumulation + ${result.retirementYears}y retirement (${result.totalYears}y total)
+Portfolio: ${(equityRatio * 100).toFixed(0)}% Equity / ${((1 - equityRatio) * 100).toFixed(0)}% Debt
+
+[ACTUARIAL TELEMETRY]
+Antifragility Score: ${result.antifragilityScore} / 100
+Ruin Probability: ${result.ruinProbabilityPercent}%
+Sequence Risk Rating: ${result.srrRiskRating}
+Safe Withdrawal Rate (SWR): ${result.safeWithdrawalRatePercent}%
+Recommended Cash Wedge: ${formatINR(result.recommendedCashWedgeRupees)} (${result.recommendedCashWedgeMonths} Months)
+Projected Median Retirement Corpus: ${formatINR(result.medianRetirementCorpus)}
+Projected Median Terminal Corpus: ${formatINR(result.medianTerminalCorpus)}
+
+[SAFE WITHDRAWAL RATE MATRIX]
+${result.swrScenarios.map((s) => `• ${s.swrPercent}% SWR: ${formatINR(s.annualWithdrawalRupees)}/yr — ${s.successProbabilityPercent}% Success (${s.verdict})`).join('\n')}
+
+Verdict: "${result.actuarialVerdict}"
+Advice: "${result.srrExplanation}"
+Generated client-side via Pseudo-Fi Sovereign Actuarial Engine
+============================================================`;
+
+    navigator.clipboard.writeText(text);
+    setCopiedReport(true);
+    setTimeout(() => setCopiedReport(false), 2200);
+  };
 
   if (!isOpen) return null;
 
@@ -183,6 +219,16 @@ export const ReverseMonteCarloModal: React.FC<ReverseMonteCarloModalProps> = ({
                 </button>
               )}
             </div>
+
+            <button
+              type="button"
+              className="px-2.5 py-1 rounded-lg text-xs font-mono flex items-center gap-1.5 bg-slate-900/60 border border-subtle text-slate-200 hover:text-white hover:border-slate-500 transition-all"
+              onClick={handleCopyReport}
+              title="Copy Full Stochastic Audit Summary"
+            >
+              {copiedReport ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+              <span>{copiedReport ? 'Copied!' : 'Copy Audit'}</span>
+            </button>
 
             <button
               type="button"
@@ -444,7 +490,93 @@ export const ReverseMonteCarloModal: React.FC<ReverseMonteCarloModalProps> = ({
           </div>
         </div>
 
-        {/* 5. ACTUARIAL SUMMARY BANNER */}
+        {/* 5. SEQUENCE RISK & SAFE WITHDRAWAL RATE MATRIX */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3">
+          <div className="bg-slate-900/40 border border-subtle rounded-xl p-3.5 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-slate-200">
+                  <ShieldCheck size={14} className="text-cyan-400" />
+                  <span>SEQUENCE RISK &amp; CASH WEDGE</span>
+                </div>
+                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                  result.srrRiskRating === 'LOW'
+                    ? 'bg-emerald-950/60 border border-emerald-500/40 text-emerald-400'
+                    : result.srrRiskRating === 'MODERATE'
+                    ? 'bg-amber-950/60 border border-amber-500/40 text-amber-400'
+                    : 'bg-rose-950/60 border border-rose-500/40 text-rose-400'
+                }`}>
+                  {result.srrRiskRating} RISK
+                </span>
+              </div>
+              <p className="text-[11px] text-muted leading-relaxed mb-3">
+                Early-retirement market crashes can deplete equity units prematurely. Holding an arbitrage/liquid cash cushion insulates you from selling equities during bear market years.
+              </p>
+            </div>
+
+            <div className="p-2.5 rounded-lg bg-surface-page/60 border border-white/5 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-mono text-muted uppercase block">Recommended Cash Wedge</span>
+                <span className="text-sm font-bold font-mono text-cyan-300">
+                  {formatINR(result.recommendedCashWedgeRupees)}
+                </span>
+              </div>
+              <span className="text-xs font-mono text-slate-300 bg-white/5 px-2.5 py-1 rounded-md border border-white/10">
+                {result.recommendedCashWedgeMonths} Months Runway
+              </span>
+            </div>
+          </div>
+
+          <div className="bg-slate-900/40 border border-subtle rounded-xl p-3.5">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-mono font-bold text-slate-200">
+                SAFE WITHDRAWAL RATE (SWR) MATRIX
+              </span>
+              <span className="text-[10px] font-mono text-muted">
+                Indian 30-Yr SWR: <strong className="text-cyan-300">{result.safeWithdrawalRatePercent}%</strong>
+              </span>
+            </div>
+
+            <div className="space-y-1.5 font-mono text-[11px]">
+              {result.swrScenarios.map((s) => (
+                <div
+                  key={s.swrPercent}
+                  className="flex items-center justify-between p-1.5 rounded-lg bg-surface-page/40 border border-white/5"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-200">{s.swrPercent.toFixed(1)}%</span>
+                    <span className="text-[10px] text-muted">({formatINR(s.annualWithdrawalRupees)}/yr)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-16 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${
+                          s.verdict === 'SAFE'
+                            ? 'bg-emerald-500'
+                            : s.verdict === 'CAUTION'
+                            ? 'bg-amber-500'
+                            : 'bg-rose-500'
+                        }`}
+                        style={{ width: `${s.successProbabilityPercent}%` }}
+                      />
+                    </div>
+                    <span className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded ${
+                      s.verdict === 'SAFE'
+                        ? 'bg-emerald-950/60 text-emerald-400'
+                        : s.verdict === 'CAUTION'
+                        ? 'bg-amber-950/60 text-amber-400'
+                        : 'bg-rose-950/60 text-rose-400'
+                    }`}>
+                      {s.successProbabilityPercent}% {s.verdict}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* 6. ACTUARIAL SUMMARY BANNER */}
         <div className="mt-4 p-3 rounded-xl bg-cyan-950/20 border border-cyan-800/30 text-xs flex items-start gap-2.5">
           <Sparkles size={16} className="text-cyan-400 shrink-0 mt-0.5" />
           <div className="space-y-1 text-muted">

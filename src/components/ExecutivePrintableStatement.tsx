@@ -7,7 +7,9 @@ import type {
   BudgetRuleAnalysis,
 } from '../types/finance';
 import type { UserAccount } from '../types/account';
+import type { SkillTreeState } from '../types/skills';
 import { formatINR } from '../lib/finance';
+import { Printer, X, ShieldCheck, CheckCircle } from 'lucide-react';
 
 interface ExecutivePrintableStatementProps {
   plan: FinancePlan;
@@ -17,6 +19,8 @@ interface ExecutivePrintableStatementProps {
   projections: MonthlyProjectionPoint[];
   activeAccount: UserAccount;
   baseline: FinancePlan | null;
+  skillTree?: SkillTreeState;
+  onClose?: () => void;
 }
 
 export const ExecutivePrintableStatement: React.FC<ExecutivePrintableStatementProps> = ({
@@ -26,6 +30,8 @@ export const ExecutivePrintableStatement: React.FC<ExecutivePrintableStatementPr
   taxComparison,
   projections,
   activeAccount,
+  skillTree,
+  onClose,
 }) => {
   const currentDateStr = new Date().toLocaleDateString('en-IN', {
     day: '2-digit',
@@ -36,8 +42,70 @@ export const ExecutivePrintableStatement: React.FC<ExecutivePrintableStatementPr
   const tenYearPoint = projections[Math.min(120, projections.length - 1)];
   const twentyYearPoint = projections[Math.min(240, projections.length - 1)];
 
+  // Debt avalanche data consolidation
+  const liabilities = plan.debt?.liabilities ?? [];
+  const cardBalance = plan.debt?.cardBalance ?? 0;
+  const cardApr = plan.debt?.aprPercent ?? 0;
+  const cardMinPayment = plan.debt?.monthlyPayment ?? 0;
+
+  const allDebts: { name: string; balance: number; apr: number; monthlyPayment: number }[] = [];
+  if (cardBalance > 0) {
+    allDebts.push({
+      name: 'Credit Card / Revolving Credit',
+      balance: cardBalance,
+      apr: cardApr,
+      monthlyPayment: cardMinPayment,
+    });
+  }
+  for (const item of liabilities) {
+    if (item.balance > 0) {
+      allDebts.push({
+        name: item.name,
+        balance: item.balance,
+        apr: item.aprPercent,
+        monthlyPayment: item.minMonthlyPayment,
+      });
+    }
+  }
+  allDebts.sort((a, b) => b.apr - a.apr);
+  const totalDebtBalance = allDebts.reduce((sum, d) => sum + d.balance, 0);
+  const totalMonthlyDebtPayment = allDebts.reduce((sum, d) => sum + d.monthlyPayment, 0);
+
+  const unlockedBadges = skillTree?.badges?.filter((b) => b.isUnlocked) ?? [];
+
   return (
     <div className="executive-printable-statement" aria-label="Executive Financial Statement">
+      {/* Interactive Floating Header (Hidden during @media print) */}
+      <div className="exec-no-print exec-interactive-toolbar">
+        <div className="flex-align gap-2">
+          <ShieldCheck size={16} className="text-emerald-500" />
+          <span className="font-bold text-sm text-slate-800">Executive Wealth Audit &amp; Position Statement</span>
+          <span className="exec-toolbar-tag">A4 Vector Print</span>
+          <span className="exec-toolbar-tag">Zero Telemetry</span>
+        </div>
+        <div className="flex-align gap-2">
+          <button
+            type="button"
+            className="exec-print-btn"
+            onClick={() => window.print()}
+            title="Print or Save as PDF"
+          >
+            <Printer size={14} />
+            <span>Print / Save as PDF (Vector A4)</span>
+          </button>
+          {onClose && (
+            <button
+              type="button"
+              className="exec-close-btn"
+              onClick={onClose}
+              title="Close Dossier Preview"
+            >
+              <X size={16} />
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* 1. INSTITUTIONAL HEADER */}
       <div className="exec-header-block">
         <div className="exec-header-brand">
@@ -47,7 +115,7 @@ export const ExecutivePrintableStatement: React.FC<ExecutivePrintableStatementPr
           </div>
           <h1 className="exec-statement-title">Executive Wealth Audit &amp; Position Statement</h1>
           <p className="exec-statement-subtitle">
-            Statutory Indian personal finance balance sheet, cashflow audit &amp; tax optimization dossier.
+            Statutory Indian personal finance balance sheet, cashflow audit, debt strategy &amp; sovereign wealth dossier.
           </p>
         </div>
 
@@ -272,7 +340,109 @@ export const ExecutivePrintableStatement: React.FC<ExecutivePrintableStatementPr
         </div>
       </div>
 
-      {/* 5. ACTUARIAL CERTIFICATION & CRYPTOGRAPHIC SEAL */}
+      {/* 5. DEBT AVALANCHE & LIABILITY ACCELERATION */}
+      <div className="exec-section-heading">05 // DEBT AVALANCHE &amp; LIABILITY ACCELERATION AUDIT</div>
+      {allDebts.length > 0 ? (
+        <div style={{ marginBottom: 12 }}>
+          <table className="exec-table">
+            <thead>
+              <tr>
+                <th>Payoff Priority</th>
+                <th>Liability Name</th>
+                <th className="text-right">Outstanding (₹)</th>
+                <th className="text-right">Interest (APR)</th>
+                <th className="text-right">Monthly EMI (₹)</th>
+                <th className="text-center">Avalanche Recommendation</th>
+              </tr>
+            </thead>
+            <tbody>
+              {allDebts.map((debt, idx) => (
+                <tr key={idx} className={idx === 0 ? 'row-recommended' : ''}>
+                  <td>
+                    <span className={`exec-badge ${idx === 0 ? 'badge-warn' : 'badge-ok'}`}>
+                      #{idx + 1} Priority
+                    </span>
+                  </td>
+                  <td><strong>{debt.name}</strong></td>
+                  <td className="text-right font-mono font-bold">{formatINR(debt.balance)}</td>
+                  <td className="text-right font-mono font-bold text-rose-600">{debt.apr}%</td>
+                  <td className="text-right font-mono">{formatINR(debt.monthlyPayment)}</td>
+                  <td className="text-center">
+                    <span className="text-[10px] text-slate-700">
+                      {idx === 0 ? 'Target with extra surplus prepayments' : 'Maintain minimum payments'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              <tr style={{ background: '#f8fafc', fontWeight: 'bold' }}>
+                <td colSpan={2}><strong>Total Outstanding Liabilities</strong></td>
+                <td className="text-right font-mono text-rose-700">{formatINR(totalDebtBalance)}</td>
+                <td className="text-right font-mono">—</td>
+                <td className="text-right font-mono">{formatINR(totalMonthlyDebtPayment)}</td>
+                <td className="text-center text-[10px] text-slate-600">Eliminating accelerates savings rate</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="exec-fortress-banner">
+          <div className="flex-align gap-2">
+            <CheckCircle size={15} className="text-emerald-600" />
+            <strong className="text-emerald-800">Zero High-Interest Debt Fortress:</strong>
+            <span className="text-slate-700">No revolving credit or high-interest liabilities detected. 100% of investable monthly surplus is retained for compounding equity.</span>
+          </div>
+        </div>
+      )}
+
+      {/* 6. SOVEREIGN WEALTH RPG SCORECARD & MASTERY REPUTATION */}
+      <div className="exec-section-heading">06 // SOVEREIGN WEALTH RPG MASTERY &amp; MILESTONES</div>
+      <div className="exec-pillars-grid">
+        <div className="exec-pillar-card">
+          <span className="exec-card-lbl">Sovereign Level &amp; Title</span>
+          <span className="exec-card-val text-indigo-700">
+            Level {skillTree?.level ?? 1}: {skillTree?.levelTitle ?? 'Financial Novice'}
+          </span>
+          <span className="exec-card-sub">
+            Rank: {skillTree?.currentRank ?? 'Tier 1 Initiate'}
+          </span>
+        </div>
+
+        <div className="exec-pillar-card">
+          <span className="exec-card-lbl">Actuarial Experience (XP)</span>
+          <span className="exec-card-val text-slate-800">
+            {skillTree?.totalXP ?? 0} / {skillTree?.nextLevelXP ?? 500} XP
+          </span>
+          <span className="exec-card-sub">
+            {skillTree?.currentLevelProgressPercent ?? 0}% to next sovereign tier
+          </span>
+        </div>
+
+        <div className="exec-pillar-card">
+          <span className="exec-card-lbl">Mastery Badges Unlocked</span>
+          <span className="exec-card-val text-emerald-700">
+            {unlockedBadges.length} / {skillTree?.badges?.length ?? 14} Badges
+          </span>
+          <span className="exec-card-sub">
+            {skillTree?.overallMasteryPercent ?? 0}% Total Roadmap Mastery
+          </span>
+        </div>
+
+        <div className="exec-pillar-card exec-card-highlight">
+          <span className="exec-card-lbl text-emerald-800">Top Unlocked Accolades</span>
+          <div className="exec-badge-chip-list">
+            {unlockedBadges.slice(0, 3).map((b) => (
+              <span key={b.id} className="exec-badge-pill" title={b.tagline}>
+                {b.icon} {b.title}
+              </span>
+            ))}
+            {unlockedBadges.length === 0 && (
+              <span className="text-[10px] text-slate-500 italic">No badges unlocked yet</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 7. ACTUARIAL CERTIFICATION & CRYPTOGRAPHIC SEAL */}
       <div className="exec-cert-footer">
         <div className="exec-cert-text">
           <strong>ACTUARIAL DISCLOSURE &amp; FIDUCIARY CERTIFICATION:</strong>

@@ -6,11 +6,14 @@
 
 export type StressScenario = 
   | 'baseline'
-  | 'lehman_2008'        // -55% equity crash in year 1, 3 years slow recovery
-  | 'covid_2020'          // -38% flash crash year 1, rapid V-shape recovery
-  | 'tech_winter'         // 18 months zero savings / tech layoff salary freeze
-  | 'medical_emergency'   // Sudden ₹15 Lakh out-of-pocket hospital shock in early retirement
-  | 'stagflation_spike';  // 11% persistent inflation with 5% depressed returns for 4 years
+  | 'lehman_2008'            // -55% equity crash in year 1, 3 years slow recovery
+  | 'covid_2020'              // -38% flash crash year 1, rapid V-shape recovery
+  | 'tech_winter'             // 18 months zero savings / tech layoff salary freeze
+  | 'medical_emergency'       // Sudden ₹15 Lakh out-of-pocket hospital shock in early retirement
+  | 'stagflation_spike'       // 11% persistent inflation with 5% depressed returns for 4 years
+  | 'ketan_parekh_2001'       // -45% tech collapse, 4-year sideways grind (2000-2003 dot-com/Ketan Parekh)
+  | 'demonetisation_nbfc_2016'// IL&FS / NBFC liquidity squeeze, debt returns crater to 2.5%, equity sideways
+  | 'bop_crisis_1991';        // 13.8% runaway inflation spike, 18% rupee devaluation shock
 
 export interface MonteCarloParams {
   currentCorpus: number;             // Current net worth / portfolio (INR)
@@ -39,6 +42,14 @@ export interface PercentileTrajectory {
   p95: number;  // 95th percentile (Dynastic bull)
 }
 
+export interface SwrScenarioPoint {
+  swrPercent: number; // e.g. 3.0, 3.5, 4.0, 4.5
+  annualWithdrawalRupees: number;
+  successProbabilityPercent: number;
+  ruinProbabilityPercent: number;
+  verdict: 'SAFE' | 'CAUTION' | 'DANGEROUS';
+}
+
 export interface MonteCarloResult {
   simulationsRun: number;
   totalYears: number;
@@ -51,6 +62,9 @@ export interface MonteCarloResult {
   safeWithdrawalRatePercent: number; // Recommended actuarial SWR for this plan
   srrRiskRating: 'LOW' | 'MODERATE' | 'ELEVATED' | 'CRITICAL';
   srrExplanation: string;
+  recommendedCashWedgeMonths: number;
+  recommendedCashWedgeRupees: number;
+  swrScenarios: SwrScenarioPoint[];
   trajectories: PercentileTrajectory[];
   actuarialVerdict: string;
 }
@@ -149,6 +163,27 @@ export function runMonteCarloSimulation(params: MonteCarloParams): MonteCarloRes
         if (yr >= 1 && yr <= 4) {
           annualInflation = 0.115;
           blendedReturn = 0.045;
+        }
+      } else if (scenario === 'ketan_parekh_2001') {
+        // Dot-Com / Ketan Parekh crash: -45% year 1, -12% year 2, flat recovery
+        if (yr === 1 || yr === yearsToRetire + 1) {
+          blendedReturn = -0.45;
+        } else if (yr === 2 || yr === yearsToRetire + 2) {
+          blendedReturn = -0.12;
+        } else if (yr === 3 || yr === yearsToRetire + 3) {
+          blendedReturn = 0.02;
+        }
+      } else if (scenario === 'demonetisation_nbfc_2016') {
+        // IL&FS / NBFC liquidity squeeze: debt returns compressed to 2%, equity choppy
+        if (yr >= 1 && yr <= 2) {
+          blendedReturn = equityRatio * 0.04 + (1 - equityRatio) * 0.02;
+          annualInflation = 0.045;
+        }
+      } else if (scenario === 'bop_crisis_1991') {
+        // 1991 Balance-of-payments crisis: 13.8% runaway CPI inflation, 6% muted return
+        if (yr >= 1 && yr <= 3) {
+          annualInflation = 0.138;
+          blendedReturn = 0.06;
         }
       }
 
@@ -261,6 +296,46 @@ export function runMonteCarloSimulation(params: MonteCarloParams): MonteCarloRes
     actuarialVerdict = 'Fragile Structure: High probability of premature depletion under Indian economic stress. Increase monthly SIP or extend horizon.';
   }
 
+  // Dynamic Cash Wedge / Buffer Sizer
+  // Recommends non-equity cushion in liquid/arbitrage funds to survive early bear markets without selling equities
+  const recommendedCashWedgeMonths = srrRiskRating === 'CRITICAL'
+    ? 36
+    : srrRiskRating === 'ELEVATED'
+    ? 24
+    : srrRiskRating === 'MODERATE'
+    ? 18
+    : 12;
+  const recommendedCashWedgeRupees = Math.round(monthlyRetirementBurn * recommendedCashWedgeMonths);
+
+  // Safe Withdrawal Rate (SWR) Actuarial Matrix (3.0% to 5.0%)
+  const swrRates = [3.0, 3.5, 4.0, 4.5, 5.0];
+  const swrScenarios: SwrScenarioPoint[] = swrRates.map((rate) => {
+    const annualWithdrawalRupees = Math.round(medianRetirementCorpus * (rate / 100));
+    let ruinProb = 0;
+    let verdict: 'SAFE' | 'CAUTION' | 'DANGEROUS' = 'SAFE';
+
+    if (rate <= safeWithdrawalRatePercent) {
+      ruinProb = Math.min(10, Math.round(ruinProbabilityPercent * (rate / Math.max(1, safeWithdrawalRatePercent))));
+      verdict = 'SAFE';
+    } else if (rate <= safeWithdrawalRatePercent + 0.6) {
+      ruinProb = Math.min(45, Math.round(ruinProbabilityPercent * 1.5 + (rate - safeWithdrawalRatePercent) * 12));
+      verdict = 'CAUTION';
+    } else {
+      ruinProb = Math.min(95, Math.round(ruinProbabilityPercent * 2.2 + (rate - safeWithdrawalRatePercent) * 20));
+      verdict = 'DANGEROUS';
+    }
+
+    const successProbabilityPercent = Math.max(5, Math.min(100, 100 - ruinProb));
+
+    return {
+      swrPercent: rate,
+      annualWithdrawalRupees,
+      successProbabilityPercent,
+      ruinProbabilityPercent: ruinProb,
+      verdict,
+    };
+  });
+
   return {
     simulationsRun: numSimulations,
     totalYears,
@@ -273,6 +348,9 @@ export function runMonteCarloSimulation(params: MonteCarloParams): MonteCarloRes
     safeWithdrawalRatePercent,
     srrRiskRating,
     srrExplanation,
+    recommendedCashWedgeMonths,
+    recommendedCashWedgeRupees,
+    swrScenarios,
     trajectories,
     actuarialVerdict,
   };

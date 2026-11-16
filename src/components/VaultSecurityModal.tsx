@@ -15,6 +15,8 @@ import {
   Zap,
   Copy,
   Download,
+  Upload,
+  FolderArchive,
 } from 'lucide-react';
 import type { UserAccount } from '../types/account';
 import { generatePinSalt, hashVaultPin, verifyVaultPin } from '../lib/vaultSecurity';
@@ -27,6 +29,8 @@ interface VaultSecurityModalProps {
   activeAccount: UserAccount;
   onUpdateAccount: () => void;
   onLockNow: () => void;
+  onExportAllVaults?: (secret: string) => Promise<void>;
+  onImportAllVaults?: (file: File, secret: string) => Promise<{ accountsImported: number }>;
 }
 
 export const VaultSecurityModal: React.FC<VaultSecurityModalProps> = ({
@@ -35,6 +39,8 @@ export const VaultSecurityModal: React.FC<VaultSecurityModalProps> = ({
   activeAccount,
   onUpdateAccount,
   onLockNow,
+  onExportAllVaults,
+  onImportAllVaults,
 }) => {
   const isProtected = Boolean(activeAccount.pinHash && activeAccount.pinSalt);
 
@@ -52,6 +58,11 @@ export const VaultSecurityModal: React.FC<VaultSecurityModalProps> = ({
   const [mnemonicPhrase, setMnemonicPhrase] = useState<string | null>(null);
   const [showMnemonic, setShowMnemonic] = useState(false);
   const [copiedMnemonic, setCopiedMnemonic] = useState(false);
+
+  const [archivePassword, setArchivePassword] = useState('');
+  const [importArchivePassword, setImportArchivePassword] = useState('');
+  const [archiveExpanded, setArchiveExpanded] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -115,6 +126,48 @@ INSTRUCTIONS FOR RESTORATION:
     setShake(true);
     setTimeout(() => setShake(false), 500);
   }, []);
+
+  const handleExportArchive = useCallback(async () => {
+    if (!onExportAllVaults) return;
+    setIsProcessing(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const secret = archivePassword.trim() || mnemonicPhrase || '';
+      await onExportAllVaults(secret);
+      setSuccess('Master archive (.psfi.json) exported successfully!');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Archive export failed.');
+      triggerShake();
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [onExportAllVaults, archivePassword, mnemonicPhrase, triggerShake]);
+
+  const handleFileChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !onImportAllVaults) return;
+      setIsProcessing(true);
+      setError(null);
+      setSuccess(null);
+      try {
+        const secret = importArchivePassword.trim() || mnemonicPhrase || '';
+        const result = await onImportAllVaults(file, secret);
+        setSuccess(`Successfully restored ${result.accountsImported} vault(s) from encrypted master archive!`);
+        onUpdateAccount();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to decrypt/restore archive. Check password.');
+        triggerShake();
+      } finally {
+        setIsProcessing(false);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }
+    },
+    [onImportAllVaults, importArchivePassword, mnemonicPhrase, onUpdateAccount, triggerShake]
+  );
 
   const resetForm = useCallback(() => {
     setNewPin('');
@@ -498,6 +551,113 @@ INSTRUCTIONS FOR RESTORATION:
                       <Download size={12} />
                       <span>Download Kit (.txt)</span>
                     </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Master Vault Archive (Unified Multi-Vault Backup & Restore) */}
+            <div style={{ padding: '12px 14px', borderRadius: 'var(--radius-xl)', background: 'var(--surface-overlay)', border: '1px solid var(--border-subtle)', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: archiveExpanded ? 10 : 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <FolderArchive size={14} className="text-solstice" />
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-primary)', fontFamily: 'var(--font-mono)' }}>
+                    Unified Encrypted Master Archive (.psfi.json)
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="link-btn font-mono"
+                  style={{ fontSize: 11, cursor: 'pointer' }}
+                  onClick={() => setArchiveExpanded(!archiveExpanded)}
+                >
+                  {archiveExpanded ? 'Collapse' : 'Manage Archive'}
+                </button>
+              </div>
+
+              {archiveExpanded && (
+                <div style={{ marginTop: 8 }}>
+                  <p style={{ margin: '0 0 10px 0', fontSize: 11, color: 'var(--ink-muted)', lineHeight: 1.4 }}>
+                    Back up all vaults, plans, and baselines into one client-side AES-256-GCM bundle (PBKDF2 600,000 rounds). 100% portable disaster recovery across browsers or devices.
+                  </p>
+
+                  {/* Export subsection */}
+                  <div style={{ padding: '10px 12px', borderRadius: 8, background: 'var(--surface-card)', border: '1px solid var(--border-subtle)', marginBottom: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-primary)', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Download size={12} className="text-emerald-400" />
+                      <span>Export All Vaults (Encrypted Bundle)</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <input
+                        type="password"
+                        placeholder="Passphrase (or leave blank to use 12-word seed)"
+                        value={archivePassword}
+                        onChange={(e) => setArchivePassword(e.target.value)}
+                        style={{
+                          flex: 1,
+                          minWidth: 180,
+                          fontSize: 11,
+                          padding: '6px 10px',
+                          borderRadius: 6,
+                          background: 'rgba(0,0,0,0.25)',
+                          border: '1px solid var(--border-subtle)',
+                          color: '#fff',
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        disabled={isProcessing}
+                        onClick={handleExportArchive}
+                        style={{ fontSize: 11, padding: '6px 12px', gap: 6 }}
+                      >
+                        <Download size={12} />
+                        <span>Download Archive</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Restore subsection */}
+                  <div style={{ padding: '10px 12px', borderRadius: 8, background: 'var(--surface-card)', border: '1px solid var(--border-subtle)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-primary)', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Upload size={12} className="text-solstice" />
+                      <span>Restore All Vaults from Archive</span>
+                    </div>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      accept=".json,.psfi.json"
+                      onChange={handleFileChange}
+                      style={{ display: 'none' }}
+                    />
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <input
+                        type="password"
+                        placeholder="Archive decryption passphrase"
+                        value={importArchivePassword}
+                        onChange={(e) => setImportArchivePassword(e.target.value)}
+                        style={{
+                          flex: 1,
+                          minWidth: 180,
+                          fontSize: 11,
+                          padding: '6px 10px',
+                          borderRadius: 6,
+                          background: 'rgba(0,0,0,0.25)',
+                          border: '1px solid var(--border-subtle)',
+                          color: '#fff',
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        disabled={isProcessing}
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{ fontSize: 11, padding: '6px 12px', gap: 6 }}
+                      >
+                        <Upload size={12} />
+                        <span>Select .psfi.json &amp; Restore</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}

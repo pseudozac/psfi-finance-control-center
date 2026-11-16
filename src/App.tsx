@@ -31,6 +31,7 @@ import {
   X,
   Search,
   Scale,
+  FolderArchive,
 } from 'lucide-react';
 import type { FinancePlan, ViewPeriod } from './types/finance';
 import {
@@ -97,10 +98,17 @@ export function App() {
     isDirty,
     commitPlanChanges,
     discardPlanChanges,
+    exportAllVaultsBundle,
+    importAllVaultsBundle,
   } = useFinancePlan();
 
   // App phase control: loading -> gateway -> dashboard
-  const [appPhase, setAppPhase] = useState<AppPhase>('loading');
+  const [appPhase, setAppPhase] = useState<AppPhase>(() => {
+    if (typeof window !== 'undefined' && (window.location.search.includes('dashboard') || window.location.search.includes('skipIntro'))) {
+      return 'dashboard';
+    }
+    return 'loading';
+  });
   const [activeView, setActiveView] = useState<'control' | 'terminal'>('control');
   const [period, setPeriod] = useState<ViewPeriod>('monthly');
   const [horizonMonths, setHorizonMonths] = useState<number>(24);
@@ -118,6 +126,7 @@ export function App() {
   const [showMonteCarlo, setShowMonteCarlo] = useState<boolean>(false);
   const [showVaultSecurity, setShowVaultSecurity] = useState<boolean>(false);
   const [showLoanArbitrage, setShowLoanArbitrage] = useState<boolean>(false);
+  const [showPrintableStatement, setShowPrintableStatement] = useState<boolean>(false);
   const [unlockedVaultIds, setUnlockedVaultIds] = useState<Set<string>>(new Set());
   const [toolsMenuOpen, setToolsMenuOpen] = useState<boolean>(false);
   const [toolsSearchQuery, setToolsSearchQuery] = useState<string>('');
@@ -165,6 +174,7 @@ export function App() {
     setShowQRModal(false);
     setShowVaultSecurity(false);
     setShowLoanArbitrage(false);
+    setShowPrintableStatement(false);
     setShowCmdK(false);
   };
 
@@ -178,7 +188,8 @@ export function App() {
     showShareModal ||
     showQRModal ||
     showVaultSecurity ||
-    showLoanArbitrage
+    showLoanArbitrage ||
+    showPrintableStatement
   );
 
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -844,16 +855,30 @@ export function App() {
           </button>
           )}
 
-          {matchesToolsSearch('Print Executive PDF', '1-page formatted report') && (
+          {matchesToolsSearch('Executive Wealth Dossier', 'Audit, debt & RPG PDF dossier') && (
           <button
             type="button"
             className="tools-menu-item"
-            onClick={() => { setToolsMenuOpen(false); window.print(); }}
+            onClick={() => { setToolsMenuOpen(false); setShowPrintableStatement(true); }}
           >
-            <Printer size={13} className="text-muted" />
+            <Printer size={13} className="text-solstice" />
             <div>
-              <span className="item-title">Print Executive PDF</span>
-              <span className="item-sub">1-page formatted report</span>
+              <span className="item-title">Executive Wealth Dossier</span>
+              <span className="item-sub">Audit, debt &amp; RPG PDF dossier</span>
+            </div>
+          </button>
+          )}
+
+          {matchesToolsSearch('Master Vault Archive', 'Encrypted multi-vault backup') && (
+          <button
+            type="button"
+            className="tools-menu-item"
+            onClick={() => { setToolsMenuOpen(false); setShowVaultSecurity(true); }}
+          >
+            <FolderArchive size={13} className="text-solstice" />
+            <div>
+              <span className="item-title">Master Vault Archive</span>
+              <span className="item-sub">Encrypted multi-vault .psfi.json bundle</span>
             </div>
           </button>
           )}
@@ -1310,7 +1335,7 @@ export function App() {
         onTogglePeriod={() => setPeriod(period === 'monthly' ? 'annual' : 'monthly')}
         onExportJSON={exportJSON}
         onExportCSV={() => exportCSV(horizonMonths)}
-        onPrint={() => window.print()}
+        onPrint={() => setShowPrintableStatement(true)}
         onResetDefaults={resetToDefaults}
         onLoadDemo={launchDemoVault}
         onOpenStatementParser={() => setShowStatementParser(true)}
@@ -1374,6 +1399,8 @@ export function App() {
             return next;
           });
         }}
+        onExportAllVaults={exportAllVaultsBundle}
+        onImportAllVaults={importAllVaultsBundle}
       />
 
       {/* Zero-Server Private Statement & Document Ingestion Modal */}
@@ -1418,7 +1445,36 @@ export function App() {
         projections={projections}
         activeAccount={activeAccount}
         baseline={baseline}
+        skillTree={skillTreeState}
       />
+
+      {/* Interactive Dossier Preview Modal */}
+      {showPrintableStatement && (
+        <div
+          className="executive-dossier-preview-modal"
+          onClick={() => setShowPrintableStatement(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Executive Wealth Dossier Preview"
+        >
+          <div
+            className="executive-dossier-modal-container"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ExecutivePrintableStatement
+              plan={plan}
+              summary={summary}
+              budgetRule={budgetRule}
+              taxComparison={taxComparison}
+              projections={projections}
+              activeAccount={activeAccount}
+              baseline={baseline}
+              skillTree={skillTreeState}
+              onClose={() => setShowPrintableStatement(false)}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Minimalist Footer */}
       <footer className="footer-capsule">

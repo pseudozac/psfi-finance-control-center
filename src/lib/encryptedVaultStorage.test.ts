@@ -8,6 +8,8 @@ import {
   loadAllAccountsEncrypted,
   deleteAccountEncrypted,
   migrateLegacyAccountsToEncrypted,
+  exportEncryptedVaultBundle,
+  importEncryptedVaultBundle,
 } from './encryptedVaultStorage';
 import type { UserAccount } from '../types/account';
 import { DEFAULT_PLAN } from './finance';
@@ -115,5 +117,58 @@ describe('Encrypted Vault Storage Engine (encryptedVaultStorage)', () => {
 
     const loaded = await loadAllAccountsEncrypted(result.masterKey);
     expect(loaded.length).toBe(result.accountsCount);
+  });
+
+  it('exports all vaults into an encrypted master bundle and imports them cleanly', async () => {
+    const { masterKey } = await initializeSecureVault(undefined, 5_000);
+
+    const vault1: UserAccount = {
+      id: 'vault_alpha',
+      name: 'Alpha Corporate Vault',
+      avatarColor: 'nebula',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      plan: { ...DEFAULT_PLAN, income: { ...DEFAULT_PLAN.income, salary: 250000 } },
+      baseline: null,
+    };
+    const vault2: UserAccount = {
+      id: 'vault_beta',
+      name: 'Beta Family Vault',
+      avatarColor: 'solstice',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      plan: { ...DEFAULT_PLAN, income: { ...DEFAULT_PLAN.income, salary: 180000 } },
+      baseline: null,
+    };
+
+    await saveAccountEncrypted(masterKey, vault1);
+    await saveAccountEncrypted(masterKey, vault2);
+
+    const exportPassword = 'MasterPassphrase#2026';
+    const bundleJson = await exportEncryptedVaultBundle(masterKey, exportPassword, 2_000);
+
+    const parsedEnvelope = JSON.parse(bundleJson);
+    expect(parsedEnvelope.type).toBe('encrypted_vault_bundle');
+    expect(parsedEnvelope.accounts_count).toBe(2);
+    expect(parsedEnvelope.mbk.wrapped).toBeDefined();
+    expect(parsedEnvelope.payload.ciphertext).toBeDefined();
+
+    // Wrong password should reject decryption
+    await expect(
+      importEncryptedVaultBundle(bundleJson, 'WrongPassword', masterKey)
+    ).rejects.toThrow();
+
+    // Clean destination storage and import bundle
+    await clearSecureStorage();
+    const { masterKey: freshMasterKey } = await initializeSecureVault(undefined, 5_000);
+
+    const importResult = await importEncryptedVaultBundle(bundleJson, exportPassword, freshMasterKey);
+    expect(importResult.accountsImported).toBe(2);
+    expect(importResult.accounts).toHaveLength(2);
+
+    const restoredVaults = await loadAllAccountsEncrypted(freshMasterKey);
+    expect(restoredVaults).toHaveLength(2);
+    expect(restoredVaults.some((v) => v.name === 'Alpha Corporate Vault')).toBe(true);
+    expect(restoredVaults.some((v) => v.name === 'Beta Family Vault')).toBe(true);
   });
 });

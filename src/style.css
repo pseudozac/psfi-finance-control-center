@@ -10262,13 +10262,153 @@ body {
 }
 
 /* ==========================================================================
-   Executive 1-Page Printable PDF Statement (@media print)
+   Executive Wealth Dossier & Printable PDF Statement (@media print & Modal)
    ========================================================================== */
 .executive-printable-statement {
   display: none;
 }
 
+/* Executive Dossier On-Screen Preview Modal */
+.executive-dossier-preview-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(8, 12, 22, 0.88);
+  backdrop-filter: blur(14px);
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  padding: 32px 16px;
+  animation: fadeIn 0.2s ease;
+}
+
+.executive-dossier-modal-container {
+  width: 100%;
+  max-width: 860px;
+  margin: auto;
+}
+
+.executive-dossier-modal-container .executive-printable-statement {
+  display: block;
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+  border-radius: 8px;
+  padding: 24px 30px;
+  box-sizing: border-box;
+}
+
+.exec-interactive-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  margin-bottom: 14px;
+  border: 1px solid #e2e8f0;
+}
+
+.exec-toolbar-tag {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  background: #e2e8f0;
+  color: #475569;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.exec-print-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  background: #059669;
+  color: #ffffff;
+  font-size: 11.5px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.exec-print-btn:hover {
+  background: #047857;
+  transform: translateY(-1px);
+}
+
+.exec-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background: #e2e8f0;
+  color: #475569;
+  border: none;
+  cursor: pointer;
+}
+.exec-close-btn:hover {
+  background: #cbd5e1;
+  color: #0f172a;
+}
+
+.exec-fortress-banner {
+  padding: 8px 12px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 6px;
+  font-size: 10px;
+  color: #065f46;
+  margin-bottom: 8px;
+}
+
+.exec-badge-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 3px;
+}
+
+.exec-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
 @media print {
+  .exec-no-print {
+    display: none !important;
+  }
+
+  .executive-dossier-preview-modal {
+    position: static !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .executive-dossier-modal-container {
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .executive-dossier-modal-container .executive-printable-statement {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+  }
+
   @page {
     size: A4 portrait;
     margin: 8mm 10mm;
@@ -10568,6 +10708,35 @@ body {
     font-size: 7.5px !important;
     color: #94a3b8 !important;
     margin-top: 1px !important;
+  }
+
+  .exec-fortress-banner {
+    padding: 6px 8px !important;
+    background: #ecfdf5 !important;
+    border: 1px solid #a7f3d0 !important;
+    border-radius: 4px !important;
+    font-size: 8.5px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .exec-badge-chip-list {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 3px !important;
+    margin-top: 2px !important;
+  }
+
+  .exec-badge-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+    font-size: 8px !important;
+    font-weight: 700 !important;
+    padding: 1px 4px !important;
+    border-radius: 3px !important;
+    background: #d1fae5 !important;
+    color: #065f46 !important;
+    border: 1px solid #a7f3d0 !important;
   }
 }
 

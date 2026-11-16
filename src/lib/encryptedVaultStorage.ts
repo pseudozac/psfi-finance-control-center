@@ -471,3 +471,164 @@ export async function ensureActiveMasterKey(): Promise<{ masterKey: CryptoKey; m
   setLiveSessionKey(result.masterKey, result.mnemonic);
   return { masterKey: result.masterKey, mnemonic: result.mnemonic };
 }
+
+// ============================================================================
+// Multi-Vault Unified Encrypted Bundle Export & Import
+// ============================================================================
+
+export interface EncryptedVaultBundleEnvelope {
+  psfi_version: number;
+  type: 'encrypted_vault_bundle';
+  created_at: string;
+  accounts_count: number;
+  kdf: {
+    algorithm: 'PBKDF2-HMAC-SHA256';
+    iterations: number;
+    salt: string; // base64
+  };
+  mbk: {
+    wrapped: string; // base64
+    iv: string; // base64
+  };
+  payload: {
+    ciphertext: string; // base64
+    iv: string; // base64
+  };
+}
+
+/**
+ * Exports all user vaults (accounts, plans, baselines) into an AES-256-GCM encrypted
+ * master archive bundle wrapped with the user's secret passphrase or 12-word mnemonic.
+ */
+export async function exportEncryptedVaultBundle(
+  masterKey: CryptoKey,
+  passphraseOrMnemonic: string,
+  iterations: number = PBKDF2_RECOMMENDED_ITERATIONS
+): Promise<string> {
+  const accounts = await loadAllAccountsEncrypted(masterKey);
+  if (accounts.length === 0) {
+    throw new Error('No accounts found to export');
+  }
+
+  // 1. Generate fresh salt and derive wrapping key from passphrase/mnemonic
+  const salt = generateRandomBytes(16);
+  const wrappingKey = await deriveWrappingKeyFromSecret(passphraseOrMnemonic, salt, iterations);
+
+  // 2. Generate random Master Bundle Key (MBK)
+  const mbk = await generateMasterVaultKey();
+
+  // 3. Encrypt accounts JSON payload with MBK
+  const payloadJson = JSON.stringify({
+    accounts,
+    exported_at: new Date().toISOString(),
+  });
+  const encryptedPayload = await encryptWithKey(mbk, payloadJson);
+
+  // 4. Wrap MBK with the wrapping key
+  const wrappedMbk = await wrapMasterVaultKey(mbk, wrappingKey);
+
+  // 5. Construct envelope
+  const envelope: EncryptedVaultBundleEnvelope = {
+    psfi_version: CURRENT_CRYPTO_VERSION,
+    type: 'encrypted_vault_bundle',
+    created_at: new Date().toISOString(),
+    accounts_count: accounts.length,
+    kdf: {
+      algorithm: 'PBKDF2-HMAC-SHA256',
+      iterations,
+      salt: bytesToBase64(salt),
+    },
+    mbk: {
+      wrapped: bytesToBase64(wrappedMbk.wrappedKey),
+      iv: bytesToBase64(wrappedMbk.iv),
+    },
+    payload: {
+      ciphertext: bytesToBase64(encryptedPayload.ciphertext),
+      iv: bytesToBase64(encryptedPayload.iv),
+    },
+  };
+
+  return JSON.stringify(envelope, null, 2);
+}
+
+/**
+ * Decrypts and validates an encrypted master vault bundle archive, then persists
+ * all restored accounts encrypted with the active Master Vault Key.
+ */
+export async function importEncryptedVaultBundle(
+  bundleJson: string,
+  passphraseOrMnemonic: string,
+  activeMasterKey: CryptoKey
+): Promise<{ accountsImported: number; accounts: UserAccount[] }> {
+  let envelope: EncryptedVaultBundleEnvelope;
+  try {
+    envelope = JSON.parse(bundleJson);
+  } catch {
+    throw new Error('Invalid bundle file: corrupted JSON format');
+  }
+
+  if (envelope.type !== 'encrypted_vault_bundle') {
+    throw new Error('Invalid file type: expected an encrypted PsFi vault bundle');
+  }
+
+  // 1. Recreate wrapping key from salt and passphrase/mnemonic
+  const salt = base64ToBytes(envelope.kdf.salt);
+  const wrappingKey = await deriveWrappingKeyFromSecret(
+    passphraseOrMnemonic,
+    salt,
+    envelope.kdf.iterations
+  );
+
+  // 2. Unwrap Master Bundle Key (MBK)
+  let mbk: CryptoKey;
+  try {
+    mbk = await unwrapMasterVaultKey(
+      base64ToBytes(envelope.mbk.wrapped),
+      wrappingKey,
+      base64ToBytes(envelope.mbk.iv)
+    );
+  } catch {
+    throw new Error('Decryption failed: Incorrect passphrase or recovery mnemonic');
+  }
+
+  // 3. Decrypt payload
+  let decryptedPayload: string;
+  try {
+    decryptedPayload = await decryptWithKey(
+      mbk,
+      base64ToBytes(envelope.payload.ciphertext),
+      base64ToBytes(envelope.payload.iv)
+    );
+  } catch {
+    throw new Error('Corrupted bundle payload or integrity check failed');
+  }
+
+  const parsed = JSON.parse(decryptedPayload);
+  const rawAccounts: UserAccount[] = parsed.accounts || [];
+  if (!Array.isArray(rawAccounts) || rawAccounts.length === 0) {
+    throw new Error('Bundle contains no valid accounts');
+  }
+
+  // 4. Validate and save accounts encrypted under the activeMasterKey
+  const validatedAccounts: UserAccount[] = [];
+  for (const raw of rawAccounts) {
+    const validatedPlan = validateImportedPlan(raw.plan);
+    const validatedBaseline = raw.baseline ? validateImportedPlan(raw.baseline) : null;
+    const account: UserAccount = {
+      id: raw.id || `vault_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      name: raw.name || 'Restored Vault',
+      avatarColor: raw.avatarColor || 'nebula',
+      createdAt: raw.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      plan: validatedPlan,
+      baseline: validatedBaseline,
+    };
+    await saveAccountEncrypted(activeMasterKey, account);
+    validatedAccounts.push(account);
+  }
+
+  return {
+    accountsImported: validatedAccounts.length,
+    accounts: validatedAccounts,
+  };
+}

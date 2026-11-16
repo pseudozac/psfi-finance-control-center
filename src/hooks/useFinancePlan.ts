@@ -17,6 +17,12 @@ import {
   loadOrCreateDemoAccount,
   syncEncryptedVault,
 } from '../lib/accountStorage';
+import {
+  ensureActiveMasterKey,
+  exportEncryptedVaultBundle,
+  importEncryptedVaultBundle,
+  loadAllAccountsEncrypted,
+} from '../lib/encryptedVaultStorage';
 
 export function useFinancePlan() {
   const [accounts, setAccounts] = useState<UserAccount[]>(() => loadAllAccounts());
@@ -219,6 +225,45 @@ export function useFinancePlan() {
     [setPlan, activeAccount.name]
   );
 
+  const exportAllVaultsBundle = useCallback(
+    async (secret: string) => {
+      try {
+        const { masterKey } = await ensureActiveMasterKey();
+        const bundleJson = await exportEncryptedVaultBundle(masterKey, secret);
+        const blob = new Blob([bundleJson], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `psfi-all-vaults-encrypted-${new Date().toISOString().slice(0, 10)}.psfi.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        setStatusMessage('Exported encrypted master archive for all vaults.');
+      } catch (err) {
+        setStatusMessage(err instanceof Error ? `Export failed: ${err.message}` : 'Export failed.');
+      }
+    },
+    []
+  );
+
+  const importAllVaultsBundle = useCallback(
+    async (file: File, secret: string) => {
+      try {
+        const text = await file.text();
+        const { masterKey } = await ensureActiveMasterKey();
+        const result = await importEncryptedVaultBundle(text, secret, masterKey);
+        const refreshed = await loadAllAccountsEncrypted(masterKey);
+        setAccounts(refreshed);
+        setStatusMessage(`Successfully restored ${result.accountsImported} vault(s) from encrypted master archive.`);
+        return result;
+      } catch (err) {
+        const msg = err instanceof Error ? `Import failed: ${err.message}` : 'Import failed.';
+        setStatusMessage(msg);
+        throw err;
+      }
+    },
+    []
+  );
+
   return {
     plan,
     setPlan,
@@ -229,6 +274,8 @@ export function useFinancePlan() {
     exportJSON,
     exportCSV,
     importJSON,
+    exportAllVaultsBundle,
+    importAllVaultsBundle,
     accounts,
     activeAccount,
     switchAccount,

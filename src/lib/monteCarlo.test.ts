@@ -80,4 +80,66 @@ describe('Reverse Monte Carlo FIRE Stress-Testing Engine', () => {
     expect(['ELEVATED', 'CRITICAL']).toContain(stressed.srrRiskRating);
     expect(stressed.antifragilityScore).toBeLessThan(50);
   });
+
+  it('calculates recommended cash wedge cushion and Safe Withdrawal Rate (SWR) scenarios', () => {
+    const result = runMonteCarloSimulation({
+      currentCorpus: 3000000,
+      monthlySavings: 60000,
+      monthlyRetirementBurn: 50000,
+      yearsToRetire: 8,
+      yearsInRetirement: 25,
+      numSimulations: 500,
+      randomSeed: 777,
+    });
+
+    expect(result.recommendedCashWedgeMonths).toBeGreaterThanOrEqual(12);
+    expect(result.recommendedCashWedgeRupees).toBe(50000 * result.recommendedCashWedgeMonths);
+    expect(result.swrScenarios).toHaveLength(5);
+
+    const swr3 = result.swrScenarios.find((s) => s.swrPercent === 3.0);
+    expect(swr3).toBeDefined();
+    expect(swr3?.successProbabilityPercent).toBeGreaterThanOrEqual(70);
+
+    const swr5 = result.swrScenarios.find((s) => s.swrPercent === 5.0);
+    expect(swr5).toBeDefined();
+    expect(swr5?.verdict).toBeDefined();
+  });
+
+  it('supports historical Indian crisis regimes (Ketan Parekh, NBFC crisis, BOP 1991)', () => {
+    const dotCom = runMonteCarloSimulation({
+      currentCorpus: 2000000,
+      monthlySavings: 30000,
+      monthlyRetirementBurn: 40000,
+      yearsToRetire: 5,
+      yearsInRetirement: 20,
+      scenario: 'ketan_parekh_2001',
+      numSimulations: 300,
+      randomSeed: 42,
+    });
+    expect(dotCom.simulationsRun).toBe(300);
+
+    const nbfc = runMonteCarloSimulation({
+      currentCorpus: 2000000,
+      monthlySavings: 30000,
+      monthlyRetirementBurn: 40000,
+      yearsToRetire: 5,
+      yearsInRetirement: 20,
+      scenario: 'demonetisation_nbfc_2016',
+      numSimulations: 300,
+      randomSeed: 42,
+    });
+    expect(nbfc.simulationsRun).toBe(300);
+
+    const bop1991 = runMonteCarloSimulation({
+      currentCorpus: 2000000,
+      monthlySavings: 30000,
+      monthlyRetirementBurn: 40000,
+      yearsToRetire: 5,
+      yearsInRetirement: 20,
+      scenario: 'bop_crisis_1991',
+      numSimulations: 300,
+      randomSeed: 42,
+    });
+    expect(bop1991.simulationsRun).toBe(300);
+  });
 });
