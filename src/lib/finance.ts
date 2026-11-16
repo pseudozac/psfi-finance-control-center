@@ -1,5 +1,6 @@
 import type {
   BudgetRuleAnalysis,
+  CrossoverPointResult,
   CustomExpenseItem,
   DebtPayoffResult,
   EmergencyStressTestResult,
@@ -10,6 +11,7 @@ import type {
   FireMilestone,
   MonthlyProjectionPoint,
   PlanPreset,
+  StepUpComparisonResult,
   TaxComparisonResult,
 } from '../types/finance';
 
@@ -100,6 +102,22 @@ export function formatINR(amount: number): string {
   return inrFormatter.format(Math.round(amount));
 }
 
+export function formatCompactINR(amount: number): string {
+  if (!Number.isFinite(amount)) return '₹0';
+  const abs = Math.abs(amount);
+  const sign = amount < 0 ? '-' : '';
+  if (abs >= 10_000_000) {
+    return `${sign}₹${(abs / 10_000_000).toFixed(2)} Cr`;
+  }
+  if (abs >= 100_000) {
+    return `${sign}₹${(abs / 100_000).toFixed(2)} L`;
+  }
+  if (abs >= 1_000) {
+    return `${sign}₹${(abs / 1_000).toFixed(1)}k`;
+  }
+  return formatINR(amount);
+}
+
 export function sumValues(record: Record<string, number>): number {
   return Object.values(record).reduce((acc, val) => acc + (Number.isFinite(val) ? val : 0), 0);
 }
@@ -144,10 +162,11 @@ export function calculateProjections(
   months = 24,
   baselinePlan?: FinancePlan | null
 ): MonthlyProjectionPoint[] {
-  const safeMonths = Math.max(1, Math.min(120, Math.round(months)));
+  const safeMonths = Math.max(1, Math.min(360, Math.round(months)));
   const monthlyRate = plan.savings.expectedReturnPercent / 100 / 12;
   const monthlyInflation = plan.savings.inflationPercent / 100 / 12;
   const stepUpFactor = 1 + plan.savings.stepUpSipPercent / 100;
+  const monthlyExpenses = calculateTotalMonthlyExpenses(plan.expenses);
 
   const baseMonthlyRate = baselinePlan ? baselinePlan.savings.expectedReturnPercent / 100 / 12 : 0;
   const baseStepUpFactor = baselinePlan ? 1 + baselinePlan.savings.stepUpSipPercent / 100 : 1;
@@ -168,10 +187,13 @@ export function calculateProjections(
     }
 
     const monthlyContribution = plan.savings.monthlySavings + currentSip;
-    corpus = corpus * (1 + monthlyRate) + monthlyContribution;
+    const monthlyGain = corpus * monthlyRate;
+    corpus = corpus + monthlyGain + monthlyContribution;
     contributed += monthlyContribution;
 
     const realCorpus = corpus / Math.pow(1 + monthlyInflation, m);
+    const compoundGrowth = Math.max(0, corpus - contributed);
+    const isCrossover = monthlyGain >= monthlyExpenses && monthlyExpenses > 0;
 
     const point: MonthlyProjectionPoint = {
       month: m,
@@ -179,11 +201,17 @@ export function calculateProjections(
       nominalCorpus: Math.round(corpus),
       realCorpus: Math.round(realCorpus),
       totalContributed: Math.round(contributed),
+      compoundGrowth: Math.round(compoundGrowth),
+      monthlyGain: Math.round(monthlyGain),
+      isCrossover,
+      year: Math.ceil(m / 12),
+      yearLabel: m % 12 === 0 ? `Y${m / 12}` : `M${m}`,
     };
 
     if (baselinePlan) {
       const baseContribution = baselinePlan.savings.monthlySavings + baseSip;
-      baseCorpus = baseCorpus * (1 + baseMonthlyRate) + baseContribution;
+      const baseGain = baseCorpus * baseMonthlyRate;
+      baseCorpus = baseCorpus + baseGain + baseContribution;
       point.baselineCorpus = Math.round(baseCorpus);
     }
 
@@ -191,6 +219,83 @@ export function calculateProjections(
   }
 
   return points;
+}
+
+export function calculateCrossoverPoint(plan: FinancePlan, maxMonths = 360): CrossoverPointResult {
+  const summary = calculateSummary(plan);
+  const monthlyExpenses = summary.monthlyExpenses;
+  if (monthlyExpenses <= 0) {
+    return {
+      achieved: true,
+      month: 0,
+      years: 0,
+      monthsRemainder: 0,
+      corpusAtCrossover: plan.savings.emergencyFundBalance,
+      monthlyPassiveGain: 0,
+      monthlyExpenses: 0,
+    };
+  }
+
+  const monthlyRate = plan.savings.expectedReturnPercent / 100 / 12;
+  const stepUpFactor = 1 + plan.savings.stepUpSipPercent / 100;
+  let corpus = plan.savings.emergencyFundBalance;
+  let currentSip = plan.savings.monthlySip;
+
+  for (let m = 1; m <= maxMonths; m++) {
+    if (m > 1 && (m - 1) % 12 === 0) {
+      currentSip *= stepUpFactor;
+    }
+    const monthlyGain = corpus * monthlyRate;
+    if (monthlyGain >= monthlyExpenses) {
+      const years = Math.floor(m / 12);
+      const monthsRemainder = m % 12;
+      return {
+        achieved: true,
+        month: m,
+        years,
+        monthsRemainder,
+        corpusAtCrossover: Math.round(corpus),
+        monthlyPassiveGain: Math.round(monthlyGain),
+        monthlyExpenses,
+      };
+    }
+    const monthlyContribution = plan.savings.monthlySavings + currentSip;
+    corpus = corpus + monthlyGain + monthlyContribution;
+  }
+
+  return {
+    achieved: false,
+    month: null,
+    years: null,
+    monthsRemainder: null,
+    corpusAtCrossover: null,
+    monthlyPassiveGain: null,
+    monthlyExpenses,
+  };
+}
+
+export function calculateStepUpComparison(plan: FinancePlan, months: number): StepUpComparisonResult {
+  const currentProjections = calculateProjections(plan, months);
+  const flatPlan: FinancePlan = {
+    ...plan,
+    savings: {
+      ...plan.savings,
+      stepUpSipPercent: 0,
+    },
+  };
+  const flatProjections = calculateProjections(flatPlan, months);
+
+  const currentFinal = currentProjections[currentProjections.length - 1]?.nominalCorpus ?? 0;
+  const flatFinal = flatProjections[flatProjections.length - 1]?.nominalCorpus ?? 0;
+  const difference = currentFinal - flatFinal;
+  const differencePercent = flatFinal > 0 ? (difference / flatFinal) * 100 : 0;
+
+  return {
+    currentCorpus: currentFinal,
+    flatCorpus: flatFinal,
+    difference: Math.round(difference),
+    differencePercent: Number(differencePercent.toFixed(1)),
+  };
 }
 
 export function calculateFireAnalysis(plan: FinancePlan): FireAnalysis {

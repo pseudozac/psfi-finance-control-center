@@ -64,7 +64,29 @@ export interface MonthlyProjectionPoint {
   nominalCorpus: number;
   realCorpus: number;
   totalContributed: number;
+  compoundGrowth?: number;
+  monthlyGain?: number;
+  isCrossover?: boolean;
+  year?: number;
+  yearLabel?: string;
   baselineCorpus?: number;
+}
+
+export interface CrossoverPointResult {
+  achieved: boolean;
+  month: number | null;
+  years: number | null;
+  monthsRemainder: number | null;
+  corpusAtCrossover: number | null;
+  monthlyPassiveGain: number | null;
+  monthlyExpenses: number;
+}
+
+export interface StepUpComparisonResult {
+  currentCorpus: number;
+  flatCorpus: number;
+  difference: number;
+  differencePercent: number;
 }
 
 export interface DebtPayoffResult {

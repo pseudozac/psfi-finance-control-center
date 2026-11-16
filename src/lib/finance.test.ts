@@ -3,10 +3,13 @@ import {
   DEFAULT_PLAN,
   PLAN_PRESETS,
   calculateBudgetRule,
+  calculateCrossoverPoint,
   calculateDebtPayoff,
   calculateProjections,
+  calculateStepUpComparison,
   calculateSummary,
   estimateIndianIncomeTax,
+  formatCompactINR,
   formatINR,
   planToCSV,
   validateImportedPlan,
@@ -18,6 +21,13 @@ describe('finance calculations', () => {
     expect(formatINR(Number.NaN)).toBe('₹0');
   });
 
+  it('formats compact INR into Crores and Lakhs', () => {
+    expect(formatCompactINR(15_000_000)).toBe('₹1.50 Cr');
+    expect(formatCompactINR(2_500_000)).toBe('₹25.00 L');
+    expect(formatCompactINR(45_000)).toBe('₹45.0k');
+    expect(formatCompactINR(500)).toBe('₹500');
+  });
+
   it('computes monthly surplus, savings rate, and emergency runway', () => {
     const summary = calculateSummary(DEFAULT_PLAN);
     expect(summary.monthlyIncome).toBe(140_000);
@@ -26,12 +36,32 @@ describe('finance calculations', () => {
     expect(summary.emergencyRunwayMonths).toBeCloseTo(240_000 / 66_000, 4);
   });
 
-  it('projects step-up SIP and inflation-adjusted real corpus', () => {
-    const pts = calculateProjections(DEFAULT_PLAN, 24, DEFAULT_PLAN);
-    expect(pts).toHaveLength(24);
+  it('projects step-up SIP, multi-decade compounding, and crossover metrics', () => {
+    const pts = calculateProjections(DEFAULT_PLAN, 360, DEFAULT_PLAN);
+    expect(pts).toHaveLength(360);
     expect(pts[23].nominalCorpus).toBeGreaterThan(pts[23].realCorpus);
     expect(pts[23].nominalCorpus).toBeGreaterThan(pts[23].totalContributed);
     expect(pts[23].baselineCorpus).toBe(pts[23].nominalCorpus);
+    expect(pts[23].compoundGrowth).toBe(pts[23].nominalCorpus - pts[23].totalContributed);
+    expect(pts[359].year).toBe(30);
+
+    // Later years should exhibit crossover where monthly gain >= monthly expenses
+    const latePoint = pts[pts.length - 1];
+    expect(latePoint.isCrossover).toBe(true);
+  });
+
+  it('computes financial independence crossover point correctly', () => {
+    const crossover = calculateCrossoverPoint(DEFAULT_PLAN, 360);
+    expect(crossover.achieved).toBe(true);
+    expect(crossover.month).toBeGreaterThan(0);
+    expect(crossover.monthlyPassiveGain).toBeGreaterThanOrEqual(crossover.monthlyExpenses);
+  });
+
+  it('calculates the step-up advantage over flat SIP', () => {
+    const comparison = calculateStepUpComparison(DEFAULT_PLAN, 120);
+    expect(comparison.currentCorpus).toBeGreaterThan(comparison.flatCorpus);
+    expect(comparison.difference).toBeGreaterThan(0);
+    expect(comparison.differencePercent).toBeGreaterThan(0);
   });
 
   it('handles debt payoff edge cases cleanly', () => {
