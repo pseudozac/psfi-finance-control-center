@@ -123,10 +123,11 @@ export const ProjectionSection: React.FC<ProjectionSectionProps> = ({
         <div>
           <div className="flex-align gap-2 mb-1">
             <span className="dot dot-pulsar" />
-            <h2 className="card-title m-0">Majestic Wealth &amp; SIP Compounding Curve</h2>
+            <h2 className="card-title m-0">Wealth Compounding &amp; Long-Term SIP Scenarios</h2>
+            <span className="tag-pill tag-nebula font-mono text-[10px]">SCENARIO PROJECTION MODEL</span>
           </div>
           <p className="muted text-xs">
-            Multi-decade equity mutual fund trajectory, milestone countdowns, and financial freedom crossover point
+            Multi-decade equity mutual fund simulations, milestone countdowns, and financial freedom crossover scenarios under assumed market CAGR
           </p>
         </div>
 
@@ -181,28 +182,76 @@ export const ProjectionSection: React.FC<ProjectionSectionProps> = ({
         </div>
       </div>
 
-      {/* Freedom Crossover Point Highlight Banner */}
+      {/* Freedom Crossover Point Highlight Banner (Scenario Mode) */}
       {crossover.achieved && crossover.month ? (
-        <div className="mb-4 p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/30 text-emerald-200 flex items-start gap-2.5 text-xs animate-fadeIn">
-          <Sparkles size={16} className="text-emerald-400 shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <span className="font-bold text-white mr-1.5">
-              🎯 Financial Independence Crossover Point: Month {crossover.month} ({crossover.years} Years{crossover.monthsRemainder ? `, ${crossover.monthsRemainder} Months` : ''})
-            </span>
-            <span className="text-emerald-300">
-              At this landmark, your monthly compounding gains ({formatINR(crossover.monthlyPassiveGain ?? 0)}/mo) surpass your living expenses ({formatINR(crossover.monthlyExpenses)}/mo). Your money earns more every month than your lifestyle burns!
-            </span>
+        <div className="mb-4 rounded-xl bg-slate-950/70 border border-emerald-500/40 p-3.5 text-xs animate-fadeIn space-y-3">
+          <div className="flex items-start gap-2.5">
+            <Sparkles size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
+                <span className="font-bold text-white text-sm">
+                  🎯 Financial Freedom Crossover Point (Scenario Model): Month {crossover.month} ({crossover.years} Years{crossover.monthsRemainder ? `, ${crossover.monthsRemainder} Months` : ''})
+                </span>
+                <span className="tag-pill tag-nebula font-mono text-[10px]">
+                  [ILLUSTRATIVE SCENARIO · NOT DEPENDABLE CASHFLOW]
+                </span>
+              </div>
+              <p className="text-emerald-300 leading-relaxed mb-2">
+                At this milestone, hypothetical monthly compounding gains ({formatINR(crossover.monthlyPassiveGain ?? 0)}/mo) surpass your baseline living burn ({formatINR(crossover.monthlyExpenses)}/mo).
+              </p>
+              <div className="p-2.5 rounded-lg bg-slate-900/90 border border-amber-500/30 text-amber-200/90 leading-relaxed text-[11px]">
+                <strong className="text-amber-300 font-mono block mb-0.5">⚠️ Actuarial Reality Notice: A Projected Monthly Gain is NOT Dependable Spendable Income</strong>
+                Equity returns are non-linear and volatile ($\sigma \approx 18\%$ annual deviation). Paper compounding cannot be withdrawn smoothly every month like a salary. Selling units to spend incurs <strong>Section 112A LTCG tax (12.5% over ₹1.25L)</strong>, while living expenses inflate with <strong>CPI ({plan.savings.inflationPercent}%/yr)</strong>. Dependable spendable income requires a conservative <strong>3.0%–3.5% Safe Withdrawal Rate (SWR)</strong> backed by a liquid cash wedge.
+              </div>
+            </div>
           </div>
+
+          {/* Scenario Assumptions & Friction Matrix Close to Headline */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2 pt-2 border-t border-subtle/60 font-mono text-[11px]">
+            <div className="p-2 rounded bg-slate-900/50 border border-subtle">
+              <span className="text-muted block text-[10px]">ASSUMED EQUITY CAGR</span>
+              <span className="font-bold text-nebula">{crossover.assumptions.expectedReturnPercent}% Gross</span>
+            </div>
+            <div className="p-2 rounded bg-slate-900/50 border border-subtle">
+              <span className="text-muted block text-[10px]">CPI INFLATION DRAG</span>
+              <span className="font-bold text-rose-300">{crossover.assumptions.inflationPercent}% / yr</span>
+            </div>
+            <div className="p-2 rounded bg-slate-900/50 border border-subtle">
+              <span className="text-muted block text-[10px]">SEC 112A LTCG TAX</span>
+              <span className="font-bold text-amber-300">{crossover.assumptions.estimatedLtcgTaxPercent}% (&gt;₹1.25L)</span>
+            </div>
+            <div className="p-2 rounded bg-slate-900/50 border border-subtle">
+              <span className="text-muted block text-[10px]">MUTUAL FUND TER</span>
+              <span className="font-bold text-slate-300">~{crossover.assumptions.estimatedExpenseRatioPercent}% Fee Drag</span>
+            </div>
+            <div className="p-2 rounded bg-slate-900/50 border border-subtle">
+              <span className="text-muted block text-[10px]">INFLATED BURN @ M{crossover.month}</span>
+              <span className="font-bold text-corona">{formatINR(crossover.inflatedMonthlyExpenses ?? crossover.monthlyExpenses)}/mo</span>
+            </div>
+            <div className="p-2 rounded bg-slate-900/50 border border-subtle">
+              <span className="text-muted block text-[10px]">DEPENDABLE SWR (3.5%)</span>
+              <span className="font-bold text-emerald-400">{formatINR(crossover.realSpendableCashflow ?? 0)}/mo</span>
+            </div>
+          </div>
+
+          {crossover.realCrossoverMonth && (
+            <div className="text-[11px] font-mono text-cyan-300 flex items-center gap-1.5 pt-1">
+              <CheckCircle2 size={12} className="text-cyan-400" />
+              <span>
+                <strong>Conservative SWR &amp; Post-Tax Crossover:</strong> Reached at Month {crossover.realCrossoverMonth} ({crossover.realCrossoverYears} Years), where dependable 3.5% SWR cashflow fully covers your inflated monthly burn.
+              </span>
+            </div>
+          )}
         </div>
       ) : (
-        <div className="mb-4 p-2.5 rounded-xl bg-slate-900/40 border border-subtle text-muted flex items-center justify-between text-xs">
+        <div className="mb-4 p-3 rounded-xl bg-slate-900/40 border border-subtle text-muted flex items-center justify-between text-xs">
           <div className="flex items-center gap-2">
             <Target size={14} className="text-amber-400" />
             <span>
-              Living burn: <strong className="text-primary font-mono">{formatINR(crossover.monthlyExpenses)}/mo</strong>. Boost SIP or Step-Up to reach your Crossover Point within 10–15 years.
+              Scenario Living Burn: <strong className="text-primary font-mono">{formatINR(crossover.monthlyExpenses)}/mo</strong>. Boost SIP or Step-Up to reach your Crossover Scenario within 10–15 years.
             </span>
           </div>
-          <span className="text-[11px] font-mono text-amber-400/80">30-Year Horizon Active</span>
+          <span className="text-[11px] font-mono text-amber-400/80">Assumptions: {plan.savings.expectedReturnPercent}% CAGR · {plan.savings.inflationPercent}% Inflation</span>
         </div>
       )}
 
@@ -210,7 +259,7 @@ export const ProjectionSection: React.FC<ProjectionSectionProps> = ({
       {finalPoint && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">
           <div className="telemetry-pill">
-            <span className="telemetry-label font-mono">Nominal Corpus ({horizonYears}Y)</span>
+            <span className="telemetry-label font-mono">Nominal Corpus ({horizonYears}Y Scenario)</span>
             <span className="telemetry-val font-mono text-nebula">
               {formatCompactINR(finalPoint.nominalCorpus)}
             </span>
@@ -230,7 +279,7 @@ export const ProjectionSection: React.FC<ProjectionSectionProps> = ({
           </div>
 
           <div className="telemetry-pill">
-            <span className="telemetry-label font-mono">Pure Compound Wealth</span>
+            <span className="telemetry-label font-mono">Compound Wealth (Scenario)</span>
             <span className="telemetry-val font-mono text-emerald-400">
               {formatCompactINR(compoundGrowth)}
             </span>
@@ -249,12 +298,12 @@ export const ProjectionSection: React.FC<ProjectionSectionProps> = ({
 
           <div className="telemetry-pill col-span-2 sm:col-span-1">
             <span className="telemetry-label font-mono flex items-center gap-1">
-              <Coins size={11} className="text-amber-400" /> Safe Passive Cashflow
+              <Coins size={11} className="text-amber-400" /> Dependable SWR Cashflow
             </span>
             <span className="telemetry-val font-mono text-amber-400">
               {formatCompactINR(safeWithdrawalMonthly)}/mo
             </span>
-            <span className="telemetry-sub muted text-[11px]">3.5% SWR for Life</span>
+            <span className="telemetry-sub muted text-[11px]">3.5% SWR for Life (Post-Tax Buffer)</span>
           </div>
         </div>
       )}

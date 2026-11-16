@@ -154,12 +154,12 @@ export const MASTER_TOUR_STEPS: MasterTourStep[] = [
   {
     targetId: 'terminal-financial-statement',
     targetView: 'terminal',
-    badge: '11. AUDITED LEDGER',
+    badge: '11. CASH-FLOW SUMMARY',
     badgeColor: 'nebula',
-    title: 'GAAP / IFRS Personal Income Statement',
+    title: 'Monthly Cash-Flow Summary & Budget Run-Rate',
     description:
-      'A formal corporate-style audited statement detailing Operating Revenue, Cost of Living (COGS), Debt Servicing, Risk Shields (Insurance), and Bottom-Line Net Operating Surplus.',
-    tip: 'Every single rupee from your sliders is accounted for with % of revenue distribution.',
+      'A structured monthly cash-flow run-rate summary detailing Operating Inflows, Essential Living Outflows, Debt Obligations, Risk Shields, and Bottom-Line Net Monthly Surplus.',
+    tip: 'Every single rupee from your budget sliders is accounted for with % of total inflow distribution.',
     icon: <FileSpreadsheet size={15} className="text-nebula" />,
   },
 ];

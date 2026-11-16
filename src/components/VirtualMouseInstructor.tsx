@@ -167,8 +167,8 @@ export const VirtualMouseInstructor: React.FC<VirtualMouseInstructorProps> = ({
       'Simulating Cumulative Reserve & Asset Valuation',
     ],
     7: [
-      'Auditing Operating Revenues & Inflow Streams',
-      'Reviewing GAAP/IFRS Personal Income Statement',
+      'Auditing Inflow Streams & Net Take-Home',
+      'Reviewing Monthly Cash-Flow Summary & Budget Run-Rate',
     ],
   };
 

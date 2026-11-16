@@ -355,6 +355,14 @@ export function calculateProjections(
 export function calculateCrossoverPoint(plan: FinancePlan, maxMonths = 360): CrossoverPointResult {
   const summary = calculateSummary(plan);
   const monthlyExpenses = summary.monthlyExpenses;
+  const assumptions = {
+    expectedReturnPercent: plan.savings.expectedReturnPercent,
+    inflationPercent: plan.savings.inflationPercent,
+    estimatedLtcgTaxPercent: 12.5,
+    estimatedExpenseRatioPercent: 0.75,
+    safeWithdrawalRatePercent: 3.5,
+  };
+
   if (monthlyExpenses <= 0) {
     return {
       achieved: true,
@@ -364,34 +372,89 @@ export function calculateCrossoverPoint(plan: FinancePlan, maxMonths = 360): Cro
       corpusAtCrossover: plan.savings.emergencyFundBalance,
       monthlyPassiveGain: 0,
       monthlyExpenses: 0,
+      realSpendableCashflow: 0,
+      inflatedMonthlyExpenses: 0,
+      realCrossoverMonth: 0,
+      realCrossoverYears: 0,
+      realCrossoverMonthsRemainder: 0,
+      assumptions,
     };
   }
 
   const monthlyRate = plan.savings.expectedReturnPercent / 100 / 12;
+  const inflationMonthlyRate = plan.savings.inflationPercent / 100 / 12;
   const stepUpFactor = 1 + plan.savings.stepUpSipPercent / 100;
   let corpus = plan.savings.emergencyFundBalance;
   let currentSip = plan.savings.monthlySip;
+
+  let nominalCrossover: {
+    month: number;
+    years: number;
+    monthsRemainder: number;
+    corpus: number;
+    monthlyGain: number;
+    realSpendableCashflow: number;
+    inflatedMonthlyExpenses: number;
+  } | null = null;
+
+  let realCrossover: {
+    month: number;
+    years: number;
+    monthsRemainder: number;
+  } | null = null;
 
   for (let m = 1; m <= maxMonths; m++) {
     if (m > 1 && (m - 1) % 12 === 0) {
       currentSip *= stepUpFactor;
     }
     const monthlyGain = corpus * monthlyRate;
-    if (monthlyGain >= monthlyExpenses) {
+    const inflatedExpenses = Math.round(monthlyExpenses * Math.pow(1 + inflationMonthlyRate, m));
+    const safeSpendableCashflow = Math.round((corpus * 0.035) / 12);
+
+    if (!nominalCrossover && monthlyGain >= monthlyExpenses) {
       const years = Math.floor(m / 12);
       const monthsRemainder = m % 12;
-      return {
-        achieved: true,
+      nominalCrossover = {
         month: m,
         years,
         monthsRemainder,
-        corpusAtCrossover: Math.round(corpus),
-        monthlyPassiveGain: Math.round(monthlyGain),
-        monthlyExpenses,
+        corpus: Math.round(corpus),
+        monthlyGain: Math.round(monthlyGain),
+        realSpendableCashflow: safeSpendableCashflow,
+        inflatedMonthlyExpenses: inflatedExpenses,
       };
     }
+
+    if (!realCrossover && safeSpendableCashflow >= inflatedExpenses) {
+      const years = Math.floor(m / 12);
+      const monthsRemainder = m % 12;
+      realCrossover = {
+        month: m,
+        years,
+        monthsRemainder,
+      };
+    }
+
     const monthlyContribution = plan.savings.monthlySavings + currentSip;
     corpus = corpus + monthlyGain + monthlyContribution;
+  }
+
+  if (nominalCrossover) {
+    return {
+      achieved: true,
+      month: nominalCrossover.month,
+      years: nominalCrossover.years,
+      monthsRemainder: nominalCrossover.monthsRemainder,
+      corpusAtCrossover: nominalCrossover.corpus,
+      monthlyPassiveGain: nominalCrossover.monthlyGain,
+      monthlyExpenses,
+      realSpendableCashflow: nominalCrossover.realSpendableCashflow,
+      inflatedMonthlyExpenses: nominalCrossover.inflatedMonthlyExpenses,
+      realCrossoverMonth: realCrossover?.month ?? null,
+      realCrossoverYears: realCrossover?.years ?? null,
+      realCrossoverMonthsRemainder: realCrossover?.monthsRemainder ?? null,
+      assumptions,
+    };
   }
 
   return {
@@ -402,6 +465,12 @@ export function calculateCrossoverPoint(plan: FinancePlan, maxMonths = 360): Cro
     corpusAtCrossover: null,
     monthlyPassiveGain: null,
     monthlyExpenses,
+    realSpendableCashflow: null,
+    inflatedMonthlyExpenses: null,
+    realCrossoverMonth: realCrossover?.month ?? null,
+    realCrossoverYears: realCrossover?.years ?? null,
+    realCrossoverMonthsRemainder: realCrossover?.monthsRemainder ?? null,
+    assumptions,
   };
 }
 
@@ -990,40 +1059,80 @@ export function planToCSV(plan: FinancePlan, projections: MonthlyProjectionPoint
 }
 
 export function calculateBudgetRule(plan: FinancePlan): BudgetRuleAnalysis {
-  const totalIncome = plan.income.salary + plan.income.freelance + plan.income.other;
+  const totalIncome = Math.max(0, plan.income.salary + plan.income.freelance + plan.income.other);
   const safeIncome = Math.max(1, totalIncome);
 
-  const customTotal = (plan.expenses.custom ?? []).reduce((sum, item) => sum + item.amount, 0);
+  const customItems = plan.expenses.custom ?? [];
+  let customNeeds = 0;
+  let customWants = 0;
+  for (const c of customItems) {
+    if (c.category === 'needs' || c.category === 'sinking') {
+      customNeeds += c.amount;
+    } else {
+      customWants += c.amount;
+    }
+  }
+
   const needsAmount =
     plan.expenses.housing +
     plan.expenses.groceries +
     plan.expenses.utilities +
     plan.expenses.transport +
-    plan.expenses.insurance;
-  const wantsAmount = plan.expenses.lifestyle + customTotal;
-  const savingsAmount = plan.savings.monthlySavings + plan.savings.monthlySip;
+    plan.expenses.insurance +
+    customNeeds;
+  const wantsAmount = plan.expenses.lifestyle + customWants;
+  const savingsAmount = Math.max(0, plan.savings.monthlySavings + plan.savings.monthlySip);
+  const debtAmount = Math.max(0, plan.debt.monthlyPayment);
+
+  const totalCommitted = needsAmount + wantsAmount + savingsAmount + debtAmount;
+  const unallocatedBufferAmount = Math.max(0, totalIncome - totalCommitted);
 
   const needsPercent = Math.round((needsAmount / safeIncome) * 100);
   const wantsPercent = Math.round((wantsAmount / safeIncome) * 100);
   const savingsPercent = Math.round((savingsAmount / safeIncome) * 100);
+  const debtPercent = Math.round((debtAmount / safeIncome) * 100);
+  const unallocatedBufferPercent = Math.max(0, Math.round((unallocatedBufferAmount / safeIncome) * 100));
+  const pillarPercentSum = needsPercent + wantsPercent + savingsPercent;
 
-  let score = 100;
-  if (needsPercent > 50) score -= (needsPercent - 50) * 1.5;
-  if (wantsPercent > 30) score -= (wantsPercent - 30) * 1.5;
-  if (savingsPercent < 20) score -= (20 - savingsPercent) * 2;
-  score = Math.max(10, Math.min(100, Math.round(score)));
+  let needsPenalty = 0;
+  let wantsPenalty = 0;
+  let savingsPenalty = 0;
 
+  if (needsPercent > 50) needsPenalty = Math.round((needsPercent - 50) * 1.5);
+  if (wantsPercent > 30) wantsPenalty = Math.round((wantsPercent - 30) * 1.5);
+  if (savingsPercent < 20) savingsPenalty = Math.round((20 - savingsPercent) * 2);
+
+  const score = Math.max(10, Math.min(100, Math.round(100 - needsPenalty - wantsPenalty - savingsPenalty)));
   const rating = score >= 80 ? 'Optimal' : score >= 60 ? 'Healthy' : 'Attention Needed';
 
+  const explanation =
+    `Denominator: Total Monthly Inflow of ₹${totalIncome.toLocaleString('en-IN')} (100% net take-home base). ` +
+    `The 50/30/20 framework specifically audits 3 core living pillars: Needs (${needsPercent}%), Wants (${wantsPercent}%), and Savings/SIP (${savingsPercent}%) = ${pillarPercentSum}%. ` +
+    `The remaining ${debtPercent + unallocatedBufferPercent}% represents Debt Servicing (${debtPercent}%) and Unallocated Retained Buffer (${unallocatedBufferPercent}%). ` +
+    `Budget Health Score = 100 base score − penalties for exceeding 50% Needs (-${needsPenalty} pts), exceeding 30% Wants (-${wantsPenalty} pts), or trailing 20% Savings (-${savingsPenalty} pts). ` +
+    `Debt payments reduce discretionary margin and are tracked in the Debt Avalanche module, while unallocated cash buffers preserve liquidity.`;
+
   return {
+    totalIncome,
     needsAmount,
     needsPercent,
     wantsAmount,
     wantsPercent,
     savingsAmount,
     savingsPercent,
+    debtAmount,
+    debtPercent,
+    unallocatedBufferAmount,
+    unallocatedBufferPercent,
+    pillarPercentSum,
     score,
     rating,
+    scoringBreakdown: {
+      needsPenalty,
+      wantsPenalty,
+      savingsPenalty,
+      explanation,
+    },
   };
 }
 

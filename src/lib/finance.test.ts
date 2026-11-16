@@ -52,11 +52,17 @@ describe('finance calculations', () => {
     expect(latePoint.isCrossover).toBe(true);
   });
 
-  it('computes financial independence crossover point correctly', () => {
+  it('computes financial independence crossover point correctly and includes scenario friction assumptions', () => {
     const crossover = calculateCrossoverPoint(DEFAULT_PLAN, 360);
     expect(crossover.achieved).toBe(true);
     expect(crossover.month).toBeGreaterThan(0);
     expect(crossover.monthlyPassiveGain).toBeGreaterThanOrEqual(crossover.monthlyExpenses);
+    expect(crossover.realSpendableCashflow).toBeGreaterThan(0);
+    expect(crossover.inflatedMonthlyExpenses).toBeGreaterThan(crossover.monthlyExpenses);
+    expect(crossover.assumptions.expectedReturnPercent).toBe(DEFAULT_PLAN.savings.expectedReturnPercent);
+    expect(crossover.assumptions.inflationPercent).toBe(DEFAULT_PLAN.savings.inflationPercent);
+    expect(crossover.assumptions.estimatedLtcgTaxPercent).toBe(12.5);
+    expect(crossover.assumptions.safeWithdrawalRatePercent).toBe(3.5);
   });
 
   it('calculates the step-up advantage over flat SIP', () => {
@@ -161,13 +167,23 @@ describe('finance calculations', () => {
     expect(csv).toContain('"Projection","M12"');
   });
 
-  it('evaluates 50/30/20 budget rules and presets', () => {
+  it('evaluates 50/30/20 budget rules, denominator, and complete allocation reconciliation', () => {
     const analysis = calculateBudgetRule(DEFAULT_PLAN);
-    expect(analysis.needsAmount).toBeGreaterThan(0);
-    expect(analysis.wantsAmount).toBeGreaterThan(0);
-    expect(analysis.savingsAmount).toBeGreaterThan(0);
+    expect(analysis.totalIncome).toBe(140_000);
+    expect(analysis.needsAmount).toBe(56_000); // 40% of 140k
+    expect(analysis.needsPercent).toBe(40);
+    expect(analysis.wantsAmount).toBe(10_000); // 7.1% -> 7%
+    expect(analysis.wantsPercent).toBe(7);
+    expect(analysis.savingsAmount).toBe(40_000); // 28.6% -> 29%
+    expect(analysis.savingsPercent).toBe(29);
+    expect(analysis.debtAmount).toBe(8_000); // 5.7% -> 6%
+    expect(analysis.debtPercent).toBe(6);
+    expect(analysis.unallocatedBufferAmount).toBe(26_000); // 18.6% -> 19%
+    expect(analysis.unallocatedBufferPercent).toBe(19);
+    expect(analysis.pillarPercentSum).toBe(76); // 40 + 7 + 29 = 76%
     expect(analysis.score).toBeGreaterThanOrEqual(10);
     expect(analysis.score).toBeLessThanOrEqual(100);
+    expect(analysis.scoringBreakdown.explanation).toContain('Denominator: Total Monthly Inflow');
     expect(PLAN_PRESETS.length).toBe(4);
   });
 });

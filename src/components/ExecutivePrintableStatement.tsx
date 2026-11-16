@@ -192,12 +192,12 @@ export const ExecutivePrintableStatement: React.FC<ExecutivePrintableStatementPr
             </thead>
             <tbody>
               <tr>
-                <td><strong>Needs (Living &amp; EMIs)</strong></td>
+                <td><strong>Needs (Housing, Food, Ops)</strong></td>
                 <td className="text-right font-mono">{formatINR(budgetRule.needsAmount)}</td>
                 <td className="text-right font-mono font-bold">
                   {budgetRule.needsPercent}%
                 </td>
-                <td className="text-right font-mono text-slate-500">50%</td>
+                <td className="text-right font-mono text-slate-500">&le; 50%</td>
                 <td className="text-center">
                   <span className={`exec-badge ${budgetRule.needsPercent <= 50 ? 'badge-ok' : 'badge-warn'}`}>
                     {budgetRule.needsPercent <= 50 ? 'COMPLIANT' : 'ELEVATED'}
@@ -210,7 +210,7 @@ export const ExecutivePrintableStatement: React.FC<ExecutivePrintableStatementPr
                 <td className="text-right font-mono font-bold">
                   {budgetRule.wantsPercent}%
                 </td>
-                <td className="text-right font-mono text-slate-500">30%</td>
+                <td className="text-right font-mono text-slate-500">&le; 30%</td>
                 <td className="text-center">
                   <span className={`exec-badge ${budgetRule.wantsPercent <= 30 ? 'badge-ok' : 'badge-warn'}`}>
                     {budgetRule.wantsPercent <= 30 ? 'COMPLIANT' : 'STRETCHED'}
@@ -223,18 +223,53 @@ export const ExecutivePrintableStatement: React.FC<ExecutivePrintableStatementPr
                 <td className="text-right font-mono font-bold">
                   {budgetRule.savingsPercent}%
                 </td>
-                <td className="text-right font-mono text-slate-500">20%</td>
+                <td className="text-right font-mono text-slate-500">&ge; 20%</td>
                 <td className="text-center">
                   <span className={`exec-badge ${budgetRule.savingsPercent >= 20 ? 'badge-success' : 'badge-warn'}`}>
                     {budgetRule.savingsPercent >= 20 ? 'OPTIMAL' : 'BELOW 20%'}
                   </span>
                 </td>
               </tr>
+              {budgetRule.debtPercent > 0 && (
+                <tr>
+                  <td><strong>Debt Servicing &amp; EMIs</strong></td>
+                  <td className="text-right font-mono">{formatINR(budgetRule.debtAmount)}</td>
+                  <td className="text-right font-mono font-bold text-amber-700">
+                    {budgetRule.debtPercent}%
+                  </td>
+                  <td className="text-right font-mono text-slate-500">Min.</td>
+                  <td className="text-center">
+                    <span className="exec-badge badge-warn">OBLIGATION</span>
+                  </td>
+                </tr>
+              )}
+              {budgetRule.unallocatedBufferPercent > 0 && (
+                <tr>
+                  <td><strong>Retained Cashflow Buffer</strong></td>
+                  <td className="text-right font-mono">{formatINR(budgetRule.unallocatedBufferAmount)}</td>
+                  <td className="text-right font-mono font-bold text-cyan-700">
+                    {budgetRule.unallocatedBufferPercent}%
+                  </td>
+                  <td className="text-right font-mono text-slate-500">Surplus</td>
+                  <td className="text-center">
+                    <span className="exec-badge badge-ok">BUFFER</span>
+                  </td>
+                </tr>
+              )}
+              <tr style={{ borderTop: '2px solid #cbd5e1', fontWeight: 'bold' }}>
+                <td><strong>TOTAL INFLOW (DENOMINATOR)</strong></td>
+                <td className="text-right font-mono">{formatINR(budgetRule.totalIncome)}</td>
+                <td className="text-right font-mono">100.0%</td>
+                <td className="text-right font-mono text-slate-500">100%</td>
+                <td className="text-center">
+                  <span className="exec-badge badge-ok">RECONCILED</span>
+                </td>
+              </tr>
             </tbody>
           </table>
           <div className="exec-verdict-banner">
-            <span className="font-bold text-slate-800">Budget Score: </span>
-            <span>{budgetRule.score}/100 — Status: {budgetRule.rating}</span>
+            <span className="font-bold text-slate-800">Budget Health Score: </span>
+            <span>{budgetRule.score}/100 ({budgetRule.rating}) — 3-Pillar Sum: {budgetRule.pillarPercentSum}% · Base: {formatINR(budgetRule.totalIncome)}/mo</span>
           </div>
         </div>
 

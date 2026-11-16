@@ -113,6 +113,19 @@ export interface CrossoverPointResult {
   corpusAtCrossover: number | null;
   monthlyPassiveGain: number | null;
   monthlyExpenses: number;
+  // Scenario & Actuarial Breakdown (Taxes, Inflation, SWR):
+  realSpendableCashflow: number | null; // Dependable post-tax monthly cashflow under conservative 3.5% SWR
+  inflatedMonthlyExpenses: number | null; // Monthly living expenses escalated by CPI inflation at crossover month
+  realCrossoverMonth: number | null; // Month where 3.5% SWR covers inflated living burn
+  realCrossoverYears: number | null;
+  realCrossoverMonthsRemainder: number | null;
+  assumptions: {
+    expectedReturnPercent: number; // e.g. 12%
+    inflationPercent: number; // e.g. 6%
+    estimatedLtcgTaxPercent: number; // 12.5% Section 112A
+    estimatedExpenseRatioPercent: number; // 0.75% Mutual Fund TER
+    safeWithdrawalRatePercent: number; // 3.5% SWR
+  };
 }
 
 export interface StepUpComparisonResult {
@@ -179,14 +192,26 @@ export interface MultiDebtComparisonResult {
 }
 
 export interface BudgetRuleAnalysis {
+  totalIncome: number; // Denominator (100% net monthly inflow base)
   needsAmount: number;
   needsPercent: number;
   wantsAmount: number;
   wantsPercent: number;
   savingsAmount: number;
   savingsPercent: number;
+  debtAmount: number;
+  debtPercent: number;
+  unallocatedBufferAmount: number;
+  unallocatedBufferPercent: number;
+  pillarPercentSum: number; // needsPercent + wantsPercent + savingsPercent
   score: number;
   rating: 'Optimal' | 'Healthy' | 'Attention Needed';
+  scoringBreakdown: {
+    needsPenalty: number;
+    wantsPenalty: number;
+    savingsPenalty: number;
+    explanation: string;
+  };
 }
 
 export interface FireMilestone {

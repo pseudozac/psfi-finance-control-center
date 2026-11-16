@@ -179,8 +179,11 @@ export const IncomeExpensePanel: React.FC<IncomeExpensePanelProps> = ({ plan, pe
           </div>
         </div>
 
-        {/* 50/30/20 Quick Distribution Health Bar */}
-        <div className="p-2.5 rounded-xl bg-slate-900/60 border border-subtle mb-3 flex items-center justify-between flex-wrap gap-2 text-xs font-mono">
+        {/* 50/30/20 Quick Distribution Health Bar with Denominator & Complete Allocation */}
+        <div
+          className="p-2.5 rounded-xl bg-slate-900/60 border border-subtle mb-3 flex items-center justify-between flex-wrap gap-2 text-xs font-mono"
+          title={`Denominator: Total Monthly Inflow ${formatINR(budgetRule.totalIncome)} (100% Base). Pillars: Needs ${budgetRule.needsPercent}% + Wants ${budgetRule.wantsPercent}% + Savings ${budgetRule.savingsPercent}% = ${budgetRule.pillarPercentSum}%. Auxiliary: Debt ${budgetRule.debtPercent}% + Buffer ${budgetRule.unallocatedBufferPercent}% = ${budgetRule.debtPercent + budgetRule.unallocatedBufferPercent}%. Sum = 100%. Score: ${budgetRule.score}/100.`}
+        >
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-purple-400" />
             <span className="text-muted">Needs:</span>
@@ -208,17 +211,38 @@ export const IncomeExpensePanel: React.FC<IncomeExpensePanelProps> = ({ plan, pe
             <span className="text-[10px] text-muted">(&ge;20%)</span>
           </div>
 
-          <span
-            className={`text-[10px] px-2 py-0.5 rounded-full font-sans font-bold border ${
-              budgetRule.score >= 80
-                ? 'bg-emerald-950/60 text-emerald-300 border-emerald-600/40'
-                : budgetRule.score >= 60
-                ? 'bg-blue-950/60 text-blue-300 border-blue-600/40'
-                : 'bg-amber-950/60 text-amber-300 border-amber-600/40'
-            }`}
-          >
-            {budgetRule.rating} ({budgetRule.score}/100)
-          </span>
+          {budgetRule.debtPercent > 0 && (
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
+              <span className="text-muted">Debt:</span>
+              <strong className="text-amber-400">{budgetRule.debtPercent}%</strong>
+            </div>
+          )}
+
+          {budgetRule.unallocatedBufferPercent > 0 && (
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-cyan-400" />
+              <span className="text-muted">Buffer:</span>
+              <strong className="text-cyan-300">{budgetRule.unallocatedBufferPercent}%</strong>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-muted border border-subtle px-1.5 py-0.5 rounded bg-slate-950/60 font-mono">
+              Base: {formatINR(budgetRule.totalIncome)}
+            </span>
+            <span
+              className={`text-[10px] px-2 py-0.5 rounded-full font-sans font-bold border ${
+                budgetRule.score >= 80
+                  ? 'bg-emerald-950/60 text-emerald-300 border-emerald-600/40'
+                  : budgetRule.score >= 60
+                  ? 'bg-blue-950/60 text-blue-300 border-blue-600/40'
+                  : 'bg-amber-950/60 text-amber-300 border-amber-600/40'
+              }`}
+            >
+              {budgetRule.rating} ({budgetRule.score}/100)
+            </span>
+          </div>
         </div>
 
         {/* Inflow Streams */}

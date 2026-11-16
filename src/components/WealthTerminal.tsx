@@ -455,34 +455,39 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
         </div>
       </section>
 
-      {/* Corporate Financial Statement Matrix (P&L Breakdown) */}
+      {/* Personal Cash-Flow Summary (Monthly Budget Run-Rate) */}
       <section
         className="terminal-statement-card"
         id="terminal-financial-statement"
       >
         <div className="terminal-statement-header flex-between items-center mb-3">
           <div className="flex-align gap-2">
-            <h3 className="font-semibold text-base m-0">Personal Income Statement (P&L Audit)</h3>
-            <span className="tag-pill tag-nebula font-mono text-[10px]">GAAP/IFRS ANALOGY</span>
+            <h3 className="font-semibold text-base m-0">Personal Cash-Flow Summary (Budget Run-Rate)</h3>
+            <span className="tag-pill tag-nebula font-mono text-[10px]">BUDGET RUN-RATE MODEL</span>
           </div>
-          <span className="text-muted text-xs font-mono">Currency: INR (₹) · Client-Side Audit</span>
+          <span className="text-muted text-xs font-mono">Currency: INR (₹) · Planned Budget Projection (No Bank Reconciliation)</span>
+        </div>
+
+        {/* Accounting Disclaimer Banner */}
+        <div className="p-2.5 rounded-lg bg-slate-900/50 border border-subtle mb-3 text-xs text-muted leading-relaxed">
+          <strong className="text-white font-mono">[BUDGET RUN-RATE MODEL]</strong> This summary reflects your forward-looking monthly budget allocations and annualized cash-flow run-rates. It is an illustrative personal planning tool, not an audited accounting ledger, bank reconciliation statement, or GAAP/IFRS financial filing.
         </div>
 
         <div className="statement-table-wrapper">
           <table className="statement-table font-mono text-xs">
             <thead>
               <tr>
-                <th className="text-left">ACCOUNT LINE</th>
-                <th className="text-left">CATEGORY</th>
-                <th className="text-right">MONTHLY RUN-RATE</th>
-                <th className="text-right">ANNUALIZED</th>
-                <th className="text-right">% OF REVENUE</th>
+                <th className="text-left">CASH-FLOW LINE ITEM</th>
+                <th className="text-left">ALLOCATION BUCKET</th>
+                <th className="text-right">MONTHLY BUDGET</th>
+                <th className="text-right">ANNUALIZED RUN-RATE</th>
+                <th className="text-right">% OF TOTAL INFLOW</th>
               </tr>
             </thead>
             <tbody>
               {/* Revenue Section */}
               <tr className="statement-row-heading">
-                <td colSpan={5}>1. OPERATING REVENUE (INFLOWS)</td>
+                <td colSpan={5}>1. MONTHLY CASH INFLOWS (NET TAKE-HOME)</td>
               </tr>
               <tr>
                 <td className="pl-4">Primary Salary (Net Take-Home)</td>
@@ -510,7 +515,7 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
                 </tr>
               )}
               <tr className="statement-subtotal">
-                <td className="font-bold">TOTAL OPERATING REVENUE</td>
+                <td className="font-bold">TOTAL MONTHLY INFLOW</td>
                 <td></td>
                 <td className="text-right font-bold text-nebula">+₹{monthlyInflow.toLocaleString('en-IN')}</td>
                 <td className="text-right font-bold text-nebula">+₹{(monthlyInflow * 12).toLocaleString('en-IN')}</td>
@@ -519,7 +524,7 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
 
               {/* Cost of Living (COGS) Section */}
               <tr className="statement-row-heading">
-                <td colSpan={5}>2. COST OF SURVIVAL & DEBT SERVICE (ESSENTIAL OUTFLOWS)</td>
+                <td colSpan={5}>2. COMMITTED &amp; DISCRETIONARY OUTFLOWS</td>
               </tr>
               <tr>
                 <td className="pl-4">Shelter & Housing Rent</td>
@@ -584,24 +589,24 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
                 </tr>
               ))}
               <tr className="statement-subtotal">
-                <td className="font-bold">TOTAL OPERATING EXPENSES</td>
+                <td className="font-bold">TOTAL BUDGETED OUTFLOWS</td>
                 <td></td>
                 <td className="text-right font-bold text-corona">-₹{monthlyOutflow.toLocaleString('en-IN')}</td>
                 <td className="text-right font-bold text-corona">-₹{(monthlyOutflow * 12).toLocaleString('en-IN')}</td>
                 <td className="text-right font-bold">{((monthlyOutflow / monthlyInflow) * 100).toFixed(1)}%</td>
               </tr>
 
-              {/* Bottom Line (Net Free Cashflow / Profit) */}
+              {/* Bottom Line (Net Free Cashflow / Surplus) */}
               <tr className="statement-final-row">
                 <td className="font-bold">
                   <div className="flex-align gap-1.5">
                     <Zap size={14} className={isGain ? 'text-nebula' : 'text-corona'} />
-                    <span>NET FREE CASHFLOW (OPERATING PROFIT)</span>
+                    <span>NET MONTHLY SURPLUS / FREE CASHFLOW</span>
                   </div>
                 </td>
                 <td>
                   <span className={`tag-pill ${isGain ? 'tag-nebula' : 'tag-corona'} font-bold`}>
-                    {isGain ? 'NET SURPLUS' : 'CASH DEFICIT'}
+                    {isGain ? 'NET CASH SURPLUS' : 'MONTHLY CASH DEFICIT'}
                   </span>
                 </td>
                 <td className={`text-right font-bold text-base ${isGain ? 'text-nebula' : 'text-corona'}`}>

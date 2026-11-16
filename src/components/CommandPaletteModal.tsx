@@ -630,7 +630,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       id: 'nav_terminal',
       category: 'Navigation',
       title: 'Switch to Wealth Terminal',
-      subtitle: 'Stock market P&L ticker, GAAP operating statement & 12M trajectory',
+      subtitle: 'Stock market P&L ticker, monthly cash-flow summary & 12M trajectory',
       keywords: 'wealth terminal market pnl ticker statement valuation stocks',
       icon: <TrendingUp size={15} className={activeView === 'terminal' ? 'text-nebula' : 'text-muted'} />,
       badge: activeView === 'terminal' ? 'Current' : 'View',
