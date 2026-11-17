@@ -169,6 +169,8 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [isTheaterMode, setIsTheaterMode] = useState<boolean>(false);
   const [isDossierCollapsed, setIsDossierCollapsed] = useState<boolean>(false);
+  const [canvasAspectRatio, setCanvasAspectRatio] = useState(1.5);
+  const canvasRef = useRef<HTMLElement | null>(null);
   
   // Dynamic Responsive Window State & Astrolabe ViewBox (frames constellation mathematically across any screen)
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
@@ -181,14 +183,30 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
 
   const isMobile = windowWidth <= 768;
 
+  useEffect(() => {
+    if (!isOpen || !isTheaterMode) return;
+    document.body.classList.add('skill-tree-theater-active');
+    return () => document.body.classList.remove('skill-tree-theater-active');
+  }, [isOpen, isTheaterMode]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const updateAspectRatio = () => {
+      const { width, height } = canvas.getBoundingClientRect();
+      if (width > 0 && height > 0) setCanvasAspectRatio(width / height);
+    };
+
+    updateAspectRatio();
+    const observer = new ResizeObserver(updateAspectRatio);
+    observer.observe(canvas);
+    return () => observer.disconnect();
+  }, [isOpen, viewMode, isTheaterMode]);
+
   // ViewBox bounds include the new status tags beneath the lowest node.
   // Optimal full view: Center X = 720, Center Y = 430
-  const DEFAULT_VIEWBOX = useMemo(() => {
-    if (isMobile) {
-      return { x: 180, y: 20, w: 920, h: 800 };
-    }
-    return { x: 110, y: 0, w: 1220, h: 860 };
-  }, [isMobile]);
+  const DEFAULT_VIEWBOX = useMemo(() => ({ x: 110, y: 0, w: 1220, h: 860 }), []);
 
   const CITADEL_VIEWBOX = useMemo(() => ({ x: 130, y: 180, w: 620, h: 630 }), []);
   const VELOCITY_VIEWBOX = useMemo(() => ({ x: 340, y: 80, w: 660, h: 710 }), []);
@@ -233,6 +251,7 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
       applyViewBox(DEFAULT_VIEWBOX);
       setSelectedTier('all');
       setIsDossierCollapsed(isMobile);
+      setIsTheaterMode(false);
     }
   }, [isOpen, DEFAULT_VIEWBOX, isMobile]);
 
@@ -271,7 +290,7 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
     const nextH = prev.h * zoomFactor;
     const cx = prev.x + prev.w / 2;
     const cy = prev.y + prev.h / 2;
-    applyViewBox(clampViewBox({ x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH }));
+    applyViewBox(clampViewBox({ x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH }), false);
     playChime(600);
   };
 
@@ -282,7 +301,7 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
     const nextH = prev.h * zoomFactor;
     const cx = prev.x + prev.w / 2;
     const cy = prev.y + prev.h / 2;
-    applyViewBox(clampViewBox({ x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH }));
+    applyViewBox(clampViewBox({ x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH }), false);
     playChime(420);
   };
 
@@ -292,7 +311,18 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
     playChime(480);
   };
 
+  const toggleTheaterMode = () => {
+    if (!isTheaterMode) {
+      setViewMode('visual_tree');
+      setSelectedTier('all');
+      applyViewBox(clampViewBox(DEFAULT_VIEWBOX));
+    }
+    setIsTheaterMode((current) => !current);
+  };
+
   const handlePointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (e.target instanceof Element && e.target.closest('[role="button"]')) return;
     isDraggingRef.current = true;
     dragDistanceRef.current = 0;
     dragStartRef.current = {
@@ -330,6 +360,7 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
+    if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
     setViewBox(viewBoxRef.current);
     try {
@@ -347,7 +378,7 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
     const nextH = prev.h * zoomFactor;
     const cx = prev.x + prev.w / 2;
     const cy = prev.y + prev.h / 2;
-    applyViewBox(clampViewBox({ x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH }));
+    applyViewBox(clampViewBox({ x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH }), false);
   };
 
   const handleNodeClick = (node: SkillNode) => {
@@ -481,7 +512,7 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
   if (!isOpen) return null;
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-label="Sovereign Wealth RPG Skill Tree">
+    <div className={`modal-backdrop ${isTheaterMode ? 'skill-tree-theater-backdrop' : ''}`} onClick={onClose} role="dialog" aria-modal="true" aria-label="Sovereign Wealth RPG Skill Tree">
       <div
         className={`modal-card skill-tree-modal ${isTheaterMode ? 'skill-tree-theater-mode' : ''}`}
         onClick={(e) => e.stopPropagation()}
@@ -526,7 +557,7 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
             <button
               type="button"
               className={`action-pill font-mono text-xs skill-tree-theater-btn ${isTheaterMode ? 'pill-active-mode' : ''}`}
-              onClick={() => setIsTheaterMode(!isTheaterMode)}
+              onClick={toggleTheaterMode}
               title={isTheaterMode ? "Exit Fullscreen Theater Mode" : "Expand Fullscreen Theater Mode"}
             >
               {isTheaterMode ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
@@ -849,11 +880,9 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
 
             {/* RIGHT PANE: 100% UNOBSTRUCTED SVG ASTROLABE STAR-CHART */}
             <main
+              ref={canvasRef}
               className="skill-tree-canvas-panel"
               aria-label="Constellation Astrolabe Star-Chart"
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
               onWheel={handleWheel}
             >
               {/* Floating Tactical Astrolabe HUD */}
@@ -927,6 +956,39 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                 </div>
 
                 <div className="hud-zoom-cluster">
+                  {!isTheaterMode && (
+                    <button
+                      type="button"
+                      className="hud-icon-btn theater-enter-btn"
+                      onClick={toggleTheaterMode}
+                      aria-label="Enter theater mode"
+                      title="Show only the star chart"
+                    >
+                      <Maximize2 size={14} />
+                    </button>
+                  )}
+                  {isTheaterMode && (
+                    <>
+                      <button
+                        type="button"
+                        className="hud-icon-btn theater-exit-btn"
+                        onClick={toggleTheaterMode}
+                        aria-label="Exit theater mode"
+                        title="Restore chart details"
+                      >
+                        <Minimize2 size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        className="hud-icon-btn theater-close-btn"
+                        onClick={onClose}
+                        aria-label="Close star chart"
+                        title="Close star chart"
+                      >
+                        <X size={14} />
+                      </button>
+                    </>
+                  )}
                   <button
                     type="button"
                     className="hud-icon-btn"
@@ -961,7 +1023,11 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                 ref={svgRef}
                 viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`}
                 className="skill-tree-svg"
-                preserveAspectRatio="xMidYMid meet"
+                preserveAspectRatio="none"
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
               >
                 <defs>
                   <linearGradient id="constellation-space" x1="0" y1="0" x2="1" y2="1">
@@ -1117,7 +1183,7 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                     return (
                       <g
                         key={node.id}
-                        transform={`translate(${x}, ${y})`}
+                        transform={`translate(${x}, ${y}) scale(${Math.max(0.25, Math.min(3, (viewBox.w / viewBox.h) / canvasAspectRatio))}, 1)`}
                         className={`skill-constellation-node cursor-pointer transition-transform duration-200 ${isSelected ? 'is-selected' : ''} ${isMastered ? 'is-mastered' : ''} ${isInProgress ? 'is-in-progress' : ''}`}
                         opacity={isDimmed ? 0.3 : 1}
                         role="button"
