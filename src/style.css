@@ -12334,3 +12334,65 @@ body {
   }
 }
 
+
+
+/* Theater mode gives the constellation the entire viewport and keeps only chart controls visible. */
+.modal-backdrop.skill-tree-theater-backdrop {
+  padding: 0 !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  overflow: hidden !important;
+}
+
+.skill-tree-modal.skill-tree-theater-mode {
+  position: relative !important;
+  inset: auto !important;
+  width: 100vw !important;
+  max-width: none !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.skill-tree-modal.skill-tree-theater-mode .skill-tree-header,
+.skill-tree-modal.skill-tree-theater-mode .skill-tree-nav-bar,
+.skill-tree-modal.skill-tree-theater-mode .skill-tree-dossier-dock {
+  display: none !important;
+}
+
+.skill-tree-modal.skill-tree-theater-mode .skill-tree-split-viewport {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+
+.skill-tree-modal.skill-tree-theater-mode .skill-tree-canvas-panel {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+}
+
+.skill-tree-modal.skill-tree-theater-mode .theater-exit-btn,
+.skill-tree-modal.skill-tree-theater-mode .theater-close-btn {
+  display: inline-flex;
+}
+
+.skill-tree-svg {
+  touch-action: none;
+  cursor: grab;
+}
+
+.skill-tree-svg:active {
+  cursor: grabbing;
+}
