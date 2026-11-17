@@ -74,6 +74,14 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Sparkles: <Sparkles size={18} className="text-quasar" />,
 };
 
+// Fixed low-discrepancy points keep the star field consistent across renders and devices.
+const CONSTELLATION_STARS = Array.from({ length: 88 }, (_, index) => ({
+  x: (index * 197 + 43) % 1400,
+  y: (index * 113 + 29) % 820,
+  radius: index % 13 === 0 ? 1.8 : index % 4 === 0 ? 1.1 : 0.65,
+  opacity: index % 13 === 0 ? 0.72 : index % 3 === 0 ? 0.38 : 0.2,
+}));
+
 // Retro Web Audio synthesizer chime
 function playChime(freq = 520) {
   try {
@@ -934,28 +942,52 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                 preserveAspectRatio="xMidYMid meet"
               >
                 <defs>
+                  <linearGradient id="constellation-space" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#050914" />
+                    <stop offset="52%" stopColor="#091222" />
+                    <stop offset="100%" stopColor="#100b20" />
+                  </linearGradient>
+                  <radialGradient id="citadel-nebula">
+                    <stop offset="0%" stopColor="#10b981" stopOpacity="0.15" />
+                    <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+                  </radialGradient>
+                  <radialGradient id="velocity-nebula">
+                    <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.15" />
+                    <stop offset="100%" stopColor="#06b6d4" stopOpacity="0" />
+                  </radialGradient>
+                  <radialGradient id="autonomy-nebula">
+                    <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.13" />
+                    <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
+                  </radialGradient>
                   {/* Blueprint Grid */}
                   <pattern id="celestial-grid" width="48" height="48" patternUnits="userSpaceOnUse">
                     <path d="M 48 0 L 0 0 0 48" fill="none" stroke="rgba(255, 255, 255, 0.02)" strokeWidth="1" />
                     <circle cx="48" cy="48" r="1.2" fill="rgba(191, 159, 241, 0.1)" />
                   </pattern>
 
-                  {/* Laser Glow Filter */}
-                  <filter id="conduit-laser-glow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="3.5" result="blur" />
+                  {/* Soft light bloom for live progress routes */}
+                  <filter id="conduit-laser-glow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="4" result="blur" />
                     <feComposite in="SourceGraphic" in2="blur" operator="over" />
                   </filter>
                 </defs>
 
-                {/* Background Grid */}
+                {/* Layered starfield with tier-colored nebulae. */}
+                <rect width="1440" height="860" fill="url(#constellation-space)" />
                 <rect width="1440" height="820" fill="url(#celestial-grid)" />
+                <ellipse cx="420" cy="490" rx="330" ry="340" fill="url(#citadel-nebula)" />
+                <ellipse cx="680" cy="370" rx="360" ry="330" fill="url(#velocity-nebula)" />
+                <ellipse cx="1080" cy="320" rx="300" ry="300" fill="url(#autonomy-nebula)" />
+                <g className="constellation-starfield" aria-hidden="true">
+                  {CONSTELLATION_STARS.map((star, index) => (
+                    <circle key={index} cx={star.x} cy={star.y} r={star.radius} fill="#dbeafe" opacity={star.opacity} />
+                  ))}
+                </g>
 
-                {/* Concentric Astrolabe Background Rings (Centered at Root x=680, y=740) */}
-                <circle cx="680" cy="740" r="180" fill="none" stroke="rgba(255, 255, 255, 0.04)" strokeDasharray="4 8" />
-                <circle cx="680" cy="740" r="340" fill="none" stroke="rgba(255, 255, 255, 0.04)" strokeDasharray="4 8" />
-                <circle cx="680" cy="740" r="500" fill="none" stroke="rgba(255, 255, 255, 0.035)" strokeDasharray="4 8" />
-                <circle cx="680" cy="740" r="660" fill="none" stroke="rgba(255, 255, 255, 0.03)" strokeDasharray="4 8" />
-                <circle cx="680" cy="740" r="820" fill="none" stroke="rgba(255, 255, 255, 0.025)" strokeDasharray="4 8" />
+                {/* Fine astrolabe rings pull the eye toward the compounding hub. */}
+                <circle cx="680" cy="570" r="72" fill="none" stroke="rgba(103, 232, 249, 0.12)" strokeDasharray="2 8" />
+                <circle cx="680" cy="570" r="148" fill="none" stroke="rgba(103, 232, 249, 0.07)" strokeDasharray="3 11" />
+                <circle cx="680" cy="570" r="280" fill="none" stroke="rgba(191, 159, 241, 0.045)" strokeDasharray="2 12" />
 
                 {/* Faint Astrolabe Radial Ray Lines from Root (680, 740) */}
                 <line x1="680" y1="740" x2="220" y2="60" stroke="rgba(255, 255, 255, 0.02)" strokeDasharray="2 6" />
@@ -964,26 +996,26 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                 <line x1="680" y1="740" x2="940" y2="40" stroke="rgba(255, 255, 255, 0.02)" strokeDasharray="2 6" />
                 <line x1="680" y1="740" x2="1200" y2="60" stroke="rgba(255, 255, 255, 0.02)" strokeDasharray="2 6" />
 
-                {/* Three Wing Constellation Headers */}
-                <g transform="translate(190, 42)">
-                  <rect x="-10" y="-16" width="220" height="30" rx="15" fill="rgba(16, 185, 129, 0.1)" stroke="rgba(16, 185, 129, 0.3)" />
-                  <text x="100" y="4" textAnchor="middle" fill="#10b981" fontSize="11" fontFamily="monospace" fontWeight="bold" letterSpacing="0.08em">
-                    🛡️ DEFENSIVE CITADEL
-                  </text>
+                {/* Three living tier beacons echo the selector chips above. */}
+                <g className="constellation-tier-beacon" transform="translate(420, 100)">
+                  <rect x="-110" y="-19" width="220" height="38" rx="19" fill="rgba(4, 19, 20, 0.82)" stroke="rgba(52, 211, 153, 0.42)" />
+                  <circle cx="-84" cy="0" r="4" fill="#34d399" />
+                  <text x="4" y="-2" textAnchor="middle" fill="#a7f3d0" fontSize="13" fontFamily="monospace" fontWeight="bold" letterSpacing="0.06em">CITADEL</text>
+                  <text x="4" y="12" textAnchor="middle" fill="#6b8b89" fontSize="9" fontFamily="monospace">{treeState.tier1MasteredCount}/5 MASTERED</text>
                 </g>
 
-                <g transform="translate(570, 42)">
-                  <rect x="-10" y="-16" width="220" height="30" rx="15" fill="rgba(6, 182, 212, 0.1)" stroke="rgba(6, 182, 212, 0.3)" />
-                  <text x="100" y="4" textAnchor="middle" fill="#06b6d4" fontSize="11" fontFamily="monospace" fontWeight="bold" letterSpacing="0.08em">
-                    ⚡ COMPOUNDING VELOCITY
-                  </text>
+                <g className="constellation-tier-beacon" transform="translate(700, 100)">
+                  <rect x="-110" y="-19" width="220" height="38" rx="19" fill="rgba(5, 18, 27, 0.84)" stroke="rgba(34, 211, 238, 0.42)" />
+                  <circle cx="-84" cy="0" r="4" fill="#22d3ee" />
+                  <text x="4" y="-2" textAnchor="middle" fill="#a5f3fc" fontSize="13" fontFamily="monospace" fontWeight="bold" letterSpacing="0.06em">VELOCITY</text>
+                  <text x="4" y="12" textAnchor="middle" fill="#638b99" fontSize="9" fontFamily="monospace">{treeState.tier2MasteredCount}/5 MASTERED</text>
                 </g>
 
-                <g transform="translate(980, 42)">
-                  <rect x="-10" y="-16" width="220" height="30" rx="15" fill="rgba(245, 158, 11, 0.1)" stroke="rgba(245, 158, 11, 0.3)" />
-                  <text x="100" y="4" textAnchor="middle" fill="#f59e0b" fontSize="11" fontFamily="monospace" fontWeight="bold" letterSpacing="0.08em">
-                    👑 SOVEREIGN AUTONOMY
-                  </text>
+                <g className="constellation-tier-beacon" transform="translate(1000, 100)">
+                  <rect x="-110" y="-19" width="220" height="38" rx="19" fill="rgba(25, 18, 7, 0.84)" stroke="rgba(251, 191, 36, 0.42)" />
+                  <circle cx="-84" cy="0" r="4" fill="#fbbf24" />
+                  <text x="4" y="-2" textAnchor="middle" fill="#fde68a" fontSize="13" fontFamily="monospace" fontWeight="bold" letterSpacing="0.06em">AUTONOMY</text>
+                  <text x="4" y="12" textAnchor="middle" fill="#a58a52" fontSize="9" fontFamily="monospace">{treeState.tier3MasteredCount}/5 MASTERED</text>
                 </g>
 
                 {/* 1. RENDER ORGANIC CUBIC BEZIER CONDUITS */}
@@ -1004,35 +1036,35 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                     const isInFlight = parent.status === 'mastered' && child.status === 'in_progress';
                     const isIlluminated = illuminatedAncestors.has(conduit.from) && illuminatedAncestors.has(conduit.to);
                     const isDimmed = selectedTier !== 'all' && (parent.tier !== selectedTier && child.tier !== selectedTier);
+                    const routeColor = isIlluminated
+                      ? '#fb923c'
+                      : child.tier === 'tier1_survival'
+                      ? '#34d399'
+                      : child.tier === 'tier2_velocity'
+                      ? '#22d3ee'
+                      : '#fbbf24';
+                    const routeIsActive = isIlluminated || isBothMastered || isInFlight;
 
                     return (
-                      <g key={idx} opacity={isDimmed ? 0.2 : 1} className="transition-opacity duration-300">
-                        {/* Background blurred glow conduit */}
-                        {(isIlluminated || isBothMastered || isInFlight) && (
+                      <g key={idx} opacity={isDimmed ? 0.12 : 1} className={`constellation-conduit ${isInFlight && !isIlluminated ? 'constellation-conduit-live' : ''}`} aria-hidden="true">
+                        {routeIsActive && (
                           <path
                             d={pathD}
                             fill="none"
-                            stroke={isIlluminated ? '#f78d2c' : isBothMastered ? '#10b981' : '#a855f7'}
-                            strokeWidth={isIlluminated ? "5" : "3.5"}
-                            opacity={isIlluminated ? 0.75 : 0.35}
+                            stroke={routeColor}
+                            strokeWidth={isIlluminated ? 10 : 8}
+                            opacity={isIlluminated ? 0.38 : isBothMastered ? 0.24 : 0.32}
                             filter="url(#conduit-laser-glow)"
                           />
                         )}
-                        {/* Foreground crisp energy line */}
                         <path
                           d={pathD}
                           fill="none"
-                          stroke={
-                            isIlluminated
-                              ? '#f78d2c'
-                              : isBothMastered
-                              ? '#10b981'
-                              : isInFlight
-                              ? '#c084fc'
-                              : 'rgba(255, 255, 255, 0.12)'
-                          }
-                          strokeWidth={isIlluminated ? 3 : isBothMastered ? 2.5 : isInFlight ? 2 : 1.5}
-                          strokeDasharray={isInFlight && !isIlluminated ? '6 6' : undefined}
+                          stroke={routeIsActive ? routeColor : '#91a0ba'}
+                          strokeWidth={isIlluminated ? 3 : isBothMastered ? 2.6 : isInFlight ? 2.2 : 1.5}
+                          strokeOpacity={isIlluminated ? 0.96 : isBothMastered ? 0.72 : isInFlight ? 0.86 : 0.2}
+                          strokeDasharray={isInFlight && !isIlluminated ? '8 8' : undefined}
+                          className={isInFlight && !isIlluminated ? 'constellation-route-dash' : ''}
                         />
                       </g>
                     );
