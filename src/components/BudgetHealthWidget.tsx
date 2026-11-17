@@ -226,14 +226,14 @@ export const BudgetHealthWidget: React.FC<BudgetHealthWidgetProps> = ({ analysis
             </div>
 
             <div className="p-2.5 rounded-lg bg-slate-900/80 border border-subtle text-slate-300">
-              <strong className="text-white font-mono block mb-1">2. Why the 3 Pillars Sum to {analysis.pillarPercentSum}% (Not 100%)</strong>
+              <strong className="text-white font-mono block mb-1">2. How the allocations share monthly income</strong>
               The classic 50/30/20 framework defines optimal spending boundaries for your <strong className="text-purple-300">Needs ({analysis.needsPercent}%)</strong>, <strong className="text-rose-300">Wants ({analysis.wantsPercent}%)</strong>, and <strong className="text-emerald-300">Savings/SIP ({analysis.savingsPercent}%)</strong>, which total {analysis.pillarPercentSum}%.
-              The remaining <strong className="text-white font-mono">{analysis.debtPercent + analysis.unallocatedBufferPercent}%</strong> is accounted for by <strong className="text-amber-300 font-mono">Debt Servicing ({analysis.debtPercent}%)</strong> and <strong className="text-cyan-300 font-mono">Unallocated Cash Buffer ({analysis.unallocatedBufferPercent}%)</strong>. All 5 components together complete 100% of your income waterfall!
+              Additional allocations are <strong className="text-amber-300 font-mono">Debt Servicing ({analysis.debtPercent}%)</strong> and <strong className="text-cyan-300 font-mono">Unallocated Cash Buffer ({analysis.unallocatedBufferPercent}%)</strong>. Rounded percentages can differ from 100%. If allocations exceed income, reduce them or identify how the shortfall will be funded.
             </div>
 
             <div className="p-2.5 rounded-lg bg-slate-900/80 border border-subtle text-slate-300">
               <strong className="text-white font-mono block mb-1">3. Which Allocations Count Toward the Health Score ({analysis.score}/100)</strong>
-              The score begins at a perfect baseline of 100 and applies actuarial deductions strictly based on 50/30/20 target compliance:
+              The score applies penalties for spending above the target and for funded savings below 20%. A budget shortfall caps the score at 59. Percentages require positive income.
               <ul className="list-disc pl-5 mt-1 space-y-1 font-mono text-[11px]">
                 <li>
                   <span className="text-purple-300">Needs Target (&le;50%):</span> {analysis.needsPercent}% &rarr; {analysis.scoringBreakdown.needsPenalty > 0 ? <span className="text-amber-400">-{analysis.scoringBreakdown.needsPenalty} pts penalty</span> : <span className="text-emerald-400">0 penalty (Compliant)</span>}

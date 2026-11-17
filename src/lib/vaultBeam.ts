@@ -14,7 +14,7 @@ export interface CompactBeamPayload {
   c: [string, number][]; // custom expenses [[name, amount]]
   s: [number, number, number, number, number, number]; // emergency, savings, sip, stepUp, return, inflation
   d: [number, number, number]; // cardBalance, apr, monthlyPayment
-  t: [number, number, number, number, number]; // 80C, 80D, NPS, rentPaid, isMetro (1/0)
+  t: [number, number, number, number, number, (number | null)?, number?, number?, number?]; // 80C, 80D, NPS, rentPaid, isMetro (1/0)
   p?: boolean; // is PIN protected
 }
 
@@ -86,6 +86,10 @@ export function buildCompactPayload(plan: FinancePlan, vaultName: string, isProt
       plan.tax.deductionsNPS || 0,
       plan.tax.rentPaidMonthly || 0,
       plan.tax.isMetroCity ? 1 : 0,
+      plan.tax.grossSalaryAnnual ?? null,
+      plan.tax.otherOrdinaryIncomeAnnual ?? 0,
+      plan.tax.hraSalaryMonthly ?? 0,
+      plan.tax.hraReceivedMonthly ?? 0,
     ],
     p: isProtected,
   };
@@ -126,9 +130,13 @@ export function reconstructPlanFromCompact(payload: CompactBeamPayload): Finance
       monthlyPayment: payload.d?.[2] || 0,
     },
     tax: {
-      deductions80C: payload.t?.[0] || 150000,
-      deductions80D: payload.t?.[1] || 25000,
-      deductionsNPS: payload.t?.[2] || 50000,
+      grossSalaryAnnual: payload.t?.[5] ?? undefined,
+      otherOrdinaryIncomeAnnual: payload.t?.[6],
+      hraSalaryMonthly: payload.t?.[7],
+      hraReceivedMonthly: payload.t?.[8],
+      deductions80C: payload.t?.[0] ?? 0,
+      deductions80D: payload.t?.[1] ?? 0,
+      deductionsNPS: payload.t?.[2] ?? 0,
       rentPaidMonthly: payload.t?.[3] || 0,
       isMetroCity: Boolean(payload.t?.[4]),
     },

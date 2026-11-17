@@ -24,7 +24,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, debtPayoff,
             <span className="kpi-title">{periodLabel} Surplus</span>
             <InfoTooltip
               title={`${periodLabel} Surplus (Free Cashflow)`}
-              explanation="The net unencumbered liquidity generated each month. Any positive surplus flows into step-up SIPs and emergency reserves."
+              explanation="Income left after budgeted living costs and debt payments, before scheduled savings and SIPs."
               formula="Surplus = Total Inflows − Total Outflows"
               benchmark="Target: > 20% of net monthly income."
             />
@@ -55,7 +55,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, debtPayoff,
             <InfoTooltip
               title="Compounding Savings Rate"
               explanation="The percentage of your total inflow that is preserved and directed toward investments and emergency reserves."
-              formula="(Monthly Surplus ÷ Gross Inflow) × 100"
+              formula="(Scheduled monthly savings + SIP) ÷ net inflow × 100"
               benchmark="20% is good; 35%+ accelerates financial independence (FIRE) by over a decade."
             />
           </div>
@@ -64,13 +64,13 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, debtPayoff,
           </div>
         </div>
         <div className="kpi-big-num font-mono text-pulsar">
-          {summary.savingsRatePercent.toFixed(1)}%
+          {summary.monthlyIncome > 0 ? `${summary.savingsRatePercent.toFixed(1)}%` : '—'}
         </div>
         <div className="kpi-footer">
-          <span className={`tag-pill ${summary.savingsRatePercent >= 20 ? 'tag-pulsar' : 'tag-solstice'}`}>
-            {summary.savingsRatePercent >= 20 ? 'Target Met (20%+)' : 'Below 20% Goal'}
+          <span className={`tag-pill ${summary.savingsFundingGap === 0 && summary.savingsRatePercent >= 20 ? 'tag-pulsar' : 'tag-solstice'}`}>
+            {summary.savingsFundingGap > 0 ? `${formatINR(summary.savingsFundingGap)}/mo unfunded` : summary.monthlyIncome === 0 ? 'No income entered' : summary.savingsRatePercent >= 20 ? 'Target Met (20%+)' : 'Below 20% Goal'}
           </span>
-          <span className="kpi-detail muted">of gross income</span>
+          <span className="kpi-detail muted">scheduled · net inflow</span>
         </div>
       </div>
 

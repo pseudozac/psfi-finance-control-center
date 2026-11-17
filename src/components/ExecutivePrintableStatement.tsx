@@ -15,7 +15,7 @@ interface ExecutivePrintableStatementProps {
   plan: FinancePlan;
   summary: FinanceSummary;
   budgetRule: BudgetRuleAnalysis;
-  taxComparison: TaxComparisonResult;
+  taxComparison: TaxComparisonResult | null;
   projections: MonthlyProjectionPoint[];
   activeAccount: UserAccount;
   baseline: FinancePlan | null;
@@ -275,21 +275,22 @@ export const ExecutivePrintableStatement: React.FC<ExecutivePrintableStatementPr
 
         {/* Right Column: Indian Statutory Tax Engine */}
         <div className="exec-sub-col">
-          <div className="exec-section-heading">03 // STATUTORY TAX AUDIT: FY 2025–26 (AY 2026–27) &amp; TY 2026–27</div>
+          <div className="exec-section-heading">03 // ESTIMATED INCOME TAX · FY 2025–26 (AY 2026–27)</div>
+          {taxComparison ? <>
           <table className="exec-table">
             <thead>
               <tr>
                 <th>Regime Under Law</th>
                 <th className="text-right">Annual Tax</th>
-                <th className="text-right">Monthly TDS</th>
+                <th className="text-right">Monthly Tax Equivalent</th>
                 <th className="text-center">Recommendation</th>
               </tr>
             </thead>
             <tbody>
               <tr className={taxComparison.recommended === 'new' ? 'row-recommended' : ''}>
                 <td>
-                  <strong>New Default (Sec 115BAC / TY 2026–27 Framework)</strong>
-                  <div className="text-[9px] text-slate-500">FY 2025–26 (AY 2026–27) Default · ₹75k Std Ded · Sec 87A Rebate &le; ₹7L</div>
+                  <strong>Default Regime (Section 115BAC)</strong>
+                  <div className="text-[9px] text-slate-500">FY 2025–26 (AY 2026–27) Default · ₹75k Std Ded · Section 87A rebate up to ₹60k</div>
                 </td>
                 <td className="text-right font-mono font-bold text-slate-900">
                   {formatINR(taxComparison.newRegimeTax)}
@@ -326,12 +327,13 @@ export const ExecutivePrintableStatement: React.FC<ExecutivePrintableStatementPr
             <span className="font-bold text-slate-800">Tax Optimization: </span>
             <span>
               {taxComparison.recommended === 'new'
-                ? `New Default Regime (Sec 115BAC / TY 2026–27) saves ${formatINR(taxComparison.savings)}/year vs Prior Act itemized opt-out.`
+                ? `Default regime saves ${formatINR(taxComparison.savings)}/year vs Prior Act itemized opt-out.`
                 : taxComparison.recommended === 'old'
                 ? `Prior Act 1961 with itemized deductions saves ${formatINR(taxComparison.savings)}/year.`
-                : 'Both regimes yield equivalent statutory liability.'}
+                : 'Both regimes have the same estimated liability.'}
             </span>
           </div>
+          </> : <p>Tax estimate unavailable for the supplied tax inputs.</p>}
         </div>
       </div>
 
@@ -482,7 +484,7 @@ export const ExecutivePrintableStatement: React.FC<ExecutivePrintableStatementPr
         <div className="exec-cert-text">
           <strong>ACTUARIAL DISCLOSURE &amp; FIDUCIARY CERTIFICATION:</strong>
           <br />
-          This document is generated client-side by Pseudo-Fi Financial Intelligence Engine. All computations adhere strictly to the Indian Income Tax Act 1961, Section 115BAC amendments (Finance Act 2024 &amp; Budget 2025), and standard compound interest actuarial conventions. Zero data leaves local device storage.
+          This report uses your entered budget and tax assumptions. The income tax comparison covers ordinary income for AY 2026–27.
         </div>
         <div className="exec-cert-seal">
           <div className="seal-badge">OFFLINE SEAL</div>

@@ -926,7 +926,7 @@ export const StatementParserModal: React.FC<StatementParserModalProps> = ({
                       </div>
                       <div className="text-left">
                         <div className="sample-name">CAMS Mutual Fund CAS</div>
-                        <div className="sample-desc">Extracts ₹25k SIP, ₹28.5L portfolio across 3 folios</div>
+                        <div className="sample-desc">Detects ₹50k across three SIP entries, ₹28.5L valuation and one folio ID</div>
                       </div>
                     </button>
 
@@ -968,7 +968,7 @@ export const StatementParserModal: React.FC<StatementParserModalProps> = ({
                       </div>
                       <div className="text-left">
                         <div className="sample-name">Corporate Salary Payslip</div>
-                        <div className="sample-desc">Extracts ₹1.37L take-home, ₹9k EPF, HRA, Section 80C</div>
+                        <div className="sample-desc">Extracts ₹1.37L take-home, ₹9k employee EPF and HRA received</div>
                       </div>
                     </button>
 

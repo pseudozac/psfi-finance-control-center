@@ -26,7 +26,7 @@ export interface CashflowWaterfallAnalysis {
   unallocatedSurplus: number;
   dailyLivingBurn: number;
   dailyDiscretionaryPocket: number;
-  fixedObligationsDay: number;
+  fixedObligationsDay: number | null;
   steps: CashflowWaterfallStep[];
 }
 
@@ -75,6 +75,10 @@ export interface FinancePlan {
     liabilities?: DebtItem[];
   };
   tax: {
+    grossSalaryAnnual?: number;
+    otherOrdinaryIncomeAnnual?: number;
+    hraSalaryMonthly?: number;
+    hraReceivedMonthly?: number;
     deductions80C: number;
     deductions80D: number;
     deductionsNPS?: number;
@@ -88,6 +92,7 @@ export interface FinanceSummary {
   monthlyExpenses: number;
   monthlySurplus: number;
   savingsRatePercent: number;
+  savingsFundingGap: number;
   emergencyRunwayMonths: number;
 }
 

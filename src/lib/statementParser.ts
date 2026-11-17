@@ -570,7 +570,7 @@ export function parseCAS(text: string): StatementParseResult {
 
   // Count Folios
   const folioMatches = text.match(/Folio\s+No\.?[:\s]+([0-9\/-]+)/gi);
-  const folioCount = folioMatches ? new Set(folioMatches).size : 1;
+  const folioCount = folioMatches ? new Set(folioMatches.map((match) => match.match(/[0-9\/-]+$/)?.[0])).size : 0;
 
   if (totalMonthlySip > 0) {
     params.push({
@@ -580,9 +580,9 @@ export function parseCAS(text: string): StatementParseResult {
       targetField: 'savings.monthlySip',
       detectedValue: totalMonthlySip,
       formattedValue: `${formatINR(totalMonthlySip)}/mo`,
-      confidence: 'high',
-      sourceHint: `Extracted across ${sipLines.length} systematic investment scheme(s)`,
-      selected: true,
+      confidence: 'estimated',
+      sourceHint: `Based on ${sipLines.length} distinct SIP amounts in the statement. Confirm recurring amounts before applying.`,
+      selected: false,
     });
   }
 
@@ -607,7 +607,7 @@ export function parseCAS(text: string): StatementParseResult {
     statementType: 'cas',
     typeLabel: label,
     institutionName: institution,
-    summaryText: `Parsed ${folioCount} folios with ${sipLines.length} active systematic investment plan(s)${transactions.length > 0 ? ` and ${transactions.length} transaction entries` : ''}.`,
+    summaryText: `Detected ${folioCount} ${folioCount === 1 ? 'folio' : 'folios'} with ${sipLines.length} distinct detected SIP amount(s)${transactions.length > 0 ? ` and ${transactions.length} transaction entries` : ''}.`,
     params,
     rawTextPreview: text.slice(0, 500),
     folioCount,
@@ -967,29 +967,33 @@ export function parsePayslip(text: string): StatementParseResult {
     });
   }
 
+  const grossMatch = text.match(/^\s*(?:Gross Earnings|Gross Salary|Gross Pay)\s*:\s*(?:INR|Rs\.?|₹)?\s*([\d,]+(?:\.\d{1,2})?)/im);
+  const grossMonthly = cleanCurrency(grossMatch?.[1] ?? '');
+  if (grossMonthly > 0) {
+    params.push({
+      key: 'payslip_gross_salary',
+      label: 'Estimated Annual Gross Salary',
+      category: 'tax',
+      targetField: 'tax.grossSalaryAnnual',
+      detectedValue: grossMonthly * 12,
+      formattedValue: `${formatINR(grossMonthly * 12)}/yr`,
+      confidence: 'estimated',
+      sourceHint: 'Gross pay for this month × 12. Confirm against your annual gross salary for the tax period.',
+      selected: false,
+    });
+  }
+
   if (hra > 0) {
     params.push({
-      key: 'payslip_hra_housing',
-      label: 'Housing Rent (HRA Component)',
-      category: 'expense',
-      targetField: 'expenses.housing',
-      detectedValue: hra,
-      formattedValue: `${formatINR(hra)}/mo`,
-      confidence: 'medium',
-      sourceHint: `House Rent Allowance allowance for 80GG / HRA tax deduction`,
-      selected: true,
-    });
-
-    params.push({
-      key: 'tax_rent_paid',
-      label: 'Monthly Rent for HRA Exemption',
+      key: 'payslip_hra_received',
+      label: 'Monthly HRA Allowance Received',
       category: 'tax',
-      targetField: 'tax.rentPaidMonthly',
+      targetField: 'tax.hraReceivedMonthly',
       detectedValue: hra,
       formattedValue: `${formatINR(hra)}/mo`,
       confidence: 'high',
-      sourceHint: `HRA deduction lever in Old Tax Regime`,
-      selected: true,
+      sourceHint: 'Employer allowance. Enter rent actually paid separately in the tax estimator.',
+      selected: false,
     });
   }
 
@@ -1002,21 +1006,21 @@ export function parsePayslip(text: string): StatementParseResult {
       detectedValue: epf,
       formattedValue: `${formatINR(epf)}/mo`,
       confidence: 'high',
-      sourceHint: `Annual EPF of ${formatINR(epf * 12)} automatically qualifies for Section 80C`,
+      sourceHint: `Employee EPF amount shown on this payslip`,
       selected: true,
     });
 
     const annualEpf = epf * 12;
     params.push({
       key: 'section_80c',
-      label: 'Section 80C Exemption (from EPF)',
+      label: 'Estimated Section 80C Deduction from EPF',
       category: 'tax',
       targetField: 'tax.deductions80C',
       detectedValue: Math.min(150000, annualEpf),
       formattedValue: `${formatINR(Math.min(150000, annualEpf))}/yr`,
-      confidence: 'high',
-      sourceHint: `Mandatory PF tax exemption`,
-      selected: true,
+      confidence: 'estimated',
+      sourceHint: 'Annualized employee EPF for the optional old regime. Review the combined ₹1.5 lakh cap and existing 80C entries before replacing the total.',
+      selected: false,
     });
   }
 
@@ -1176,8 +1180,11 @@ export function applyParsedParameters(
       case 'debt.monthlyPayment':
         next.debt.monthlyPayment = Math.round(p.detectedValue);
         break;
-      case 'tax.rentPaidMonthly':
-        next.tax.rentPaidMonthly = Math.round(p.detectedValue);
+      case 'tax.grossSalaryAnnual':
+        next.tax.grossSalaryAnnual = Math.round(p.detectedValue);
+        break;
+      case 'tax.hraReceivedMonthly':
+        next.tax.hraReceivedMonthly = Math.round(p.detectedValue);
         break;
       case 'tax.deductions80C':
         next.tax.deductions80C = Math.round(p.detectedValue);

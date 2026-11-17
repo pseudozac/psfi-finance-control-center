@@ -363,23 +363,25 @@ export function App() {
     () => calculateDebtPayoff(plan.debt.cardBalance, plan.debt.aprPercent, plan.debt.monthlyPayment),
     [plan.debt]
   );
-  const taxComparison = useMemo(
-    () =>
-      estimateIndianIncomeTax(
-        summary.monthlyIncome * 12,
-        plan.tax.deductions80C,
-        plan.tax.deductions80D,
-        plan.tax.deductionsNPS ?? 0,
-        plan.tax.rentPaidMonthly ?? 0,
-        Boolean(plan.tax.isMetroCity)
-      ),
-    [summary.monthlyIncome, plan.tax]
-  );
+  const taxComparison = useMemo(() => {
+    const { tax } = plan;
+    const grossSalary = tax.grossSalaryAnnual;
+    const otherIncome = tax.otherOrdinaryIncomeAnnual ?? 0;
+    if (grossSalary == null || !Number.isFinite(grossSalary) || grossSalary + otherIncome > 5_000_000) {
+      return null;
+    }
+    return estimateIndianIncomeTax(
+      grossSalary + otherIncome,
+      tax.deductions80C,
+      tax.deductions80D,
+      tax.deductionsNPS,
+      tax.rentPaidMonthly,
+      tax.isMetroCity,
+      { grossSalaryAnnual: grossSalary, hraSalaryMonthly: tax.hraSalaryMonthly, hraReceivedMonthly: tax.hraReceivedMonthly }
+    );
+  }, [plan.tax]);
 
-  const optimalTaxSavings = useMemo(() => {
-    if (!taxComparison) return 0;
-    return taxComparison.savings ?? Math.abs(taxComparison.oldRegimeTax - taxComparison.newRegimeTax);
-  }, [taxComparison]);
+  const optimalTaxSavings = taxComparison?.savings ?? 0;
 
   const skillTreeState = useMemo(() => {
     return calculateSkillTree(plan, summary, optimalTaxSavings);
@@ -925,6 +927,7 @@ export function App() {
   // Phase 3: Main Dashboard
   return (
     <div className={`app-shell layout-${layoutMode} ${privacyMode ? 'privacy-masked' : ''} ${showTour ? 'tour-active' : ''}`}>
+      <div className="app-scroll">
       {/* Floating Pill Dock Navbar */}
       <header className="navbar-dock" id="tour-dock">
         {/* Left: Brand & Active Vault */}
@@ -1143,7 +1146,7 @@ export function App() {
             onClick={() => {
               document.getElementById('tour-tax')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }}
-            title="Jump to Indian Tax Engine (FY 2025–26 / AY 2026–27 vs TY 2026–27)"
+            title="Jump to the AY 2026–27 Indian income tax estimate"
           >
             <span className="quick-pill-dot" />
             <span>Tax Regimes</span>
@@ -1380,7 +1383,7 @@ export function App() {
         onClose={() => setShowSkillTree(false)}
         plan={plan}
         summary={summary}
-        taxSavingsDelta={taxComparison.savings}
+        taxSavingsDelta={optimalTaxSavings}
         onApplySimulatedPlan={(updated) => setPlan(updated)}
       />
 
@@ -1428,7 +1431,7 @@ export function App() {
       />
 
       {/* Floating Bi-Directional Slide-to-Commit / Discard Capsule portaled to document.body */}
-      {typeof document !== 'undefined' &&
+      {!isMobileViewport && typeof document !== 'undefined' &&
         createPortal(
           <TactileCommitSlider
             isDirty={isDirty}
@@ -1505,6 +1508,11 @@ export function App() {
           <span>react 18 · vite 6 · recharts · local storage</span>
         </div>
       </footer>
+      </div>
+
+      {isMobileViewport && !showTour && (
+        <TactileCommitSlider isDirty={isDirty} onSave={commitPlanChanges} onDiscard={discardPlanChanges} />
+      )}
 
       {/* Mobile Floating Bottom Navigation Dock (Hidden during Tour so tour controls are 100% unobstructed) */}
       {!showTour && (
