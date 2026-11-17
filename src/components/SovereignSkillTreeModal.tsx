@@ -1053,10 +1053,17 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                     const isApex = node.id === 'antifragile_dynasty';
                     const isHub = node.id === 'quarter_crore_hub' || node.id === 'debt_elimination';
 
-                    const radius = isApex ? 34 : isHub ? 30 : 26;
+                    const radius = isApex ? 38 : isHub ? 34 : 30;
                     const circumference = 2 * Math.PI * (radius + 3);
                     const progressOffset = circumference - (node.progressPercent / 100) * circumference;
                     const isDimmed = selectedTier !== 'all' && node.tier !== selectedTier;
+                    const nodeLabel = node.shortLabel || node.title;
+                    const labelWidth = Math.min(176, Math.max(112, nodeLabel.length * 8.6 + 24));
+                    const statusLabel = isMastered
+                      ? 'MASTERED · 100%'
+                      : isInProgress
+                      ? `IN PROGRESS · ${node.progressPercent}%`
+                      : `LOCKED · ${node.progressPercent}%`;
 
                     // Wing category color
                     const wingColor = node.tier === 'tier1_survival' ? '#10b981' : node.tier === 'tier2_velocity' ? '#06b6d4' : '#f59e0b';
@@ -1065,12 +1072,32 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                       <g
                         key={node.id}
                         transform={`translate(${x}, ${y})`}
-                        className="cursor-pointer transition-transform duration-200"
+                        className={`skill-constellation-node cursor-pointer transition-transform duration-200 ${isSelected ? 'is-selected' : ''} ${isMastered ? 'is-mastered' : ''} ${isInProgress ? 'is-in-progress' : ''}`}
                         opacity={isDimmed ? 0.3 : 1}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`${node.title}. ${statusLabel}. ${node.currentMetricLabel}; target ${node.targetMetricLabel}.`}
                         onClick={() => handleNodeClick(node)}
                         onMouseEnter={() => setHoveredNodeId(node.id)}
                         onMouseLeave={() => setHoveredNodeId(null)}
+                        onFocus={() => setHoveredNodeId(node.id)}
+                        onBlur={() => setHoveredNodeId(null)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            handleNodeClick(node);
+                          }
+                        }}
                       >
+                        <title>{`${node.title} — ${statusLabel}. ${node.currentMetricLabel}; target ${node.targetMetricLabel}.`}</title>
+
+                        {/* Soft tier-colored bloom makes node state visible without muddying the chart. */}
+                        <circle
+                          r={radius + 8}
+                          fill={isMastered ? '#10b981' : isInProgress ? '#a855f7' : wingColor}
+                          opacity={isMastered ? 0.12 : isInProgress ? 0.1 : 0.055}
+                        />
+
                         {/* Selected Outer Pulsing Halo */}
                         {isSelected && (
                           <circle
@@ -1132,19 +1159,19 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                           strokeDashoffset={progressOffset}
                           strokeLinecap="round"
                           transform="rotate(-90)"
-                          opacity={node.progressPercent > 0 ? 0.95 : 0}
+                          opacity={isMastered ? 0.95 : node.progressPercent > 0 ? 0.88 : 0.42}
                         />
 
                         {/* Centered Node Icon */}
                         <foreignObject
-                          x="-12"
-                          y="-12"
-                          width="24"
-                          height="24"
+                          x="-14"
+                          y="-14"
+                          width="28"
+                          height="28"
                           className="pointer-events-none"
                         >
                           <div className="w-full h-full flex items-center justify-center text-primary">
-                            {ICON_MAP[node.iconName] || <Award size={18} />}
+                            {ICON_MAP[node.iconName] || <Award size={20} />}
                           </div>
                         </foreignObject>
 
@@ -1160,28 +1187,39 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                           </g>
                         ) : null}
 
-                        {/* Crisp Short Title (Zero Collision) */}
+                        {/* Contrast-backed labels stay readable against the star field. */}
+                        <rect
+                          x={-labelWidth / 2}
+                          y={radius + 10}
+                          width={labelWidth}
+                          height="42"
+                          rx="10"
+                          fill="rgba(7, 11, 22, 0.94)"
+                          stroke={isSelected ? '#c084fc' : wingColor}
+                          strokeOpacity={isSelected ? 0.82 : 0.42}
+                          strokeWidth={isSelected ? 1.5 : 1}
+                        />
+
                         <text
                           textAnchor="middle"
-                          y={radius + 18}
-                          fill={isSelected ? '#ffffff' : isMastered ? '#34d399' : '#f1f5f9'}
-                          fontSize="11.5"
+                          y={radius + 28}
+                          fill={isSelected ? '#ffffff' : '#f8fafc'}
+                          fontSize="15"
                           fontFamily="sans-serif"
                           fontWeight="700"
                         >
-                          {node.shortLabel || node.title}
+                          {nodeLabel}
                         </text>
 
-                        {/* Status / Metric Sub-Label */}
                         <text
                           textAnchor="middle"
-                          y={radius + 31}
-                          fill={isMastered ? '#10b981' : isInProgress ? '#c084fc' : '#64748b'}
-                          fontSize="9.5"
+                          y={radius + 44}
+                          fill={isMastered ? '#6ee7b7' : isInProgress ? '#d8b4fe' : '#cbd5e1'}
+                          fontSize="10.5"
                           fontFamily="monospace"
-                          fontWeight="600"
+                          fontWeight="700"
                         >
-                          {node.status === 'mastered' ? '✓ Mastered' : `${node.progressPercent}% · ${node.badge}`}
+                          {statusLabel}
                         </text>
                       </g>
                     );
@@ -1533,3 +1571,4 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
     </div>
   );
 };
+
