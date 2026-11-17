@@ -290,7 +290,7 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
     const nextH = prev.h * zoomFactor;
     const cx = prev.x + prev.w / 2;
     const cy = prev.y + prev.h / 2;
-    applyViewBox(clampViewBox({ x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH }));
+    applyViewBox(clampViewBox({ x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH }), false);
     playChime(600);
   };
 
@@ -301,7 +301,7 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
     const nextH = prev.h * zoomFactor;
     const cx = prev.x + prev.w / 2;
     const cy = prev.y + prev.h / 2;
-    applyViewBox(clampViewBox({ x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH }));
+    applyViewBox(clampViewBox({ x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH }), false);
     playChime(420);
   };
 
@@ -378,7 +378,7 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
     const nextH = prev.h * zoomFactor;
     const cx = prev.x + prev.w / 2;
     const cy = prev.y + prev.h / 2;
-    applyViewBox(clampViewBox({ x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH }));
+    applyViewBox(clampViewBox({ x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH }), false);
   };
 
   const handleNodeClick = (node: SkillNode) => {
