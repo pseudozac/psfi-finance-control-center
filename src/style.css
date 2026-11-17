@@ -7630,6 +7630,47 @@ body {
   user-select: none;
 }
 
+.constellation-starfield circle {
+  animation: star-breathe 6s ease-in-out infinite alternate;
+}
+
+.constellation-starfield circle:nth-child(3n) {
+  animation-delay: -2.5s;
+}
+
+.constellation-starfield circle:nth-child(5n) {
+  animation-delay: -4s;
+}
+
+.constellation-tier-beacon {
+  pointer-events: none;
+  filter: drop-shadow(0 0 12px rgba(70, 160, 210, 0.16));
+}
+
+.constellation-conduit path {
+  transition: stroke-opacity 220ms ease, opacity 220ms ease;
+}
+
+.constellation-route-dash {
+  animation: constellation-flow 3.8s linear infinite;
+}
+
+@keyframes star-breathe {
+  from { opacity: 0.28; }
+  to { opacity: 0.78; }
+}
+
+@keyframes constellation-flow {
+  to { stroke-dashoffset: -32; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .constellation-starfield circle,
+  .constellation-route-dash {
+    animation: none;
+  }
+}
+
 .skill-constellation-node {
   cursor: pointer;
   outline: none;
