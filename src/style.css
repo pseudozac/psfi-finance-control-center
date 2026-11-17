@@ -7630,6 +7630,25 @@ body {
   user-select: none;
 }
 
+.skill-constellation-node {
+  cursor: pointer;
+  outline: none;
+}
+
+.skill-constellation-node:hover > rect,
+.skill-constellation-node:focus-visible > rect {
+  fill: rgba(18, 25, 44, 0.98);
+  stroke-opacity: 0.95;
+}
+
+.skill-constellation-node:focus-visible {
+  filter: drop-shadow(0 0 8px rgba(192, 132, 252, 0.85));
+}
+
+.skill-constellation-node:focus-visible > circle {
+  stroke: #e9d5ff;
+}
+
 /* ==========================================================================
    Tactical Astrolabe Floating HUD (Constellation Pan, Zoom & Wings)
    ========================================================================== */
@@ -12282,3 +12301,4 @@ body {
     min-width: 580px;
   }
 }
+
