@@ -257,9 +257,14 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({
     const module = document.getElementById(step.targetId);
     if (!module) return null;
     if (window.matchMedia('(max-width: 767px)').matches && step.compactFocusSelector) {
-      return document.querySelector<HTMLElement>(step.compactFocusSelector) ?? module;
+      const compactTarget = document.querySelector<HTMLElement>(step.compactFocusSelector);
+      if (compactTarget) return compactTarget;
     }
-    return module;
+    const rect = module.getBoundingClientRect();
+    const styles = getComputedStyle(module);
+    return rect.width > 0 && rect.height > 0 && styles.display !== 'none' && styles.visibility !== 'hidden'
+      ? module
+      : null;
   }, [step]);
 
   // Auto-switch view when step requires it
