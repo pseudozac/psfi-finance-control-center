@@ -71,12 +71,15 @@ import { VaultSecurityModal } from './components/VaultSecurityModal';
 import { LoanPrepaymentArbitrageModal } from './components/LoanPrepaymentArbitrageModal';
 import { TactileCommitSlider } from './components/TactileCommitSlider';
 import { ExecutivePrintableStatement } from './components/ExecutivePrintableStatement';
+import { recoverDeviceUnlock } from './lib/encryptedVaultStorage';
 import { decodeVaultBeamSecure } from './lib/vaultBeam';
 
 type AppPhase = 'loading' | 'gateway' | 'dashboard';
 
 export function App() {
   const {
+    storageReady,
+    storageError,
     plan,
     setPlan,
     baseline,
@@ -101,6 +104,8 @@ export function App() {
     exportAllVaultsBundle,
     importAllVaultsBundle,
   } = useFinancePlan();
+
+  const [recoveryError, setRecoveryError] = useState(false);
 
   // App phase control: loading -> gateway -> dashboard
   const [appPhase, setAppPhase] = useState<AppPhase>(() => {
@@ -253,6 +258,7 @@ export function App() {
 
   // Listen for incoming #beam= URL hash transfers
   useEffect(() => {
+    if (!storageReady) return;
     const handleHash = async () => {
       const hash = window.location.hash;
       if (hash && hash.startsWith('#beam=')) {
@@ -273,7 +279,7 @@ export function App() {
     handleHash();
     window.addEventListener('hashchange', handleHash);
     return () => window.removeEventListener('hashchange', handleHash);
-  }, [setPlan, setStatusMessage]);
+  }, [storageReady, setPlan, setStatusMessage]);
 
   const handleUnlockPendingBeam = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -474,6 +480,37 @@ export function App() {
   }
 
   // Phase 2: Gateway Choice Screen ("Start" vs "Continue")
+  if (!storageReady) {
+    return (
+      <main className="hipuku-card" aria-label="Vault storage">
+        <p role={storageError ? 'alert' : 'status'}>
+          {storageError ?? 'Opening local vault storage…'}
+        </p>
+        {storageError?.includes('finish upgrading device storage') && (
+          <form onSubmit={async (event) => {
+            event.preventDefault();
+            const secret = new FormData(event.currentTarget).get('recovery')?.toString().trim().replace(/\s+/g, ' ');
+            if (!secret) return;
+            try {
+              await recoverDeviceUnlock(secret);
+              window.location.reload();
+            } catch {
+              setRecoveryError(true);
+            }
+          }}>
+            <label>
+              Vault recovery phrase
+              <input name="recovery" type="password" autoComplete="off" required />
+            </label>
+            <button type="submit">Recover local vault</button>
+            {recoveryError && <p role="alert">Could not unlock the vault with that recovery phrase.</p>}
+          </form>
+        )}
+        {storageError && <button type="button" onClick={() => window.location.reload()}>Retry</button>}
+      </main>
+    );
+  }
+
   if (appPhase === 'gateway') {
     return (
       <GatewayScreen
@@ -926,7 +963,7 @@ export function App() {
 
   // Phase 3: Main Dashboard
   return (
-    <div className={`app-shell layout-${layoutMode} ${privacyMode ? 'privacy-masked' : ''} ${showTour ? 'tour-active' : ''}`}>
+    <div className={`app-shell layout-${layoutMode} ${isDirty && !showTour ? 'has-draft' : ''} ${privacyMode ? 'privacy-masked' : ''} ${showTour ? 'tour-active' : ''}`}>
       <div className="app-scroll">
       {/* Floating Pill Dock Navbar */}
       <header className="navbar-dock" id="tour-dock">

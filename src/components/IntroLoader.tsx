@@ -17,7 +17,7 @@ interface IntroLoaderProps {
 const FEATURES = [
   {
     icon: <ShieldCheck size={18} className="text-nebula" />,
-    badge: 'ZERO EXTERNAL CLOUD',
+    badge: 'LOCAL FINANCIAL DATA',
     title: '100% Private Client-Side Enclave',
     desc: 'Your salary, net worth, and debt never leave your machine. Stored locally in your browser storage with zero telemetry.',
     color: 'nebula',
@@ -186,7 +186,7 @@ export const IntroLoader: React.FC<IntroLoaderProps> = ({ onFinish }) => {
                 ? 'LOADING UNION BUDGET TAX ENGINE'
                 : progress < 99
                 ? 'MOUNTING ZERO-CLOUD VAULT'
-                : 'OFFLINE VAULT READY'}
+                : 'VAULT INTERFACE READY'}
             </span>
             <span className="text-nebula font-bold">{progress}%</span>
           </div>

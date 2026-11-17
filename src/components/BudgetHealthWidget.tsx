@@ -59,11 +59,11 @@ export const BudgetHealthWidget: React.FC<BudgetHealthWidgetProps> = ({ analysis
           <span className="text-muted">·</span>
           <span className="text-cyan-400">Buffer: {analysis.unallocatedBufferPercent}%</span>
           <span className="text-muted">·</span>
-          <span className="text-slate-300 font-bold">Total: 100%</span>
+          <span className="text-slate-300 font-bold">Shares rounded</span>
         </div>
       </div>
 
-      {/* Complete 100% Income Allocation Track */}
+      {/* Income Allocation Track */}
       <div className="multi-bar-container mb-4">
         <div className="multi-bar">
           <div

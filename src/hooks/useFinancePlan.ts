@@ -50,10 +50,13 @@ export function useFinancePlan() {
     return JSON.stringify(plan) !== JSON.stringify(committedPlan);
   }, [plan, committedPlan]);
 
+  const [storageReady, setStorageReady] = useState(false);
+  const [storageError, setStorageError] = useState<string | null>(null);
+
   // Seamless continuous auto-save to encrypted IndexedDB — user modifications are NEVER lost
   useEffect(() => {
-    saveAllAccounts(accounts);
-  }, [accounts]);
+    if (storageReady) saveAllAccounts(accounts);
+  }, [accounts, storageReady]);
 
   // Synchronize on boot with encrypted IndexedDB storage
   useEffect(() => {
@@ -62,9 +65,14 @@ export function useFinancePlan() {
       .then((secureAccounts) => {
         if (mounted && secureAccounts && secureAccounts.length > 0) {
           setAccounts(secureAccounts);
+          const active = secureAccounts.find((account) => account.id === activeId) ?? secureAccounts[0];
+          setCommittedPlan(structuredClone(active.plan));
+          setStorageReady(true);
         }
       })
-      .catch(() => {});
+      .catch((error: unknown) => {
+        if (mounted) setStorageError(error instanceof Error ? error.message : "Vault storage is unavailable.");
+      });
     return () => {
       mounted = false;
     };
@@ -265,6 +273,8 @@ export function useFinancePlan() {
   );
 
   return {
+    storageReady,
+    storageError,
     plan,
     setPlan,
     baseline,

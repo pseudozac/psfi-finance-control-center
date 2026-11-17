@@ -40,6 +40,7 @@ export interface StoredVaultMeta {
   mvkIv: string; // base64
   iterations: number;
   recoveryHint?: string;
+  deviceUnlock?: { key: CryptoKey; ciphertext: Uint8Array; iv: Uint8Array };
   createdAt: string;
   updatedAt: string;
 }
@@ -215,7 +216,7 @@ export async function initializeSecureVault(
     updatedAt: new Date().toISOString(),
   };
 
-  await dbSetMeta(meta);
+  await rememberDeviceUnlock(meta, mnemonic);
   return { masterKey, mnemonic };
 }
 
@@ -249,6 +250,9 @@ export async function saveAccountEncrypted(
   const sensitivePayload = JSON.stringify({
     plan: account.plan,
     baseline: account.baseline,
+    pinHash: account.pinHash,
+    pinSalt: account.pinSalt,
+    autoLockMinutes: account.autoLockMinutes,
   });
 
   const encrypted = await encryptWithKey(masterKey, sensitivePayload);
@@ -288,6 +292,9 @@ export async function loadAllAccountsEncrypted(masterKey: CryptoKey): Promise<Us
         updatedAt: item.updatedAt,
         plan: validateImportedPlan(parsed.plan),
         baseline: parsed.baseline ? validateImportedPlan(parsed.baseline) : null,
+        pinHash: typeof parsed.pinHash === "string" ? parsed.pinHash : undefined,
+        pinSalt: typeof parsed.pinSalt === "string" ? parsed.pinSalt : undefined,
+        autoLockMinutes: typeof parsed.autoLockMinutes === "number" ? parsed.autoLockMinutes : undefined,
       });
     } catch {
       // Skip corrupt or un-decryptable records
@@ -356,9 +363,11 @@ export function readLegacyPlaintextAccounts(): UserAccount[] {
  */
 export async function migrateLegacyAccountsToEncrypted(
   passphraseOrMnemonic?: string,
-  iterations: number = PBKDF2_RECOMMENDED_ITERATIONS
+  iterations: number = PBKDF2_RECOMMENDED_ITERATIONS,
+  initialAccounts: UserAccount[] = []
 ): Promise<{ success: boolean; accountsCount: number; mnemonic: string; masterKey: CryptoKey }> {
-  const legacyAccounts = readLegacyPlaintextAccounts();
+  const storedLegacyAccounts = readLegacyPlaintextAccounts();
+  const legacyAccounts = storedLegacyAccounts.length ? storedLegacyAccounts : initialAccounts;
   if (legacyAccounts.length === 0) {
     // No legacy data; initialize clean initial account
     const { masterKey, mnemonic } = await initializeSecureVault(passphraseOrMnemonic, iterations);
@@ -393,8 +402,7 @@ export async function migrateLegacyAccountsToEncrypted(
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
       window.localStorage.setItem(MIGRATION_FLAG_KEY, 'true');
-      // Create a temporary backup key before wiping
-      window.localStorage.setItem('psfi_accounts_pre_encryption_backup', JSON.stringify(legacyAccounts));
+      window.localStorage.removeItem('psfi_accounts_pre_encryption_backup');
       window.localStorage.removeItem(LEGACY_STORAGE_KEY_ACCOUNTS);
     }
   } catch {
@@ -417,11 +425,11 @@ export function setLiveSessionKey(key: CryptoKey, mnemonic?: string): void {
   if (mnemonic) {
     liveSessionMnemonic = mnemonic;
     try {
-      if (typeof window !== 'undefined' && window.sessionStorage) {
-        window.sessionStorage.setItem('psfi_session_recovery_mnemonic', mnemonic);
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.removeItem('psfi_session_recovery_mnemonic');
       }
     } catch {
-      // Ignore storage errors in private browsing
+      // Storage can be unavailable in restricted browser contexts.
     }
   }
 }
@@ -450,27 +458,55 @@ export function getLiveSessionMnemonic(): string | null {
  * Ensures an active Master Vault Key is ready.
  * Reconnects in-memory session key, unlocks via session token, or triggers non-destructive migration.
  */
-export async function ensureActiveMasterKey(): Promise<{ masterKey: CryptoKey; mnemonic: string }> {
+async function rememberDeviceUnlock(meta: StoredVaultMeta, mnemonic: string): Promise<void> {
+  const key = await crypto.subtle.generateKey(
+    { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+  );
+  const encrypted = await encryptWithKey(key, mnemonic);
+  await dbSetMeta({ ...meta, deviceUnlock: { key, ...encrypted } });
+}
+
+export async function recoverDeviceUnlock(secret: string): Promise<void> {
+  const meta = await dbGetMeta();
+  if (!meta || meta.deviceUnlock) throw new Error('Device recovery is unavailable.');
+  await unlockVaultWithSecret(secret);
+  await rememberDeviceUnlock(meta, secret);
+}
+
+let pendingMasterKey: Promise<{ masterKey: CryptoKey; mnemonic: string }> | null = null;
+
+export async function ensureActiveMasterKey(initialAccounts: UserAccount[] = []): Promise<{ masterKey: CryptoKey; mnemonic: string }> {
   if (liveSessionMasterKey && liveSessionMnemonic) {
     return { masterKey: liveSessionMasterKey, mnemonic: liveSessionMnemonic };
   }
-
-  const sessionMnemonic = getLiveSessionMnemonic();
-  if (sessionMnemonic && (await isVaultInitialized())) {
-    try {
-      const masterKey = await unlockVaultWithSecret(sessionMnemonic);
-      setLiveSessionKey(masterKey, sessionMnemonic);
-      return { masterKey, mnemonic: sessionMnemonic };
-    } catch {
-      // Re-initialize if unlock fails
-    }
-  }
-
-  // Migrate or initialize
-  const result = await migrateLegacyAccountsToEncrypted();
-  setLiveSessionKey(result.masterKey, result.mnemonic);
-  return { masterKey: result.masterKey, mnemonic: result.mnemonic };
+  pendingMasterKey ??= (async () => typeof navigator !== "undefined" && navigator.locks
+    ? await navigator.locks.request("psfi-device-initialization", () => openOrInitializeMasterKey(initialAccounts))
+    : await openOrInitializeMasterKey(initialAccounts))().finally(() => {
+    pendingMasterKey = null;
+  });
+  return pendingMasterKey;
 }
+
+async function openOrInitializeMasterKey(initialAccounts: UserAccount[]): Promise<{ masterKey: CryptoKey; mnemonic: string }> {
+  const meta = await dbGetMeta();
+  if (meta) {
+    const device = meta.deviceUnlock;
+    const mnemonic = device
+      ? await decryptWithKey(device.key, device.ciphertext, device.iv)
+      : getLiveSessionMnemonic();
+    if (!mnemonic) {
+      throw new Error('Open the original vault tab to finish upgrading device storage.');
+    }
+    const masterKey = await unlockVaultWithSecret(mnemonic);
+    if (!device) await rememberDeviceUnlock(meta, mnemonic);
+    setLiveSessionKey(masterKey, mnemonic);
+    return { masterKey, mnemonic };
+  }
+  const result = await migrateLegacyAccountsToEncrypted(undefined, undefined, initialAccounts);
+  setLiveSessionKey(result.masterKey, result.mnemonic);
+  return result;
+}
+
 
 // ============================================================================
 // Multi-Vault Unified Encrypted Bundle Export & Import

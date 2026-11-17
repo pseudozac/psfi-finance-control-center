@@ -642,8 +642,8 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
               </span>
               <p className="text-[10.5px] text-slate-400 leading-relaxed">
                 • <strong>Why Ruin Risk may be high while SWR has safe tiers:</strong> The top card ({result.ruinProbabilityPercent}% Ruin Risk) tests your <em>actual planned withdrawal</em> of {formatINR(monthlyRetirementBurn)}/mo ({result.plannedWithdrawalRatePercent}% of median corpus). Under severe shocks like {activeScenarioMeta.label}, your corpus is depressed, making {formatINR(monthlyRetirementBurn)}/mo unsustainable.<br />
-                • <strong>Safe Withdrawal Rate ({result.safeWithdrawalRatePercent}%):</strong> Shows the maximum percentage rate that <em>would survive</em> &ge; 90% of paths in this specific crisis. If you lower your withdrawal to {formatINR(Math.round(result.medianRetirementCorpus * (result.safeWithdrawalRatePercent / 100) / 12))}/mo, portfolio survival is restored.<br />
-                • <strong>Success Criterion:</strong> A 30-year trajectory is successful if portfolio net worth remains positive (&gt; ₹0) through Year {result.totalYears} after living costs compounded at 6.5% Indian CPI inflation.
+                • <strong>Safe Withdrawal Rate ({result.safeWithdrawalRatePercent}%):</strong> Shows the maximum percentage rate that <em>would survive</em> &ge; 90% of paths in this specific crisis. That modeled threshold corresponds to {formatINR(Math.round(result.medianRetirementCorpus * (result.safeWithdrawalRatePercent / 100) / 12))}/mo at the median retirement corpus.<br />
+                • <strong>Success Criterion:</strong> A path succeeds if its balance stays positive through {result.retirementYears} years of retirement after withdrawals adjusted by simulated inflation.
               </p>
             </div>
           </div>

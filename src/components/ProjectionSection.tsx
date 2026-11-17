@@ -201,7 +201,7 @@ export const ProjectionSection: React.FC<ProjectionSectionProps> = ({
               </p>
               <div className="p-2.5 rounded-lg bg-slate-900/90 border border-amber-500/30 text-amber-200/90 leading-relaxed text-[11px]">
                 <strong className="text-amber-300 font-mono block mb-0.5">⚠️ Actuarial Reality Notice: A Projected Monthly Gain is NOT Dependable Spendable Income</strong>
-                Equity returns are non-linear and volatile ($\sigma \approx 18\%$ annual deviation). Paper compounding cannot be withdrawn smoothly every month like a salary. Selling units to spend incurs <strong>Section 112A LTCG tax (12.5% over ₹1.25L)</strong>, while living expenses inflate with <strong>CPI ({plan.savings.inflationPercent}%/yr)</strong>. Dependable spendable income requires a conservative <strong>3.0%–3.5% Safe Withdrawal Rate (SWR)</strong> backed by a liquid cash wedge.
+                Equity returns are non-linear and volatile (about 18% annual deviation). Paper compounding cannot be withdrawn smoothly every month like a salary. Selling units to spend incurs <strong>Section 112A LTCG tax (12.5% over ₹1.25L)</strong>, while living expenses inflate with <strong>CPI ({plan.savings.inflationPercent}%/yr)</strong>. Dependable spendable income requires a conservative <strong>3.0%–3.5% Safe Withdrawal Rate (SWR)</strong> backed by a liquid cash wedge.
               </div>
             </div>
           </div>
@@ -218,18 +218,18 @@ export const ProjectionSection: React.FC<ProjectionSectionProps> = ({
             </div>
             <div className="p-2 rounded bg-slate-900/50 border border-subtle">
               <span className="text-muted block text-[10px]">SEC 112A LTCG TAX</span>
-              <span className="font-bold text-amber-300">{crossover.assumptions.estimatedLtcgTaxPercent}% (&gt;₹1.25L)</span>
+              <span className="font-bold text-amber-300">Not modeled</span>
             </div>
             <div className="p-2 rounded bg-slate-900/50 border border-subtle">
               <span className="text-muted block text-[10px]">MUTUAL FUND TER</span>
-              <span className="font-bold text-slate-300">~{crossover.assumptions.estimatedExpenseRatioPercent}% Fee Drag</span>
+              <span className="font-bold text-slate-300">Not modeled</span>
             </div>
             <div className="p-2 rounded bg-slate-900/50 border border-subtle">
               <span className="text-muted block text-[10px]">INFLATED BURN @ M{crossover.month}</span>
               <span className="font-bold text-corona">{formatINR(crossover.inflatedMonthlyExpenses ?? crossover.monthlyExpenses)}/mo</span>
             </div>
             <div className="p-2 rounded bg-slate-900/50 border border-subtle">
-              <span className="text-muted block text-[10px]">DEPENDABLE SWR (3.5%)</span>
+              <span className="text-muted block text-[10px]">PRE-TAX WITHDRAWAL (3.5%)</span>
               <span className="font-bold text-emerald-400">{formatINR(crossover.realSpendableCashflow ?? 0)}/mo</span>
             </div>
           </div>
@@ -238,7 +238,7 @@ export const ProjectionSection: React.FC<ProjectionSectionProps> = ({
             <div className="text-[11px] font-mono text-cyan-300 flex items-center gap-1.5 pt-1">
               <CheckCircle2 size={12} className="text-cyan-400" />
               <span>
-                <strong>Conservative SWR &amp; Post-Tax Crossover:</strong> Reached at Month {crossover.realCrossoverMonth} ({crossover.realCrossoverYears} Years), where dependable 3.5% SWR cashflow fully covers your inflated monthly burn.
+                <strong>Illustrative Pre-Tax Withdrawal Crossover:</strong> Reached at Month {crossover.realCrossoverMonth} ({crossover.realCrossoverYears} Years), where the modeled 3.5% withdrawal covers your inflated monthly burn.
               </span>
             </div>
           )}
@@ -298,12 +298,12 @@ export const ProjectionSection: React.FC<ProjectionSectionProps> = ({
 
           <div className="telemetry-pill col-span-2 sm:col-span-1">
             <span className="telemetry-label font-mono flex items-center gap-1">
-              <Coins size={11} className="text-amber-400" /> Dependable SWR Cashflow
+              <Coins size={11} className="text-amber-400" /> Illustrative Monthly Withdrawal
             </span>
             <span className="telemetry-val font-mono text-amber-400">
               {formatCompactINR(safeWithdrawalMonthly)}/mo
             </span>
-            <span className="telemetry-sub muted text-[11px]">3.5% SWR for Life (Post-Tax Buffer)</span>
+            <span className="telemetry-sub muted text-[11px]">3.5% annual withdrawal before taxes and fees</span>
           </div>
         </div>
       )}
