@@ -280,7 +280,12 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({
         const cardReservedHeight = 220;
         const rect = el.getBoundingClientRect();
         const scroller = document.querySelector<HTMLElement>('.layout-mobile .app-scroll');
-        const currentScrollY = scroller?.scrollTop ?? window.scrollY;
+        const canScrollElement = Boolean(
+          scroller &&
+          getComputedStyle(scroller).display !== 'contents' &&
+          scroller.scrollHeight > scroller.clientHeight
+        );
+        const currentScrollY = canScrollElement ? scroller!.scrollTop : window.scrollY;
         const elementAbsoluteTop = currentScrollY + rect.top;
         const viewportHeight = window.innerHeight;
         const availableHeight = viewportHeight - navOffset - cardReservedHeight;
@@ -288,10 +293,11 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({
         let targetScroll = elementAbsoluteTop - navOffset - Math.max(0, (availableHeight - rect.height) / 2);
         targetScroll = Math.max(0, targetScroll);
 
-        (scroller ?? window).scrollTo({
-          top: targetScroll,
-          behavior: 'smooth',
-        });
+        if (canScrollElement) {
+          scroller!.scrollTo({ top: targetScroll, behavior: 'smooth' });
+        } else {
+          window.scrollTo({ top: targetScroll, behavior: 'smooth' });
+        }
       }
       updateTargetMeasurements();
     }, 80);
