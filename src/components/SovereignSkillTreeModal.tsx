@@ -954,6 +954,17 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                 </div>
 
                 <div className="hud-zoom-cluster">
+                  {!isTheaterMode && (
+                    <button
+                      type="button"
+                      className="hud-icon-btn theater-enter-btn"
+                      onClick={toggleTheaterMode}
+                      aria-label="Enter theater mode"
+                      title="Show only the star chart"
+                    >
+                      <Maximize2 size={14} />
+                    </button>
+                  )}
                   {isTheaterMode && (
                     <>
                       <button
