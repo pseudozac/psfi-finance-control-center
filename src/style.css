@@ -12201,3 +12201,110 @@ body {
 
 
 
+
+/* Give the mobile navigation and draft controls their own space below the viewport. */
+.app-scroll {
+  display: contents;
+}
+
+.tax-scope-note,
+.terminal-statement-description {
+  color: var(--ink-secondary);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.tax-scope-note a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.tax-input-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.tax-input-grid label {
+  display: grid;
+  gap: 6px;
+  color: var(--ink-secondary);
+  font-size: 13px;
+}
+
+.tax-input-grid input {
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 10px;
+  color: var(--ink-primary);
+  background: var(--surface-primary);
+  border: 1px solid var(--border-medium);
+  border-radius: 8px;
+}
+
+.statement-table th,
+.statement-row-heading td,
+.statement-table td.text-muted,
+.terminal-statement-header .text-muted {
+  color: var(--ink-secondary);
+}
+
+@media screen and (max-width: 768px) {
+  body:has(.app-shell) {
+    padding-bottom: 0 !important;
+  }
+
+  .app-shell.layout-mobile {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px) !important;
+    overflow: hidden;
+  }
+
+  .layout-mobile .app-scroll {
+    display: block;
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 10px 12px 16px;
+    scroll-padding-top: 80px;
+  }
+
+  .layout-mobile .mobile-bottom-dock {
+    position: relative;
+    inset: auto;
+    flex: none;
+    margin: 8px 12px;
+    background: var(--surface-primary);
+    box-shadow: none;
+  }
+
+  .layout-mobile .tactile-commit-slider-wrapper {
+    position: relative;
+    inset: auto !important;
+    align-self: center;
+    flex: none;
+    max-width: calc(100% - 24px);
+    transform: none;
+  }
+
+  .layout-mobile .tactile-commit-slider-wrapper.slider-hidden {
+    display: none;
+  }
+
+  .layout-mobile .main-stack,
+  .layout-mobile .wealth-terminal-shell {
+    padding-bottom: 0 !important;
+  }
+
+  .terminal-statement-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .statement-table {
+    min-width: 580px;
+  }
+}

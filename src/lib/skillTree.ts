@@ -603,7 +603,7 @@ export function calculateSkillTree(
       iconName: 'HeartPulse',
       requiredParentIds: ['term_life_shield'],
       currentMetricLabel: (plan.tax.deductions80D > 0 || plan.expenses.insurance > 0)
-        ? `${formatINR(plan.tax.deductions80D || plan.expenses.insurance)} Cover/Ded`
+        ? `${plan.tax.deductions80D > 0 ? `${formatINR(plan.tax.deductions80D)} entered deduction` : `${formatINR(plan.expenses.insurance)}/mo budgeted premium`}`
         : 'No Health Cover Logged',
       targetMetricLabel: 'Verified Family Policy + Super Top-Up',
       progressPercent: (plan.tax.deductions80D > 0 || plan.expenses.insurance > 0) ? 60 : 25,
@@ -649,7 +649,7 @@ export function calculateSkillTree(
       targetMetricLabel: '6.0 Months Buffer',
       progressPercent: Math.min(100, Math.round((runwayMonths / 6) * 100)),
       gapRupeesOrMonths: runwayMonths < 6 ? `${formatINR(Math.max(0, 6 * monthlyExpenses - currentSavings))} needed` : undefined,
-      actionableStep: runwayMonths < 6 ? `Build up reserves by ${formatINR(Math.max(0, 6 * monthlyExpenses - currentSavings))}.` : 'Iron Fortress unlocked: Immune to short-term economic shocks.',
+      actionableStep: runwayMonths < 6 ? `Build up reserves by ${formatINR(Math.max(0, 6 * monthlyExpenses - currentSavings))}.` : 'Your budgeted reserves cover six months of current expenses.',
       evidenceType: 'budgeted',
       evidenceDescription: `[BUDGET ALLOCATION]: Self-reported emergency reserves (${formatINR(currentSavings)}) vs 6 months living expenses (${formatINR(6 * monthlyExpenses)}). Unverified via bank account clearing.`,
       gridColumn: 5,

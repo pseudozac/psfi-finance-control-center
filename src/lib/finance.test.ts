@@ -6,6 +6,8 @@ import {
   calculateCashflowWaterfall,
   calculateCrossoverPoint,
   calculateDebtPayoff,
+  calculateEmergencyStressTest,
+  calculateFireAnalysis,
   calculateMultiDebtPayoff,
   calculateProjections,
   calculateStepUpComparison,
@@ -33,9 +35,34 @@ describe('finance calculations', () => {
   it('computes monthly surplus, savings rate, and emergency runway', () => {
     const summary = calculateSummary(DEFAULT_PLAN);
     expect(summary.monthlyIncome).toBe(140_000);
-    expect(summary.monthlyExpenses).toBe(66_000);
-    expect(summary.monthlySurplus).toBe(74_000);
-    expect(summary.emergencyRunwayMonths).toBeCloseTo(240_000 / 66_000, 4);
+    expect(summary.monthlyExpenses).toBe(74_000);
+    expect(summary.monthlySurplus).toBe(66_000);
+    expect(summary.emergencyRunwayMonths).toBeCloseTo(240_000 / 74_000, 4);
+  });
+
+  it('flags unfunded savings and leaves unfunded obligations without a coverage date', () => {
+    const plan = { ...DEFAULT_PLAN, income: { ...DEFAULT_PLAN.income, salary: 0 } };
+    expect(calculateSummary(plan).savingsFundingGap).toBe(40_000);
+    expect(calculateBudgetRule(plan).rating).toBe('Attention Needed');
+    expect(calculateCashflowWaterfall(plan).fixedObligationsDay).toBeNull();
+  });
+
+  it('reclassifies custom expenses and uses standard runway for essential custom spending', () => {
+    const makePlan = (category: 'needs' | 'wants') => ({
+      ...DEFAULT_PLAN,
+      expenses: { ...DEFAULT_PLAN.expenses, custom: [{ id: 'test', name: 'Test', amount: 2_500, category }] },
+    });
+    expect(calculateBudgetRule(makePlan('wants')).wantsAmount).toBe(12_500);
+    expect(calculateBudgetRule(makePlan('needs')).needsAmount).toBe(58_500);
+    expect(calculateEmergencyStressTest(makePlan('needs')).standardMonthly
+      - calculateEmergencyStressTest(makePlan('wants')).standardMonthly).toBe(2_500);
+  });
+
+  it('keeps the FIRE target in today’s rupees and adjusts the date for inflation', () => {
+    const baseline = calculateFireAnalysis(DEFAULT_PLAN);
+    const zeroInflation = calculateFireAnalysis({ ...DEFAULT_PLAN, savings: { ...DEFAULT_PLAN.savings, inflationPercent: 0 } });
+    expect(baseline.fireTarget).toBe(zeroInflation.fireTarget);
+    expect(baseline.fireEtaMonths).toBeGreaterThan(zeroInflation.fireEtaMonths ?? 0);
   });
 
   it('projects step-up SIP, multi-decade compounding, and crossover metrics', () => {
@@ -116,6 +143,19 @@ describe('finance calculations', () => {
     expect(highIncomeWithDeductions.oldRegimeTax).toBeGreaterThan(0);
   });
 
+  it('applies the AY 2026–27 rebate and marginal relief', () => {
+    expect(estimateIndianIncomeTax(1_275_000).newRegimeTax).toBe(0);
+    expect(estimateIndianIncomeTax(1_285_000).newRegimeTax).toBe(10_400);
+    expect(estimateIndianIncomeTax(1_800_000).newRegimeTax).toBe(150_800);
+    expect(estimateIndianIncomeTax(1_240_000, 0, 0, 0, 0, false, { grossSalaryAnnual: 0 }).newRegimeTaxableIncome).toBe(1_240_000);
+  });
+
+  it('caps HRA at the allowance received and requires actual rent', () => {
+    const salary = { grossSalaryAnnual: 1_800_000, hraSalaryMonthly: 60_000, hraReceivedMonthly: 10_000 };
+    expect(estimateIndianIncomeTax(1_800_000, 0, 0, 0, 30_000, true, salary).hraExemption).toBe(120_000);
+    expect(estimateIndianIncomeTax(1_800_000, 0, 0, 0, 0, true, salary).hraExemption).toBe(0);
+  });
+
   it('simulates multi-debt avalanche vs snowball strategies', () => {
     const debts = [
       { id: 'card1', name: 'Premium Card', balance: 50_000, aprPercent: 42, minMonthlyPayment: 2_500 },
@@ -137,7 +177,7 @@ describe('finance calculations', () => {
 
   it('provides detailed tax slab breakdowns and capital gains details', () => {
     const res = estimateIndianIncomeTax(1_500_000, 150_000, 50_000);
-    expect(res.newRegimeSlabs?.length).toBe(6);
+    expect(res.newRegimeSlabs?.length).toBe(7);
     expect(res.oldRegimeSlabs?.length).toBe(4);
     expect(res.effectiveRateNew).toBeGreaterThan(0);
     expect(res.effectiveRateOld).toBeGreaterThan(0);

@@ -201,6 +201,13 @@ describe('statementParser - Classification & Ingestion', () => {
     const c80 = parsed.params.find((p) => p.key === 'section_80c');
     // 7200 * 12 = 86,400 (under 1.5L cap)
     expect(c80?.detectedValue).toBe(86400);
+    expect(c80?.selected).toBe(false);
+    expect(parsed.params.some((param) => param.targetField === 'expenses.housing' || param.targetField === 'tax.rentPaidMonthly')).toBe(false);
+    expect(parsed.params.find((param) => param.targetField === 'tax.hraReceivedMonthly')?.detectedValue).toBe(30_000);
+    expect(parsed.params.find((param) => param.targetField === 'tax.grossSalaryAnnual')).toMatchObject({
+      detectedValue: 1_620_000,
+      selected: false,
+    });
   });
 
   it('correctly parses Zerodha / broker demat holdings CSV', () => {

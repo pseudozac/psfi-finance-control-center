@@ -29,7 +29,7 @@ interface SocialShareModalProps {
   plan: FinancePlan;
   summary: FinanceSummary;
   budgetRule: BudgetRuleAnalysis;
-  taxComparison: TaxComparisonResult;
+  taxComparison: TaxComparisonResult | null;
   debtPayoff: DebtPayoffResult;
   accountName: string;
 }
@@ -276,7 +276,7 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
       drawPillarBox(ctx, pal, 60, dividerY + 175, cardW, cardH, 'EMERGENCY SURVIVAL RUNWAY', `${runwayMonths} MONTHS`, pal.accent, runwayMonths >= 6 ? 'Tier 2 Fortress: Full 6-Month Absorption' : 'Building towards 6-month buffer');
 
       // Pillar 4: Tax Optimization
-      drawPillarBox(ctx, pal, 620, dividerY + 175, cardW, cardH, 'INDIAN TAX REGIME EFFICIENCY', taxComparison.recommended === 'new' ? 'New Regime Optimal' : 'Old Regime Optimal', pal.highlight, anonymized ? 'Sec 87A + 80CCD(1B) NPS + Cess Audited' : `Net Annual Savings: ${formatINR(taxComparison.savings)}`);
+      drawPillarBox(ctx, pal, 620, dividerY + 175, cardW, cardH, 'INDIAN TAX REGIME EFFICIENCY', !taxComparison ? 'Estimate unavailable' : taxComparison.recommended === 'tie' ? 'Same estimated tax' : taxComparison.recommended === 'new' ? 'Default regime lower' : 'Old regime lower', pal.highlight, taxComparison && !anonymized ? `Estimated savings: ${formatINR(taxComparison.savings)}` : 'AY 2026–27 estimate');
     } else if (format === 'square') {
       const cardW = 460;
       const cardH = 160;
@@ -285,7 +285,7 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
       drawPillarBox(ctx, pal, 60, dividerY + 40, cardW, cardH, 'COMPOUNDING SAVINGS RATE', `${savingsRate}% / MO`, pal.highlight, anonymized ? 'Target Met: 20%+ acceleration tier' : `Net Monthly SIP: ${formatINR(plan.savings.monthlySip)}`);
       drawPillarBox(ctx, pal, 560, dividerY + 40, cardW, cardH, '50/30/20 BUDGET EQUILIBRIUM', `${Math.round(budgetRule.needsPercent)}% / ${Math.round(budgetRule.wantsPercent)}% / ${Math.round(budgetRule.savingsPercent)}%`, pal.accent, 'Needs / Wants / Wealth Balance');
       drawPillarBox(ctx, pal, 60, dividerY + 230, cardW, cardH, 'EMERGENCY SURVIVAL RUNWAY', `${runwayMonths} MONTHS`, pal.accent, runwayMonths >= 6 ? 'Tier 2 Fortress: Shock Absorption' : 'Building towards 6-month buffer');
-      drawPillarBox(ctx, pal, 560, dividerY + 230, cardW, cardH, 'INDIAN TAX REGIME EFFICIENCY', taxComparison.recommended === 'new' ? 'New Regime Optimal' : 'Old Regime Optimal', pal.highlight, anonymized ? 'Sec 87A + 80CCD(1B) NPS Audited' : `Net Annual Savings: ${formatINR(taxComparison.savings)}`);
+      drawPillarBox(ctx, pal, 560, dividerY + 230, cardW, cardH, 'INDIAN TAX REGIME EFFICIENCY', !taxComparison ? 'Estimate unavailable' : taxComparison.recommended === 'tie' ? 'Same estimated tax' : taxComparison.recommended === 'new' ? 'Default regime lower' : 'Old regime lower', pal.highlight, taxComparison && !anonymized ? `Estimated savings: ${formatINR(taxComparison.savings)}` : 'AY 2026–27 estimate');
 
       // Extra Milestone Strip for Square
       ctx.fillStyle = pal.cardBg;
@@ -307,7 +307,7 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
       drawPillarBox(ctx, pal, 60, startStackY, cardW, cardH, '1. COMPOUNDING SAVINGS RATE', `${savingsRate}% / MO`, pal.highlight, anonymized ? 'Target Met: 20%+ wealth acceleration tier' : `Net Monthly SIP: ${formatINR(plan.savings.monthlySip)}`);
       drawPillarBox(ctx, pal, 60, startStackY + 220, cardW, cardH, '2. 50/30/20 BUDGET EQUILIBRIUM', `${Math.round(budgetRule.needsPercent)}% Needs · ${Math.round(budgetRule.wantsPercent)}% Wants · ${Math.round(budgetRule.savingsPercent)}% Wealth`, pal.accent, 'Living Expenses vs Discretionary vs Investing');
       drawPillarBox(ctx, pal, 60, startStackY + 440, cardW, cardH, '3. EMERGENCY SURVIVAL RUNWAY', `${runwayMonths} MONTHS RESERVES`, pal.accent, runwayMonths >= 6 ? 'Tier 2 Fortress: Shock Absorption' : 'Building towards 6-month buffer');
-      drawPillarBox(ctx, pal, 60, startStackY + 660, cardW, cardH, '4. INDIAN TAX REGIME EFFICIENCY', taxComparison.recommended === 'new' ? 'New Regime Optimal' : 'Old Regime Optimal', pal.highlight, anonymized ? 'Sec 87A + 80CCD(1B) NPS + Cess Audited' : `Net Annual Savings: ${formatINR(taxComparison.savings)}`);
+      drawPillarBox(ctx, pal, 60, startStackY + 660, cardW, cardH, '4. INDIAN TAX REGIME EFFICIENCY', !taxComparison ? 'Estimate unavailable' : taxComparison.recommended === 'tie' ? 'Same estimated tax' : taxComparison.recommended === 'new' ? 'Default regime lower' : 'Old regime lower', pal.highlight, taxComparison && !anonymized ? `Estimated savings: ${formatINR(taxComparison.savings)}` : 'AY 2026–27 estimate');
 
       // High-Impact Story CTA Footer Box
       ctx.fillStyle = pal.cardBg;

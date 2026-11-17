@@ -1,3 +1,4 @@
+import { monthlyDebtOutflow } from '../lib/finance';
 import React, { useState, useMemo } from 'react';
 import {
   TrendingUp,
@@ -62,7 +63,8 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
   const transport = plan.expenses.transport;
   const lifestyle = plan.expenses.lifestyle;
   const insurance = plan.expenses.insurance;
-  const emi = plan.debt.monthlyPayment;
+  const emi = monthlyDebtOutflow(plan.debt);
+  const shareOfInflow = (amount: number) => monthlyInflow > 0 ? `${((amount / monthlyInflow) * 100).toFixed(1)}%` : '—';
   const customExpenses = plan.expenses.custom || [];
   const stepUpRate = plan.savings.stepUpSipPercent;
   const investmentRate = plan.savings.expectedReturnPercent;
@@ -76,10 +78,11 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
         return Array.from({ length: days }, (_, i) => {
           const dayNum = i + 1;
           let dayInflow = 0;
-          let dayOutflow = dailyBurn;
+          const distributedOutflow = monthlyOutflow - housing - emi;
+          let dayOutflow = Math.round(distributedOutflow * dayNum / days) - Math.round(distributedOutflow * i / days);
 
           if (dayNum === 1) dayInflow += salary;
-          if (dayNum === 15) dayInflow += freelance;
+          if (dayNum === 15) dayInflow += freelance + otherIncome;
           if (dayNum === 2) dayOutflow += housing;
           if (dayNum === 5) dayOutflow += emi;
 
@@ -200,7 +203,7 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
       default:
         return [];
     }
-  }, [timeframe, currentSavings, salary, freelance, housing, emi, stepUpRate, investmentRate, monthlyInflow, monthlyOutflow, dailyBurn]);
+  }, [timeframe, currentSavings, salary, freelance, otherIncome, housing, emi, stepUpRate, investmentRate, monthlyInflow, monthlyOutflow]);
 
   return (
     <div className="terminal-container">
@@ -246,7 +249,7 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
           <div>
             <div className="flex-align gap-2">
               <span className="font-mono text-xs text-muted uppercase tracking-wider">
-                Monthly Net Cashflow P&L
+                Monthly Surplus Before Savings
               </span>
               <InfoTooltip
                 title="Personal Free Cashflow (P&L)"
@@ -264,7 +267,7 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
               <div className={`terminal-delta-pill font-mono text-xs flex-align gap-1 ${isGain ? 'pill-gain' : 'pill-loss'}`}>
                 {isGain ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
                 <span>
-                  {isGain ? '+' : ''}{savingsRate.toFixed(1)}% Operating Margin
+                  {shareOfInflow(monthlySurplus)} Cashflow Margin
                 </span>
               </div>
             </div>
@@ -296,7 +299,7 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
             <div className="terminal-stat-box">
               <span className="terminal-stat-label font-mono">SAVINGS BENCHMARK</span>
               <span className="terminal-stat-val font-mono text-solstice">
-                {savingsRate >= 20 ? 'Target Achieved (20%+)' : 'Needs Attention (<20%)'}
+                {summary.savingsFundingGap > 0 ? 'Scheduled savings unfunded' : savingsRate >= 20 ? 'Target Achieved (20%+)' : 'Needs Attention (<20%)'}
               </span>
             </div>
           </div>
@@ -469,11 +472,11 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
         </div>
 
         {/* Accounting Disclaimer Banner */}
-        <div className="p-2.5 rounded-lg bg-slate-900/50 border border-subtle mb-3 text-xs text-muted leading-relaxed">
+        <div className="p-2.5 rounded-lg bg-slate-900/50 border border-subtle mb-3 terminal-statement-description">
           <strong className="text-white font-mono">[BUDGET RUN-RATE MODEL]</strong> This summary reflects your forward-looking monthly budget allocations and annualized cash-flow run-rates. It is an illustrative personal planning tool, not an audited accounting ledger, bank reconciliation statement, or GAAP/IFRS financial filing.
         </div>
 
-        <div className="statement-table-wrapper">
+        <div className="statement-table-wrapper" tabIndex={0} role="region" aria-label="Cashflow line items">
           <table className="statement-table font-mono text-xs">
             <thead>
               <tr>
@@ -494,7 +497,7 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
                 <td><span className="tag-badge">Core Operations</span></td>
                 <td className="text-right text-nebula">+₹{salary.toLocaleString('en-IN')}</td>
                 <td className="text-right text-nebula">+₹{(salary * 12).toLocaleString('en-IN')}</td>
-                <td className="text-right text-muted">{((salary / monthlyInflow) * 100).toFixed(1)}%</td>
+                <td className="text-right text-muted">{shareOfInflow(salary)}</td>
               </tr>
               {freelance > 0 && (
                 <tr>
@@ -502,7 +505,7 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
                   <td><span className="tag-badge">Ancillary Operations</span></td>
                   <td className="text-right text-nebula">+₹{freelance.toLocaleString('en-IN')}</td>
                   <td className="text-right text-nebula">+₹{(freelance * 12).toLocaleString('en-IN')}</td>
-                  <td className="text-right text-muted">{((freelance / monthlyInflow) * 100).toFixed(1)}%</td>
+                  <td className="text-right text-muted">{shareOfInflow(freelance)}</td>
                 </tr>
               )}
               {otherIncome > 0 && (
@@ -511,7 +514,7 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
                   <td><span className="tag-badge">Other Operations</span></td>
                   <td className="text-right text-nebula">+₹{otherIncome.toLocaleString('en-IN')}</td>
                   <td className="text-right text-nebula">+₹{(otherIncome * 12).toLocaleString('en-IN')}</td>
-                  <td className="text-right text-muted">{((otherIncome / monthlyInflow) * 100).toFixed(1)}%</td>
+                  <td className="text-right text-muted">{shareOfInflow(otherIncome)}</td>
                 </tr>
               )}
               <tr className="statement-subtotal">
@@ -531,28 +534,28 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
                 <td><span className="tag-badge tag-amber">Fixed Overhead</span></td>
                 <td className="text-right text-corona">-₹{housing.toLocaleString('en-IN')}</td>
                 <td className="text-right text-corona">-₹{(housing * 12).toLocaleString('en-IN')}</td>
-                <td className="text-right text-muted">{((housing / monthlyInflow) * 100).toFixed(1)}%</td>
+                <td className="text-right text-muted">{shareOfInflow(housing)}</td>
               </tr>
               <tr>
                 <td className="pl-4">Essential Groceries & Food</td>
-                <td><span className="tag-badge tag-amber">COGS</span></td>
+                <td><span className="tag-badge tag-amber">Essential</span></td>
                 <td className="text-right text-corona">-₹{groceries.toLocaleString('en-IN')}</td>
                 <td className="text-right text-corona">-₹{(groceries * 12).toLocaleString('en-IN')}</td>
-                <td className="text-right text-muted">{((groceries / monthlyInflow) * 100).toFixed(1)}%</td>
+                <td className="text-right text-muted">{shareOfInflow(groceries)}</td>
               </tr>
               <tr>
                 <td className="pl-4">Utilities & High-Speed Connectivity</td>
                 <td><span className="tag-badge tag-amber">Essential Ops</span></td>
                 <td className="text-right text-corona">-₹{utilities.toLocaleString('en-IN')}</td>
                 <td className="text-right text-corona">-₹{(utilities * 12).toLocaleString('en-IN')}</td>
-                <td className="text-right text-muted">{((utilities / monthlyInflow) * 100).toFixed(1)}%</td>
+                <td className="text-right text-muted">{shareOfInflow(utilities)}</td>
               </tr>
               <tr>
                 <td className="pl-4">Commute & Transport</td>
                 <td><span className="tag-badge tag-amber">Essential Ops</span></td>
                 <td className="text-right text-corona">-₹{transport.toLocaleString('en-IN')}</td>
                 <td className="text-right text-corona">-₹{(transport * 12).toLocaleString('en-IN')}</td>
-                <td className="text-right text-muted">{((transport / monthlyInflow) * 100).toFixed(1)}%</td>
+                <td className="text-right text-muted">{shareOfInflow(transport)}</td>
               </tr>
               {emi > 0 && (
                 <tr>
@@ -560,7 +563,7 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
                   <td><span className="tag-badge tag-red">Debt Obligation</span></td>
                   <td className="text-right text-corona">-₹{emi.toLocaleString('en-IN')}</td>
                   <td className="text-right text-corona">-₹{(emi * 12).toLocaleString('en-IN')}</td>
-                  <td className="text-right text-muted">{((emi / monthlyInflow) * 100).toFixed(1)}%</td>
+                  <td className="text-right text-muted">{shareOfInflow(emi)}</td>
                 </tr>
               )}
               {insurance > 0 && (
@@ -569,7 +572,7 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
                   <td><span className="tag-badge">Risk Shield</span></td>
                   <td className="text-right text-corona">-₹{insurance.toLocaleString('en-IN')}</td>
                   <td className="text-right text-corona">-₹{(insurance * 12).toLocaleString('en-IN')}</td>
-                  <td className="text-right text-muted">{((insurance / monthlyInflow) * 100).toFixed(1)}%</td>
+                  <td className="text-right text-muted">{shareOfInflow(insurance)}</td>
                 </tr>
               )}
               <tr>
@@ -577,7 +580,7 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
                 <td><span className="tag-badge">OPEX</span></td>
                 <td className="text-right text-corona">-₹{lifestyle.toLocaleString('en-IN')}</td>
                 <td className="text-right text-corona">-₹{(lifestyle * 12).toLocaleString('en-IN')}</td>
-                <td className="text-right text-muted">{((lifestyle / monthlyInflow) * 100).toFixed(1)}%</td>
+                <td className="text-right text-muted">{shareOfInflow(lifestyle)}</td>
               </tr>
               {customExpenses.map((exp: { id: string; name: string; amount: number }) => (
                 <tr key={exp.id}>
@@ -585,7 +588,7 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
                   <td><span className="tag-badge">Custom Line</span></td>
                   <td className="text-right text-corona">-₹{exp.amount.toLocaleString('en-IN')}</td>
                   <td className="text-right text-corona">-₹{(exp.amount * 12).toLocaleString('en-IN')}</td>
-                  <td className="text-right text-muted">{((exp.amount / monthlyInflow) * 100).toFixed(1)}%</td>
+                  <td className="text-right text-muted">{shareOfInflow(exp.amount)}</td>
                 </tr>
               ))}
               <tr className="statement-subtotal">
@@ -593,7 +596,7 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
                 <td></td>
                 <td className="text-right font-bold text-corona">-₹{monthlyOutflow.toLocaleString('en-IN')}</td>
                 <td className="text-right font-bold text-corona">-₹{(monthlyOutflow * 12).toLocaleString('en-IN')}</td>
-                <td className="text-right font-bold">{((monthlyOutflow / monthlyInflow) * 100).toFixed(1)}%</td>
+                <td className="text-right font-bold">{shareOfInflow(monthlyOutflow)}</td>
               </tr>
 
               {/* Bottom Line (Net Free Cashflow / Surplus) */}
@@ -601,7 +604,7 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
                 <td className="font-bold">
                   <div className="flex-align gap-1.5">
                     <Zap size={14} className={isGain ? 'text-nebula' : 'text-corona'} />
-                    <span>NET MONTHLY SURPLUS / FREE CASHFLOW</span>
+                    <span>NET MONTHLY SURPLUS BEFORE SAVINGS</span>
                   </div>
                 </td>
                 <td>
@@ -616,7 +619,7 @@ export const WealthTerminal: React.FC<WealthTerminalProps> = ({
                   {isGain ? '+' : ''}₹{annualSurplus.toLocaleString('en-IN')}
                 </td>
                 <td className={`text-right font-bold text-base ${isGain ? 'text-nebula' : 'text-corona'}`}>
-                  {savingsRate.toFixed(1)}%
+                  {shareOfInflow(monthlySurplus)}
                 </td>
               </tr>
             </tbody>

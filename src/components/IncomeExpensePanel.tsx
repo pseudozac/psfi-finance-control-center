@@ -182,7 +182,7 @@ export const IncomeExpensePanel: React.FC<IncomeExpensePanelProps> = ({ plan, pe
         {/* 50/30/20 Quick Distribution Health Bar with Denominator & Complete Allocation */}
         <div
           className="p-2.5 rounded-xl bg-slate-900/60 border border-subtle mb-3 flex items-center justify-between flex-wrap gap-2 text-xs font-mono"
-          title={`Denominator: Total Monthly Inflow ${formatINR(budgetRule.totalIncome)} (100% Base). Pillars: Needs ${budgetRule.needsPercent}% + Wants ${budgetRule.wantsPercent}% + Savings ${budgetRule.savingsPercent}% = ${budgetRule.pillarPercentSum}%. Auxiliary: Debt ${budgetRule.debtPercent}% + Buffer ${budgetRule.unallocatedBufferPercent}% = ${budgetRule.debtPercent + budgetRule.unallocatedBufferPercent}%. Sum = 100%. Score: ${budgetRule.score}/100.`}
+          title={`Denominator: Total Monthly Inflow ${formatINR(budgetRule.totalIncome)} (100% Base). Pillars: Needs ${budgetRule.needsPercent}% + Wants ${budgetRule.wantsPercent}% + Savings ${budgetRule.savingsPercent}% = ${budgetRule.pillarPercentSum}%. Auxiliary: Debt ${budgetRule.debtPercent}% + Buffer ${budgetRule.unallocatedBufferPercent}% = ${budgetRule.debtPercent + budgetRule.unallocatedBufferPercent}%. Percentages are rounded. Score: ${budgetRule.score}/100.`}
         >
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-purple-400" />
@@ -389,6 +389,7 @@ export const IncomeExpensePanel: React.FC<IncomeExpensePanelProps> = ({ plan, pe
                                 : 'bg-amber-900/80 text-amber-200 border border-amber-500/60'
                               : 'text-muted hover:text-primary bg-slate-800/40'
                           }`}
+                          aria-pressed={cat === tag}
                           title={`Tag as ${tag.toUpperCase()}`}
                         >
                           {tag}
@@ -651,7 +652,7 @@ export const IncomeExpensePanel: React.FC<IncomeExpensePanelProps> = ({ plan, pe
                     [BUDGETED PROJECTION]
                   </span>
                   <span className="font-mono text-purple-300 font-bold">
-                    Day {waterfall.fixedObligationsDay} of 30
+                    {waterfall.fixedObligationsDay == null ? 'Not covered this month' : `Day ${waterfall.fixedObligationsDay} of 30`}
                   </span>
                 </div>
               </div>
@@ -660,12 +661,16 @@ export const IncomeExpensePanel: React.FC<IncomeExpensePanelProps> = ({ plan, pe
               <div className="relative w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-subtle">
                 <div
                   className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full transition-all"
-                  style={{ width: `${Math.min(100, (waterfall.fixedObligationsDay / 30) * 100)}%` }}
+                  style={{ width: `${waterfall.fixedObligationsDay == null ? 0 : waterfall.fixedObligationsDay / 30 * 100}%` }}
                 />
               </div>
 
               <p className="text-[11.5px] text-muted font-sans leading-relaxed m-0">
-                <strong className="text-amber-300 font-mono text-[11px]">[BUDGETED PROJECTION]</strong> Under your monthly cashflow plan, <strong className="text-white">Day {waterfall.fixedObligationsDay}</strong> represents the projected milestone where cumulative monthly earnings equal your fixed budgeted obligations (Housing, Groceries, Utilities &amp; EMIs totaling {formatINR(waterfall.essentialNeeds + waterfall.debtObligations)}). <em>Note: This models planned income pacing, not reconciled or cleared bank account transactions.</em> The remaining <strong className="text-emerald-300">{30 - waterfall.fixedObligationsDay} days</strong> model projected discretionary cashflow and wealth compounding!
+                {waterfall.fixedObligationsDay == null
+                  ? `Planned income falls short of essential expenses and debt payments by ${formatINR(waterfall.essentialNeeds + waterfall.debtObligations - waterfall.totalIncome)} this month.`
+                  : waterfall.fixedObligationsDay === 0
+                    ? 'No essential expenses or debt payments are scheduled.'
+                    : `If income arrives evenly over the month, projected income covers ${formatINR(waterfall.essentialNeeds + waterfall.debtObligations)} in essential expenses and debt payments by day ${waterfall.fixedObligationsDay}.`}
               </p>
             </div>
 

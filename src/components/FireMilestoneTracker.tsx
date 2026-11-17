@@ -20,13 +20,13 @@ export const FireMilestoneTracker: React.FC<FireMilestoneTrackerProps> = ({ plan
             <h2 className="card-title m-0">FIRE &amp; Wealth Milestone Countdown</h2>
             <InfoTooltip
               title="FIRE 25× Rule & Milestones"
-              explanation="Financial Independence, Retire Early (FIRE) is grounded in the 4% Safe Withdrawal Rule: accumulating 25× your annual living expenses generates self-sustaining passive returns that cover lifestyle without capital depletion."
+              explanation="The 25× spending target is a planning benchmark. The estimated date compares projected savings against the target adjusted for inflation."
               formula="FIRE Corpus Target = Annual Living Expenses × 25"
               benchmark="ETA accelerates by 3–7 years for every +5% step-up SIP boost."
             />
           </div>
           <p className="muted text-xs">
-            Financial Independence target (25× annual expenses) &amp; compounding timeline to key Indian Rupee landmarks
+            FIRE target in today’s rupees (25× annual living expenses). The estimated date accounts for inflation.
           </p>
         </div>
 
@@ -40,7 +40,7 @@ export const FireMilestoneTracker: React.FC<FireMilestoneTrackerProps> = ({ plan
             </span>
           ) : (
             <span className="tag-pill tag-corona font-mono">
-              Increase monthly SIP to calculate ETA
+              Target not reached within the projection horizon
             </span>
           )}
         </div>

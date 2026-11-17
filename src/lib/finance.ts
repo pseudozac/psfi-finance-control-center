@@ -142,13 +142,20 @@ export function calculateTotalMonthlyExpenses(expenses: ExpenseBreakdown): numbe
   return base + customTotal;
 }
 
+export function monthlyDebtOutflow(debt: FinancePlan['debt']): number {
+  const hasOutstandingDebt = debt.cardBalance > 0 || debt.liabilities?.some((item) => item.balance > 0);
+  return hasOutstandingDebt ? Math.max(0, debt.monthlyPayment) : 0;
+}
+
 export function calculateSummary(plan: FinancePlan): FinanceSummary {
   const monthlyIncome = sumValues(plan.income as unknown as Record<string, number>);
-  const monthlyExpenses = calculateTotalMonthlyExpenses(plan.expenses);
+  const monthlyExpenses = calculateTotalMonthlyExpenses(plan.expenses) + monthlyDebtOutflow(plan.debt);
   const monthlySurplus = monthlyIncome - monthlyExpenses;
+  const scheduledSavings = Math.max(0, plan.savings.monthlySavings + plan.savings.monthlySip);
+  const savingsFundingGap = Math.max(0, scheduledSavings - Math.max(0, monthlySurplus));
   const savingsRatePercent =
     monthlyIncome > 0
-      ? Math.max(0, ((plan.savings.monthlySavings + plan.savings.monthlySip) / monthlyIncome) * 100)
+      ? Math.max(0, (scheduledSavings / monthlyIncome) * 100)
       : 0;
   const emergencyRunwayMonths =
     monthlyExpenses > 0 ? plan.savings.emergencyFundBalance / monthlyExpenses : 0;
@@ -158,6 +165,7 @@ export function calculateSummary(plan: FinancePlan): FinanceSummary {
     monthlyExpenses,
     monthlySurplus,
     savingsRatePercent,
+    savingsFundingGap,
     emergencyRunwayMonths,
   };
 }
@@ -185,7 +193,7 @@ export function calculateCashflowWaterfall(plan: FinancePlan): CashflowWaterfall
     plan.expenses.insurance +
     customNeeds;
 
-  const debtObligations = Math.max(0, plan.debt.monthlyPayment);
+  const debtObligations = monthlyDebtOutflow(plan.debt);
   const discretionaryWants = plan.expenses.lifestyle + customWants;
   const investmentsAndSavings = Math.max(0, plan.savings.monthlySavings + plan.savings.monthlySip);
 
@@ -194,10 +202,10 @@ export function calculateCashflowWaterfall(plan: FinancePlan): CashflowWaterfall
 
   const dailyLivingBurn = Math.round((essentialNeeds + debtObligations + discretionaryWants) / 30.4);
   const dailyDiscretionaryPocket = Math.round(discretionaryWants / 30.4);
-  const fixedObligationsDay =
-    totalIncome > 0
-      ? Math.min(30, Math.max(1, Math.ceil(((essentialNeeds + debtObligations) / totalIncome) * 30)))
-      : 0;
+  const fixedObligations = essentialNeeds + debtObligations;
+  const fixedObligationsDay = fixedObligations === 0 ? 0
+    : totalIncome >= fixedObligations ? Math.ceil((fixedObligations / totalIncome) * 30)
+    : null;
 
   let running = totalIncome;
   const steps: CashflowWaterfallStep[] = [
@@ -353,8 +361,7 @@ export function calculateProjections(
 }
 
 export function calculateCrossoverPoint(plan: FinancePlan, maxMonths = 360): CrossoverPointResult {
-  const summary = calculateSummary(plan);
-  const monthlyExpenses = summary.monthlyExpenses;
+  const monthlyExpenses = calculateTotalMonthlyExpenses(plan.expenses);
   const assumptions = {
     expectedReturnPercent: plan.savings.expectedReturnPercent,
     inflationPercent: plan.savings.inflationPercent,
@@ -499,8 +506,7 @@ export function calculateStepUpComparison(plan: FinancePlan, months: number): St
 }
 
 export function calculateFireAnalysis(plan: FinancePlan): FireAnalysis {
-  const summary = calculateSummary(plan);
-  const annualLivingExpenses = summary.monthlyExpenses * 12;
+  const annualLivingExpenses = calculateTotalMonthlyExpenses(plan.expenses) * 12;
   const fireTarget = Math.round(annualLivingExpenses * 25);
   const leanFireTarget = Math.round(annualLivingExpenses * 20);
   const fatFireTarget = Math.round(annualLivingExpenses * 35);
@@ -525,6 +531,7 @@ export function calculateFireAnalysis(plan: FinancePlan): FireAnalysis {
     milestoneMonths[m.id] = corpus >= m.targetAmount ? 0 : null;
   }
 
+  const inflationFactor = Math.pow(1 + plan.savings.inflationPercent / 100, 1 / 12);
   const maxMonths = 360; // 30 years simulation
   for (let m = 1; m <= maxMonths; m++) {
     if (m > 1 && (m - 1) % 12 === 0) {
@@ -534,7 +541,8 @@ export function calculateFireAnalysis(plan: FinancePlan): FireAnalysis {
     corpus = corpus * (1 + monthlyRate) + monthlyContribution;
 
     for (const target of milestoneConfigs) {
-      if (milestoneMonths[target.id] === null && corpus >= target.targetAmount) {
+      const threshold = target.id === 'fire' ? target.targetAmount * inflationFactor ** m : target.targetAmount;
+      if (milestoneMonths[target.id] === null && corpus >= threshold) {
         milestoneMonths[target.id] = m;
       }
     }
@@ -571,7 +579,10 @@ export function calculateFireAnalysis(plan: FinancePlan): FireAnalysis {
 
 export function calculateEmergencyStressTest(plan: FinancePlan): EmergencyStressTestResult {
   const liquidReserve = plan.savings.emergencyFundBalance;
-  const debtPayment = plan.debt.cardBalance > 0 ? plan.debt.monthlyPayment : 0;
+  const debtPayment = monthlyDebtOutflow(plan.debt);
+  const customEssential = (plan.expenses.custom ?? [])
+    .filter((item) => item.category === 'needs' || item.category === 'sinking')
+    .reduce((sum, item) => sum + item.amount, 0);
 
   // 1. Barebones: Housing + Groceries + Utilities + Min Debt
   const barebonesMonthly =
@@ -579,7 +590,7 @@ export function calculateEmergencyStressTest(plan: FinancePlan): EmergencyStress
 
   // 2. Standard: Essential needs + Term insurance + Transport + Debt
   const standardMonthly =
-    barebonesMonthly + plan.expenses.insurance + plan.expenses.transport;
+    barebonesMonthly + plan.expenses.insurance + plan.expenses.transport + customEssential;
 
   // 3. Full: Everything (including lifestyle & custom) + Debt
   const fullMonthly = calculateTotalMonthlyExpenses(plan.expenses) + debtPayment;
@@ -665,32 +676,28 @@ export function calculateDebtPayoff(
   };
 }
 
-/**
- * Estimates Indian personal income tax comparing:
- * - Current-year statutory planning under Income-tax Act, 2025 (Tax Year 2026–27 Default Simplified Schedule)
- * - Historical itemized comparisons under prior Income-tax Act, 1961 (FY 2024–25 & FY 2025–26)
- * Includes standard deduction of ₹75,000, Section 87A rebate (zero tax up to ₹7.75L gross),
- * plus Old Regime 80C, 80D, NPS 80CCD(1B), and HRA exemption modeling.
- */
+/** AY 2026–27 ordinary-income estimate for resident individuals under 60, before surcharge. */
 export function estimateIndianIncomeTax(
   annualGrossIncome: number,
   deductions80C = 0,
   deductions80D = 0,
   deductionsNPS = 0,
   rentPaidMonthly = 0,
-  isMetroCity = false
+  isMetroCity = false,
+  salaryDetails?: { grossSalaryAnnual: number; hraSalaryMonthly?: number; hraReceivedMonthly?: number }
 ): TaxComparisonResult {
   const gross = Math.max(0, annualGrossIncome);
 
-  // New Regime: Rs 75,000 standard deduction; rebate u/s 87A if taxable <= Rs 7,00,000
-  const newTaxable = Math.max(0, gross - 75_000);
+  const hasSalary = (salaryDetails?.grossSalaryAnnual ?? gross) > 0;
+  const newTaxable = Math.max(0, gross - (hasSalary ? Math.min(75_000, salaryDetails?.grossSalaryAnnual ?? gross) : 0));
   const newSlabConfigs = [
-    { label: '₹0 – ₹3,00,000', limit: 300_000, rate: 0, rateLabel: '0%' },
-    { label: '₹3,00,001 – ₹7,00,000', limit: 700_000, rate: 0.05, rateLabel: '5%' },
-    { label: '₹7,00,001 – ₹10,00,000', limit: 1_000_000, rate: 0.1, rateLabel: '10%' },
-    { label: '₹10,00,001 – ₹12,00,000', limit: 1_200_000, rate: 0.15, rateLabel: '15%' },
-    { label: '₹12,00,001 – ₹15,00,000', limit: 1_500_000, rate: 0.2, rateLabel: '20%' },
-    { label: 'Above ₹15,00,000', limit: Infinity, rate: 0.3, rateLabel: '30%' },
+    { label: '₹0 – ₹4,00,000', limit: 400_000, rate: 0, rateLabel: '0%' },
+    { label: '₹4,00,001 – ₹8,00,000', limit: 800_000, rate: 0.05, rateLabel: '5%' },
+    { label: '₹8,00,001 – ₹12,00,000', limit: 1_200_000, rate: 0.1, rateLabel: '10%' },
+    { label: '₹12,00,001 – ₹16,00,000', limit: 1_600_000, rate: 0.15, rateLabel: '15%' },
+    { label: '₹16,00,001 – ₹20,00,000', limit: 2_000_000, rate: 0.2, rateLabel: '20%' },
+    { label: '₹20,00,001 – ₹24,00,000', limit: 2_400_000, rate: 0.25, rateLabel: '25%' },
+    { label: 'Above ₹24,00,000', limit: Infinity, rate: 0.3, rateLabel: '30%' },
   ];
 
   let newBaseTax = 0;
@@ -719,29 +726,31 @@ export function estimateIndianIncomeTax(
     }
   }
 
-  // Section 87A Rebate for New Regime if taxable <= 7 Lakhs
-  if (newTaxable <= 700_000) {
-    newBaseTax = 0;
+  if (newTaxable <= 1_200_000) {
+    newBaseTax -= Math.min(60_000, newBaseTax);
+  } else {
+    // Section 87A marginal relief caps ordinary-income tax at the excess over ₹12 lakh.
+    newBaseTax = Math.min(newBaseTax, newTaxable - 1_200_000);
   }
   const newRegimeTax = Math.round(newBaseTax * 1.04); // 4% Health & Education Cess
 
   // Old Regime: Rs 50,000 standard deduction + 80C (1.5L) + 80D (75k) + NPS 80CCD(1B) (50k) + HRA
   const capped80C = Math.min(150_000, Math.max(0, deductions80C));
-  const capped80D = Math.min(75_000, Math.max(0, deductions80D));
+  const capped80D = Math.min(100_000, Math.max(0, deductions80D));
   const cappedNPS = Math.min(50_000, Math.max(0, deductionsNPS));
 
-  let hraExemption = 0;
-  if (rentPaidMonthly > 0 && gross > 0) {
-    const annualRent = rentPaidMonthly * 12;
-    const basicEst = gross * 0.5; // typical basic salary ~50% of gross
-    const rentMinusTenPctBasic = Math.max(0, annualRent - basicEst * 0.1);
-    const metroCap = basicEst * (isMetroCity ? 0.5 : 0.4);
-    hraExemption = Math.round(Math.min(rentMinusTenPctBasic, metroCap));
-  }
-
+  const hraSalary = (salaryDetails?.hraSalaryMonthly ?? 0) * 12;
+  const hraReceived = (salaryDetails?.hraReceivedMonthly ?? 0) * 12;
+  const hraExemption = Math.round(Math.min(
+    hraReceived,
+    Math.max(0, rentPaidMonthly * 12 - hraSalary * 0.1),
+    hraSalary * (isMetroCity ? 0.5 : 0.4),
+    salaryDetails?.grossSalaryAnnual ?? 0
+  ));
+  const oldStandardDeduction = Math.min(50_000, Math.max(0, (salaryDetails?.grossSalaryAnnual ?? gross) - hraExemption));
   const oldTaxable = Math.max(
     0,
-    gross - 50_000 - capped80C - capped80D - cappedNPS - hraExemption
+    gross - oldStandardDeduction - capped80C - capped80D - cappedNPS - hraExemption
   );
 
   const oldSlabConfigs = [
@@ -1030,6 +1039,12 @@ export function validateImportedPlan(raw: unknown): FinancePlan {
         : undefined,
     },
     tax: {
+      grossSalaryAnnual: typeof tax.grossSalaryAnnual === 'number' && Number.isFinite(tax.grossSalaryAnnual) && tax.grossSalaryAnnual >= 0
+        ? tax.grossSalaryAnnual
+        : undefined,
+      otherOrdinaryIncomeAnnual: finiteNonNeg(tax.otherOrdinaryIncomeAnnual, 0),
+      hraSalaryMonthly: finiteNonNeg(tax.hraSalaryMonthly, 0),
+      hraReceivedMonthly: finiteNonNeg(tax.hraReceivedMonthly, 0),
       deductions80C: finiteNonNeg(tax.deductions80C, DEFAULT_PLAN.tax.deductions80C),
       deductions80D: finiteNonNeg(tax.deductions80D, DEFAULT_PLAN.tax.deductions80D),
       deductionsNPS: finiteNonNeg(tax.deductionsNPS, 0),
@@ -1060,7 +1075,7 @@ export function planToCSV(plan: FinancePlan, projections: MonthlyProjectionPoint
 
 export function calculateBudgetRule(plan: FinancePlan): BudgetRuleAnalysis {
   const totalIncome = Math.max(0, plan.income.salary + plan.income.freelance + plan.income.other);
-  const safeIncome = Math.max(1, totalIncome);
+  const percentOfIncome = (amount: number) => totalIncome > 0 ? Math.round((amount / totalIncome) * 100) : 0;
 
   const customItems = plan.expenses.custom ?? [];
   let customNeeds = 0;
@@ -1082,16 +1097,16 @@ export function calculateBudgetRule(plan: FinancePlan): BudgetRuleAnalysis {
     customNeeds;
   const wantsAmount = plan.expenses.lifestyle + customWants;
   const savingsAmount = Math.max(0, plan.savings.monthlySavings + plan.savings.monthlySip);
-  const debtAmount = Math.max(0, plan.debt.monthlyPayment);
+  const debtAmount = monthlyDebtOutflow(plan.debt);
 
   const totalCommitted = needsAmount + wantsAmount + savingsAmount + debtAmount;
   const unallocatedBufferAmount = Math.max(0, totalIncome - totalCommitted);
 
-  const needsPercent = Math.round((needsAmount / safeIncome) * 100);
-  const wantsPercent = Math.round((wantsAmount / safeIncome) * 100);
-  const savingsPercent = Math.round((savingsAmount / safeIncome) * 100);
-  const debtPercent = Math.round((debtAmount / safeIncome) * 100);
-  const unallocatedBufferPercent = Math.max(0, Math.round((unallocatedBufferAmount / safeIncome) * 100));
+  const needsPercent = percentOfIncome(needsAmount);
+  const wantsPercent = percentOfIncome(wantsAmount);
+  const savingsPercent = percentOfIncome(savingsAmount);
+  const debtPercent = percentOfIncome(debtAmount);
+  const unallocatedBufferPercent = Math.max(0, percentOfIncome(unallocatedBufferAmount));
   const pillarPercentSum = needsPercent + wantsPercent + savingsPercent;
 
   let needsPenalty = 0;
@@ -1100,15 +1115,18 @@ export function calculateBudgetRule(plan: FinancePlan): BudgetRuleAnalysis {
 
   if (needsPercent > 50) needsPenalty = Math.round((needsPercent - 50) * 1.5);
   if (wantsPercent > 30) wantsPenalty = Math.round((wantsPercent - 30) * 1.5);
-  if (savingsPercent < 20) savingsPenalty = Math.round((20 - savingsPercent) * 2);
+  const fundedSavingsPercent = percentOfIncome(Math.min(savingsAmount, Math.max(0, totalIncome - needsAmount - wantsAmount - debtAmount)));
+  if (fundedSavingsPercent < 20) savingsPenalty = Math.round((20 - fundedSavingsPercent) * 2);
 
-  const score = Math.max(10, Math.min(100, Math.round(100 - needsPenalty - wantsPenalty - savingsPenalty)));
+  const shortfallAmount = Math.max(0, totalCommitted - totalIncome);
+  const scoreCeiling = shortfallAmount > 0 ? 59 : 100;
+  const score = totalIncome > 0 ? Math.max(10, Math.min(scoreCeiling, 100 - needsPenalty - wantsPenalty - savingsPenalty)) : 0;
   const rating = score >= 80 ? 'Optimal' : score >= 60 ? 'Healthy' : 'Attention Needed';
 
   const explanation =
     `Denominator: Total Monthly Inflow of ₹${totalIncome.toLocaleString('en-IN')} (100% net take-home base). ` +
     `The 50/30/20 framework specifically audits 3 core living pillars: Needs (${needsPercent}%), Wants (${wantsPercent}%), and Savings/SIP (${savingsPercent}%) = ${pillarPercentSum}%. ` +
-    `The remaining ${debtPercent + unallocatedBufferPercent}% represents Debt Servicing (${debtPercent}%) and Unallocated Retained Buffer (${unallocatedBufferPercent}%). ` +
+    `Debt servicing is ${debtPercent}% and the unallocated buffer is ${unallocatedBufferPercent}%. Rounded shares may differ from 100%; allocations can exceed income. ` +
     `Budget Health Score = 100 base score − penalties for exceeding 50% Needs (-${needsPenalty} pts), exceeding 30% Wants (-${wantsPenalty} pts), or trailing 20% Savings (-${savingsPenalty} pts). ` +
     `Debt payments reduce discretionary margin and are tracked in the Debt Avalanche module, while unallocated cash buffers preserve liquidity.`;
 

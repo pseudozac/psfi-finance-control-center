@@ -73,9 +73,9 @@ export const MASTER_TOUR_STEPS: MasterTourStep[] = [
     targetView: 'control',
     badge: '4. INDIAN TAX ENGINE',
     badgeColor: 'corona',
-    title: 'FY 2025–26 (AY 2026–27) vs TY 2026–27 Regime Verdict',
+    title: 'AY 2026–27 Income Tax Estimate',
     description:
-      'Automated side-by-side tax calculation incorporating the ₹75,000 standard deduction, Section 87A rebate (zero tax up to ₹7.75L under New Regime), Section 80CCD(1B) NPS ₹50k deduction, and Metro vs. Non-Metro HRA exemptions.',
+      'Automated side-by-side tax calculation incorporating the ₹75,000 standard deduction, Section 87A rebate for eligible ordinary taxable income up to ₹12 lakh in AY 2026–27, Section 80CCD(1B) NPS ₹50k deduction, and Metro vs. Non-Metro HRA exemptions.',
     tip: 'PsFi automatically compares both regimes and highlights the OPTIMAL choice with your exact net annual rupee savings.',
     icon: <Receipt size={15} className="text-corona" />,
   },
@@ -125,7 +125,7 @@ export const MASTER_TOUR_STEPS: MasterTourStep[] = [
     badgeColor: 'pulsar',
     title: 'Corporate P&L & Net Burn Velocity',
     description:
-      'View your household finances with the precision of a public corporation. This high-density ticker shows your Monthly Net Cashflow P&L, Operating Margin, Annualized P&L, Daily Burn Rate, and Reserve Valuation.',
+      'See monthly and annualized budget surplus, cashflow margin, daily spending, and liquid reserves.',
     tip: 'A positive operating margin above 25% signifies top-tier institutional financial health.',
     icon: <TrendingUp size={15} className="text-pulsar" />,
   },
@@ -279,7 +279,8 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({
         const navOffset = 90;
         const cardReservedHeight = 220;
         const rect = el.getBoundingClientRect();
-        const currentScrollY = window.scrollY || window.pageYOffset;
+        const scroller = document.querySelector<HTMLElement>('.layout-mobile .app-scroll');
+        const currentScrollY = scroller?.scrollTop ?? window.scrollY;
         const elementAbsoluteTop = currentScrollY + rect.top;
         const viewportHeight = window.innerHeight;
         const availableHeight = viewportHeight - navOffset - cardReservedHeight;
@@ -287,7 +288,7 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({
         let targetScroll = elementAbsoluteTop - navOffset - Math.max(0, (availableHeight - rect.height) / 2);
         targetScroll = Math.max(0, targetScroll);
 
-        window.scrollTo({
+        (scroller ?? window).scrollTo({
           top: targetScroll,
           behavior: 'smooth',
         });
@@ -304,10 +305,10 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({
     const handleSync = () => {
       requestAnimationFrame(updateTargetMeasurements);
     };
-    window.addEventListener('scroll', handleSync, { passive: true });
+    window.addEventListener('scroll', handleSync, { passive: true, capture: true });
     window.addEventListener('resize', handleSync, { passive: true });
     return () => {
-      window.removeEventListener('scroll', handleSync);
+      window.removeEventListener('scroll', handleSync, true);
       window.removeEventListener('resize', handleSync);
     };
   }, [isOpen, updateTargetMeasurements]);

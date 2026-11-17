@@ -410,7 +410,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
           id: 'calc_tax_result',
           category: 'Calculator',
           title: `Tax on ${formatINR(annualGross)}: New Regime ${formatINR(result.newRegimeTax)} vs Old ${formatINR(result.oldRegimeTax)}`,
-          subtitle: `${result.recommended === 'new' ? 'New Default saves ₹' + result.savings.toLocaleString('en-IN') : result.recommended === 'old' ? 'Old Regime saves ₹' + result.savings.toLocaleString('en-IN') : 'Equal statutory tax'} (FY 2025–26 / AY 2026–27 & TY 2026–27)`,
+          subtitle: `${result.recommended === 'new' ? 'New Default saves ₹' + result.savings.toLocaleString('en-IN') : result.recommended === 'old' ? 'Old Regime saves ₹' + result.savings.toLocaleString('en-IN') : 'Equal statutory tax'} (AY 2026–27 · salary estimate before surcharge)`,
           keywords: 'tax regime income comparison 2026 2025 80c old new',
           icon: <Scale size={15} className="text-solstice" />,
           badge: 'Tax Engine',
