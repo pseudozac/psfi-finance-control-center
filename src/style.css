@@ -893,7 +893,7 @@ body {
   position: absolute;
   top: -40px;
   left: 0;
-  width: 480px;
+  width: min(480px, 100%);
   height: 180px;
   background: radial-gradient(ellipse at top left, rgba(167, 139, 250, 0.08) 0%, rgba(6, 182, 212, 0.04) 50%, transparent 80%);
   pointer-events: none;
