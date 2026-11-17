@@ -184,6 +184,12 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
   const isMobile = windowWidth <= 768;
 
   useEffect(() => {
+    if (!isOpen || !isTheaterMode) return;
+    document.body.classList.add('skill-tree-theater-active');
+    return () => document.body.classList.remove('skill-tree-theater-active');
+  }, [isOpen, isTheaterMode]);
+
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -200,12 +206,7 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
 
   // ViewBox bounds include the new status tags beneath the lowest node.
   // Optimal full view: Center X = 720, Center Y = 430
-  const DEFAULT_VIEWBOX = useMemo(() => {
-    if (isMobile) {
-      return { x: 180, y: 20, w: 920, h: 800 };
-    }
-    return { x: 110, y: 0, w: 1220, h: 860 };
-  }, [isMobile]);
+  const DEFAULT_VIEWBOX = useMemo(() => ({ x: 110, y: 0, w: 1220, h: 860 }), []);
 
   const CITADEL_VIEWBOX = useMemo(() => ({ x: 130, y: 180, w: 620, h: 630 }), []);
   const VELOCITY_VIEWBOX = useMemo(() => ({ x: 340, y: 80, w: 660, h: 710 }), []);
@@ -250,6 +251,7 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
       applyViewBox(DEFAULT_VIEWBOX);
       setSelectedTier('all');
       setIsDossierCollapsed(isMobile);
+      setIsTheaterMode(false);
     }
   }, [isOpen, DEFAULT_VIEWBOX, isMobile]);
 
