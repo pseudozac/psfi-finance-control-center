@@ -12396,3 +12396,14 @@ body {
 .skill-tree-svg:active {
   cursor: grabbing;
 }
+
+
+.theater-enter-btn {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .skill-tree-modal .theater-enter-btn {
+    display: inline-flex !important;
+  }
+}
