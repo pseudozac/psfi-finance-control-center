@@ -26,7 +26,7 @@ export const FireMilestoneTracker: React.FC<FireMilestoneTrackerProps> = ({ plan
             />
           </div>
           <p className="muted text-xs">
-            FIRE target in today’s rupees (25× annual living expenses). The estimated date accounts for inflation.
+            FIRE target in today’s rupees (25× annual living expenses). The FIRE date accounts for inflation. Fixed rupee milestones use nominal amounts.
           </p>
         </div>
 

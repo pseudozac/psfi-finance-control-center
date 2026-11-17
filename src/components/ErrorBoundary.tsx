@@ -24,26 +24,21 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error('PsFi Uncaught Error:', error, errorInfo);
   }
 
-  private handleHardReset = () => {
+  private handleHardReset = async () => {
     try {
-      localStorage.clear();
-      sessionStorage.clear();
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then((registrations) => {
-          for (const reg of registrations) {
-            reg.unregister();
-          }
-        });
+        const registration = await navigator.serviceWorker.getRegistration();
+        await registration?.unregister();
       }
       if ('caches' in window) {
-        caches.keys().then((names) => {
-          for (const name of names) caches.delete(name);
-        });
+        const names = await caches.keys();
+        await Promise.all(names.filter((name) => name.startsWith('psfi-')).map((name) => caches.delete(name)));
       }
     } finally {
       window.location.reload();
     }
   };
+
 
   public render() {
     if (this.state.hasError) {
@@ -84,7 +79,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </div>
             <h2 style={{ margin: '0 0 8px', fontSize: '20px', fontWeight: 700 }}>Something went wrong</h2>
             <p style={{ margin: '0 0 24px', fontSize: '13px', color: '#9096a2', lineHeight: 1.5 }}>
-              PsFi encountered an unexpected state. You can reset your local cache or reload the application.
+              PsFi encountered an unexpected state. Reload the application or clear its offline cache. Both options preserve your local vault.
             </p>
             {this.state.error?.message && (
               <pre style={{
@@ -135,7 +130,7 @@ export class ErrorBoundary extends Component<Props, State> {
                   gap: '6px',
                 }}
               >
-                <RotateCcw size={14} /> Clear Cache &amp; Reset
+                <RotateCcw size={14} /> Clear App Cache &amp; Reload
               </button>
             </div>
           </div>

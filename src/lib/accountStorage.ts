@@ -109,8 +109,7 @@ export function loadAllAccounts(): UserAccount[] {
   };
 
   cachedAccounts = [initialAccount];
-  saveAllAccounts([initialAccount]);
-  setActiveAccountId(initialAccount.id);
+
   return [initialAccount];
 }
 
@@ -118,40 +117,35 @@ export function loadAllAccounts(): UserAccount[] {
  * Asynchronously synchronizes the UI with the encrypted IndexedDB vault.
  */
 export async function syncEncryptedVault(): Promise<UserAccount[]> {
-  try {
-    const { masterKey } = await ensureActiveMasterKey();
-    const accounts = await loadAllAccountsEncrypted(masterKey);
-    if (accounts.length > 0) {
-      cachedAccounts = accounts;
-      try {
-        if (typeof window !== 'undefined' && window.sessionStorage) {
-          window.sessionStorage.setItem(STORAGE_KEY_SESSION_ACCOUNTS, JSON.stringify(accounts));
-        }
-      } catch {
-        // Ignore
-      }
-      return accounts;
+  const previousAccounts = loadAllAccounts();
+  const { masterKey } = await ensureActiveMasterKey(previousAccounts);
+  const accounts = await loadAllAccountsEncrypted(masterKey);
+  if (accounts.length === 0) return cachedAccounts || loadAllAccounts();
+  for (const account of accounts) {
+    const previous = previousAccounts.find((item) => item.id === account.id);
+    if (!account.pinHash && previous?.pinHash && previous.pinSalt) {
+      account.pinHash = previous.pinHash;
+      account.pinSalt = previous.pinSalt;
+      account.autoLockMinutes = previous.autoLockMinutes;
+      await saveAccountEncrypted(masterKey, account);
     }
-  } catch {
-    // Ignore error in offline or headless mode
   }
-  return cachedAccounts || loadAllAccounts();
+  cachedAccounts = accounts;
+  try {
+    window.sessionStorage.removeItem(STORAGE_KEY_SESSION_ACCOUNTS);
+    window.localStorage.removeItem('psfi_accounts_pre_encryption_backup');
+  } catch {
+    // Storage can be unavailable in restricted browser contexts.
+  }
+  return accounts;
 }
 
+
 /**
- * Saves all accounts into memory cache, ephemeral session storage, and encrypted IndexedDB.
+ * Saves accounts in memory and encrypted IndexedDB.
  */
 export function saveAllAccounts(accounts: UserAccount[]): void {
   cachedAccounts = accounts;
-
-  // Ephemeral tab-level session cache
-  try {
-    if (typeof window !== 'undefined' && window.sessionStorage) {
-      window.sessionStorage.setItem(STORAGE_KEY_SESSION_ACCOUNTS, JSON.stringify(accounts));
-    }
-  } catch {
-    // Ignore quota errors in private browsing
-  }
 
   // Asynchronous encrypted persistence to IndexedDB (AES-256-GCM)
   ensureActiveMasterKey()
@@ -185,12 +179,23 @@ export function setActiveAccountId(id: string): void {
   }
 }
 
+function makeDemoPlan(): FinancePlan {
+  const plan = structuredClone(DEFAULT_PLAN);
+  plan.tax.grossSalaryAnnual = 1_800_000;
+  plan.tax.otherOrdinaryIncomeAnnual = 240_000;
+  return plan;
+}
+
 export function loadOrCreateDemoAccount(): UserAccount {
   const accounts = loadAllAccounts();
   const existing = accounts.find((a) => a.id === 'vault_demo');
   if (existing) {
+    if (existing.plan.tax.grossSalaryAnnual == null && existing.plan.income.salary === DEFAULT_PLAN.income.salary) {
+      existing.plan = { ...existing.plan, tax: { ...existing.plan.tax, grossSalaryAnnual: makeDemoPlan().tax.grossSalaryAnnual } };
+      updateExistingAccount(existing);
+    }
     if (existing.plan.income.salary === 0) {
-      existing.plan = structuredClone(DEFAULT_PLAN);
+      existing.plan = makeDemoPlan();
       updateExistingAccount(existing);
     }
     setActiveAccountId(existing.id);
@@ -202,7 +207,7 @@ export function loadOrCreateDemoAccount(): UserAccount {
     avatarColor: 'solstice',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    plan: structuredClone(DEFAULT_PLAN),
+    plan: makeDemoPlan(),
     baseline: null,
   };
   const updated = [...accounts, demoAccount];

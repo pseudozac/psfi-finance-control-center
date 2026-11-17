@@ -1,4 +1,4 @@
-const CACHE_NAME = 'psfi-v5.11.0-fix-layout-autosave-clean-slider';
+const CACHE_NAME = 'psfi-v5.11.1';
 
 self.addEventListener('install', () => {
   self.skipWaiting();
@@ -29,7 +29,7 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(() => caches.match('/index.html'))
+        .catch(async () => (await caches.match(event.request)) ?? (await caches.match('/')) ?? Response.error())
     );
     return;
   }

@@ -2,6 +2,21 @@ import { describe, it, expect } from 'vitest';
 import { runMonteCarloSimulation } from './monteCarlo';
 
 describe('Reverse Monte Carlo FIRE Stress-Testing Engine', () => {
+  it('uses the same sampled paths for the planned burn and an equal matrix withdrawal', () => {
+    const result = runMonteCarloSimulation({
+      currentCorpus: 12_000_000,
+      monthlySavings: 0,
+      monthlyRetirementBurn: 30_000,
+      yearsToRetire: 0,
+      yearsInRetirement: 30,
+      numSimulations: 500,
+      randomSeed: 42,
+    });
+    const withdrawal = result.swrScenarios.find((point) => point.swrPercent === 3);
+    expect(withdrawal?.annualWithdrawalRupees).toBe(360_000);
+    expect(withdrawal?.ruinProbabilityPercent).toBe(result.ruinProbabilityPercent);
+  });
+
   it('runs deterministic simulation with valid trajectories and percentiles', () => {
     const result = runMonteCarloSimulation({
       currentCorpus: 2500000,

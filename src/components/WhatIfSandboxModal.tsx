@@ -189,7 +189,7 @@ export const WhatIfSandboxModal: React.FC<WhatIfSandboxModalProps> = ({
           </div>
 
           <div className="compare-pod">
-            <span className="compare-label">5-Year Projected Corpus</span>
+            <span className="compare-label">5-Year Corpus (Savings and SIP Held Fixed)</span>
             <div className="compare-vals font-mono">
               <span className="muted text-xs">{formatINR(origFinalCorpus)}</span>
               <ArrowRight size={13} className="text-muted" />
