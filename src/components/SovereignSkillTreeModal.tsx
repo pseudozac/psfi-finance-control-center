@@ -156,13 +156,13 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
 
   const isMobile = windowWidth <= 768;
 
-  // ViewBox bounds calculated from exact node coordinates (X: 220-1220, Y: 110-740)
+  // ViewBox bounds include the new status tags beneath the lowest node.
   // Optimal full view: Center X = 720, Center Y = 430
   const DEFAULT_VIEWBOX = useMemo(() => {
     if (isMobile) {
       return { x: 180, y: 20, w: 920, h: 800 };
     }
-    return { x: 110, y: 15, w: 1220, h: 790 };
+    return { x: 110, y: 0, w: 1220, h: 860 };
   }, [isMobile]);
 
   const CITADEL_VIEWBOX = useMemo(() => ({ x: 130, y: 180, w: 620, h: 630 }), []);
