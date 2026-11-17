@@ -2533,6 +2533,7 @@ body {
 .gap-2 { gap: 8px; }
 .gap-3 { gap: 12px; }
 .gap-4 { gap: 16px; }
+.flex { display: flex; }
 
 .mb-1 { margin-bottom: 4px; }
 .mb-2 { margin-bottom: 8px; }
