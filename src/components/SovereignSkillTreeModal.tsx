@@ -214,15 +214,17 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
     return { x: clampedX, y: clampedY, w: clampedW, h: clampedH };
   };
 
-  const viewBoxRef = useRef<{ x: number; y: number; w: number; h: number }>(DEFAULT_VIEWBOX);
+  const [viewBox, setViewBox] = useState<{ x: number; y: number; w: number; h: number }>(DEFAULT_VIEWBOX);
+  const viewBoxRef = useRef(viewBox);
   const isDraggingRef = useRef<boolean>(false);
   const dragStartRef = useRef<{ clientX: number; clientY: number; vbX: number; vbY: number }>({ clientX: 0, clientY: 0, vbX: 0, vbY: 0 });
   const dragDistanceRef = useRef<number>(0);
   const svgRef = useRef<SVGSVGElement>(null);
 
-  const applyViewBox = (next: { x: number; y: number; w: number; h: number }) => {
+  const applyViewBox = (next: { x: number; y: number; w: number; h: number }, updateReact = true) => {
     viewBoxRef.current = next;
     svgRef.current?.setAttribute('viewBox', `${next.x} ${next.y} ${next.w} ${next.h}`);
+    if (updateReact) setViewBox(next);
   };
 
   // Auto-center and reset to fit whenever modal opens
@@ -324,11 +326,12 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
       ...currentViewBox,
       x: dragStartRef.current.vbX - dx,
       y: dragStartRef.current.vbY - dy,
-    }));
+    }), false);
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
     isDraggingRef.current = false;
+    setViewBox(viewBoxRef.current);
     try {
       (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
     } catch {
@@ -956,7 +959,7 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
 
               <svg
                 ref={svgRef}
-                viewBox={`${viewBoxRef.current.x} ${viewBoxRef.current.y} ${viewBoxRef.current.w} ${viewBoxRef.current.h}`}
+                viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`}
                 className="skill-tree-svg"
                 preserveAspectRatio="xMidYMid meet"
               >
