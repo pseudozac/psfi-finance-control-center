@@ -23,6 +23,8 @@ import { VirtualMouseInstructor } from './VirtualMouseInstructor';
 
 export interface MasterTourStep {
   targetId: string;
+  /** Small, meaningful anchor used on compact screens when the full module is too tall. */
+  compactFocusSelector?: string;
   targetView: 'control' | 'terminal';
   badge: string;
   badgeColor: 'nebula' | 'quasar' | 'solstice' | 'corona' | 'pulsar';
@@ -48,6 +50,7 @@ export const MASTER_TOUR_STEPS: MasterTourStep[] = [
   },
   {
     targetId: 'tour-cashflows',
+    compactFocusSelector: '#tour-cashflows .section-head',
     targetView: 'control',
     badge: '2. TACTILE CASHFLOW',
     badgeColor: 'quasar',
@@ -59,6 +62,7 @@ export const MASTER_TOUR_STEPS: MasterTourStep[] = [
   },
   {
     targetId: 'tour-survival',
+    compactFocusSelector: '#tour-survival .stress-test-section .section-head',
     targetView: 'control',
     badge: '3. SURVIVAL & FIRE',
     badgeColor: 'solstice',
@@ -70,6 +74,7 @@ export const MASTER_TOUR_STEPS: MasterTourStep[] = [
   },
   {
     targetId: 'tour-tax',
+    compactFocusSelector: '#tour-tax h3.card-title',
     targetView: 'control',
     badge: '4. INDIAN TAX ENGINE',
     badgeColor: 'corona',
@@ -81,6 +86,7 @@ export const MASTER_TOUR_STEPS: MasterTourStep[] = [
   },
   {
     targetId: 'tour-impulse-shield',
+    compactFocusSelector: '#tour-impulse-shield h3.card-title',
     targetView: 'control',
     badge: '5. MICRO SPENDING ARMOR',
     badgeColor: 'corona',
@@ -120,6 +126,7 @@ export const MASTER_TOUR_STEPS: MasterTourStep[] = [
   },
   {
     targetId: 'terminal-ticker',
+    compactFocusSelector: '#terminal-ticker .terminal-ticker-row',
     targetView: 'terminal',
     badge: '8. WEALTH TERMINAL',
     badgeColor: 'pulsar',
@@ -153,6 +160,7 @@ export const MASTER_TOUR_STEPS: MasterTourStep[] = [
   },
   {
     targetId: 'terminal-financial-statement',
+    compactFocusSelector: '#terminal-financial-statement .terminal-statement-header',
     targetView: 'terminal',
     badge: '11. CASH-FLOW SUMMARY',
     badgeColor: 'nebula',
@@ -244,6 +252,16 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({
 
   const step = MASTER_TOUR_STEPS[currentStepIndex];
 
+  const getTargetElement = useCallback((): HTMLElement | null => {
+    if (!step) return null;
+    const module = document.getElementById(step.targetId);
+    if (!module) return null;
+    if (window.matchMedia('(max-width: 767px)').matches && step.compactFocusSelector) {
+      return document.querySelector<HTMLElement>(step.compactFocusSelector) ?? module;
+    }
+    return module;
+  }, [step]);
+
   // Auto-switch view when step requires it
   useEffect(() => {
     if (isOpen && step && onViewChange && step.targetView !== activeView) {
@@ -258,7 +276,7 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({
       return;
     }
 
-    const el = document.getElementById(step.targetId);
+    const el = getTargetElement();
     if (!el) {
       setTargetRect(null);
       return;
@@ -266,7 +284,7 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({
 
     const rect = el.getBoundingClientRect();
     setTargetRect(rect);
-  }, [isOpen, step]);
+  }, [isOpen, getTargetElement]);
 
   // Measure target and auto-scroll smoothly into view
   useEffect(() => {
@@ -274,7 +292,7 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({
 
     // Small delay to allow potential view-switch renders
     const timer = setTimeout(() => {
-      const el = document.getElementById(step.targetId);
+      const el = getTargetElement();
       if (el) {
         const navOffset = 90;
         const cardReservedHeight = 220;
@@ -303,7 +321,7 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({
     }, 80);
 
     return () => clearTimeout(timer);
-  }, [isOpen, currentStepIndex, step.targetId, updateTargetMeasurements]);
+  }, [isOpen, currentStepIndex, getTargetElement, updateTargetMeasurements]);
 
   // Track scroll and resize
   useEffect(() => {
@@ -603,3 +621,4 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({
     </div>
   );
 };
+
