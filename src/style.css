@@ -12407,3 +12407,12 @@ body {
     display: inline-flex !important;
   }
 }
+
+
+body.skill-tree-theater-active {
+  overflow: hidden !important;
+}
+
+body.skill-tree-theater-active .mobile-bottom-dock {
+  display: none !important;
+}
