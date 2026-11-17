@@ -7631,28 +7631,19 @@ body {
 }
 
 .constellation-starfield circle {
-  animation: star-breathe 6s ease-in-out infinite alternate;
-}
-
-.constellation-starfield circle:nth-child(3n) {
-  animation-delay: -2.5s;
-}
-
-.constellation-starfield circle:nth-child(5n) {
-  animation-delay: -4s;
+  animation: none;
 }
 
 .constellation-tier-beacon {
   pointer-events: none;
-  filter: drop-shadow(0 0 12px rgba(70, 160, 210, 0.16));
 }
 
 .constellation-conduit path {
-  transition: stroke-opacity 220ms ease, opacity 220ms ease;
+  transition: stroke-opacity 120ms linear, opacity 120ms linear;
 }
 
 .constellation-route-dash {
-  animation: constellation-flow 3.8s linear infinite;
+  animation: none;
 }
 
 @keyframes star-breathe {
@@ -7683,7 +7674,7 @@ body {
 }
 
 .skill-constellation-node:focus-visible {
-  filter: drop-shadow(0 0 8px rgba(192, 132, 252, 0.85));
+  filter: none;
 }
 
 .skill-constellation-node:focus-visible > circle {

@@ -41,7 +41,6 @@ import {
   RANK_LORE_PERKS,
   SOVEREIGN_TREE_CONDUITS,
   getPrerequisiteAncestors,
-  generateCurvedPath,
 } from '../lib/skillTree';
 import { calculateSummary } from '../lib/finance';
 
@@ -81,6 +80,24 @@ const CONSTELLATION_STARS = Array.from({ length: 88 }, (_, index) => ({
   radius: index % 13 === 0 ? 1.8 : index % 4 === 0 ? 1.1 : 0.65,
   opacity: index % 13 === 0 ? 0.72 : index % 3 === 0 ? 0.38 : 0.2,
 }));
+
+function generateAngularPath(x1: number, y1: number, x2: number, y2: number, inset = 34): string {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const length = Math.hypot(dx, dy) || 1;
+  const offset = Math.min(inset, length * 0.22);
+  const startX = x1 + (dx / length) * offset;
+  const startY = y1 + (dy / length) * offset;
+  const endX = x2 - (dx / length) * offset;
+  const endY = y2 - (dy / length) * offset;
+
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    const elbowX = (startX + endX) / 2;
+    return `M ${startX} ${startY} L ${elbowX} ${startY} L ${elbowX} ${endY} L ${endX} ${endY}`;
+  }
+  const elbowY = (startY + endY) / 2;
+  return `M ${startX} ${startY} L ${startX} ${elbowY} L ${endX} ${elbowY} L ${endX} ${endY}`;
+}
 
 // Retro Web Audio synthesizer chime
 function playChime(freq = 520) {
@@ -198,15 +215,22 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
   };
 
   const [viewBox, setViewBox] = useState<{ x: number; y: number; w: number; h: number }>(DEFAULT_VIEWBOX);
+  const viewBoxRef = useRef(viewBox);
   const isDraggingRef = useRef<boolean>(false);
   const dragStartRef = useRef<{ clientX: number; clientY: number; vbX: number; vbY: number }>({ clientX: 0, clientY: 0, vbX: 0, vbY: 0 });
   const dragDistanceRef = useRef<number>(0);
   const svgRef = useRef<SVGSVGElement>(null);
 
+  const applyViewBox = (next: { x: number; y: number; w: number; h: number }, updateReact = true) => {
+    viewBoxRef.current = next;
+    svgRef.current?.setAttribute('viewBox', `${next.x} ${next.y} ${next.w} ${next.h}`);
+    if (updateReact) setViewBox(next);
+  };
+
   // Auto-center and reset to fit whenever modal opens
   useEffect(() => {
     if (isOpen) {
-      setViewBox(DEFAULT_VIEWBOX);
+      applyViewBox(DEFAULT_VIEWBOX);
       setSelectedTier('all');
       setIsDossierCollapsed(isMobile);
     }
@@ -226,46 +250,44 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
   const handleFilterTier = (tier: SkillTier | 'all') => {
     setSelectedTier(tier);
     if (tier === 'tier1_survival') {
-      setViewBox(clampViewBox(CITADEL_VIEWBOX));
+      applyViewBox(clampViewBox(CITADEL_VIEWBOX));
       playChime(440);
     } else if (tier === 'tier2_velocity') {
-      setViewBox(clampViewBox(VELOCITY_VIEWBOX));
+      applyViewBox(clampViewBox(VELOCITY_VIEWBOX));
       playChime(554);
     } else if (tier === 'tier3_autonomy') {
-      setViewBox(clampViewBox(AUTONOMY_VIEWBOX));
+      applyViewBox(clampViewBox(AUTONOMY_VIEWBOX));
       playChime(659);
     } else {
-      setViewBox(clampViewBox(DEFAULT_VIEWBOX));
+      applyViewBox(clampViewBox(DEFAULT_VIEWBOX));
       playChime(520);
     }
   };
 
   const handleZoomIn = () => {
-    setViewBox((prev) => {
-      const zoomFactor = 0.8;
-      const nextW = prev.w * zoomFactor;
-      const nextH = prev.h * zoomFactor;
-      const cx = prev.x + prev.w / 2;
-      const cy = prev.y + prev.h / 2;
-      return clampViewBox({ x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH });
-    });
+    const prev = viewBoxRef.current;
+    const zoomFactor = 0.8;
+    const nextW = prev.w * zoomFactor;
+    const nextH = prev.h * zoomFactor;
+    const cx = prev.x + prev.w / 2;
+    const cy = prev.y + prev.h / 2;
+    applyViewBox(clampViewBox({ x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH }));
     playChime(600);
   };
 
   const handleZoomOut = () => {
-    setViewBox((prev) => {
-      const zoomFactor = 1.25;
-      const nextW = prev.w * zoomFactor;
-      const nextH = prev.h * zoomFactor;
-      const cx = prev.x + prev.w / 2;
-      const cy = prev.y + prev.h / 2;
-      return clampViewBox({ x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH });
-    });
+    const prev = viewBoxRef.current;
+    const zoomFactor = 1.25;
+    const nextW = prev.w * zoomFactor;
+    const nextH = prev.h * zoomFactor;
+    const cx = prev.x + prev.w / 2;
+    const cy = prev.y + prev.h / 2;
+    applyViewBox(clampViewBox({ x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH }));
     playChime(420);
   };
 
   const handleResetFit = () => {
-    setViewBox(clampViewBox(DEFAULT_VIEWBOX));
+    applyViewBox(clampViewBox(DEFAULT_VIEWBOX));
     setSelectedTier('all');
     playChime(480);
   };
@@ -276,8 +298,8 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
     dragStartRef.current = {
       clientX: e.clientX,
       clientY: e.clientY,
-      vbX: viewBox.x,
-      vbY: viewBox.y,
+      vbX: viewBoxRef.current.x,
+      vbY: viewBoxRef.current.y,
     };
     try {
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -291,23 +313,25 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
     const rect = svgRef.current.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
 
-    const scaleX = viewBox.w / rect.width;
-    const scaleY = viewBox.h / rect.height;
+    const currentViewBox = viewBoxRef.current;
+    const scaleX = currentViewBox.w / rect.width;
+    const scaleY = currentViewBox.h / rect.height;
 
     const dx = (e.clientX - dragStartRef.current.clientX) * scaleX;
     const dy = (e.clientY - dragStartRef.current.clientY) * scaleY;
 
     dragDistanceRef.current += Math.hypot(e.movementX, e.movementY);
 
-    setViewBox((prev) => clampViewBox({
-      ...prev,
+    applyViewBox(clampViewBox({
+      ...currentViewBox,
       x: dragStartRef.current.vbX - dx,
       y: dragStartRef.current.vbY - dy,
-    }));
+    }), false);
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
     isDraggingRef.current = false;
+    setViewBox(viewBoxRef.current);
     try {
       (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
     } catch {
@@ -318,13 +342,12 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     const zoomFactor = e.deltaY > 0 ? 1.08 : 0.92;
-    setViewBox((prev) => {
-      const nextW = prev.w * zoomFactor;
-      const nextH = prev.h * zoomFactor;
-      const cx = prev.x + prev.w / 2;
-      const cy = prev.y + prev.h / 2;
-      return clampViewBox({ x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH });
-    });
+    const prev = viewBoxRef.current;
+    const nextW = prev.w * zoomFactor;
+    const nextH = prev.h * zoomFactor;
+    const cx = prev.x + prev.w / 2;
+    const cy = prev.y + prev.h / 2;
+    applyViewBox(clampViewBox({ x: cx - nextW / 2, y: cy - nextH / 2, w: nextW, h: nextH }));
   };
 
   const handleNodeClick = (node: SkillNode) => {
@@ -335,16 +358,15 @@ export const SovereignSkillTreeModal: React.FC<SovereignSkillTreeModalProps> = (
     playChime(freq);
 
     if (node.treeX && node.treeY) {
-      setViewBox((prev) => {
-        const targetW = Math.min(prev.w, 750);
-        const targetH = (targetW / prev.w) * prev.h;
-        return clampViewBox({
-          x: node.treeX! - targetW / 2,
-          y: node.treeY! - targetH / 2,
-          w: targetW,
-          h: targetH,
-        });
-      });
+      const prev = viewBoxRef.current;
+      const targetW = Math.min(prev.w, 750);
+      const targetH = (targetW / prev.w) * prev.h;
+      applyViewBox(clampViewBox({
+        x: node.treeX! - targetW / 2,
+        y: node.treeY! - targetH / 2,
+        w: targetW,
+        h: targetH,
+      }));
     }
   };
 
@@ -965,11 +987,6 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                     <circle cx="48" cy="48" r="1.2" fill="rgba(191, 159, 241, 0.1)" />
                   </pattern>
 
-                  {/* Soft light bloom for live progress routes */}
-                  <filter id="conduit-laser-glow" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur stdDeviation="4" result="blur" />
-                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                  </filter>
                 </defs>
 
                 {/* Layered starfield with tier-colored nebulae. */}
@@ -1018,7 +1035,7 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                   <text x="4" y="12" textAnchor="middle" fill="#a58a52" fontSize="9" fontFamily="monospace">{treeState.tier3MasteredCount}/5 MASTERED</text>
                 </g>
 
-                {/* 1. RENDER ORGANIC CUBIC BEZIER CONDUITS */}
+                {/* 1. Render crisp orthogonal milestone routes. */}
                 <g className="conduits-group">
                   {SOVEREIGN_TREE_CONDUITS.map((conduit, idx) => {
                     const parent = nodeMap.get(conduit.from);
@@ -1030,7 +1047,7 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                     const x2 = child.treeX;
                     const y2 = child.treeY;
 
-                    const pathD = generateCurvedPath(x1, y1, x2, y2);
+                    const pathD = generateAngularPath(x1, y1, x2, y2);
 
                     const isBothMastered = parent.status === 'mastered' && child.status === 'mastered';
                     const isInFlight = parent.status === 'mastered' && child.status === 'in_progress';
@@ -1052,9 +1069,8 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                             d={pathD}
                             fill="none"
                             stroke={routeColor}
-                            strokeWidth={isIlluminated ? 10 : 8}
-                            opacity={isIlluminated ? 0.38 : isBothMastered ? 0.24 : 0.32}
-                            filter="url(#conduit-laser-glow)"
+                            strokeWidth={isIlluminated ? 5 : 4}
+                            opacity={isIlluminated ? 0.16 : isBothMastered ? 0.1 : 0.12}
                           />
                         )}
                         <path
@@ -1078,15 +1094,13 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                     const x = node.treeX;
                     const y = node.treeY;
                     const isSelected = activeNode.id === node.id;
-                    const isHovered = hoveredNodeId === node.id;
-                    const isAncestor = illuminatedAncestors.has(node.id);
                     const isMastered = node.status === 'mastered';
                     const isInProgress = node.status === 'in_progress';
                     const isApex = node.id === 'antifragile_dynasty';
                     const isHub = node.id === 'quarter_crore_hub' || node.id === 'debt_elimination';
 
                     const radius = isApex ? 38 : isHub ? 34 : 30;
-                    const circumference = 2 * Math.PI * (radius + 3);
+                    const circumference = 2 * Math.PI * (radius + 2);
                     const progressOffset = circumference - (node.progressPercent / 100) * circumference;
                     const isDimmed = selectedTier !== 'all' && node.tier !== selectedTier;
                     const nodeLabel = node.shortLabel || node.title;
@@ -1123,101 +1137,51 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                       >
                         <title>{`${node.title} — ${statusLabel}. ${node.currentMetricLabel}; target ${node.targetMetricLabel}.`}</title>
 
-                        {/* Soft tier-colored bloom makes node state visible without muddying the chart. */}
+                        {/* A quiet track and one progress arc read as a single clean ring. */}
                         <circle
-                          r={radius + 8}
-                          fill={isMastered ? '#10b981' : isInProgress ? '#a855f7' : wingColor}
-                          opacity={isMastered ? 0.12 : isInProgress ? 0.1 : 0.055}
-                        />
-
-                        {/* Selected Outer Pulsing Halo */}
-                        {isSelected && (
-                          <circle
-                            r={radius + 9}
-                            fill="none"
-                            stroke="#c084fc"
-                            strokeWidth="2"
-                            strokeDasharray="5 5"
-                            opacity="0.9"
-                            className="animate-spin-slow"
-                          />
-                        )}
-
-                        {/* Hover / Prerequisite Ancestry Highlight Ring */}
-                        {(isHovered || isAncestor) && !isSelected && (
-                          <circle
-                            r={radius + 7}
-                            fill="none"
-                            stroke={isAncestor ? '#f78d2c' : isMastered ? '#10b981' : '#38bdf8'}
-                            strokeWidth={isAncestor ? "2.5" : "1.8"}
-                            opacity={isAncestor ? 0.9 : 0.6}
-                            strokeDasharray={isAncestor ? '4 4' : undefined}
-                          />
-                        )}
-
-                        {/* Base Orb Circle */}
-                        <circle
-                          r={radius}
-                          fill={
-                            isSelected
-                              ? '#1e1b4b'
-                              : isMastered
-                              ? '#062817'
-                              : isInProgress
-                              ? '#18122c'
-                              : '#090d16'
-                          }
-                          stroke={
-                            isSelected
-                              ? '#c084fc'
-                              : isAncestor
-                              ? '#f78d2c'
-                              : isMastered
-                              ? '#10b981'
-                              : isInProgress
-                              ? '#a855f7'
-                              : '#1e293b'
-                          }
-                          strokeWidth={isSelected ? '2.5' : isMastered ? '2' : '1.5'}
-                        />
-
-                        {/* Circular Progress Ring */}
-                        <circle
-                          r={radius + 3}
+                          r={radius + 2}
                           fill="none"
-                          stroke={isMastered ? '#10b981' : isAncestor ? '#f78d2c' : wingColor}
-                          strokeWidth="2.5"
+                          stroke={isSelected ? 'rgba(226, 232, 240, 0.42)' : 'rgba(148, 163, 184, 0.22)'}
+                          strokeWidth="2"
+                        />
+                        <circle
+                          r={radius + 2}
+                          fill="none"
+                          stroke={isSelected ? '#f8fafc' : isMastered ? '#34d399' : isInProgress ? '#c084fc' : wingColor}
+                          strokeWidth={isSelected ? '3.5' : '3'}
                           strokeDasharray={circumference}
                           strokeDashoffset={progressOffset}
                           strokeLinecap="round"
                           transform="rotate(-90)"
-                          opacity={isMastered ? 0.95 : node.progressPercent > 0 ? 0.88 : 0.42}
+                          opacity={isMastered || node.progressPercent > 0 ? 0.95 : 0.45}
                         />
 
-                        {/* Centered Node Icon */}
-                        <foreignObject
-                          x="-14"
-                          y="-14"
-                          width="28"
-                          height="28"
-                          className="pointer-events-none"
-                        >
-                          <div className="w-full h-full flex items-center justify-center text-primary">
-                            {ICON_MAP[node.iconName] || <Award size={20} />}
-                          </div>
-                        </foreignObject>
+                        {/* Native SVG glyph avoids foreignObject font and scaling artifacts. */}
+                        {React.cloneElement(
+                          (ICON_MAP[node.iconName] || <Award size={18} />) as React.ReactElement,
+                          {
+                            x: -10,
+                            y: -10,
+                            width: 20,
+                            height: 20,
+                            className: undefined,
+                            color: isMastered ? '#6ee7b7' : isInProgress ? '#e9d5ff' : wingColor,
+                            strokeWidth: 2.1,
+                            style: { pointerEvents: 'none' },
+                          } as React.SVGProps<SVGSVGElement>
+                        )}
 
                         {/* Mastered Checkmark Badge (Top-Right) */}
-                        {isMastered ? (
-                          <g transform={`translate(${radius - 5}, ${-radius + 5})`}>
-                            <circle r="7" fill="#10b981" />
-                            <path d="M -3.5 0 L -1 2.5 L 4 -2" fill="none" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
-                          </g>
-                        ) : isInProgress ? (
-                          <g transform={`translate(${radius - 5}, ${-radius + 5})`}>
-                            <circle r="6" fill="#a855f7" className="animate-pulse" />
-                          </g>
-                        ) : null}
+                        {isMastered && (
+                          <path
+                            d={`M ${radius * 0.58} ${-radius * 0.72} l 5 5 l 9 -10`}
+                            fill="none"
+                            stroke="#6ee7b7"
+                            strokeWidth="2.6"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        )}
 
                         {/* Contrast-backed labels stay readable against the star field. */}
                         <rect
