@@ -81,6 +81,8 @@ interface CommandPaletteModalProps {
   onOpenSteganography?: () => void;
   onOpenMonteCarlo?: () => void;
   onOpenVaultSecurity?: () => void;
+  onLockVault?: () => void;
+  isVaultProtected?: boolean;
   onOpenLoanArbitrage?: () => void;
   onExportJSON: () => void;
   onExportCSV: () => void;
@@ -207,6 +209,8 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   onOpenSteganography,
   onOpenMonteCarlo,
   onOpenVaultSecurity,
+  onLockVault,
+  isVaultProtected = false,
   onOpenLoanArbitrage,
   onExportJSON,
   onExportCSV,
@@ -814,6 +818,19 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         icon: <Lock size={15} className="text-amber-400" />,
         badge: 'Master PIN',
         execute: () => onOpenVaultSecurity(),
+      });
+    }
+
+    if (onLockVault) {
+      list.push({
+        id: 'action_lock_vault_now',
+        category: 'Tools',
+        title: isVaultProtected ? 'Lock Active Vault Immediately' : 'Set Vault Security PIN',
+        subtitle: isVaultProtected ? 'Drop the cryptographic blast shield (Alt+L)' : 'Configure 4-digit master PIN enclave',
+        keywords: 'lock vault immediate panic pin protect shield secure alt l',
+        icon: <Lock size={15} className={isVaultProtected ? 'text-corona' : 'text-amber-400'} />,
+        badge: 'Alt+L',
+        execute: () => onLockVault(),
       });
     }
 

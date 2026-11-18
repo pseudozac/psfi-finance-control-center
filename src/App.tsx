@@ -461,12 +461,14 @@ export function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showCamouflage]);
+  }, [showCamouflage, activeAccount]);
 
   // Auto-lock vault on document visibility change (tab hidden / screen locked)
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.hidden && activeAccount?.pinHash && activeAccount?.autoLockMinutes === 0) {
+      // Auto-arm locks when tab is hidden/unfocused if autoLockMinutes is 0 (default) or not explicitly disabled (-1)
+      const minutes = activeAccount?.autoLockMinutes;
+      if (document.hidden && activeAccount?.pinHash && (minutes === undefined || minutes === 0)) {
         setUnlockedVaultIds((prev) => {
           const next = new Set(prev);
           next.delete(activeAccount.id);
@@ -476,6 +478,36 @@ export function App() {
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [activeAccount]);
+
+  // Idle inactivity auto-lock timer for positive autoLockMinutes (e.g. 5m, 15m)
+  useEffect(() => {
+    if (!activeAccount?.pinHash) return;
+    const timeoutMinutes = activeAccount.autoLockMinutes;
+    if (!timeoutMinutes || timeoutMinutes <= 0) return;
+
+    let timer: ReturnType<typeof setTimeout>;
+
+    const resetTimer = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        setUnlockedVaultIds((prev) => {
+          const next = new Set(prev);
+          next.delete(activeAccount.id);
+          return next;
+        });
+        setStatusMessage(`🔒 Vault "${activeAccount.name}" locked due to inactivity.`);
+      }, timeoutMinutes * 60 * 1000);
+    };
+
+    const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    activityEvents.forEach((ev) => window.addEventListener(ev, resetTimer, { passive: true }));
+    resetTimer();
+
+    return () => {
+      clearTimeout(timer);
+      activityEvents.forEach((ev) => window.removeEventListener(ev, resetTimer));
+    };
   }, [activeAccount]);
 
   const toggleTheme = () => {
@@ -1753,6 +1785,21 @@ export function App() {
         onOpenSteganography={() => setShowSteganography(true)}
         onOpenMonteCarlo={() => setShowMonteCarlo(true)}
         onOpenVaultSecurity={() => setShowVaultSecurity(true)}
+        isVaultProtected={Boolean(activeAccount.pinHash)}
+        onLockVault={() => {
+          if (activeAccount.pinHash) {
+            setUnlockedVaultIds((prev) => {
+              const next = new Set(prev);
+              next.delete(activeAccount.id);
+              return next;
+            });
+            setShowCmdK(false);
+            setStatusMessage(`🔒 Vault "${activeAccount.name}" locked.`);
+          } else {
+            setShowCmdK(false);
+            setShowVaultSecurity(true);
+          }
+        }}
         onOpenLoanArbitrage={() => setShowLoanArbitrage(true)}
       />
 
