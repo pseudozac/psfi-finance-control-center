@@ -15266,3 +15266,499 @@ body.skill-tree-theater-active .mobile-bottom-dock {
   background: #fef3c7 !important;
   border-color: #d97706 !important;
 }
+
+/* ==========================================================================
+   Comprehensive Light Mode Studio Design System (7 Reported UI Polish Items)
+   ========================================================================== */
+
+/* 1. Vault Passphrase Inputs & Sovereign Enclave Card */
+.vault-passphrase-input {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-subtle);
+  color: var(--ink-primary);
+  transition: all 0.2s ease;
+}
+.vault-passphrase-input:focus {
+  border-color: var(--colour-quasar);
+  outline: none;
+}
+.vault-enclave-title {
+  color: #34d399;
+}
+.vault-enclave-tag {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(52, 211, 153, 0.15);
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  color: #34d399;
+}
+.constellation-zoom-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+[data-theme='light'] .vault-passphrase-input {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.16) !important;
+  color: #0f172a !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+[data-theme='light'] .vault-passphrase-input::placeholder {
+  color: #94a3b8 !important;
+}
+[data-theme='light'] .vault-passphrase-input:focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15) !important;
+}
+
+[data-theme='light'] .vault-status-hud-card {
+  background: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04) !important;
+}
+[data-theme='light'] .vault-status-hud-card.status-active {
+  background: linear-gradient(165deg, rgba(16, 185, 129, 0.08) 0%, #ffffff 100%) !important;
+  border: 1px solid rgba(16, 185, 129, 0.35) !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.06) !important;
+}
+[data-theme='light'] .vault-enclave-title {
+  color: #059669 !important;
+}
+[data-theme='light'] .vault-enclave-tag {
+  background: rgba(5, 150, 105, 0.1) !important;
+  border-color: rgba(5, 150, 105, 0.3) !important;
+  color: #047857 !important;
+}
+
+/* 2. Interactive Tour (Virtual Cursor Callout & Bottom Tour Dock) */
+[data-theme='light'] .virtual-cursor-callout {
+  background: rgba(255, 255, 255, 0.96) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(124, 58, 237, 0.3) !important;
+  color: #0f172a !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(124, 58, 237, 0.1) !important;
+}
+[data-theme='light'] .virtual-cursor-callout span {
+  color: #0f172a !important;
+}
+[data-theme='light'] .tour-bottom-control-dock {
+  background: rgba(255, 255, 255, 0.94) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+}
+[data-theme='light'] .tour-btn-prev {
+  background: #f1f5f9 !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  color: #475569 !important;
+}
+[data-theme='light'] .tour-btn-prev:hover:not(:disabled) {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+[data-theme='light'] .tour-dock-cancel-btn {
+  background: rgba(239, 68, 68, 0.08) !important;
+  border: 1px solid rgba(239, 68, 68, 0.22) !important;
+  color: #dc2626 !important;
+}
+[data-theme='light'] .tour-dock-cancel-btn:hover {
+  background: rgba(239, 68, 68, 0.16) !important;
+  color: #b91c1c !important;
+}
+[data-theme='light'] .tour-dock-step-label {
+  color: #64748b !important;
+}
+[data-theme='light'] .tour-audio-toggle {
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  color: #64748b !important;
+}
+[data-theme='light'] .tour-audio-toggle:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+[data-theme='light'] .tour-audio-toggle.audio-active {
+  color: #7c3aed !important;
+  background: rgba(124, 58, 237, 0.1) !important;
+  border-color: rgba(124, 58, 237, 0.35) !important;
+}
+[data-theme='light'] .tour-dot {
+  background: rgba(0, 0, 0, 0.22) !important;
+}
+[data-theme='light'] .tour-dot-active {
+  background: #7c3aed !important;
+  box-shadow: 0 0 8px rgba(124, 58, 237, 0.45) !important;
+}
+[data-theme='light'] .tour-btn-next {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35) !important;
+}
+[data-theme='light'] .tour-btn-next:hover {
+  background: #6d28d9 !important;
+}
+
+/* 3. Recharts & Terminal Chart Tooltips */
+[data-theme='light'] .terminal-tooltip-box {
+  background: rgba(255, 255, 255, 0.96) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+}
+[data-theme='light'] .terminal-tooltip-header {
+  color: #0f172a !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+[data-theme='light'] .terminal-tooltip-box .text-muted {
+  color: #64748b !important;
+}
+[data-theme='light'] .terminal-tooltip-box .border-subtle {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+[data-theme='light'] .terminal-tooltip-box .text-quasar {
+  color: #7c3aed !important;
+}
+[data-theme='light'] .terminal-tooltip-box .text-nebula {
+  color: #059669 !important;
+}
+[data-theme='light'] .terminal-tooltip-box .text-corona {
+  color: #dc2626 !important;
+}
+[data-theme='light'] .hipuku-tooltip {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+}
+[data-theme='light'] .hipuku-tooltip .tooltip-name {
+  color: #64748b !important;
+}
+[data-theme='light'] .hipuku-tooltip .tooltip-val {
+  color: #0f172a !important;
+}
+[data-theme='light'] .hipuku-tooltip .tooltip-sub {
+  color: #475569 !important;
+}
+[data-theme='light'] .recharts-default-tooltip {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+  color: #0f172a !important;
+}
+
+/* 4. Primary Gradient Buttons Contrast Lock */
+.btn-primary,
+.empty-slate-cta {
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+.btn-primary span,
+.empty-slate-cta span {
+  color: #ffffff !important;
+}
+[data-theme='light'] .btn-primary,
+[data-theme='light'] .empty-slate-cta {
+  background: linear-gradient(135deg, #7c3aed 0%, #059669 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3) !important;
+}
+[data-theme='light'] .btn-primary:hover,
+[data-theme='light'] .empty-slate-cta:hover {
+  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.45) !important;
+}
+
+/* 5. Sovereign Wealth RPG Constellation Modal Light Mode */
+[data-theme='light'] .skill-tree-modal {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+}
+[data-theme='light'] .skill-tree-title {
+  color: #0f172a !important;
+}
+[data-theme='light'] .skill-tree-header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+[data-theme='light'] .skill-tree-crown-box {
+  background: rgba(245, 158, 11, 0.12) !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  color: #d97706 !important;
+}
+[data-theme='light'] .skill-tree-stats-row {
+  color: #475569 !important;
+}
+[data-theme='light'] .skill-sim-pill {
+  background: rgba(124, 58, 237, 0.08) !important;
+  border-color: rgba(124, 58, 237, 0.25) !important;
+  color: #7c3aed !important;
+}
+[data-theme='light'] .skill-rank-badge {
+  background: rgba(124, 58, 237, 0.1) !important;
+  border-color: rgba(124, 58, 237, 0.3) !important;
+  color: #7c3aed !important;
+}
+[data-theme='light'] .skill-tree-split-viewport {
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3) !important;
+}
+[data-theme='light'] .skill-tree-dossier-dock {
+  background: #ffffff !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+  color: #0f172a !important;
+}
+[data-theme='light'] .skill-tree-dossier-dock.dossier-collapsed {
+  background: #f8fafc !important;
+}
+[data-theme='light'] .dossier-vertical-label {
+  color: #475569 !important;
+}
+[data-theme='light'] .constellation-zoom-btn {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.14) !important;
+  color: #0f172a !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06) !important;
+}
+[data-theme='light'] .constellation-zoom-btn:hover {
+  background: #f1f5f9 !important;
+}
+[data-theme='light'] .skill-filter-pill {
+  background: #f1f5f9;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #475569;
+}
+[data-theme='light'] .skill-filter-pill:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+[data-theme='light'] .skill-filter-pill.active {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #6d28d9 !important;
+}
+
+/* Mobile Constellation Dossier Bar */
+@media (max-width: 768px) {
+  [data-theme='light'] .skill-tree-dossier-dock.dossier-collapsed {
+    background: rgba(255, 255, 255, 0.96) !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.12) !important;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08) !important;
+  }
+  [data-theme='light'] .dossier-horizontal-label {
+    color: #0f172a !important;
+  }
+  [data-theme='light'] .dossier-mobile-open-pill {
+    background: rgba(124, 58, 237, 0.1) !important;
+    border: 1px solid rgba(124, 58, 237, 0.35) !important;
+    color: #7c3aed !important;
+  }
+}
+
+/* Actuarial Matrix Grid within RPG Modal */
+[data-theme='light'] .skill-matrix-container {
+  background: #f8fafc !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+[data-theme='light'] .skill-matrix-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+[data-theme='light'] .skill-matrix-card:hover {
+  background: #ffffff !important;
+  border-color: rgba(124, 58, 237, 0.4) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+}
+[data-theme='light'] .skill-matrix-card.selected {
+  background: rgba(124, 58, 237, 0.06) !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 0 16px rgba(124, 58, 237, 0.2) !important;
+}
+
+/* Trophy Hall Grid within RPG Modal */
+[data-theme='light'] .trophy-hall-container {
+  background: #ffffff !important;
+}
+[data-theme='light'] .trophy-hero-banner {
+  background: #f8fafc !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+[data-theme='light'] .trophy-title-text {
+  color: #0f172a !important;
+}
+[data-theme='light'] .trophy-badge-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
+}
+[data-theme='light'] .trophy-badge-card:hover {
+  border-color: rgba(124, 58, 237, 0.35) !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08) !important;
+}
+[data-theme='light'] .trophy-card-title {
+  color: #0f172a !important;
+}
+[data-theme='light'] .character-sheet-copy-btn {
+  background: #f1f5f9 !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  color: #0f172a !important;
+}
+
+/* 6. Reverse Monte Carlo Modal Light Mode Design System */
+[data-theme='light'] .monte-carlo-modal-overlay {
+  background: rgba(15, 23, 42, 0.5) !important;
+}
+[data-theme='light'] .monte-carlo-modal-window {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 25px 70px -10px rgba(0, 0, 0, 0.2), 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+  color: #0f172a !important;
+}
+[data-theme='light'] .monte-carlo-scanline {
+  background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.5), rgba(124, 58, 237, 0.5), transparent) !important;
+}
+[data-theme='light'] .monte-carlo-modal-window .bg-slate-950\/40,
+[data-theme='light'] .monte-carlo-modal-window .bg-slate-950\/20 {
+  background: #f8fafc !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+[data-theme='light'] .monte-carlo-modal-window .text-white {
+  color: #0f172a !important;
+}
+[data-theme='light'] .monte-carlo-modal-window .text-slate-200 {
+  color: #1e293b !important;
+}
+[data-theme='light'] .monte-carlo-modal-window .text-slate-300 {
+  color: #334155 !important;
+}
+[data-theme='light'] .monte-carlo-modal-window .text-slate-400 {
+  color: #475569 !important;
+}
+[data-theme='light'] .monte-carlo-modal-window .text-slate-500 {
+  color: #64748b !important;
+}
+[data-theme='light'] .monte-carlo-modal-window .border-white\/10,
+[data-theme='light'] .monte-carlo-modal-window .border-white\/5 {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+[data-theme='light'] .monte-carlo-modal-window .bg-slate-900\/50,
+[data-theme='light'] .monte-carlo-modal-window .bg-slate-900\/60,
+[data-theme='light'] .monte-carlo-modal-window .bg-slate-900\/80,
+[data-theme='light'] .monte-carlo-modal-window .bg-slate-950\/50,
+[data-theme='light'] .monte-carlo-modal-window .bg-slate-950\/60,
+[data-theme='light'] .monte-carlo-modal-window .bg-slate-800\/80,
+[data-theme='light'] .monte-carlo-modal-window .bg-slate-800,
+[data-theme='light'] .monte-carlo-modal-window .bg-slate-900\/40 {
+  background: #f8fafc !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+[data-theme='light'] .monte-carlo-modal-window .bg-cyan-950\/60,
+[data-theme='light'] .monte-carlo-modal-window .bg-cyan-950\/80 {
+  background: rgba(6, 182, 212, 0.1) !important;
+  border-color: rgba(6, 182, 212, 0.3) !important;
+}
+[data-theme='light'] .monte-carlo-modal-window .bg-purple-950\/50 {
+  background: rgba(124, 58, 237, 0.1) !important;
+  border-color: rgba(124, 58, 237, 0.25) !important;
+}
+[data-theme='light'] .monte-carlo-modal-window .bg-emerald-950\/40,
+[data-theme='light'] .monte-carlo-modal-window .bg-emerald-950\/60,
+[data-theme='light'] .monte-carlo-modal-window .bg-emerald-950\/80 {
+  background: rgba(16, 185, 129, 0.1) !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+[data-theme='light'] .monte-carlo-modal-window .bg-rose-950\/60,
+[data-theme='light'] .monte-carlo-modal-window .bg-rose-950\/80 {
+  background: rgba(239, 68, 68, 0.1) !important;
+  border-color: rgba(239, 68, 68, 0.25) !important;
+}
+[data-theme='light'] .monte-carlo-modal-window .bg-amber-950\/60,
+[data-theme='light'] .monte-carlo-modal-window .bg-amber-950\/80 {
+  background: rgba(245, 158, 11, 0.1) !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+[data-theme='light'] .monte-carlo-modal-window .text-cyan-300,
+[data-theme='light'] .monte-carlo-modal-window .text-cyan-400 {
+  color: #0891b2 !important;
+}
+[data-theme='light'] .monte-carlo-modal-window .text-purple-300 {
+  color: #7c3aed !important;
+}
+[data-theme='light'] .monte-carlo-modal-window .text-emerald-400 {
+  color: #059669 !important;
+}
+[data-theme='light'] .monte-carlo-modal-window .text-rose-400 {
+  color: #dc2626 !important;
+}
+[data-theme='light'] .monte-carlo-modal-window .text-amber-400 {
+  color: #d97706 !important;
+}
+[data-theme='light'] .monte-tab-btn {
+  color: #64748b;
+}
+[data-theme='light'] .monte-tab-btn:hover {
+  color: #0f172a;
+  background: rgba(0, 0, 0, 0.04);
+}
+[data-theme='light'] .monte-tab-btn.active {
+  color: #0891b2 !important;
+  background: rgba(6, 182, 212, 0.1) !important;
+  border-color: rgba(6, 182, 212, 0.3) !important;
+  box-shadow: 0 1px 4px rgba(6, 182, 212, 0.15) !important;
+}
+[data-theme='light'] .monte-chart-canvas-wrap {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04) !important;
+}
+[data-theme='light'] .monte-chart-canvas-wrap svg line[stroke="#1e293b"] {
+  stroke: rgba(0, 0, 0, 0.08) !important;
+}
+[data-theme='light'] .scenario-chip-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+}
+[data-theme='light'] .scenario-chip-card:hover {
+  background: #f8fafc !important;
+  border-color: rgba(6, 182, 212, 0.4) !important;
+}
+[data-theme='light'] .scenario-chip-card.active {
+  background: #ecfeff !important;
+  border-color: #06b6d4 !important;
+  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.15) !important;
+}
+[data-theme='light'] .wedge-tier-box,
+[data-theme='light'] .tactile-lever-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+}
+[data-theme='light'] .swr-interactive-row {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+[data-theme='light'] .swr-interactive-row:hover {
+  background: #f8fafc !important;
+  border-color: rgba(6, 182, 212, 0.3) !important;
+}
+[data-theme='light'] .monte-chart-hud-box {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(6, 182, 212, 0.35) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12) !important;
+  color: #0f172a !important;
+}
+[data-theme='light'] .tactile-preset-btn {
+  background: #f1f5f9;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #475569;
+}
+[data-theme='light'] .tactile-preset-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+[data-theme='light'] .tactile-preset-btn.active {
+  background: rgba(6, 182, 212, 0.15);
+  border-color: #0891b2;
+  color: #0891b2;
+}

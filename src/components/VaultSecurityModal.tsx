@@ -382,7 +382,7 @@ INSTRUCTIONS FOR RESTORATION:
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, letterSpacing: '-0.02em', color: '#ffffff' }}>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--ink-primary)' }}>
                   Vault Security &amp; Defense
                 </h3>
                 <span
@@ -470,12 +470,12 @@ INSTRUCTIONS FOR RESTORATION:
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <ShieldCheck size={16} className="text-nebula" />
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#34d399' }}>
+                  <span className="vault-enclave-title" style={{ fontSize: 13, fontWeight: 700 }}>
                     AES-256-GCM Sovereign Enclave Active
                   </span>
                 </div>
 
-                <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', padding: '2px 8px', borderRadius: 10, background: 'rgba(52, 211, 153, 0.15)', border: '1px solid rgba(52, 211, 153, 0.4)', color: '#34d399' }}>
+                <span className="vault-enclave-tag font-mono">
                   INDEXEDDB ENCRYPTED
                 </span>
               </div>
@@ -593,15 +593,13 @@ INSTRUCTIONS FOR RESTORATION:
                         placeholder="Passphrase (or leave blank to use 12-word seed)"
                         value={archivePassword}
                         onChange={(e) => setArchivePassword(e.target.value)}
+                        className="vault-passphrase-input font-mono"
                         style={{
                           flex: 1,
                           minWidth: 180,
                           fontSize: 11,
                           padding: '6px 10px',
                           borderRadius: 6,
-                          background: 'rgba(0,0,0,0.25)',
-                          border: '1px solid var(--border-subtle)',
-                          color: '#fff',
                         }}
                       />
                       <button
@@ -636,15 +634,13 @@ INSTRUCTIONS FOR RESTORATION:
                         placeholder="Archive decryption passphrase"
                         value={importArchivePassword}
                         onChange={(e) => setImportArchivePassword(e.target.value)}
+                        className="vault-passphrase-input font-mono"
                         style={{
                           flex: 1,
                           minWidth: 180,
                           fontSize: 11,
                           padding: '6px 10px',
                           borderRadius: 6,
-                          background: 'rgba(0,0,0,0.25)',
-                          border: '1px solid var(--border-subtle)',
-                          color: '#fff',
                         }}
                       />
                       <button
@@ -792,7 +788,7 @@ INSTRUCTIONS FOR RESTORATION:
                 </span>
               </div>
 
-              <h4 style={{ margin: '4px 0 2px 0', fontSize: 15, fontWeight: 700, color: '#ffffff' }}>
+              <h4 style={{ margin: '4px 0 2px 0', fontSize: 15, fontWeight: 700, color: 'var(--ink-primary)' }}>
                 {setStep === 'create' ? 'Choose Your 4-Digit Master PIN' : 'Confirm Your 4-Digit Master PIN'}
               </h4>
               <p style={{ margin: 0, fontSize: 11, color: 'var(--ink-muted)' }}>
@@ -924,7 +920,7 @@ INSTRUCTIONS FOR RESTORATION:
         {mode === 'remove' && (
           <div>
             <div style={{ textAlign: 'center', marginBottom: 14 }}>
-              <h4 style={{ margin: '4px 0 2px 0', fontSize: 15, fontWeight: 700, color: '#ffffff' }}>
+              <h4 style={{ margin: '4px 0 2px 0', fontSize: 15, fontWeight: 700, color: 'var(--ink-primary)' }}>
                 Disable Vault Protection
               </h4>
               <p style={{ margin: 0, fontSize: 11, color: 'var(--ink-muted)' }}>

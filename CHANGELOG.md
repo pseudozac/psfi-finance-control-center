@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.12.1] - 2026-11-19
+
+### Fixed
+- **7 Comprehensive Light Mode Theme Polish Fixes**:
+  - **Item 1: Interactive Guided Tour**:
+    - Floating virtual cursor callout (`.virtual-cursor-callout`) now renders with a clean frosted white glass surface (`rgba(255, 255, 255, 0.96)`), purple border accent, and crisp dark ink typography (`#0f172a`), replacing pitch-black background.
+    - Master Tour Control Dock (`.tour-bottom-control-dock`) adapted to frosted white glass (`rgba(255, 255, 255, 0.94)`), subtle border, slate prev button, red-tinted cancel button, and vibrant purple next button with crisp white typography.
+  - **Item 2: WealthTerminal & Recharts Chart Tooltips**:
+    - `.terminal-tooltip-box` and `.hipuku-tooltip` converted to crisp white cards (`rgba(255, 255, 255, 0.96)`) with high-contrast dark headers (`#0f172a`), slate data labels (`#64748b`), and calibrated P&L/Equity indicators (`#059669`, `#dc2626`, `#7c3aed`).
+  - **Item 3: "Load Recommended Layout" Button Readability**:
+    - Guaranteed crisp pure white text (`color: #ffffff !important; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3)`) across `.btn-primary` and `.empty-slate-cta` gradient surfaces, eliminating muddy black text over purple/teal buttons.
+  - **Item 4: Sovereign Wealth RPG Constellation Modal**:
+    - Adapted `.skill-tree-modal` shell to crisp white with dark slate typography (`#0f172a`), clean amber crown badge, purple rank/sim badges, framed celestial viewport, and white docked/mobile dossier bar.
+    - Actuarial Matrix Grid (`.skill-matrix-card`) and Trophy Hall (`.trophy-badge-card`) styled with white card surfaces, soft elevation, and crisp text.
+  - **Item 5: AES-256-GCM Sovereign Enclave Active Card**:
+    - Replaced right-side dark navy gradient with an emerald-to-white gradient (`linear-gradient(165deg, rgba(16, 185, 129, 0.08) 0%, #ffffff 100%)`) with emerald border and dark ink explanation text.
+  - **Item 6: Vault Export / Restore Passphrase Inputs**:
+    - Replaced hardcoded dark inline styles with dedicated `.vault-passphrase-input font-mono`, rendering crisp white input boxes (`background: #ffffff`, border `1px solid rgba(0, 0, 0, 0.16)`, text `#0f172a`) in light mode.
+  - **Item 7: Reverse Monte Carlo FIRE Stress-Testing Modal**:
+    - Overhauled `.monte-carlo-modal-window` to crisp white surface with dark slate headers, tabs (`.monte-tab-btn`), scorecard gauge cards, light-grey reconciliation assumptions banner, and white SVG fan chart canvas.
+
+---
+
 ## [5.12.0] - 2026-11-19
 
 ### Added

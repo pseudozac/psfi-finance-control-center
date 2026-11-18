@@ -991,27 +991,24 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                   )}
                   <button
                     type="button"
-                    className="hud-icon-btn"
+                    className="hud-icon-btn constellation-zoom-btn"
                     onClick={handleZoomIn}
-                    style={{ background: 'rgba(255, 255, 255, 0.06)', border: '1px solid rgba(255, 255, 255, 0.14)', color: '#ffffff' }}
                     title="Zoom In (+)"
                   >
                     <ZoomIn size={14} />
                   </button>
                   <button
                     type="button"
-                    className="hud-icon-btn"
+                    className="hud-icon-btn constellation-zoom-btn"
                     onClick={handleZoomOut}
-                    style={{ background: 'rgba(255, 255, 255, 0.06)', border: '1px solid rgba(255, 255, 255, 0.14)', color: '#ffffff' }}
                     title="Zoom Out (-)"
                   >
                     <ZoomOut size={14} />
                   </button>
                   <button
                     type="button"
-                    className="hud-icon-btn"
+                    className="hud-icon-btn constellation-zoom-btn"
                     onClick={handleResetFit}
-                    style={{ background: 'rgba(255, 255, 255, 0.06)', border: '1px solid rgba(255, 255, 255, 0.14)', color: '#ffffff' }}
                     title="Reset to Fit (⛶)"
                   >
                     <RefreshCw size={13} />
@@ -1597,7 +1594,7 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                 <span style={{ fontSize: '10px', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#c084fc', display: 'block' }}>
                   Current Sovereign Title
                 </span>
-                <h3 style={{ margin: '4px 0 0', fontSize: '20px', fontWeight: 700, color: '#ffffff' }}>{treeState.currentRank}</h3>
+                <h3 style={{ margin: '4px 0 0', fontSize: '20px', fontWeight: 700, color: 'var(--ink-primary)' }}>{treeState.currentRank}</h3>
                 <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--ink-secondary)', maxWidth: '600px', lineHeight: 1.5 }}>
                   {RANK_LORE_PERKS[treeState.currentRank]?.lore || 'Sovereign financial architect.'}
                 </p>
@@ -1606,8 +1603,8 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
               <button
                 type="button"
                 onClick={handleCopyCharacterSheet}
-                className="action-pill font-mono text-xs"
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', background: 'rgba(255,255,255,0.1)', color: '#f2f3f7' }}
+                className="action-pill font-mono text-xs character-sheet-copy-btn"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px' }}
               >
                 {copiedSheet ? <Check size={13} style={{ color: 'var(--colour-nebula)' }} /> : <Copy size={13} />}
                 <span>{copiedSheet ? 'Scorecard Copied!' : 'Copy RPG Scorecard'}</span>
