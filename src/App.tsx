@@ -71,7 +71,7 @@ import { VaultSecurityModal } from './components/VaultSecurityModal';
 import { LoanPrepaymentArbitrageModal } from './components/LoanPrepaymentArbitrageModal';
 import { TactileCommitSlider } from './components/TactileCommitSlider';
 import { ExecutivePrintableStatement } from './components/ExecutivePrintableStatement';
-import { recoverDeviceUnlock } from './lib/encryptedVaultStorage';
+import { recoverDeviceUnlock, clearSecureStorage } from './lib/encryptedVaultStorage';
 import { decodeVaultBeamSecure } from './lib/vaultBeam';
 
 type AppPhase = 'loading' | 'gateway' | 'dashboard';
@@ -602,35 +602,106 @@ export function App() {
     return <IntroLoader onFinish={() => setAppPhase('gateway')} />;
   }
 
-  // Phase 2: Gateway Choice Screen ("Start" vs "Continue")
+  // Phase 2: Vault Storage Unlock / Recovery
   if (!storageReady) {
     return (
-      <main className="hipuku-card" aria-label="Vault storage">
-        <p role={storageError ? 'alert' : 'status'}>
-          {storageError ?? 'Opening local vault storage…'}
-        </p>
-        {storageError?.includes('finish upgrading device storage') && (
-          <form onSubmit={async (event) => {
-            event.preventDefault();
-            const secret = new FormData(event.currentTarget).get('recovery')?.toString().trim().replace(/\s+/g, ' ');
-            if (!secret) return;
-            try {
-              await recoverDeviceUnlock(secret);
-              window.location.reload();
-            } catch {
-              setRecoveryError(true);
-            }
-          }}>
-            <label>
-              Vault recovery phrase
-              <input name="recovery" type="password" autoComplete="off" required />
-            </label>
-            <button type="submit">Recover local vault</button>
-            {recoveryError && <p role="alert">Could not unlock the vault with that recovery phrase.</p>}
-          </form>
-        )}
-        {storageError && <button type="button" onClick={() => window.location.reload()}>Retry</button>}
-      </main>
+      <div className="gateway-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '24px' }}>
+        <main className="gateway-card" style={{ maxWidth: '480px', width: '100%', textAlign: 'center' }} aria-label="Vault storage">
+          <div className="gateway-badge" style={{ margin: '0 auto 16px' }}>
+            <Lock size={13} className="text-corona" />
+            <span>ENCRYPTED LOCAL STORAGE</span>
+          </div>
+
+          <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 8px', color: 'var(--ink-primary)' }}>
+            {storageError ? 'Vault Unlock Required' : 'Opening Secure Vault…'}
+          </h2>
+
+          <p style={{ fontSize: '13px', color: 'var(--ink-secondary)', margin: '0 0 20px', lineHeight: 1.5 }} role={storageError ? 'alert' : 'status'}>
+            {storageError
+              ? 'This browser contains an encrypted local vault, but automatic session authorization requires verification.'
+              : 'Opening local encrypted storage on this device…'}
+          </p>
+
+          {storageError && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'left' }}>
+              <form
+                onSubmit={async (event) => {
+                  event.preventDefault();
+                  const secret = new FormData(event.currentTarget).get('recovery')?.toString().trim().replace(/\s+/g, ' ');
+                  if (!secret) return;
+                  try {
+                    await recoverDeviceUnlock(secret);
+                    window.location.reload();
+                  } catch {
+                    setRecoveryError(true);
+                  }
+                }}
+                style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}
+              >
+                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink-secondary)' }}>
+                  Enter 12-Word Recovery Mnemonic or Passphrase:
+                  <input
+                    name="recovery"
+                    type="password"
+                    autoComplete="off"
+                    required
+                    placeholder="e.g. twelve secret words or your vault passphrase"
+                    className="modal-input"
+                    style={{ marginTop: '6px', width: '100%', fontFamily: 'monospace' }}
+                  />
+                </label>
+
+                {recoveryError && (
+                  <p role="alert" style={{ fontSize: '12px', color: '#f87171', margin: 0 }}>
+                    Could not unlock vault with that passphrase. Please check spelling.
+                  </p>
+                )}
+
+                <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '10px' }}>
+                  <ShieldCheck size={14} />
+                  <span>Unlock &amp; Resume Vault</span>
+                </button>
+              </form>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '8px 0' }}>
+                <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }} />
+                <span style={{ fontSize: '11px', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>or</span>
+                <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }} />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  style={{ width: '100%', justifyContent: 'center', padding: '9px', fontSize: '12px' }}
+                  onClick={async () => {
+                    if (window.confirm('Reset local storage and launch a fresh demo vault? Any stranded temporary records will be cleared.')) {
+                      await clearSecureStorage();
+                      try {
+                        localStorage.removeItem('psfi_vault_migrated_v3');
+                        localStorage.removeItem('psfi_accounts_v1');
+                      } catch {}
+                      window.location.href = window.location.pathname + '?dashboard=true';
+                    }
+                  }}
+                >
+                  <RotateCcw size={13} className="text-solstice" />
+                  <span>Reset Local Storage &amp; Start Fresh</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  style={{ width: '100%', justifyContent: 'center', padding: '6px', fontSize: '11px', color: 'var(--ink-muted)' }}
+                  onClick={() => window.location.reload()}
+                >
+                  Retry Connection
+                </button>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
     );
   }
 

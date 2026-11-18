@@ -491,10 +491,26 @@ async function openOrInitializeMasterKey(initialAccounts: UserAccount[]): Promis
   const meta = await dbGetMeta();
   if (meta) {
     const device = meta.deviceUnlock;
-    const mnemonic = device
-      ? await decryptWithKey(device.key, device.ciphertext, device.iv)
-      : getLiveSessionMnemonic();
+    let mnemonic: string | null = null;
+    if (device) {
+      try {
+        mnemonic = await decryptWithKey(device.key, device.ciphertext, device.iv);
+      } catch (err) {
+        console.warn('Failed to decrypt device unlock key:', err);
+      }
+    }
     if (!mnemonic) {
+      mnemonic = getLiveSessionMnemonic();
+    }
+    if (!mnemonic) {
+      // If there are no stored encrypted accounts, automatically self-heal and re-initialize fresh
+      const existingAccounts = await dbGetAllEncryptedAccounts();
+      if (existingAccounts.length === 0) {
+        await clearSecureStorage();
+        const fresh = await migrateLegacyAccountsToEncrypted(undefined, undefined, initialAccounts);
+        setLiveSessionKey(fresh.masterKey, fresh.mnemonic);
+        return fresh;
+      }
       throw new Error('Open the original vault tab to finish upgrading device storage.');
     }
     const masterKey = await unlockVaultWithSecret(mnemonic);
