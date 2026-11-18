@@ -12833,3 +12833,407 @@ body.skill-tree-theater-active {
 body.skill-tree-theater-active .mobile-bottom-dock {
   display: none !important;
 }
+
+/* --------------------------------------------------------------------------
+   Vault Recovery & Authorization Gate (Cyberpunk Security Upgrade)
+   -------------------------------------------------------------------------- */
+.vault-recovery-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 25%, rgba(15, 23, 42, 0.94) 0%, rgba(3, 7, 18, 0.98) 100%);
+  z-index: 10000;
+  overflow-y: auto;
+  padding: 24px 16px;
+  box-sizing: border-box;
+}
+
+.vault-recovery-aura {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, rgba(99, 102, 241, 0.08) 50%, transparent 70%);
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+.vault-recovery-grid {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.8) 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.8) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.vault-recovery-card {
+  max-width: 480px;
+  width: 100%;
+  background: linear-gradient(170deg, rgba(17, 24, 39, 0.96) 0%, rgba(10, 15, 29, 0.98) 100%);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(245, 158, 11, 0.32);
+  border-radius: 24px;
+  padding: 32px 28px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.85), 0 0 45px rgba(245, 158, 11, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  animation: cyberModalPop 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vault-recovery-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.crest-alert {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(239, 68, 68, 0.15) 100%);
+  border-color: rgba(245, 158, 11, 0.5);
+  margin-bottom: 14px;
+}
+
+.vault-security-tagline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 999px;
+  padding: 3px 10px;
+  margin-bottom: 12px;
+}
+
+.vault-recovery-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink-primary);
+  margin: 0 0 8px;
+}
+
+.vault-recovery-sub {
+  font-size: 13px;
+  color: var(--ink-secondary);
+  margin: 0;
+  line-height: 1.5;
+  max-width: 400px;
+}
+
+.vault-recovery-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.vault-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.vault-input-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vault-input-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  letter-spacing: 0.02em;
+}
+
+.vault-input-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vault-action-micro-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  color: var(--ink-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.vault-action-micro-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--ink-primary);
+}
+
+.vault-textarea-wrapper {
+  position: relative;
+}
+
+.vault-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(10, 15, 26, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #f1f5f9;
+  resize: vertical;
+  min-height: 72px;
+  transition: all 0.2s ease;
+}
+
+.vault-textarea:focus {
+  outline: none;
+  border-color: rgba(245, 158, 11, 0.6);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.vault-textarea.is-masked {
+  -webkit-text-security: disc;
+}
+
+.vault-phrase-detector {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 2px;
+}
+
+.phrase-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 2.5px 8px;
+}
+
+.phrase-badge.badge-mnemonic {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+}
+
+.phrase-badge.badge-passphrase {
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  color: #a5b4fc;
+}
+
+.phrase-badge.badge-waiting {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink-muted);
+}
+
+.vault-error-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #fca5a5;
+  animation: cyberModalPop 0.2s ease;
+}
+
+.vault-explainer-section {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 16px;
+}
+
+.vault-explainer-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  color: var(--ink-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.vault-explainer-toggle:hover {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--ink-primary);
+}
+
+.vault-explainer-content {
+  padding: 0 14px 12px;
+  font-size: 12px;
+  color: var(--ink-secondary);
+  line-height: 1.5;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.vault-explainer-content p {
+  margin: 6px 0;
+}
+
+.vault-divider-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 14px;
+}
+
+.vault-divider-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.vault-divider-text {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+}
+
+.vault-alternative-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vault-alt-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+}
+
+.vault-alt-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.vault-alt-btn.btn-launch-demo:hover {
+  border-color: rgba(191, 159, 241, 0.4);
+  background: rgba(191, 159, 241, 0.08);
+}
+
+.vault-alt-btn.btn-reset-clean:hover {
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.alt-btn-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.alt-btn-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.alt-btn-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-primary);
+}
+
+.alt-btn-desc {
+  font-size: 11px;
+  color: var(--ink-muted);
+}
+
+.vault-retry-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  font-size: 11.5px;
+  color: var(--ink-muted);
+  cursor: pointer;
+  padding: 6px;
+  transition: color 0.18s ease;
+  margin-top: 4px;
+}
+
+.vault-retry-link:hover {
+  color: var(--ink-secondary);
+}
+
+/* Light Theme Adjustments for Vault Recovery Gate */
+[data-theme='light'] .vault-recovery-overlay {
+  background: radial-gradient(circle at 50% 25%, rgba(241, 245, 249, 0.94) 0%, rgba(226, 232, 240, 0.98) 100%);
+}
+
+[data-theme='light'] .vault-recovery-card {
+  background: #ffffff;
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.1), 0 0 30px rgba(245, 158, 11, 0.15);
+}
+
+[data-theme='light'] .vault-textarea {
+  background: #f8fafc;
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #0f172a;
+}
+
+[data-theme='light'] .vault-textarea:focus {
+  background: #ffffff;
+  border-color: rgba(245, 158, 11, 0.8);
+}
+
+[data-theme='light'] .vault-action-micro-btn {
+  background: #f1f5f9;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='light'] .vault-action-micro-btn:hover {
+  background: #e2e8f0;
+}
+
+[data-theme='light'] .vault-explainer-section {
+  background: #f8fafc;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='light'] .vault-alt-btn {
+  background: #f8fafc;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='light'] .vault-alt-btn:hover {
+  background: #f1f5f9;
+}
