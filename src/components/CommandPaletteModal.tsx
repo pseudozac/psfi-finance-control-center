@@ -73,6 +73,8 @@ interface CommandPaletteModalProps {
   onToggleTheme: () => void;
   period: 'monthly' | 'annual';
   onTogglePeriod: () => void;
+  dashboardMode?: 'simple' | 'advance' | 'custom';
+  onDashboardModeChange?: (mode: 'simple' | 'advance' | 'custom') => void;
   onOpenStatementParser?: () => void;
   onOpenSkillTree?: () => void;
   onOpenCamouflage?: () => void;
@@ -197,6 +199,8 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   onToggleTheme,
   period,
   onTogglePeriod,
+  dashboardMode = 'advance',
+  onDashboardModeChange,
   onOpenStatementParser,
   onOpenSkillTree,
   onOpenCamouflage,
@@ -546,6 +550,48 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
 
     // Navigation Actions
     list.push({
+      id: 'nav_view_simple',
+      category: 'Navigation',
+      title: 'Switch to Simple View',
+      subtitle: 'Clean essentials · Vitals, Cashflow, 50/30/20 Budget & Compounding',
+      keywords: 'simple view minimal essentials basic clean focus fast',
+      icon: <Sparkles size={15} className={dashboardMode === 'simple' && activeView === 'control' ? 'text-nebula' : 'text-muted'} />,
+      badge: dashboardMode === 'simple' && activeView === 'control' ? 'Active' : 'Perspective',
+      execute: () => {
+        onViewChange('control');
+        onDashboardModeChange?.('simple');
+      },
+    });
+
+    list.push({
+      id: 'nav_view_advance',
+      category: 'Navigation',
+      title: 'Switch to Advance View',
+      subtitle: 'Full telemetry · Archetypes, Sovereign RPG, Statutory Tax & Stress Tests',
+      keywords: 'advance view advanced full telemetry analytics pro complete all',
+      icon: <Compass size={15} className={dashboardMode === 'advance' && activeView === 'control' ? 'text-quasar' : 'text-muted'} />,
+      badge: dashboardMode === 'advance' && activeView === 'control' ? 'Active' : 'Perspective',
+      execute: () => {
+        onViewChange('control');
+        onDashboardModeChange?.('advance');
+      },
+    });
+
+    list.push({
+      id: 'nav_view_custom',
+      category: 'Navigation',
+      title: 'Switch to Custom View',
+      subtitle: 'Tailored modular workspace · Toggle individual modules on and off',
+      keywords: 'custom view modular architect customize toggles modules personalize layout',
+      icon: <Sliders size={15} className={dashboardMode === 'custom' && activeView === 'control' ? 'text-corona' : 'text-muted'} />,
+      badge: dashboardMode === 'custom' && activeView === 'control' ? 'Active' : 'Perspective',
+      execute: () => {
+        onViewChange('control');
+        onDashboardModeChange?.('custom');
+      },
+    });
+
+    list.push({
       id: 'nav_control',
       category: 'Navigation',
       title: 'Switch to Control Center Cockpit',
@@ -566,6 +612,9 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       badge: 'Widget',
       execute: () => {
         onViewChange('control');
+        if (dashboardMode === 'simple') {
+          onDashboardModeChange?.('advance');
+        }
         setTimeout(() => document.getElementById('tour-impulse-shield')?.scrollIntoView({ behavior: 'smooth' }), 50);
       },
     });
@@ -580,6 +629,9 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       badge: 'Section',
       execute: () => {
         onViewChange('control');
+        if (dashboardMode === 'simple') {
+          onDashboardModeChange?.('advance');
+        }
         setTimeout(() => document.getElementById('tour-tax')?.scrollIntoView({ behavior: 'smooth' }), 50);
       },
     });
@@ -594,6 +646,9 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       badge: 'Section',
       execute: () => {
         onViewChange('control');
+        if (dashboardMode === 'simple') {
+          onDashboardModeChange?.('advance');
+        }
         setTimeout(() => document.getElementById('tour-tax')?.scrollIntoView({ behavior: 'smooth' }), 50);
       },
     });
@@ -622,6 +677,9 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       badge: 'Section',
       execute: () => {
         onViewChange('control');
+        if (dashboardMode === 'simple') {
+          onDashboardModeChange?.('advance');
+        }
         setTimeout(() => document.getElementById('tour-survival')?.scrollIntoView({ behavior: 'smooth' }), 50);
       },
     });

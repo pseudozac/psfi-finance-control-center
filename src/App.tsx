@@ -76,6 +76,76 @@ import { decodeVaultBeamSecure } from './lib/vaultBeam';
 
 type AppPhase = 'loading' | 'gateway' | 'dashboard';
 
+export type DashboardMode = 'simple' | 'advance' | 'custom';
+
+export interface CustomModulesConfig {
+  archetypes: boolean;
+  rpg: boolean;
+  vitals: boolean;
+  cashflow: boolean;
+  taxDebt: boolean;
+  budget503020: boolean;
+  impulseShield: boolean;
+  emergencyFire: boolean;
+  compounding: boolean;
+}
+
+export const DEFAULT_CUSTOM_MODULES: CustomModulesConfig = {
+  archetypes: false,
+  rpg: false,
+  vitals: true,
+  cashflow: true,
+  taxDebt: true,
+  budget503020: true,
+  impulseShield: true,
+  emergencyFire: true,
+  compounding: true,
+};
+
+export const ALL_CUSTOM_MODULES: CustomModulesConfig = {
+  archetypes: true,
+  rpg: true,
+  vitals: true,
+  cashflow: true,
+  taxDebt: true,
+  budget503020: true,
+  impulseShield: true,
+  emergencyFire: true,
+  compounding: true,
+};
+
+export const MINIMAL_CUSTOM_MODULES: CustomModulesConfig = {
+  archetypes: false,
+  rpg: false,
+  vitals: true,
+  cashflow: true,
+  taxDebt: false,
+  budget503020: true,
+  impulseShield: false,
+  emergencyFire: false,
+  compounding: true,
+};
+
+interface CustomModuleDef {
+  id: keyof CustomModulesConfig;
+  label: string;
+  shortLabel: string;
+  badge?: string;
+  description: string;
+}
+
+const CUSTOM_MODULE_DEFS: CustomModuleDef[] = [
+  { id: 'vitals', label: 'Key Vitals Telemetry', shortLabel: 'Vitals', badge: 'Core', description: 'Net Worth, Liquid Runway, Savings Rate & Debt Health' },
+  { id: 'cashflow', label: 'Cashflow Architecture', shortLabel: 'Cashflow', badge: 'Core', description: 'Income streams, fixed expenses, EMI outgo & horizon cashflow' },
+  { id: 'budget503020', label: '50/30/20 Budget Health', shortLabel: '50/30/20', badge: 'Core', description: 'Needs vs Wants vs Compounding Savings allocation audit' },
+  { id: 'compounding', label: 'Wealth Compounding Curve', shortLabel: 'Compounding', badge: 'Core', description: 'Long-term forward SIP equity compounding projections' },
+  { id: 'taxDebt', label: 'Indian Tax & Debt Optimization', shortLabel: 'Tax & Debt', badge: 'Statutory', description: 'Sec 115BAC vs 1961 itemized tax audit & debt elimination' },
+  { id: 'impulseShield', label: 'Impulse Shield & Pocket', shortLabel: 'Impulse Shield', badge: 'Tactile', description: 'Daily burn allowance, 72h cooling chamber & impulse defense' },
+  { id: 'emergencyFire', label: 'Emergency Defense & FIRE', shortLabel: 'Defense & FIRE', badge: 'Actuarial', description: 'Liquid runway months & Financial Independence milestones' },
+  { id: 'archetypes', label: 'Archetype Presets', shortLabel: 'Archetypes', badge: 'Models', description: 'Quick-load demographic financial personas and scenarios' },
+  { id: 'rpg', label: 'Sovereign RPG Milestones', shortLabel: 'Sovereign RPG', badge: 'Progress', description: 'Gamified financial sovereignty skill tree & badge progression' },
+];
+
 export function App() {
   const {
     storageReady,
@@ -115,6 +185,59 @@ export function App() {
     return 'loading';
   });
   const [activeView, setActiveView] = useState<'control' | 'terminal'>('control');
+  const [dashboardMode, setDashboardMode] = useState<DashboardMode>(() => {
+    try {
+      const saved = localStorage.getItem('psfi_dashboard_mode');
+      if (saved === 'simple' || saved === 'advance' || saved === 'custom') {
+        return saved;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return 'advance';
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('psfi_dashboard_mode', dashboardMode);
+    } catch (e) {
+      console.error(e);
+    }
+  }, [dashboardMode]);
+
+  const [customModules, setCustomModules] = useState<CustomModulesConfig>(() => {
+    try {
+      const saved = localStorage.getItem('psfi_custom_modules');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return { ...DEFAULT_CUSTOM_MODULES, ...parsed };
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return DEFAULT_CUSTOM_MODULES;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('psfi_custom_modules', JSON.stringify(customModules));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [customModules]);
+
+  const activeCustomCount = useMemo(() => {
+    return Object.values(customModules).filter(Boolean).length;
+  }, [customModules]);
+
+  const handleStartTour = (stepIdx?: number) => {
+    if (dashboardMode !== 'advance') {
+      setDashboardMode('advance');
+      setStatusMessage('Switched to Advance View to display all interactive tour modules.');
+    }
+    setTourInitialStep(stepIdx ?? 0);
+    setShowTour(true);
+  };
   const [period, setPeriod] = useState<ViewPeriod>('monthly');
   const [horizonMonths, setHorizonMonths] = useState<number>(24);
   const [privacyMode, setPrivacyMode] = useState<boolean>(false);
@@ -520,7 +643,7 @@ export function App() {
         onLaunchDemo={() => {
           launchDemoVault();
           setAppPhase('dashboard');
-          setShowTour(true);
+          handleStartTour(0);
         }}
         onSelectAccount={(id) => {
           switchAccount(id);
@@ -1060,7 +1183,7 @@ export function App() {
           <button
             type="button"
             className="action-pill pill-tour"
-            onClick={() => setShowTour(true)}
+            onClick={() => handleStartTour(0)}
             title="Start Interactive Guided Tour"
           >
             <Compass size={13} className="text-quasar" />
@@ -1139,54 +1262,54 @@ export function App() {
           Tactile personal finance control for India<span className="hero-dot">.</span>
         </h1>
 
-        {/* Minimalist Tactile Quick-Jump Dock */}
-        <div className="hero-quick-dock" role="navigation" aria-label="Quick section navigation">
+        {/* 3-Way Perspective Dock: Simple | Advance | Custom */}
+        <div className="hero-view-dock" role="tablist" aria-label="Dashboard perspective switcher">
           <button
             type="button"
-            className="hero-quick-pill pill-cashflow"
+            role="tab"
+            aria-selected={dashboardMode === 'simple'}
+            className={`hero-view-tab ${dashboardMode === 'simple' ? 'active-tab-simple' : ''}`}
             onClick={() => {
-              document.getElementById('tour-cashflows')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              setDashboardMode('simple');
+              setStatusMessage('Switched to Simple View — focused essentials');
             }}
-            title="Jump to Monthly Cashflow Cockpit"
+            title="Simple View: Clean, focused essentials (Vitals, Cashflow, 50/30/20 & Compounding)"
           >
-            <span className="quick-pill-dot" />
-            <span>Monthly Cashflow</span>
+            <Sparkles size={14} className="view-tab-icon" />
+            <span className="view-tab-label">Simple</span>
+            <span className="view-tab-hint">Essentials</span>
           </button>
 
           <button
             type="button"
-            className="hero-quick-pill pill-sip"
+            role="tab"
+            aria-selected={dashboardMode === 'advance'}
+            className={`hero-view-tab ${dashboardMode === 'advance' ? 'active-tab-advance' : ''}`}
             onClick={() => {
-              document.getElementById('tour-stepup')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              setDashboardMode('advance');
+              setStatusMessage('Switched to Advance View — full telemetry & analytics');
             }}
-            title="Jump to Step-Up SIP Compounding"
+            title="Advance View: Full deep telemetry, archetypes, statutory tax optimization & stress tests"
           >
-            <span className="quick-pill-dot" />
-            <span>Step-Up SIPs</span>
+            <Compass size={14} className="view-tab-icon" />
+            <span className="view-tab-label">Advance</span>
+            <span className="view-tab-hint">Full Suite</span>
           </button>
 
           <button
             type="button"
-            className="hero-quick-pill pill-balance"
+            role="tab"
+            aria-selected={dashboardMode === 'custom'}
+            className={`hero-view-tab ${dashboardMode === 'custom' ? 'active-tab-custom' : ''}`}
             onClick={() => {
-              document.getElementById('tour-budget-health')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              setDashboardMode('custom');
+              setStatusMessage('Switched to Custom View — tailored modular workspace');
             }}
-            title="Jump to 50/30/20 Budget Health"
+            title="Custom View: Modular cockpit — toggle individual modules on and off"
           >
-            <span className="quick-pill-dot" />
-            <span>50/30/20 Balance</span>
-          </button>
-
-          <button
-            type="button"
-            className="hero-quick-pill pill-tax"
-            onClick={() => {
-              document.getElementById('tour-tax')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }}
-            title="Jump to the AY 2026–27 Indian income tax estimate"
-          >
-            <span className="quick-pill-dot" />
-            <span>Tax Regimes</span>
+            <Sliders size={14} className="view-tab-icon" />
+            <span className="view-tab-label">Custom</span>
+            <span className="custom-active-count font-mono">{activeCustomCount}/9</span>
           </button>
         </div>
       </section>
@@ -1215,73 +1338,317 @@ export function App() {
           plan={plan}
           summary={summary}
           onReturnToDashboard={() => setActiveView('control')}
-          onLaunchTour={(stepIdx) => {
-            setTourInitialStep(stepIdx ?? 4);
-            setShowTour(true);
-          }}
+          onLaunchTour={(stepIdx) => handleStartTour(stepIdx ?? 4)}
         />
       ) : (
         /* Main Stack */
         <main className="main-stack">
-          {/* Archetypes Persona Bar */}
-          <PersonaPresetBar currentPlan={plan} onSelectPreset={handleSelectPreset} />
+          {/* Simple Perspective: Clean 1-Page Essentials */}
+          {dashboardMode === 'simple' && (
+            <>
+              {/* Key Vitals Telemetry */}
+              <div id="tour-vitals">
+                <SummaryCards summary={summary} debtPayoff={debtPayoff} period={period} />
+              </div>
 
-          {/* Sovereign Wealth Mastery & Milestones Ribbon */}
-          <SovereignMilestoneRibbon
-            skillTree={skillTreeState}
-            onOpenSkillTree={() => setShowSkillTree(true)}
-          />
+              {/* Pillar 1: Monthly Cashflow Architecture */}
+              <section id="tour-cashflows" className="dashboard-section" aria-label="Cashflow Architecture">
+                <IncomeExpensePanel plan={plan} period={period} onChange={setPlan} />
+              </section>
 
-          {/* Key Vitals Telemetry */}
-          <SummaryCards summary={summary} debtPayoff={debtPayoff} period={period} />
+              {/* Pillar 3: Discretionary Micro-Budgeting & 50/30/20 Rule */}
+              <div id="tour-budget-health" className="dashboard-section" aria-label="50/30/20 Budget Health">
+                <BudgetHealthWidget analysis={budgetRule} />
+              </div>
 
-          {/* Pillar 1: Monthly Cashflow Architecture (Inflow & Outflows) */}
-          <section id="tour-cashflows" className="dashboard-section" aria-label="Cashflow Architecture">
-            <IncomeExpensePanel plan={plan} period={period} onChange={setPlan} />
-          </section>
+              {/* Full-Width Forward Wealth Compounding Curve */}
+              <div id="tour-stepup" className="cockpit-fullwidth-section">
+                <ProjectionSection
+                  plan={plan}
+                  baseline={baseline}
+                  projections={projections}
+                  horizonMonths={horizonMonths}
+                  onHorizonChange={setHorizonMonths}
+                  onChange={setPlan}
+                />
+              </div>
+            </>
+          )}
 
-          {/* Pillar 2: Statutory Indian Tax Optimization & Debt Elimination */}
-          <section id="tour-tax" className="dashboard-section" aria-label="Tax & Debt Elimination">
-            <IndiaTaxAndDebtPanel
-              plan={plan}
-              debtPayoff={debtPayoff}
-              taxComparison={taxComparison}
-              onChange={setPlan}
-              onOpenLoanArbitrage={() => setShowLoanArbitrage(true)}
-            />
-          </section>
+          {/* Advance Perspective: Full Cockpit Telemetry */}
+          {dashboardMode === 'advance' && (
+            <>
+              {/* Archetypes Persona Bar */}
+              <PersonaPresetBar currentPlan={plan} onSelectPreset={handleSelectPreset} />
 
-          {/* Pillar 3: Discretionary Micro-Budgeting & 50/30/20 Rule (2-Card Symmetrical Row) */}
-          <div className="dashboard-two-col-row" aria-label="Budget Health and Discretionary Pocket">
-            <div className="dashboard-col">
-              <BudgetHealthWidget analysis={budgetRule} />
+              {/* Sovereign Wealth Mastery & Milestones Ribbon */}
+              <SovereignMilestoneRibbon
+                skillTree={skillTreeState}
+                onOpenSkillTree={() => setShowSkillTree(true)}
+              />
+
+              {/* Key Vitals Telemetry */}
+              <div id="tour-vitals">
+                <SummaryCards summary={summary} debtPayoff={debtPayoff} period={period} />
+              </div>
+
+              {/* Pillar 1: Monthly Cashflow Architecture (Inflow & Outflows) */}
+              <section id="tour-cashflows" className="dashboard-section" aria-label="Cashflow Architecture">
+                <IncomeExpensePanel plan={plan} period={period} onChange={setPlan} />
+              </section>
+
+              {/* Pillar 2: Statutory Indian Tax Optimization & Debt Elimination */}
+              <section id="tour-tax" className="dashboard-section" aria-label="Tax & Debt Elimination">
+                <IndiaTaxAndDebtPanel
+                  plan={plan}
+                  debtPayoff={debtPayoff}
+                  taxComparison={taxComparison}
+                  onChange={setPlan}
+                  onOpenLoanArbitrage={() => setShowLoanArbitrage(true)}
+                />
+              </section>
+
+              {/* Pillar 3: Discretionary Micro-Budgeting & 50/30/20 Rule (2-Card Symmetrical Row) */}
+              <div className="dashboard-two-col-row" aria-label="Budget Health and Discretionary Pocket">
+                <div id="tour-budget-health" className="dashboard-col">
+                  <BudgetHealthWidget analysis={budgetRule} />
+                </div>
+                <div id="tour-impulse-shield" className="dashboard-col">
+                  <ImpulseShieldWidget plan={plan} summary={summary} onPlanChange={setPlan} />
+                </div>
+              </div>
+
+              {/* Pillar 4: Emergency Runway Survival & FIRE Milestones (2-Card Symmetrical Row) */}
+              <div id="tour-survival" className="dashboard-two-col-row tour-survival-block" aria-label="Emergency Defense and Independence">
+                <div className="dashboard-col">
+                  <EmergencyStressTestWidget plan={plan} />
+                </div>
+                <div className="dashboard-col">
+                  <FireMilestoneTracker plan={plan} />
+                </div>
+              </div>
+
+              {/* Full-Width Majestic Forward Wealth Compounding Curve */}
+              <div id="tour-stepup" className="cockpit-fullwidth-section">
+                <ProjectionSection
+                  plan={plan}
+                  baseline={baseline}
+                  projections={projections}
+                  horizonMonths={horizonMonths}
+                  onHorizonChange={setHorizonMonths}
+                  onChange={setPlan}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Custom Perspective: Modular User-Configured Cockpit */}
+          {dashboardMode === 'custom' && (
+            <div className="custom-view-container">
+              {/* Custom Architect Toolbar */}
+              <div className="custom-architect-toolbar" role="region" aria-label="Custom View Architect Toolbar">
+                <div className="custom-toolbar-top">
+                  <div className="custom-toolbar-title-wrap">
+                    <div className="custom-toolbar-badge">
+                      <Sliders size={13} className="text-corona" />
+                      <span>MODULAR ARCHITECT</span>
+                    </div>
+                    <h2 className="custom-toolbar-heading">Configure Dashboard Modules</h2>
+                    <p className="custom-toolbar-sub">
+                      Tailor your control center by turning modules on or off. Changes persist automatically to your vault.
+                    </p>
+                  </div>
+
+                  <div className="custom-toolbar-actions">
+                    <button
+                      type="button"
+                      className="custom-quick-btn"
+                      onClick={() => setCustomModules(ALL_CUSTOM_MODULES)}
+                      title="Enable all 9 modules"
+                    >
+                      All (9)
+                    </button>
+                    <button
+                      type="button"
+                      className="custom-quick-btn active-quick-btn"
+                      onClick={() => setCustomModules(DEFAULT_CUSTOM_MODULES)}
+                      title="Reset to recommended 7 modules"
+                    >
+                      Recommended (7)
+                    </button>
+                    <button
+                      type="button"
+                      className="custom-quick-btn"
+                      onClick={() => setCustomModules(MINIMAL_CUSTOM_MODULES)}
+                      title="Enable 4 essential modules"
+                    >
+                      Minimal (4)
+                    </button>
+                    <button
+                      type="button"
+                      className="custom-quick-btn custom-quick-clear"
+                      onClick={() =>
+                        setCustomModules({
+                          archetypes: false,
+                          rpg: false,
+                          vitals: false,
+                          cashflow: false,
+                          taxDebt: false,
+                          budget503020: false,
+                          impulseShield: false,
+                          emergencyFire: false,
+                          compounding: false,
+                        })
+                      }
+                      title="Turn off all modules"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                </div>
+
+                {/* 9 Module Toggle Pills */}
+                <div className="custom-toggle-grid" role="group" aria-label="Module visibility toggles">
+                  {CUSTOM_MODULE_DEFS.map((mod) => {
+                    const isActive = customModules[mod.id];
+                    return (
+                      <button
+                        key={mod.id}
+                        type="button"
+                        className={`custom-toggle-pill ${isActive ? 'is-active' : 'is-inactive'}`}
+                        onClick={() => {
+                          setCustomModules((prev) => ({
+                            ...prev,
+                            [mod.id]: !prev[mod.id],
+                          }));
+                        }}
+                        title={`${mod.description} (Click to ${isActive ? 'hide' : 'show'})`}
+                        aria-pressed={isActive}
+                      >
+                        <span className={`custom-pill-status-dot ${isActive ? 'dot-active' : 'dot-inactive'}`} />
+                        <span className="custom-pill-label">{mod.shortLabel}</span>
+                        {mod.badge && <span className="custom-pill-tag font-mono">{mod.badge}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Conditionally rendered modules or empty state */}
+              {activeCustomCount === 0 ? (
+                <div className="empty-custom-slate">
+                  <div className="empty-slate-icon-ring">
+                    <Sliders size={28} className="text-corona" />
+                  </div>
+                  <h3 className="empty-slate-title">All Dashboard Modules Are Hidden</h3>
+                  <p className="empty-slate-desc">
+                    You currently have zero modules enabled in Custom View. Select modules from the Architect Toolbar above to construct your custom dashboard.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn-primary empty-slate-cta"
+                    onClick={() => setCustomModules(DEFAULT_CUSTOM_MODULES)}
+                  >
+                    <Sparkles size={14} />
+                    <span>Load Recommended Layout</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="custom-modules-stack">
+                  {customModules.archetypes && (
+                    <PersonaPresetBar currentPlan={plan} onSelectPreset={handleSelectPreset} />
+                  )}
+
+                  {customModules.rpg && (
+                    <SovereignMilestoneRibbon
+                      skillTree={skillTreeState}
+                      onOpenSkillTree={() => setShowSkillTree(true)}
+                    />
+                  )}
+
+                  {customModules.vitals && (
+                    <div id="tour-vitals">
+                      <SummaryCards summary={summary} debtPayoff={debtPayoff} period={period} />
+                    </div>
+                  )}
+
+                  {customModules.cashflow && (
+                    <section id="tour-cashflows" className="dashboard-section" aria-label="Cashflow Architecture">
+                      <IncomeExpensePanel plan={plan} period={period} onChange={setPlan} />
+                    </section>
+                  )}
+
+                  {customModules.taxDebt && (
+                    <section id="tour-tax" className="dashboard-section" aria-label="Tax & Debt Elimination">
+                      <IndiaTaxAndDebtPanel
+                        plan={plan}
+                        debtPayoff={debtPayoff}
+                        taxComparison={taxComparison}
+                        onChange={setPlan}
+                        onOpenLoanArbitrage={() => setShowLoanArbitrage(true)}
+                      />
+                    </section>
+                  )}
+
+                  {/* Budget Health & Impulse Shield: 2-column when both active, single column otherwise */}
+                  {(customModules.budget503020 || customModules.impulseShield) && (
+                    <div
+                      className={
+                        customModules.budget503020 && customModules.impulseShield
+                          ? 'dashboard-two-col-row'
+                          : 'dashboard-section'
+                      }
+                      aria-label="Budget Health and Discretionary Pocket"
+                    >
+                      {customModules.budget503020 && (
+                        <div id="tour-budget-health" className={customModules.impulseShield ? 'dashboard-col' : ''}>
+                          <BudgetHealthWidget analysis={budgetRule} />
+                        </div>
+                      )}
+                      {customModules.impulseShield && (
+                        <div
+                          id="tour-impulse-shield"
+                          className={customModules.budget503020 ? 'dashboard-col' : ''}
+                        >
+                          <ImpulseShieldWidget plan={plan} summary={summary} onPlanChange={setPlan} />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Emergency Stress Test & FIRE Tracker */}
+                  {customModules.emergencyFire && (
+                    <div
+                      id="tour-survival"
+                      className="dashboard-two-col-row tour-survival-block"
+                      aria-label="Emergency Defense and Independence"
+                    >
+                      <div className="dashboard-col">
+                        <EmergencyStressTestWidget plan={plan} />
+                      </div>
+                      <div className="dashboard-col">
+                        <FireMilestoneTracker plan={plan} />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Full-Width Wealth Compounding Curve */}
+                  {customModules.compounding && (
+                    <div id="tour-stepup" className="cockpit-fullwidth-section">
+                      <ProjectionSection
+                        plan={plan}
+                        baseline={baseline}
+                        projections={projections}
+                        horizonMonths={horizonMonths}
+                        onHorizonChange={setHorizonMonths}
+                        onChange={setPlan}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            <div id="tour-impulse-shield" className="dashboard-col">
-              <ImpulseShieldWidget plan={plan} summary={summary} onPlanChange={setPlan} />
-            </div>
-          </div>
-
-          {/* Pillar 4: Emergency Runway Survival & FIRE Milestones (2-Card Symmetrical Row) */}
-          <div id="tour-survival" className="dashboard-two-col-row tour-survival-block" aria-label="Emergency Defense and Independence">
-            <div className="dashboard-col">
-              <EmergencyStressTestWidget plan={plan} />
-            </div>
-            <div className="dashboard-col">
-              <FireMilestoneTracker plan={plan} />
-            </div>
-          </div>
-
-          {/* Full-Width Majestic Forward Wealth Compounding Curve */}
-          <div className="cockpit-fullwidth-section">
-            <ProjectionSection
-              plan={plan}
-              baseline={baseline}
-              projections={projections}
-              horizonMonths={horizonMonths}
-              onHorizonChange={setHorizonMonths}
-              onChange={setPlan}
-            />
-          </div>
+          )}
         </main>
       )}
 
@@ -1358,7 +1725,12 @@ export function App() {
         onViewChange={(v) => setActiveView(v)}
         privacyMode={privacyMode}
         onTogglePrivacy={() => setPrivacyMode(!privacyMode)}
-        onOpenTour={() => setShowTour(true)}
+        dashboardMode={dashboardMode}
+        onDashboardModeChange={(m) => {
+          setDashboardMode(m);
+          setStatusMessage(`Switched to ${m.charAt(0).toUpperCase() + m.slice(1)} View`);
+        }}
+        onOpenTour={() => handleStartTour(0)}
         onOpenShare={() => setShowShareModal(true)}
         onOpenQR={() => setShowQRModal(true)}
         onOpenSandbox={() => setShowSandbox(true)}
@@ -1529,7 +1901,7 @@ export function App() {
           <button
             type="button"
             className="link-btn font-mono"
-            onClick={() => setShowTour(true)}
+            onClick={() => handleStartTour(0)}
           >
             take tour
           </button>
