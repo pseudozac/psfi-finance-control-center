@@ -2,7 +2,6 @@ import React, { useState, useMemo, useRef } from 'react';
 import {
   X,
   Activity,
-  Sparkles,
   Dices,
   RotateCcw,
   Info,
@@ -13,6 +12,9 @@ import {
   Compass,
   Sliders,
   ChevronRight,
+  Clock,
+  Zap,
+  FileText,
 } from 'lucide-react';
 import type { FinancePlan, FinanceSummary } from '../types/finance';
 import {
@@ -30,7 +32,7 @@ interface ReverseMonteCarloModalProps {
 }
 
 type ScenarioCategory = 'all' | 'indian' | 'global' | 'domestic' | 'baseline';
-type ModalViewTab = 'cockpit' | 'crises' | 'wedge_swr' | 'levers';
+type ModalViewTab = 'cockpit' | 'crises' | 'wedge_swr' | 'levers' | 'audit';
 
 interface ScenarioMeta {
   id: StressScenario;
@@ -152,34 +154,44 @@ export const ReverseMonteCarloModal: React.FC<ReverseMonteCarloModalProps> = ({
   plan,
   summary,
 }) => {
-  // Navigation & filtering state
+  // Navigation & View Mode
   const [activeTab, setActiveTab] = useState<ModalViewTab>('cockpit');
   const [categoryFilter, setCategoryFilter] = useState<ScenarioCategory>('all');
-  const [scenario, setScenario] = useState<StressScenario>('baseline');
-  const [copiedReport, setCopiedReport] = useState<boolean>(false);
+  const [copiedReport, setCopiedReport] = useState(false);
+  const [copiedSeed, setCopiedSeed] = useState(false);
 
-  // Simulation controls
+  // Simulation Controls & Hyperparameters
   const [simCount, setSimCount] = useState<number>(5000);
+  const [scenario, setScenario] = useState<StressScenario>('baseline');
   const [randomSeed, setRandomSeed] = useState<number>(42);
-  const [equityRatio, setEquityRatio] = useState<number>(0.70);
-  const [customRetireYears, setCustomRetireYears] = useState<number>(10);
-  const [customHorizonYears, setCustomHorizonYears] = useState<number>(30);
+  const [compareBaseline, setCompareBaseline] = useState<boolean>(true);
 
-  // Dynamic what-if baseline levers
-  const baselineCorpus = useMemo(() => plan.savings.emergencyFundBalance * 4 || 1500000, [plan]);
-  const baselineMonthlySavings = useMemo(() => plan.savings.monthlySip + plan.savings.monthlySavings || 35000, [plan]);
-  const baselineMonthlyBurn = useMemo(() => summary.monthlyExpenses || 50000, [summary]);
+  // Percentile visibility toggles
+  const [visibleTrajectories, setVisibleTrajectories] = useState({
+    p95: true,
+    p75: true,
+    p50: true,
+    p25: true,
+    p5: true,
+  });
+
+  // What-If Levers (derived initially from user live plan)
+  const baselineCorpus = Math.max(500000, (plan?.savings?.emergencyFundBalance || 0) * 4 || 2500000);
+  const baselineMonthlySavings = Math.max(5000, ((plan?.savings?.monthlySip || 0) + (plan?.savings?.monthlySavings || 0)) || summary.monthlySurplus || 40000);
+  const baselineMonthlyBurn = Math.max(20000, summary.monthlyExpenses || 60000);
 
   const [startingCorpus, setStartingCorpus] = useState<number>(baselineCorpus);
   const [monthlySavings, setMonthlySavings] = useState<number>(baselineMonthlySavings);
   const [monthlyRetirementBurn, setMonthlyRetirementBurn] = useState<number>(baselineMonthlyBurn);
+  const [equityRatio, setEquityRatio] = useState<number>(0.70);
+  const [customRetireYears, setCustomRetireYears] = useState<number>(10);
+  const [customHorizonYears, setCustomHorizonYears] = useState<number>(30);
 
-  // Interactive SVG chart hover & inspection state
+  // Hovered Year for Interactive SVG Inspection
   const [hoveredYear, setHoveredYear] = useState<number | null>(null);
-  const [selectedSwrPercent, setSelectedSwrPercent] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
-  // Run Monte Carlo simulation
+  // Execute Active Scenario Simulation
   const result: MonteCarloResult = useMemo(() => {
     return runMonteCarloSimulation({
       currentCorpus: startingCorpus,
@@ -204,6 +216,33 @@ export const ReverseMonteCarloModal: React.FC<ReverseMonteCarloModalProps> = ({
     randomSeed,
   ]);
 
+  // Execute Comparative Baseline Simulation (if crisis active and compare enabled)
+  const baselineResult: MonteCarloResult | null = useMemo(() => {
+    if (scenario === 'baseline' || !compareBaseline) return null;
+    return runMonteCarloSimulation({
+      currentCorpus: startingCorpus,
+      monthlySavings,
+      monthlyRetirementBurn,
+      yearsToRetire: customRetireYears,
+      yearsInRetirement: customHorizonYears,
+      equityRatio,
+      numSimulations: simCount,
+      scenario: 'baseline',
+      randomSeed,
+    });
+  }, [
+    startingCorpus,
+    monthlySavings,
+    monthlyRetirementBurn,
+    customRetireYears,
+    customHorizonYears,
+    equityRatio,
+    simCount,
+    scenario,
+    randomSeed,
+    compareBaseline,
+  ]);
+
   // Reset what-if levers to saved plan baseline
   const handleResetToBaseline = () => {
     setStartingCorpus(baselineCorpus);
@@ -224,13 +263,14 @@ Portfolio: ${(equityRatio * 100).toFixed(0)}% Equity / ${((1 - equityRatio) * 10
 Starting Capital: ${formatINR(startingCorpus)} | Monthly SIP: ${formatINR(monthlySavings)}/mo | Retirement Burn: ${formatINR(monthlyRetirementBurn)}/mo
 
 [ACTUARIAL TELEMETRY]
-Antifragility Score: ${result.antifragilityScore} / 100
-Ruin Probability: ${result.ruinProbabilityPercent}%
+Antifragility Score: ${result.antifragilityScore} / 100 (${result.antifragilityScore >= 80 ? 'TITAN' : result.antifragilityScore >= 60 ? 'FORTRESS' : 'VULNERABLE'})
+Ruin Probability: ${result.ruinProbabilityPercent}% (Planned Burn: ${result.plannedWithdrawalRatePercent}%/yr)
+Worst-Case Solvency: ${result.depletionHorizon.worstCaseDepletionYear === null ? 'Full 30+ Years Preserved' : `${result.depletionHorizon.worstCaseRetirementSolvencyYears} Years Solvency (Depletion Yr ${result.depletionHorizon.worstCaseDepletionYear})`}
 Sequence Risk Rating (SRR): ${result.srrRiskRating}
-Safe Withdrawal Rate (SWR): ${result.safeWithdrawalRatePercent}%
+Safe Withdrawal Rate (SWR): ${result.safeWithdrawalRatePercent}% (Max Safe: ${formatINR(Math.round(result.medianRetirementCorpus * (result.safeWithdrawalRatePercent / 100) / 12))}/mo)
 Recommended Cash Wedge: ${formatINR(result.recommendedCashWedgeRupees)} (${result.recommendedCashWedgeMonths} Months Runway)
 Projected Median Retirement Corpus: ${formatINR(result.medianRetirementCorpus)}
-Projected Median Terminal Corpus: ${formatINR(result.medianTerminalCorpus)}
+Projected Median Terminal Surplus: ${formatINR(result.medianTerminalCorpus)}
 
 [SAFE WITHDRAWAL RATE BENGEN MATRIX]
 ${result.swrScenarios.map((s) => `• ${s.swrPercent}% SWR: ${formatINR(s.annualWithdrawalRupees)}/yr (${formatINR(Math.round(s.annualWithdrawalRupees / 12))}/mo) — ${s.successProbabilityPercent}% Survival (${s.verdict})`).join('\n')}
@@ -245,6 +285,12 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
     setTimeout(() => setCopiedReport(false), 2200);
   };
 
+  const handleCopySeed = () => {
+    navigator.clipboard.writeText(String(randomSeed));
+    setCopiedSeed(true);
+    setTimeout(() => setCopiedSeed(false), 1800);
+  };
+
   if (!isOpen) return null;
 
   // Filtered scenarios
@@ -257,11 +303,11 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
 
   // SVG Chart Geometry
   const width = 860;
-  const height = 300;
+  const height = 290;
   const padLeft = 85;
   const padRight = 35;
   const padTop = 25;
-  const padBottom = 40;
+  const padBottom = 38;
 
   const maxCorpus = Math.max(
     ...result.trajectories.map((t) => t.p95),
@@ -292,21 +338,35 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
 
   const retirementSplitX = scaleX(result.accumulationYears);
 
-  // SVG Mouse Hover Interaction Handler
-  const handleSvgMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+  // Unified Mouse & Touch Scrubbing Handler
+  const handlePointerInteraction = (clientX: number) => {
     if (!svgRef.current) return;
     const rect = svgRef.current.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
+    const mouseX = clientX - rect.left;
     const svgX = (mouseX / rect.width) * width;
-
     if (svgX < padLeft || svgX > width - padRight) {
       setHoveredYear(null);
       return;
     }
-
     const ratio = (svgX - padLeft) / (width - padLeft - padRight);
     const yr = Math.round(ratio * result.totalYears);
     setHoveredYear(Math.max(0, Math.min(result.totalYears, yr)));
+  };
+
+  const handleSvgMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    handlePointerInteraction(e.clientX);
+  };
+
+  const handleSvgTouchMove = (e: React.TouchEvent<SVGSVGElement>) => {
+    if (e.touches && e.touches.length > 0) {
+      handlePointerInteraction(e.touches[0].clientX);
+    }
+  };
+
+  const handleSvgTouchStart = (e: React.TouchEvent<SVGSVGElement>) => {
+    if (e.touches && e.touches.length > 0) {
+      handlePointerInteraction(e.touches[0].clientX);
+    }
   };
 
   const hoveredTrajectory = hoveredYear !== null ? result.trajectories[hoveredYear] : null;
@@ -317,42 +377,47 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
         <div className="monte-carlo-scanline" />
 
         {/* ================================================================= */}
-        {/* MODAL HEADER TOOLBAR */}
+        {/* 1. HEADER TOOLBAR */}
         {/* ================================================================= */}
         <div className="p-4 sm:p-5 border-b border-white/10 flex flex-wrap items-center justify-between gap-3 bg-slate-950/40">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-cyan-950/60 border border-cyan-500/40 flex items-center justify-center text-cyan-400 shrink-0 shadow-[0_0_15px_rgba(6,182,212,0.3)]">
-              <Activity size={22} />
+            <div className="w-10 h-10 rounded-xl bg-cyan-950/60 border border-cyan-500/40 flex items-center justify-center text-cyan-400 shrink-0 shadow-[0_0_15px_rgba(6,182,212,0.25)]">
+              <Activity size={22} className="animate-pulse" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-base sm:text-lg font-bold font-sans tracking-tight text-white">
+                <h2 className="text-base sm:text-lg font-bold font-sans tracking-tight text-white m-0">
                   Reverse Monte Carlo FIRE Stress-Testing
                 </h2>
                 <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-300">
                   {simCount.toLocaleString()} Stochastic Paths
                 </span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-purple-950/50 border border-purple-500/30 text-purple-300">
-                  Seed #{randomSeed}
-                </span>
+                <button
+                  type="button"
+                  onClick={handleCopySeed}
+                  className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-purple-950/50 border border-purple-500/30 text-purple-300 hover:bg-purple-900/50 transition-colors"
+                  title="Click to copy deterministic PRNG seed"
+                >
+                  Seed #{randomSeed} {copiedSeed && '✓'}
+                </button>
                 <span className="text-[9.5px] font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-500/30 px-2 py-0.5 rounded-md hidden md:inline-flex items-center gap-1">
                   <ShieldCheck size={10} /> 100% Client-Side PRNG
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5 truncate">
+              <p className="text-xs text-slate-400 mt-0.5 truncate m-0">
                 Box-Muller stochastic simulation modeling historical Indian black swans, runaway CPI inflation &amp; sequence-of-returns risk.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Iteration & Seed Controls */}
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            {/* Iteration Selector */}
             <div className="flex items-center gap-1 bg-slate-900/80 border border-white/10 rounded-xl p-1 text-xs font-mono">
               <button
                 type="button"
                 className={`px-2 py-1 rounded-lg text-[10.5px] transition-all ${
                   simCount === 5000
-                    ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40'
+                    ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40 shadow-sm'
                     : 'text-slate-400 hover:text-white'
                 }`}
                 onClick={() => setSimCount(5000)}
@@ -364,11 +429,11 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                 type="button"
                 className={`px-2 py-1 rounded-lg text-[10.5px] transition-all ${
                   simCount === 10000
-                    ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40'
+                    ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40 shadow-sm'
                     : 'text-slate-400 hover:text-white'
                 }`}
                 onClick={() => setSimCount(10000)}
-                title="10,000 stochastic paths (higher statistical confidence)"
+                title="10,000 stochastic paths (maximum statistical confidence)"
               >
                 10k
               </button>
@@ -396,7 +461,7 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
               )}
             </div>
 
-            {/* Copy Full Audit */}
+            {/* Copy Report */}
             <button
               type="button"
               className="px-3 py-1.5 rounded-xl text-xs font-mono flex items-center gap-1.5 bg-slate-900/80 border border-white/10 text-slate-200 hover:text-white hover:border-cyan-500/50 transition-all shadow-sm"
@@ -404,7 +469,7 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
               title="Copy Full Actuarial Audit Summary to Clipboard"
             >
               {copiedReport ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
-              <span>{copiedReport ? 'Copied!' : 'Copy Audit'}</span>
+              <span>{copiedReport ? 'Copied Audit!' : 'Copy Audit'}</span>
             </button>
 
             {/* Close Button */}
@@ -420,7 +485,7 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
         </div>
 
         {/* ================================================================= */}
-        {/* VIEW NAVIGATION TABS */}
+        {/* 2. NAVIGATION TABS */}
         {/* ================================================================= */}
         <div className="px-4 sm:px-5 pt-3 pb-2 border-b border-white/5 flex items-center justify-between gap-2 overflow-x-auto bg-slate-950/20">
           <div className="flex items-center gap-1.5">
@@ -459,42 +524,64 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
               <Sliders size={14} />
               <span>What-If Levers</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('audit')}
+              className={`monte-tab-btn ${activeTab === 'audit' ? 'active' : ''}`}
+            >
+              <FileText size={14} />
+              <span>Actuarial Certificate</span>
+            </button>
           </div>
 
-          <div className="hidden lg:flex items-center gap-2 text-xs font-mono text-slate-400">
-            <span>Active Scenario:</span>
-            <span className="font-bold text-cyan-300 flex items-center gap-1">
-              <span>{activeScenarioMeta.icon}</span>
-              <span>{activeScenarioMeta.label}</span>
-            </span>
+          <div className="hidden lg:flex items-center gap-3 text-xs font-mono text-slate-400">
+            {scenario !== 'baseline' && (
+              <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-cyan-300">
+                <input
+                  type="checkbox"
+                  checked={compareBaseline}
+                  onChange={(e) => setCompareBaseline(e.target.checked)}
+                  className="rounded accent-cyan-500 cursor-pointer"
+                />
+                <span>Compare vs Baseline</span>
+              </label>
+            )}
+            <div className="flex items-center gap-1.5">
+              <span>Active Scenario:</span>
+              <span className="font-bold text-cyan-300 flex items-center gap-1">
+                <span>{activeScenarioMeta.icon}</span>
+                <span>{activeScenarioMeta.label}</span>
+              </span>
+            </div>
           </div>
         </div>
 
         {/* ================================================================= */}
-        {/* MAIN BODY CONTENT CONTAINER */}
+        {/* 3. MAIN BODY CONTAINER */}
         {/* ================================================================= */}
         <div className="p-4 sm:p-5 max-h-[calc(88vh-130px)] overflow-y-auto space-y-4">
-          
+
           {/* =============================================================== */}
-          {/* 1. TOP ACTUARIAL GAUGES & SCORECARDS (ALL VIEWS) */}
+          {/* TOP TELEMETRY SCORECARD GRID (ALL TABS) */}
           {/* =============================================================== */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {/* Antifragility Score */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* Card 1: Antifragility Score */}
             <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-3.5 relative overflow-hidden flex flex-col justify-between">
               <div className="flex items-center justify-between">
-                <span className="text-[10.5px] font-mono text-slate-400 uppercase tracking-wider">
+                <span className="text-[10.5px] font-mono text-slate-400 uppercase tracking-wider font-semibold">
                   Antifragility Score
                 </span>
-                <span className={`text-[9.5px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                <span className={`text-[9.5px] font-mono font-bold px-2 py-0.5 rounded ${
                   result.antifragilityScore >= 80 ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/30' :
                   result.antifragilityScore >= 60 ? 'bg-cyan-950/60 text-cyan-400 border border-cyan-500/30' :
                   result.antifragilityScore >= 40 ? 'bg-amber-950/60 text-amber-400 border border-amber-500/30' :
                   'bg-rose-950/60 text-rose-400 border border-rose-500/30'
                 }`}>
-                  {result.antifragilityScore >= 80 ? 'TITAN' : result.antifragilityScore >= 60 ? 'FORTRESS' : 'VULNERABLE'}
+                  {result.antifragilityScore >= 80 ? 'TITAN' : result.antifragilityScore >= 60 ? 'FORTRESS' : result.antifragilityScore >= 40 ? 'MODERATE' : 'VULNERABLE'}
                 </span>
               </div>
-              <div className="flex items-baseline gap-1.5 my-1.5">
+              <div className="flex items-baseline gap-1.5 my-2">
                 <span className={`text-3xl font-extrabold font-mono tracking-tight ${
                   result.antifragilityScore >= 80 ? 'text-emerald-400' :
                   result.antifragilityScore >= 60 ? 'text-cyan-400' :
@@ -502,7 +589,7 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                 }`}>
                   {result.antifragilityScore}
                 </span>
-                <span className="text-xs font-mono text-slate-500">/100</span>
+                <span className="text-xs font-mono text-slate-500">/ 100</span>
               </div>
               {/* Progress Bar */}
               <div className="w-full bg-slate-800/80 rounded-full h-1.5 overflow-hidden">
@@ -516,33 +603,33 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                   style={{ width: `${result.antifragilityScore}%` }}
                 />
               </div>
-              <span className="text-[10px] text-slate-400 mt-1.5 truncate">
+              <span className="text-[10.5px] text-slate-400 mt-2 truncate">
                 {result.antifragilityScore >= 80 ? 'Superior Indian black swan resilience' : 'Vulnerable to multi-year bear grinds'}
               </span>
             </div>
 
-            {/* Probability of Ruin (Planned Burn) */}
+            {/* Card 2: Planned Burn Ruin Risk */}
             <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-3.5 relative overflow-hidden flex flex-col justify-between">
               <div className="flex items-center justify-between">
-                <span className="text-[10.5px] font-mono text-slate-400 uppercase tracking-wider">
+                <span className="text-[10.5px] font-mono text-slate-400 uppercase tracking-wider font-semibold">
                   Planned Burn Ruin Risk
                 </span>
-                <span className={`text-[9.5px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                <span className={`text-[9.5px] font-mono font-bold px-2 py-0.5 rounded ${
                   result.ruinProbabilityPercent <= 5 ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/30' :
                   result.ruinProbabilityPercent <= 15 ? 'bg-amber-950/60 text-amber-400 border border-amber-500/30' :
                   'bg-rose-950/60 text-rose-400 border border-rose-500/30'
                 }`}>
-                  {result.ruinProbabilityPercent <= 5 ? 'SAFE CEILING' : 'HIGH DEPLETION'}
+                  {result.ruinProbabilityPercent <= 5 ? 'SAFE CEILING' : result.ruinProbabilityPercent <= 15 ? 'CAUTION' : 'HIGH DEPLETION'}
                 </span>
               </div>
-              <div className="flex items-baseline gap-1.5 my-1.5">
+              <div className="flex items-baseline gap-2 my-2 flex-wrap">
                 <span className={`text-3xl font-extrabold font-mono tracking-tight ${
                   result.ruinProbabilityPercent <= 5 ? 'text-emerald-400' :
                   result.ruinProbabilityPercent <= 15 ? 'text-amber-400' : 'text-rose-400'
                 }`}>
                   {result.ruinProbabilityPercent}%
                 </span>
-                <span className="text-[10px] font-mono text-slate-400">
+                <span className="text-[11px] font-mono text-slate-400">
                   ({result.plannedWithdrawalRatePercent}%/yr burn)
                 </span>
               </div>
@@ -557,121 +644,192 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                   style={{ width: `${Math.min(100, result.ruinProbabilityPercent)}%` }}
                 />
               </div>
-              <span className="text-[10px] text-slate-400 mt-1.5 truncate">
-                Planned burn: {formatINR(monthlyRetirementBurn)}/mo in {activeScenarioMeta.label}
+              <span className="text-[10.5px] text-slate-400 mt-2 truncate">
+                {result.depletionHorizon.worstCaseDepletionYear === null
+                  ? 'Zero depletion across full retirement horizon'
+                  : `Worst-case depletion in Year ${result.depletionHorizon.worstCaseDepletionYear}`}
               </span>
             </div>
 
-            {/* Sequence of Returns Risk */}
+            {/* Card 3: Sequence of Returns Risk */}
             <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-3.5 relative overflow-hidden flex flex-col justify-between">
               <div className="flex items-center justify-between">
-                <span className="text-[10.5px] font-mono text-slate-400 uppercase tracking-wider">
+                <span className="text-[10.5px] font-mono text-slate-400 uppercase tracking-wider font-semibold">
                   Sequence Risk (SRR)
                 </span>
-                <span className={`text-[9.5px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                <span className={`text-[9.5px] font-mono font-bold px-2 py-0.5 rounded ${
                   result.srrRiskRating === 'LOW' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/30' :
                   result.srrRiskRating === 'MODERATE' ? 'bg-cyan-950/60 text-cyan-400 border border-cyan-500/30' :
                   result.srrRiskRating === 'ELEVATED' ? 'bg-amber-950/60 text-amber-400 border border-amber-500/30' :
                   'bg-rose-950/60 text-rose-400 border border-rose-500/30'
                 }`}>
-                  {result.srrRiskRating}
+                  {result.srrRiskRating} RISK
                 </span>
               </div>
-              <div className="flex items-baseline gap-1.5 my-1.5">
-                <span className={`text-2xl font-bold font-mono ${
+              <div className="flex items-baseline gap-1.5 my-2">
+                <span className={`text-xl font-bold font-mono tracking-tight ${
                   result.srrRiskRating === 'LOW' ? 'text-emerald-400' :
                   result.srrRiskRating === 'MODERATE' ? 'text-cyan-400' :
                   result.srrRiskRating === 'ELEVATED' ? 'text-amber-400' : 'text-rose-400'
                 }`}>
-                  {result.srrRiskRating} RISK
+                  {result.recommendedCashWedgeMonths} Mo Runway
                 </span>
               </div>
-              <div className="w-full bg-slate-800/80 rounded-full h-1.5 overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${
-                    result.srrRiskRating === 'LOW' ? 'bg-emerald-500 w-1/4' :
-                    result.srrRiskRating === 'MODERATE' ? 'bg-cyan-500 w-2/4' :
-                    result.srrRiskRating === 'ELEVATED' ? 'bg-amber-500 w-3/4' :
-                    'bg-rose-500 w-full'
-                  }`}
-                />
+              <div className="text-[11.5px] font-mono text-cyan-300">
+                Recommended Buffer: {formatINR(result.recommendedCashWedgeRupees)}
               </div>
-              <span className="text-[10px] text-slate-400 mt-1.5 truncate">
-                Years 1–3 decumulation vulnerability
+              <span className="text-[10.5px] text-slate-400 mt-2 truncate">
+                Years 1–3 decumulation vulnerability insulation
               </span>
             </div>
 
-            {/* Scenario Safe Withdrawal Rate Ceiling */}
+            {/* Card 4: Safe Withdrawal Rate Ceiling */}
             <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-3.5 relative overflow-hidden flex flex-col justify-between">
               <div className="flex items-center justify-between">
-                <span className="text-[10.5px] font-mono text-slate-400 uppercase tracking-wider">
-                  Scenario Safe SWR
+                <span className="text-[10.5px] font-mono text-slate-400 uppercase tracking-wider font-semibold">
+                  Safe SWR Ceiling
                 </span>
-                <span className={`text-[9.5px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                <span className={`text-[9.5px] font-mono font-bold px-2 py-0.5 rounded ${
                   result.plannedWithdrawalRatePercent <= result.safeWithdrawalRatePercent
-                    ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/30'
-                    : 'bg-rose-950/60 text-rose-300 border border-rose-500/30'
+                    ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/30'
+                    : 'bg-rose-950/60 text-rose-400 border border-rose-500/30'
                 }`}>
-                  {result.plannedWithdrawalRatePercent <= result.safeWithdrawalRatePercent ? 'WITHIN SAFE CEILING' : 'EXCEEDS SAFE CEILING'}
+                  {result.plannedWithdrawalRatePercent <= result.safeWithdrawalRatePercent ? 'SUSTAINABLE' : 'EXCEEDS CEILING'}
                 </span>
               </div>
-              <div className="flex items-baseline gap-1.5 my-1.5">
-                <span className="text-3xl font-extrabold font-mono tracking-tight text-purple-300">
+              <div className="flex items-baseline gap-2 my-2">
+                <span className="text-3xl font-extrabold font-mono tracking-tight text-cyan-300">
                   {result.safeWithdrawalRatePercent}%
                 </span>
-                <span className="text-xs font-mono text-slate-400">/year</span>
+                <span className="text-xs font-mono text-slate-400">/ year</span>
               </div>
-              <div className="w-full bg-slate-800/80 rounded-full h-1.5 overflow-hidden">
-                <div
-                  className="h-full bg-purple-500 rounded-full shadow-[0_0_8px_#a855f7]"
-                  style={{ width: `${(result.safeWithdrawalRatePercent / 6.0) * 100}%` }}
-                />
+              <div className="text-[11.5px] font-mono text-slate-300">
+                Max Safe Burn: <strong className="text-cyan-300">{formatINR(Math.round(result.medianRetirementCorpus * (result.safeWithdrawalRatePercent / 100) / 12))}/mo</strong>
               </div>
-              <span className="text-[10px] text-slate-400 mt-1.5 truncate">
-                Max safe rate for &ge; 90% survival under {activeScenarioMeta.label}
+              <span className="text-[10.5px] text-slate-400 mt-2 truncate">
+                Max rate for &ge; 90% survival in {activeScenarioMeta.label}
               </span>
-            </div>
-          </div>
-
-          {/* Actuarial Reconciliation & Success Criteria Banner */}
-          <div className="p-3 rounded-xl bg-slate-900/60 border border-white/5 text-[11px] text-slate-300 flex items-start gap-2.5">
-            <Info size={15} className="text-cyan-400 shrink-0 mt-0.5" />
-            <div className="space-y-0.5">
-              <span className="font-mono font-bold text-slate-200 block text-[10.5px]">
-                Actuarial Telemetry Reconciliation &amp; Assumptions
-              </span>
-              <p className="text-[10.5px] text-slate-400 leading-relaxed">
-                • <strong>Why Ruin Risk may be high while SWR has safe tiers:</strong> The top card ({result.ruinProbabilityPercent}% Ruin Risk) tests your <em>actual planned withdrawal</em> of {formatINR(monthlyRetirementBurn)}/mo ({result.plannedWithdrawalRatePercent}% of median corpus). Under severe shocks like {activeScenarioMeta.label}, your corpus is depressed, making {formatINR(monthlyRetirementBurn)}/mo unsustainable.<br />
-                • <strong>Safe Withdrawal Rate ({result.safeWithdrawalRatePercent}%):</strong> Shows the maximum percentage rate that <em>would survive</em> &ge; 90% of paths in this specific crisis. That modeled threshold corresponds to {formatINR(Math.round(result.medianRetirementCorpus * (result.safeWithdrawalRatePercent / 100) / 12))}/mo at the median retirement corpus.<br />
-                • <strong>Success Criterion:</strong> A path succeeds if its balance stays positive through {result.retirementYears} years of retirement after withdrawals adjusted by simulated inflation.
-              </p>
             </div>
           </div>
 
           {/* =============================================================== */}
-          {/* 2. TAB: STOCHASTIC COCKPIT (FAN CHART & ESSENTIALS) */}
+          {/* COMPARATIVE STRESS DELTA BANNER (CRISIS vs BASELINE) */}
+          {/* =============================================================== */}
+          {baselineResult && (
+            <div className="p-3.5 rounded-2xl bg-cyan-950/30 border border-cyan-500/30 flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-3 flex-wrap text-xs font-mono">
+                <span className="font-bold text-cyan-300 flex items-center gap-1.5">
+                  <span>{activeScenarioMeta.icon}</span>
+                  <span>{activeScenarioMeta.label} Shock Delta vs Baseline:</span>
+                </span>
+                {/* Ruin Risk Delta */}
+                <span className="flex items-center gap-1">
+                  <span className="text-slate-400">Ruin Risk:</span>
+                  <span className="text-slate-300">{baselineResult.ruinProbabilityPercent}%</span>
+                  <span>&rarr;</span>
+                  <span className={`font-bold ${result.ruinProbabilityPercent > baselineResult.ruinProbabilityPercent ? 'text-rose-400' : 'text-emerald-400'}`}>
+                    {result.ruinProbabilityPercent}%
+                    ({result.ruinProbabilityPercent >= baselineResult.ruinProbabilityPercent ? '+' : ''}
+                    {(result.ruinProbabilityPercent - baselineResult.ruinProbabilityPercent).toFixed(1)}%)
+                  </span>
+                </span>
+                {/* SWR Delta */}
+                <span className="flex items-center gap-1">
+                  <span className="text-slate-400">Safe SWR:</span>
+                  <span className="text-slate-300">{baselineResult.safeWithdrawalRatePercent}%</span>
+                  <span>&rarr;</span>
+                  <span className={`font-bold ${result.safeWithdrawalRatePercent < baselineResult.safeWithdrawalRatePercent ? 'text-rose-400' : 'text-emerald-400'}`}>
+                    {result.safeWithdrawalRatePercent}%
+                    ({result.safeWithdrawalRatePercent >= baselineResult.safeWithdrawalRatePercent ? '+' : ''}
+                    {(result.safeWithdrawalRatePercent - baselineResult.safeWithdrawalRatePercent).toFixed(2)}%)
+                  </span>
+                </span>
+                {/* Antifragility Delta */}
+                <span className="flex items-center gap-1">
+                  <span className="text-slate-400">Score:</span>
+                  <span className="text-slate-300">{baselineResult.antifragilityScore}</span>
+                  <span>&rarr;</span>
+                  <span className={`font-bold ${result.antifragilityScore < baselineResult.antifragilityScore ? 'text-rose-400' : 'text-emerald-400'}`}>
+                    {result.antifragilityScore}
+                    ({result.antifragilityScore >= baselineResult.antifragilityScore ? '+' : ''}
+                    {result.antifragilityScore - baselineResult.antifragilityScore})
+                  </span>
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setScenario('baseline')}
+                className="text-xs font-mono px-3 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 transition-colors shadow-sm"
+              >
+                Reset to Baseline Scenario
+              </button>
+            </div>
+          )}
+
+          {/* =============================================================== */}
+          {/* TAB 1: STOCHASTIC COCKPIT (FAN CHART & ESSENTIALS) */}
           {/* =============================================================== */}
           {activeTab === 'cockpit' && (
             <div className="space-y-4">
               {/* Interactive Fan Chart */}
               <div className="monte-chart-canvas-wrap">
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-3 px-1 text-xs">
-                  <div className="flex items-center gap-3 font-mono text-[11px] flex-wrap">
-                    <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+                  {/* Legend with Interactive Toggle Filters */}
+                  <div className="flex items-center gap-2.5 font-mono text-[11px] flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => setVisibleTrajectories((p) => ({ ...p, p95: !p.p95 }))}
+                      className={`flex items-center gap-1.5 px-2 py-0.5 rounded transition-all ${
+                        visibleTrajectories.p95 ? 'text-emerald-400 font-semibold bg-emerald-950/30' : 'text-slate-600 line-through'
+                      }`}
+                    >
                       <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#10b981]"></span>
-                      95th (Dynastic Bull)
-                    </span>
-                    <span className="flex items-center gap-1.5 text-cyan-400 font-semibold">
+                      95th (Bull)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setVisibleTrajectories((p) => ({ ...p, p75: !p.p75 }))}
+                      className={`flex items-center gap-1.5 px-2 py-0.5 rounded transition-all ${
+                        visibleTrajectories.p75 ? 'text-purple-300 font-semibold bg-purple-950/30' : 'text-slate-600 line-through'
+                      }`}
+                    >
+                      <span className="w-2 h-2 rounded-full bg-purple-400"></span>
+                      75th (Opt)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setVisibleTrajectories((p) => ({ ...p, p50: !p.p50 }))}
+                      className={`flex items-center gap-1.5 px-2 py-0.5 rounded transition-all ${
+                        visibleTrajectories.p50 ? 'text-cyan-400 font-semibold bg-cyan-950/30' : 'text-slate-600 line-through'
+                      }`}
+                    >
                       <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#06b6d4]"></span>
-                      50th (Median Path)
-                    </span>
-                    <span className="flex items-center gap-1.5 text-rose-400 font-semibold">
+                      50th (Median)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setVisibleTrajectories((p) => ({ ...p, p25: !p.p25 }))}
+                      className={`flex items-center gap-1.5 px-2 py-0.5 rounded transition-all ${
+                        visibleTrajectories.p25 ? 'text-amber-400 font-semibold bg-amber-950/30' : 'text-slate-600 line-through'
+                      }`}
+                    >
+                      <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                      25th (Cons)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setVisibleTrajectories((p) => ({ ...p, p5: !p.p5 }))}
+                      className={`flex items-center gap-1.5 px-2 py-0.5 rounded transition-all ${
+                        visibleTrajectories.p5 ? 'text-rose-400 font-semibold bg-rose-950/30' : 'text-slate-600 line-through'
+                      }`}
+                    >
                       <span className="w-2.5 h-2.5 rounded-full bg-rose-400 shadow-[0_0_6px_#f43f5e]"></span>
-                      5th (Black Swan Bear)
-                    </span>
+                      5th (Worst-Case)
+                    </button>
                   </div>
 
-                  <div className="text-[11px] font-mono text-slate-300 bg-slate-900/80 px-2.5 py-1 rounded-lg border border-white/10">
+                  <div className="font-mono text-[11px] text-slate-400">
                     Median Corpus at Retirement: <strong className="text-cyan-300">{formatINR(result.medianRetirementCorpus)}</strong>
                   </div>
                 </div>
@@ -681,7 +839,7 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                   <div className="monte-chart-hud-box">
                     <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-1 mb-1.5">
                       <span className="font-mono font-bold text-xs text-white">
-                        Year {hoveredTrajectory.year}
+                        Year {hoveredTrajectory.year} ({hoveredTrajectory.year <= result.accumulationYears ? `Accumulation Yr ${hoveredTrajectory.year}` : `Retirement Yr ${hoveredTrajectory.year - result.accumulationYears}`})
                       </span>
                       <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded ${
                         hoveredTrajectory.year < result.accumulationYears
@@ -705,9 +863,12 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                 <svg
                   ref={svgRef}
                   viewBox={`0 0 ${width} ${height}`}
-                  className="w-full h-64 sm:h-72 select-none cursor-crosshair"
+                  className="w-full h-64 sm:h-72 select-none cursor-crosshair touch-none"
                   onMouseMove={handleSvgMouseMove}
                   onMouseLeave={() => setHoveredYear(null)}
+                  onTouchMove={handleSvgTouchMove}
+                  onTouchStart={handleSvgTouchStart}
+                  onTouchEnd={() => setHoveredYear(null)}
                 >
                   <defs>
                     <linearGradient id="fanGrad" x1="0" y1="0" x2="0" y2="1">
@@ -735,17 +896,31 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                   })}
 
                   {/* Outer Fan Area (P5 to P95) */}
-                  <polygon points={fanAreaPoints} fill="url(#fanGrad)" />
+                  {visibleTrajectories.p95 && visibleTrajectories.p5 && (
+                    <polygon points={fanAreaPoints} fill="url(#fanGrad)" />
+                  )}
 
                   {/* Inner Fan Area (P25 to P75) */}
-                  <polygon points={innerFanAreaPoints} fill="url(#innerFanGrad)" />
+                  {visibleTrajectories.p75 && visibleTrajectories.p25 && (
+                    <polygon points={innerFanAreaPoints} fill="url(#innerFanGrad)" />
+                  )}
 
                   {/* Trajectory Polylines */}
-                  <polyline points={p95Points} fill="none" stroke="#10b981" strokeWidth="1.8" strokeDasharray="3 3" opacity="0.85" />
-                  <polyline points={p75Points} fill="none" stroke="#8b5cf6" strokeWidth="1.4" opacity="0.65" />
-                  <polyline points={p50Points} fill="none" stroke="#06b6d4" strokeWidth="2.8" />
-                  <polyline points={p25Points} fill="none" stroke="#f59e0b" strokeWidth="1.4" opacity="0.65" />
-                  <polyline points={p5Points} fill="none" stroke="#f43f5e" strokeWidth="1.8" strokeDasharray="3 3" opacity="0.9" />
+                  {visibleTrajectories.p95 && (
+                    <polyline points={p95Points} fill="none" stroke="#10b981" strokeWidth="1.8" strokeDasharray="3 3" opacity="0.85" />
+                  )}
+                  {visibleTrajectories.p75 && (
+                    <polyline points={p75Points} fill="none" stroke="#8b5cf6" strokeWidth="1.4" opacity="0.65" />
+                  )}
+                  {visibleTrajectories.p50 && (
+                    <polyline points={p50Points} fill="none" stroke="#06b6d4" strokeWidth="2.8" />
+                  )}
+                  {visibleTrajectories.p25 && (
+                    <polyline points={p25Points} fill="none" stroke="#f59e0b" strokeWidth="1.4" opacity="0.65" />
+                  )}
+                  {visibleTrajectories.p5 && (
+                    <polyline points={p5Points} fill="none" stroke="#f43f5e" strokeWidth="1.8" strokeDasharray="3 3" opacity="0.9" />
+                  )}
 
                   {/* Retirement Transition Divider Line */}
                   <line
@@ -782,9 +957,15 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                         strokeDasharray="2 2"
                       />
                       {/* Percentile Dots */}
-                      <circle cx={scaleX(hoveredYear)} cy={scaleY(result.trajectories[hoveredYear].p95)} r="4" fill="#10b981" stroke="#fff" strokeWidth="1" />
-                      <circle cx={scaleX(hoveredYear)} cy={scaleY(result.trajectories[hoveredYear].p50)} r="5" fill="#06b6d4" stroke="#fff" strokeWidth="1.5" />
-                      <circle cx={scaleX(hoveredYear)} cy={scaleY(result.trajectories[hoveredYear].p5)} r="4" fill="#f43f5e" stroke="#fff" strokeWidth="1" />
+                      {visibleTrajectories.p95 && (
+                        <circle cx={scaleX(hoveredYear)} cy={scaleY(result.trajectories[hoveredYear].p95)} r="4" fill="#10b981" stroke="#fff" strokeWidth="1" />
+                      )}
+                      {visibleTrajectories.p50 && (
+                        <circle cx={scaleX(hoveredYear)} cy={scaleY(result.trajectories[hoveredYear].p50)} r="5" fill="#06b6d4" stroke="#fff" strokeWidth="1.5" />
+                      )}
+                      {visibleTrajectories.p5 && (
+                        <circle cx={scaleX(hoveredYear)} cy={scaleY(result.trajectories[hoveredYear].p5)} r="4" fill="#f43f5e" stroke="#fff" strokeWidth="1" />
+                      )}
                     </g>
                   )}
 
@@ -799,11 +980,189 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                     );
                   })}
                 </svg>
-                <div className="flex items-center justify-between px-2 pt-1 text-[10px] font-mono text-slate-400">
-                  <span>💡 Move cursor across chart to inspect percentile values year-by-year</span>
-                  <span>Terminal Year {result.totalYears} Median: <strong className="text-cyan-300">{formatINR(result.medianTerminalCorpus)}</strong></span>
+
+                {/* Tactile Year Scrubber Bar (Accessible across mobile and desktop) */}
+                <div className="flex items-center justify-between px-2 pt-2 gap-3 flex-wrap">
+                  <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                    <span className="text-[10px] font-mono text-slate-400 shrink-0">Year Scrub:</span>
+                    <input
+                      type="range"
+                      min="0"
+                      max={result.totalYears}
+                      value={hoveredYear !== null ? hoveredYear : 0}
+                      onChange={(e) => setHoveredYear(parseInt(e.target.value))}
+                      className="w-full accent-cyan-500 cursor-pointer h-1.5 bg-slate-700/50 rounded-lg"
+                      aria-label="Interactive Year Scrubber"
+                    />
+                    <span className="text-[10.5px] font-mono font-bold text-cyan-400 shrink-0 w-12 text-right">
+                      Yr {hoveredYear !== null ? hoveredYear : 0}
+                    </span>
+                  </div>
+                  <div className="text-[10px] font-mono text-slate-400">
+                    Terminal Year {result.totalYears} Median: <strong className="text-cyan-300">{formatINR(result.medianTerminalCorpus)}</strong>
+                  </div>
                 </div>
               </div>
+
+              {/* ============================================================= */}
+              {/* PORTFOLIO DEPLETION LIFESPAN & SOLVENCY ANATOMY */}
+              {/* ============================================================= */}
+              <div className="p-4 rounded-2xl bg-slate-900/40 border border-white/5 space-y-3">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <Clock size={16} className="text-cyan-400" />
+                    <span className="font-mono font-bold text-xs uppercase tracking-wider text-slate-200">
+                      Decumulation Solvency &amp; Depletion Horizon
+                    </span>
+                  </div>
+                  <span className="text-[10.5px] font-mono text-slate-400">
+                    Target Retirement Horizon: {result.retirementYears} Years
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+                  {/* Worst-Case 5th Percentile Solvency */}
+                  <div className="p-3.5 rounded-xl bg-slate-950/60 border border-white/5 flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-slate-400">5th Percentile (Severe Shock):</span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                        result.depletionHorizon.worstCaseDepletionYear === null
+                          ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/30'
+                          : 'bg-rose-950/60 text-rose-400 border border-rose-500/30'
+                      }`}>
+                        {result.depletionHorizon.worstCaseDepletionYear === null ? '100% SOLVENT' : 'PREMATURE DEPLETION'}
+                      </span>
+                    </div>
+                    <div className="text-lg font-bold text-white mb-1.5">
+                      {result.depletionHorizon.worstCaseDepletionYear === null
+                        ? `${result.retirementYears} / ${result.retirementYears} Years (Zero Depletion)`
+                        : `${result.depletionHorizon.worstCaseRetirementSolvencyYears} Years Solvency (Depletes in Yr ${result.depletionHorizon.worstCaseDepletionYear})`}
+                    </div>
+                    {/* Solvency Bar */}
+                    <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden mb-1">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          result.depletionHorizon.worstCaseDepletionYear === null
+                            ? 'bg-emerald-500'
+                            : 'bg-rose-500 shadow-[0_0_8px_#f43f5e]'
+                        }`}
+                        style={{
+                          width: `${Math.min(100, Math.round((result.depletionHorizon.worstCaseRetirementSolvencyYears / result.retirementYears) * 100))}%`
+                        }}
+                      />
+                    </div>
+                    <span className="text-[10px] text-slate-400 mt-1">
+                      {result.depletionHorizon.worstCaseDepletionYear === null
+                        ? 'Capital survives full retirement lifespan even under severe black swans'
+                        : `Exhausts all liquid capital ${result.retirementYears - result.depletionHorizon.worstCaseRetirementSolvencyYears} years before plan end`}
+                    </span>
+                  </div>
+
+                  {/* Median 50th Percentile Solvency */}
+                  <div className="p-3.5 rounded-xl bg-slate-950/60 border border-white/5 flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-slate-400">50th Percentile (Median Expected):</span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                        result.depletionHorizon.medianDepletionYear === null
+                          ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/30'
+                          : 'bg-amber-950/60 text-amber-400 border border-amber-500/30'
+                      }`}>
+                        {result.depletionHorizon.medianDepletionYear === null ? 'DYNASTIC SURPLUS' : 'DEPLETION RISK'}
+                      </span>
+                    </div>
+                    <div className="text-lg font-bold text-cyan-300 mb-1.5">
+                      {result.depletionHorizon.medianDepletionYear === null
+                        ? `${result.retirementYears} / ${result.retirementYears} Years · ${formatINR(result.medianTerminalCorpus)} Surplus`
+                        : `${result.depletionHorizon.medianSolvencyYears} Years Solvency`}
+                    </div>
+                    {/* Solvency Bar */}
+                    <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden mb-1">
+                      <div
+                        className="h-full rounded-full bg-cyan-500 transition-all shadow-[0_0_8px_#06b6d4]"
+                        style={{
+                          width: `${Math.min(100, Math.round((result.depletionHorizon.medianSolvencyYears / result.retirementYears) * 100))}%`
+                        }}
+                      />
+                    </div>
+                    <span className="text-[10px] text-slate-400 mt-1">
+                      {result.depletionHorizon.medianDepletionYear === null
+                        ? 'Terminal wealth outlives lifespan, creating multigenerational capital buffer'
+                        : 'Median path experiences liquidity stress; taper monthly expenses'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* ============================================================= */}
+              {/* TACTICAL AUTO-HEAL REMEDY ACTIONS (WHEN STRESSED) */}
+              {/* ============================================================= */}
+              {(result.ruinProbabilityPercent > 15 || result.srrRiskRating === 'CRITICAL' || result.srrRiskRating === 'ELEVATED') && (
+                <div className="p-4 rounded-2xl bg-amber-950/20 border border-amber-500/30 text-xs space-y-2.5">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <Zap size={16} className="text-amber-400 shrink-0" />
+                      <span className="font-mono font-bold text-amber-300 uppercase tracking-wider text-[11px]">
+                        Tactical Auto-Heal Remedies to Reach &ge; 90% Survival
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono text-amber-400/80">Click any remedy to test live</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    {/* Remedy 1: Safe SWR Spending Alignment */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const safeMonthlyBurn = Math.max(10000, Math.round(result.medianRetirementCorpus * (result.safeWithdrawalRatePercent / 100) / 12));
+                        setMonthlyRetirementBurn(safeMonthlyBurn);
+                      }}
+                      className="p-3 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-amber-500/20 hover:border-amber-400/50 text-left transition-all group"
+                    >
+                      <span className="text-[10px] font-mono text-amber-400 block mb-1">REMEDY A · SPENDING ALIGNMENT</span>
+                      <span className="font-bold text-white text-xs block group-hover:text-amber-200">
+                        Cap Burn to {formatINR(Math.max(10000, Math.round(result.medianRetirementCorpus * (result.safeWithdrawalRatePercent / 100) / 12)))}/mo
+                      </span>
+                      <span className="text-[9.5px] text-slate-400 block mt-1">
+                        Aligns withdrawal with {result.safeWithdrawalRatePercent}% Safe SWR
+                      </span>
+                    </button>
+
+                    {/* Remedy 2: Extend Accumulation Horizon */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCustomRetireYears((prev) => prev + 2);
+                      }}
+                      className="p-3 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-amber-500/20 hover:border-amber-400/50 text-left transition-all group"
+                    >
+                      <span className="text-[10px] font-mono text-cyan-400 block mb-1">REMEDY B · HORIZON EXTENSION</span>
+                      <span className="font-bold text-white text-xs block group-hover:text-cyan-200">
+                        Delay Retirement by +2 Years
+                      </span>
+                      <span className="text-[9.5px] text-slate-400 block mt-1">
+                        Adds compounding runway and reduces decumulation span
+                      </span>
+                    </button>
+
+                    {/* Remedy 3: Step-Up Accumulation SIP */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMonthlySavings((prev) => Math.round(prev * 1.25));
+                      }}
+                      className="p-3 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-amber-500/20 hover:border-amber-400/50 text-left transition-all group"
+                    >
+                      <span className="text-[10px] font-mono text-emerald-400 block mb-1">REMEDY C · SIP REINFORCEMENT</span>
+                      <span className="font-bold text-white text-xs block group-hover:text-emerald-200">
+                        Boost SIP +25% ({formatINR(Math.round(monthlySavings * 1.25))}/mo)
+                      </span>
+                      <span className="text-[9.5px] text-slate-400 block mt-1">
+                        Strengthens terminal nest egg to absorb black swans
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Quick Scenario Chips Bar */}
               <div>
@@ -839,8 +1198,7 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                         <span className={`px-1.5 py-0.2 rounded font-semibold ${
                           sc.severity === 'CRITICAL' ? 'bg-rose-950/60 text-rose-400' :
                           sc.severity === 'SEVERE' ? 'bg-amber-950/60 text-amber-400' :
-                          sc.severity === 'MODERATE' ? 'bg-cyan-950/60 text-cyan-300' :
-                          'bg-slate-800 text-slate-300'
+                          sc.severity === 'MODERATE' ? 'bg-cyan-950/60 text-cyan-300' : 'bg-slate-800 text-slate-300'
                         }`}>
                           {sc.impactTag}
                         </span>
@@ -850,90 +1208,25 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                 </div>
               </div>
 
-              {/* Sequence Risk & Cash Wedge Summary Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-4 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2 text-xs font-mono font-bold text-slate-200">
-                        <ShieldCheck size={16} className="text-cyan-400" />
-                        <span>SEQUENCE RISK &amp; CASH WEDGE</span>
-                      </div>
-                      <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
-                        result.srrRiskRating === 'LOW' ? 'bg-emerald-950/80 border border-emerald-500/40 text-emerald-400' :
-                        result.srrRiskRating === 'MODERATE' ? 'bg-cyan-950/80 border border-cyan-500/40 text-cyan-300' :
-                        result.srrRiskRating === 'ELEVATED' ? 'bg-amber-950/80 border border-amber-500/40 text-amber-400' :
-                        'bg-rose-950/80 border border-rose-500/40 text-rose-400'
-                      }`}>
-                        {result.srrRiskRating} RISK
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-400 leading-relaxed mb-3">
-                      Early retirement crashes permanently impair portfolio longevity if equities must be sold at depressed valuations. A liquid cash cushion insulates living burn.
-                    </p>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-slate-950/60 border border-white/10 flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] font-mono text-slate-400 uppercase block">Recommended Liquid Cushion</span>
-                      <span className="text-base font-extrabold font-mono text-cyan-300">
-                        {formatINR(result.recommendedCashWedgeRupees)}
-                      </span>
-                    </div>
-                    <span className="text-xs font-mono text-slate-300 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10 font-bold">
-                      {result.recommendedCashWedgeMonths} Months Runway
-                    </span>
-                  </div>
-                </div>
-
-                {/* SWR Bengen Matrix Preview */}
-                <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-4 flex flex-col justify-between">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-mono font-bold text-slate-200">
-                      SAFE WITHDRAWAL RATE (SWR) MATRIX
-                    </span>
-                    <span className="text-[10.5px] font-mono text-slate-400">
-                      Indian 30-Yr SWR: <strong className="text-cyan-300">{result.safeWithdrawalRatePercent}%</strong>
-                    </span>
-                  </div>
-
-                  <div className="space-y-1.5 font-mono text-[11px]">
-                    {result.swrScenarios.map((s) => (
-                      <div
-                        key={s.swrPercent}
-                        className="flex items-center justify-between p-1.5 px-2 rounded-lg bg-slate-950/50 border border-white/5"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-200">{s.swrPercent.toFixed(1)}%</span>
-                          <span className="text-[10px] text-slate-400">({formatINR(s.annualWithdrawalRupees)}/yr)</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-16 h-1.5 rounded-full bg-slate-800 overflow-hidden">
-                            <div
-                              className={`h-full rounded-full ${
-                                s.verdict === 'SAFE' ? 'bg-emerald-500' :
-                                s.verdict === 'CAUTION' ? 'bg-amber-500' : 'bg-rose-500'
-                              }`}
-                              style={{ width: `${s.successProbabilityPercent}%` }}
-                            />
-                          </div>
-                          <span className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded ${
-                            s.verdict === 'SAFE' ? 'bg-emerald-950/60 text-emerald-400' :
-                            s.verdict === 'CAUTION' ? 'bg-amber-950/60 text-amber-400' : 'bg-rose-950/60 text-rose-400'
-                          }`}>
-                            {s.successProbabilityPercent}% {s.verdict}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+              {/* Actuarial Reconciliation & Assumptions Banner */}
+              <div className="p-3.5 rounded-xl bg-slate-900/60 border border-white/5 text-[11px] text-slate-300 flex items-start gap-3">
+                <Info size={16} className="text-cyan-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <span className="font-mono font-bold text-slate-200 block text-xs">
+                    Actuarial Telemetry Reconciliation &amp; Assumptions
+                  </span>
+                  <p className="text-[11px] text-slate-400 leading-relaxed m-0">
+                    • <strong>Why Ruin Risk may be high while SWR has safe tiers:</strong> The top card ({result.ruinProbabilityPercent}% Ruin Risk) tests your <em>actual planned withdrawal</em> of {formatINR(monthlyRetirementBurn)}/mo ({result.plannedWithdrawalRatePercent}% of median corpus). Under severe shocks like {activeScenarioMeta.label}, your corpus is depressed, making {formatINR(monthlyRetirementBurn)}/mo unsustainable.<br />
+                    • <strong>Safe Withdrawal Rate ({result.safeWithdrawalRatePercent}%):</strong> Shows the maximum percentage rate that <em>would survive</em> &ge; 90% of paths in this specific crisis. That modeled threshold corresponds to {formatINR(Math.round(result.medianRetirementCorpus * (result.safeWithdrawalRatePercent / 100) / 12))}/mo at the median retirement corpus.<br />
+                    • <strong>Success Criterion:</strong> A path succeeds if its balance stays positive through {result.retirementYears} years of retirement after withdrawals adjusted by simulated inflation.
+                  </p>
                 </div>
               </div>
             </div>
           )}
 
           {/* =============================================================== */}
-          {/* 3. TAB: HISTORICAL CRISIS REGIMES DEEP-DIVE */}
+          {/* TAB 2: HISTORICAL CRISIS REGIMES DEEP-DIVE */}
           {/* =============================================================== */}
           {activeTab === 'crises' && (
             <div className="space-y-4">
@@ -978,8 +1271,8 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                           {sc.impactTag}
                         </span>
                       </div>
-                      <h4 className="text-sm font-bold text-white mb-1">{sc.label}</h4>
-                      <p className="text-xs text-slate-300 mb-2 leading-relaxed">{sc.desc}</p>
+                      <h4 className="text-sm font-bold text-white mb-1 m-0">{sc.label}</h4>
+                      <p className="text-xs text-slate-300 mb-2 leading-relaxed m-0">{sc.desc}</p>
                       <div className="p-2 rounded-lg bg-slate-950/60 border border-white/5 text-[11px] text-slate-400 leading-normal">
                         <strong className="text-slate-300 block mb-0.5 font-mono text-[10px] uppercase">Historical Context:</strong>
                         {sc.historicalContext}
@@ -1010,7 +1303,7 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
           )}
 
           {/* =============================================================== */}
-          {/* 4. TAB: CASH WEDGE & SWR MATRIX BLUEPRINT */}
+          {/* TAB 3: CASH WEDGE & SWR MATRIX BLUEPRINT */}
           {/* =============================================================== */}
           {activeTab === 'wedge_swr' && (
             <div className="space-y-4">
@@ -1020,11 +1313,11 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                   <div>
                     <div className="flex items-center gap-2">
                       <ShieldCheck size={20} className="text-cyan-400" />
-                      <h3 className="text-sm sm:text-base font-bold text-white font-sans">
+                      <h3 className="text-sm sm:text-base font-bold text-white font-sans m-0">
                         3-Tier Sovereign Cash Wedge Architecture
                       </h3>
                     </div>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="text-xs text-slate-400 mt-0.5 m-0">
                       How to construct an Indian retirement cash buffer to eliminate Sequence of Returns Risk (SRR).
                     </p>
                   </div>
@@ -1049,8 +1342,8 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                         Zero Volatility
                       </span>
                     </div>
-                    <h5 className="text-xs font-bold text-white mb-1">Instant Liquid &amp; Overnight Funds</h5>
-                    <p className="text-[11px] text-slate-400 leading-relaxed mb-2">
+                    <h5 className="text-xs font-bold text-white mb-1 m-0">Instant Liquid &amp; Overnight Funds</h5>
+                    <p className="text-[11px] text-slate-400 leading-relaxed mb-2 m-0">
                       Provides immediate living expenses without touching equities during market crashes.
                     </p>
                     <div className="font-mono text-xs text-cyan-300 pt-1 border-t border-white/5">
@@ -1066,8 +1359,8 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                         Tax Arbitrage
                       </span>
                     </div>
-                    <h5 className="text-xs font-bold text-white mb-1">Arbitrage Funds (Equity Taxation)</h5>
-                    <p className="text-[11px] text-slate-400 leading-relaxed mb-2">
+                    <h5 className="text-xs font-bold text-white mb-1 m-0">Arbitrage Funds (Equity Taxation)</h5>
+                    <p className="text-[11px] text-slate-400 leading-relaxed mb-2 m-0">
                       Captures cash-futures spread with low volatility and qualifies for favorable 12.5% LTCG taxation.
                     </p>
                     <div className="font-mono text-xs text-cyan-300 pt-1 border-t border-white/5">
@@ -1078,14 +1371,14 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                   {/* Tier 3 */}
                   <div className="wedge-tier-box">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-mono font-bold text-purple-400">TIER 3 (MONTHS 25–36)</span>
+                      <span className="text-xs font-mono font-bold text-purple-300">TIER 3 (MONTHS 25–36+)</span>
                       <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-950/60 text-purple-300 border border-purple-500/30">
-                        Locked Yield
+                        Yield Inflation
                       </span>
                     </div>
-                    <h5 className="text-xs font-bold text-white mb-1">Target Maturity G-Sec &amp; SDLs</h5>
-                    <p className="text-[11px] text-slate-400 leading-relaxed mb-2">
-                      Roll-down sovereign bonds lock in guaranteed coupon yields without interest rate duration risk.
+                    <h5 className="text-xs font-bold text-white mb-1 m-0">Target Maturity G-Sec &amp; Multi-Asset</h5>
+                    <p className="text-[11px] text-slate-400 leading-relaxed mb-2 m-0">
+                      Locks in sovereign G-Sec yields to replenish Tiers 1 and 2 systematically during bear markets.
                     </p>
                     <div className="font-mono text-xs text-cyan-300 pt-1 border-t border-white/5">
                       Target: {formatINR(monthlyRetirementBurn * Math.max(0, result.recommendedCashWedgeMonths - 24))}
@@ -1094,62 +1387,56 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                 </div>
               </div>
 
-              {/* Bengen SWR Actuarial Deep-Dive */}
+              {/* Safe Withdrawal Rate Bengen Matrix */}
               <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-4 sm:p-5">
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                   <div>
-                    <h3 className="text-sm sm:text-base font-bold text-white font-sans">
+                    <h3 className="text-sm sm:text-base font-bold text-white font-sans m-0">
                       Safe Withdrawal Rate (SWR) Actuarial Matrix
                     </h3>
-                    <p className="text-xs text-slate-400">
-                      William Bengen actuarial methodology applied across 30-year Indian macroeconomic horizons.
+                    <p className="text-xs text-slate-400 mt-0.5 m-0">
+                      Probability of surviving 30 years across varying annual decumulation withdrawal rates.
                     </p>
                   </div>
-                  <span className="text-xs font-mono text-cyan-300 bg-cyan-950/80 px-2.5 py-1 rounded-lg border border-cyan-500/30">
-                    Recommended: <strong>{result.safeWithdrawalRatePercent}% SWR</strong>
-                  </span>
+                  <div className="text-xs font-mono text-cyan-300 bg-cyan-950/40 border border-cyan-500/30 px-2.5 py-1 rounded-lg">
+                    Recommended SWR Ceiling: <strong>{result.safeWithdrawalRatePercent}%</strong>
+                  </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 font-mono text-xs">
                   {result.swrScenarios.map((s) => (
                     <div
                       key={s.swrPercent}
-                      onClick={() => setSelectedSwrPercent(s.swrPercent)}
-                      className={`swr-interactive-row ${selectedSwrPercent === s.swrPercent ? 'selected' : ''}`}
+                      className="swr-interactive-row"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold font-mono text-white w-12">{s.swrPercent.toFixed(1)}%</span>
-                        <div>
-                          <div className="text-xs font-mono text-slate-200">
-                            {formatINR(s.annualWithdrawalRupees)} / year
-                            <span className="text-slate-400 text-[10.5px] ml-1.5 font-normal">
-                              ({formatINR(Math.round(s.annualWithdrawalRupees / 12))} / month living burn)
-                            </span>
-                          </div>
-                          <div className="text-[10px] text-slate-400">
-                            {s.verdict === 'SAFE' ? 'Dynastic capital preservation with virtually zero ruin risk' :
-                             s.verdict === 'CAUTION' ? 'Moderate vulnerability during prolonged 4+ year Indian bear markets' :
-                             'High probability of portfolio exhaustion before year 25'}
-                          </div>
+                        <span className="font-bold text-sm text-white w-14">{s.swrPercent.toFixed(1)}%</span>
+                        <div className="text-slate-300">
+                          <span>{formatINR(s.annualWithdrawalRupees)}/yr</span>
+                          <span className="text-slate-500 text-[10.5px] ml-2">({formatINR(Math.round(s.annualWithdrawalRupees / 12))}/mo)</span>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3 shrink-0">
-                        <div className="w-24 h-2 bg-slate-800 rounded-full overflow-hidden hidden sm:block">
+                      <div className="flex items-center gap-3">
+                        {/* Survival Progress Meter */}
+                        <div className="w-24 sm:w-36 h-2 rounded-full bg-slate-800 overflow-hidden hidden sm:block">
                           <div
-                            className={`h-full rounded-full ${
-                              s.verdict === 'SAFE' ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' :
-                              s.verdict === 'CAUTION' ? 'bg-amber-500' : 'bg-rose-500 shadow-[0_0_8px_#f43f5e]'
+                            className={`h-full rounded-full transition-all ${
+                              s.verdict === 'SAFE' ? 'bg-emerald-500 shadow-[0_0_6px_#10b981]' :
+                              s.verdict === 'CAUTION' ? 'bg-amber-500' : 'bg-rose-500'
                             }`}
                             style={{ width: `${s.successProbabilityPercent}%` }}
                           />
                         </div>
-                        <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-lg ${
+                        <span className="text-xs font-bold text-slate-200 w-12 text-right">
+                          {s.successProbabilityPercent}%
+                        </span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded w-24 text-center ${
                           s.verdict === 'SAFE' ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/30' :
                           s.verdict === 'CAUTION' ? 'bg-amber-950/80 text-amber-400 border border-amber-500/30' :
                           'bg-rose-950/80 text-rose-400 border border-rose-500/30'
                         }`}>
-                          {s.successProbabilityPercent}% Survival
+                          {s.verdict}
                         </span>
                       </div>
                     </div>
@@ -1160,65 +1447,61 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
           )}
 
           {/* =============================================================== */}
-          {/* 5. TAB: WHAT-IF LEVERS & SIMULATION CONTROLS */}
+          {/* TAB 4: WHAT-IF TACTILE LEVERS */}
           {/* =============================================================== */}
           {activeTab === 'levers' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between pb-1">
+              <div className="flex items-center justify-between pb-1 flex-wrap gap-2">
                 <div>
-                  <h3 className="text-sm font-bold text-white font-sans">
-                    Tactile Simulation Levers &amp; Dynamic What-If Testing
-                  </h3>
-                  <p className="text-xs text-slate-400">
-                    Adjust inputs dynamically to see how additional SIPs, different horizons, or higher expenses affect your probability of ruin.
-                  </p>
+                  <h3 className="text-sm font-bold text-white font-sans m-0">Tactile Actuarial Levers</h3>
+                  <p className="text-xs text-slate-400 m-0">Adjust simulation parameters to test plan sensitivity in real time.</p>
                 </div>
                 <button
                   type="button"
                   onClick={handleResetToBaseline}
-                  className="px-2.5 py-1 text-xs font-mono flex items-center gap-1 text-slate-300 hover:text-white bg-slate-800 rounded-lg border border-white/10"
+                  className="px-2.5 py-1 text-xs font-mono rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-white/10 transition-colors flex items-center gap-1"
                 >
                   <RotateCcw size={12} />
-                  <span>Reset to Plan Baseline</span>
+                  <span>Reset to Plan Defaults</span>
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {/* 1. Starting Portfolio Corpus */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                {/* Starting Capital */}
                 <div className="tactile-lever-card">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-300 font-medium">Starting Net Worth / Corpus:</span>
-                    <span className="font-mono font-bold text-cyan-300 text-sm">{formatINR(startingCorpus)}</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-300 font-mono">Starting Nest Egg (Corpus):</span>
+                    <span className="text-sm font-bold font-mono text-cyan-300">{formatINR(startingCorpus)}</span>
                   </div>
                   <input
                     type="range"
                     min="500000"
-                    max="30000000"
-                    step="500000"
+                    max="50000000"
+                    step="250000"
                     value={startingCorpus}
-                    onChange={(e) => setStartingCorpus(parseFloat(e.target.value))}
+                    onChange={(e) => setStartingCorpus(parseInt(e.target.value))}
                     className="w-full accent-cyan-500 cursor-pointer"
                   />
                   <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                    <span className="text-[10px] text-slate-400 font-mono">Quick Sets:</span>
-                    {[1500000, 2500000, 5000000, 10000000, 20000000].map((val) => (
+                    <span className="text-[10px] text-slate-400 font-mono">Presets:</span>
+                    {[2500000, 5000000, 10000000, 20000000].map((v) => (
                       <button
-                        key={val}
+                        key={v}
                         type="button"
-                        onClick={() => setStartingCorpus(val)}
-                        className={`tactile-preset-btn ${startingCorpus === val ? 'active' : ''}`}
+                        onClick={() => setStartingCorpus(v)}
+                        className={`tactile-preset-btn ${startingCorpus === v ? 'active' : ''}`}
                       >
-                        {formatINR(val)}
+                        {formatINR(v)}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* 2. Monthly SIP Additions */}
+                {/* Monthly SIP Additions */}
                 <div className="tactile-lever-card">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-300 font-medium">Monthly Investment (SIP):</span>
-                    <span className="font-mono font-bold text-cyan-300 text-sm">{formatINR(monthlySavings)} / mo</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-300 font-mono">Monthly Accumulation SIP:</span>
+                    <span className="text-sm font-bold font-mono text-emerald-400">{formatINR(monthlySavings)}/mo</span>
                   </div>
                   <input
                     type="range"
@@ -1226,66 +1509,66 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                     max="300000"
                     step="5000"
                     value={monthlySavings}
-                    onChange={(e) => setMonthlySavings(parseFloat(e.target.value))}
+                    onChange={(e) => setMonthlySavings(parseInt(e.target.value))}
                     className="w-full accent-cyan-500 cursor-pointer"
                   />
                   <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                    <span className="text-[10px] text-slate-400 font-mono">Quick Sets:</span>
-                    {[25000, 50000, 75000, 100000, 150000].map((val) => (
+                    <span className="text-[10px] text-slate-400 font-mono">Presets:</span>
+                    {[25000, 50000, 100000, 150000].map((v) => (
                       <button
-                        key={val}
+                        key={v}
                         type="button"
-                        onClick={() => setMonthlySavings(val)}
-                        className={`tactile-preset-btn ${monthlySavings === val ? 'active' : ''}`}
+                        onClick={() => setMonthlySavings(v)}
+                        className={`tactile-preset-btn ${monthlySavings === v ? 'active' : ''}`}
                       >
-                        {formatINR(val)}
+                        {formatINR(v)}/mo
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* 3. Retirement Living Expenses Burn */}
+                {/* Monthly Retirement Burn */}
                 <div className="tactile-lever-card">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-300 font-medium">Retirement Monthly Living Burn:</span>
-                    <span className="font-mono font-bold text-rose-300 text-sm">{formatINR(monthlyRetirementBurn)} / mo</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-300 font-mono">Target Retirement Burn (Today's INR):</span>
+                    <span className="text-sm font-bold font-mono text-rose-400">{formatINR(monthlyRetirementBurn)}/mo</span>
                   </div>
                   <input
                     type="range"
                     min="20000"
-                    max="250000"
+                    max="400000"
                     step="5000"
                     value={monthlyRetirementBurn}
-                    onChange={(e) => setMonthlyRetirementBurn(parseFloat(e.target.value))}
+                    onChange={(e) => setMonthlyRetirementBurn(parseInt(e.target.value))}
                     className="w-full accent-cyan-500 cursor-pointer"
                   />
                   <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                    <span className="text-[10px] text-slate-400 font-mono">Quick Sets:</span>
-                    {[35000, 50000, 75000, 100000, 150000].map((val) => (
+                    <span className="text-[10px] text-slate-400 font-mono">Presets:</span>
+                    {[40000, 60000, 80000, 120000, 150000].map((v) => (
                       <button
-                        key={val}
+                        key={v}
                         type="button"
-                        onClick={() => setMonthlyRetirementBurn(val)}
-                        className={`tactile-preset-btn ${monthlyRetirementBurn === val ? 'active' : ''}`}
+                        onClick={() => setMonthlyRetirementBurn(v)}
+                        className={`tactile-preset-btn ${monthlyRetirementBurn === v ? 'active' : ''}`}
                       >
-                        {formatINR(val)}
+                        {formatINR(v)}/mo
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* 4. Equity / Debt Allocation Ratio */}
+                {/* Equity Ratio Slider */}
                 <div className="tactile-lever-card">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-300 font-medium">Portfolio Asset Allocation:</span>
-                    <span className="font-mono font-bold text-cyan-300 text-sm">
-                      {(equityRatio * 100).toFixed(0)}% Eq / {((1 - equityRatio) * 100).toFixed(0)}% Debt
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-300 font-mono">Asset Allocation (Equity / Debt):</span>
+                    <span className="text-sm font-bold font-mono text-purple-300">
+                      {(equityRatio * 100).toFixed(0)}% Equity · {((1 - equityRatio) * 100).toFixed(0)}% Debt
                     </span>
                   </div>
                   <input
                     type="range"
-                    min="0.2"
-                    max="1.0"
+                    min="0.30"
+                    max="0.95"
                     step="0.05"
                     value={equityRatio}
                     onChange={(e) => setEquityRatio(parseFloat(e.target.value))}
@@ -1293,33 +1576,28 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                   />
                   <div className="flex items-center gap-1.5 flex-wrap pt-1">
                     <span className="text-[10px] text-slate-400 font-mono">Presets:</span>
-                    {[
-                      { label: '80/20 Aggressive', val: 0.8 },
-                      { label: '70/30 Sovereign', val: 0.7 },
-                      { label: '50/50 Defensive', val: 0.5 },
-                      { label: '40/60 Shield', val: 0.4 },
-                    ].map((p) => (
+                    {[0.50, 0.60, 0.70, 0.80, 0.90].map((r) => (
                       <button
-                        key={p.val}
+                        key={r}
                         type="button"
-                        onClick={() => setEquityRatio(p.val)}
-                        className={`tactile-preset-btn ${Math.abs(equityRatio - p.val) < 0.01 ? 'active' : ''}`}
+                        onClick={() => setEquityRatio(r)}
+                        className={`tactile-preset-btn ${equityRatio === r ? 'active' : ''}`}
                       >
-                        {p.label}
+                        {(r * 100).toFixed(0)}/{(100 - r * 100).toFixed(0)}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* 5. Years to Retirement */}
+                {/* Accumulation Horizon */}
                 <div className="tactile-lever-card">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-300 font-medium">Years to Retirement:</span>
-                    <span className="font-mono font-bold text-cyan-300 text-sm">{customRetireYears} Years</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-300 font-mono">Accumulation Years to Retire:</span>
+                    <span className="text-sm font-bold font-mono text-cyan-300">{customRetireYears} Years</span>
                   </div>
                   <input
                     type="range"
-                    min="2"
+                    min="3"
                     max="25"
                     step="1"
                     value={customRetireYears}
@@ -1328,7 +1606,7 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                   />
                   <div className="flex items-center gap-1.5 flex-wrap pt-1">
                     <span className="text-[10px] text-slate-400 font-mono">Presets:</span>
-                    {[5, 8, 10, 15, 20].map((yr) => (
+                    {[5, 7, 10, 15, 20].map((yr) => (
                       <button
                         key={yr}
                         type="button"
@@ -1341,11 +1619,11 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                   </div>
                 </div>
 
-                {/* 6. Retirement Duration Horizon */}
+                {/* Retirement Horizon */}
                 <div className="tactile-lever-card">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-300 font-medium">Retirement Lifespan Duration:</span>
-                    <span className="font-mono font-bold text-cyan-300 text-sm">{customHorizonYears} Years</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-300 font-mono">Decumulation Lifespan Horizon:</span>
+                    <span className="text-sm font-bold font-mono text-cyan-300">{customHorizonYears} Years</span>
                   </div>
                   <input
                     type="range"
@@ -1375,21 +1653,76 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
           )}
 
           {/* =============================================================== */}
-          {/* 6. ACTUARIAL SUMMARY & FIDUCIARY BANNER */}
+          {/* TAB 5: ACTUARIAL CERTIFICATE & AUDIT EXPORT */}
           {/* =============================================================== */}
-          <div className="p-3.5 rounded-2xl bg-cyan-950/20 border border-cyan-800/30 text-xs flex items-start gap-3">
-            <Sparkles size={18} className="text-cyan-400 shrink-0 mt-0.5" />
-            <div className="space-y-1 text-slate-300">
-              <strong className="text-cyan-200 block text-sm">{result.actuarialVerdict}</strong>
-              <p className="text-[11.5px] leading-relaxed text-slate-400">{result.srrExplanation}</p>
+          {activeTab === 'audit' && (
+            <div className="space-y-4 font-mono">
+              <div className="p-5 rounded-2xl bg-slate-900/50 border border-white/10 space-y-4">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3 flex-wrap gap-2">
+                  <div>
+                    <span className="text-[10px] text-cyan-400 uppercase tracking-widest block font-bold">
+                      FIDUCIARY ACTUARIAL CERTIFICATE
+                    </span>
+                    <h3 className="text-base font-bold text-white font-sans m-0">
+                      Sovereign Lifespan Solvency Audit · {activeScenarioMeta.label}
+                    </h3>
+                    <span className="text-xs text-slate-400">
+                      Engine: Box-Muller Client-Side PRNG · Seed #{randomSeed} · Iterations: {result.simulationsRun.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCopyReport}
+                      className="btn-primary text-xs px-3 py-1.5"
+                    >
+                      {copiedReport ? <Check size={13} /> : <Copy size={13} />}
+                      <span>{copiedReport ? 'Copied Full Audit' : 'Copy Full Audit'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Audit Key Metrics Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                  <div className="p-3 rounded-xl bg-slate-950/60 border border-white/5">
+                    <span className="text-slate-400 block text-[10px]">ANTIFRAGILITY SCORE</span>
+                    <span className="text-lg font-bold text-white">{result.antifragilityScore} / 100</span>
+                    <span className="text-slate-500 block text-[9.5px] mt-0.5">{result.antifragilityScore >= 80 ? 'TITAN GRADE' : 'STRESSED'}</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-950/60 border border-white/5">
+                    <span className="text-slate-400 block text-[10px]">RUIN PROBABILITY</span>
+                    <span className={`text-lg font-bold ${result.ruinProbabilityPercent > 15 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                      {result.ruinProbabilityPercent}%
+                    </span>
+                    <span className="text-slate-500 block text-[9.5px] mt-0.5">Planned: {formatINR(monthlyRetirementBurn)}/mo</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-950/60 border border-white/5">
+                    <span className="text-slate-400 block text-[10px]">SAFE SWR CEILING</span>
+                    <span className="text-lg font-bold text-cyan-300">{result.safeWithdrawalRatePercent}%</span>
+                    <span className="text-slate-500 block text-[9.5px] mt-0.5">Max: {formatINR(Math.round(result.medianRetirementCorpus * (result.safeWithdrawalRatePercent / 100) / 12))}/mo</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-950/60 border border-white/5">
+                    <span className="text-slate-400 block text-[10px]">RECOMMENDED WEDGE</span>
+                    <span className="text-lg font-bold text-amber-400">{formatINR(result.recommendedCashWedgeRupees)}</span>
+                    <span className="text-slate-500 block text-[9.5px] mt-0.5">{result.recommendedCashWedgeMonths} Months Runway</span>
+                  </div>
+                </div>
+
+                {/* Actuarial Verdict & Commentary */}
+                <div className="p-3.5 rounded-xl bg-cyan-950/20 border border-cyan-500/20 text-xs">
+                  <strong className="text-cyan-300 block mb-1">Actuarial Verdict:</strong>
+                  <p className="text-slate-300 leading-relaxed m-0">{result.actuarialVerdict}</p>
+                  <p className="text-slate-400 text-[11px] leading-relaxed mt-1.5 m-0">{result.srrExplanation}</p>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* =============================================================== */}
-          {/* 7. MATHEMATICAL MODEL PARAMETERS & DISCLOSURES */}
+          {/* FIDUCIARY BANNER & MODEL DISCLOSURES */}
           {/* =============================================================== */}
           <div className="p-3.5 rounded-2xl bg-slate-900/40 border border-white/5 text-[11px] text-slate-400 space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-1.5 text-slate-200 font-semibold font-mono text-xs">
                 <Info size={14} className="text-cyan-400" />
                 <span>Actuarial Model Parameters &amp; Stochastic Assumptions</span>
@@ -1417,7 +1750,7 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
               </div>
             </div>
 
-            <p className="text-[10px] text-slate-500 leading-normal pt-1">
+            <p className="text-[10px] text-slate-500 leading-normal pt-1 m-0">
               * Methodology: Box-Muller transform Gaussian paths. Rebalanced annually. Deterministic PRNG seed ensures reproducible scenario audits. Stochastic models present probability distributions, not guaranteed future performance. Zero data transmitted over network.
             </p>
           </div>

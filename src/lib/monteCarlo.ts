@@ -50,6 +50,14 @@ export interface SwrScenarioPoint {
   verdict: 'SAFE' | 'CAUTION' | 'DANGEROUS';
 }
 
+export interface DepletionHorizon {
+  worstCaseDepletionYear: number | null;
+  worstCaseRetirementSolvencyYears: number;
+  medianDepletionYear: number | null;
+  medianSolvencyYears: number;
+  medianTerminalSurplusRupees: number;
+}
+
 export interface MonteCarloResult {
   simulationsRun: number;
   totalYears: number;
@@ -68,6 +76,7 @@ export interface MonteCarloResult {
   swrScenarios: SwrScenarioPoint[];
   trajectories: PercentileTrajectory[];
   actuarialVerdict: string;
+  depletionHorizon: DepletionHorizon;
 }
 
 // Pseudo-random Gaussian using Box-Muller transform
@@ -350,6 +359,32 @@ export function runMonteCarloSimulation(params: MonteCarloParams): MonteCarloRes
     };
   });
 
+  // Depletion Horizon & Solvency Lifespan Calculation
+  let worstCaseDepletionYear: number | null = null;
+  let worstCaseRetirementSolvencyYears = yearsInRetirement;
+  let medianDepletionYear: number | null = null;
+  let medianSolvencyYears = yearsInRetirement;
+
+  for (let yr = yearsToRetire + 1; yr <= totalYears; yr++) {
+    const t = trajectories[yr];
+    if (worstCaseDepletionYear === null && t.p5 <= 0) {
+      worstCaseDepletionYear = yr;
+      worstCaseRetirementSolvencyYears = Math.max(0, yr - yearsToRetire);
+    }
+    if (medianDepletionYear === null && t.p50 <= 0) {
+      medianDepletionYear = yr;
+      medianSolvencyYears = Math.max(0, yr - yearsToRetire);
+    }
+  }
+
+  const depletionHorizon: DepletionHorizon = {
+    worstCaseDepletionYear,
+    worstCaseRetirementSolvencyYears,
+    medianDepletionYear,
+    medianSolvencyYears,
+    medianTerminalSurplusRupees: medianTerminalCorpus,
+  };
+
   return {
     simulationsRun: numSimulations,
     totalYears,
@@ -368,5 +403,6 @@ export function runMonteCarloSimulation(params: MonteCarloParams): MonteCarloRes
     swrScenarios,
     trajectories,
     actuarialVerdict,
+    depletionHorizon,
   };
 }

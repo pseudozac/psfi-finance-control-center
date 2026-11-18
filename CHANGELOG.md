@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.13.0] - 2026-11-19
+
+### Added
+- **Institutional Reverse Monte Carlo Actuarial Upgrade (`v5.13.0`)**:
+  - **Portfolio Depletion Horizon & Decumulation Solvency Lifespan**:
+    - Actuarial tracking of exact exhaustion year across Monte Carlo paths (`worstCaseDepletionYear`, `worstCaseRetirementSolvencyYears`, `medianSolvencyYears`, `medianTerminalSurplusRupees`).
+    - Dedicated Depletion Horizon telemetry bar in the Cockpit displaying worst-case vs median longevity and residual surplus in INR.
+  - **Live Comparative Stress Testing Delta Banner**:
+    - Real-time side-by-side Delta Diff comparing the active Historical Shock Regime (e.g. 2008 Lehman GFC, 2020 Covid Crash, 1992 Harshad Mehta) against the normal Stochastic Baseline.
+    - Computes and highlights exact percentage shifts in Ruin Probability, Safe SWR Ceiling, and Solvency Duration.
+  - **Tactical Auto-Heal Action Remedies**:
+    - Dynamic one-click mitigation buttons triggered when Ruin Risk > 15% (e.g. "Add +18M Cash Wedge", "Trim Burn by 15%", "Work +2 Years") with live plan updates.
+  - **Unified Touch & Mouse Range Scrubber**:
+    - Dual interaction on the SVG fan chart with native touch scrubbing (`onTouchStart`, `onTouchMove`) on mobile devices and an accessible range slider scrubber.
+  - **Fiduciary Actuarial Certificate Tab**:
+    - Institutional audit certificate tab with formatted audit metrics, sequence risk disclosures, and single-click full markdown clipboard export.
+
+### Fixed
+- **Responsive Mobile Layout & Text Clipping**:
+  - Restructured top telemetry scorecards with `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4` with responsive typography and padding, preventing clipped letters ("Antifragility Score" and "Sequence Risk (SRR)" fully visible).
+  - Enhanced mobile bottom dock clearance padding (`calc(92px + env(safe-area-inset-bottom, 0px))`), ensuring bottom-most cards ("Debt-Free ETA") are completely accessible when scrolled to bottom.
+- **Sovereign RPG Constellation Celestial Tab Isolation**:
+  - Isolated `.skill-tree-modal .pill-segmented button` with cosmic gradient styling, preventing global light mode pill overrides from rendering harsh white rectangular tab boxes.
+- **Light Mode High-Contrast Verifications**:
+  - Confirmed crisp white button typography on `.btn-primary` and `.empty-slate-cta` gradient surfaces.
+  - Confirmed crisp white backgrounds on Vault passphrase inputs and emerald high-contrast enclave status card.
+  - Confirmed dark header text on Wealth Terminal Recharts tooltips.
+
+---
+
 ## [5.12.1] - 2026-11-19
 
 ### Fixed

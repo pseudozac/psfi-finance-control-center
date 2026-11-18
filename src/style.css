@@ -3434,12 +3434,12 @@ body {
   }
 
   body {
-    padding-bottom: 74px !important;
+    padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   .main-stack,
   .wealth-terminal-shell {
-    padding-bottom: 74px !important;
+    padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)) !important;
   }
 }
 
@@ -15762,3 +15762,38 @@ body.skill-tree-theater-active .mobile-bottom-dock {
   border-color: #0891b2;
   color: #0891b2;
 }
+
+/* Sovereign Wealth RPG Constellation Astral Theme Isolation */
+.skill-tree-modal .pill-segmented {
+  background: rgba(15, 23, 42, 0.75) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+.skill-tree-modal .pill-segmented button {
+  color: #94a3b8 !important;
+  background: transparent !important;
+}
+.skill-tree-modal .pill-segmented button:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+.skill-tree-modal .pill-segmented button.pill-active {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.4) 0%, rgba(6, 182, 212, 0.3) 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(167, 139, 250, 0.5) !important;
+  box-shadow: 0 0 12px rgba(124, 58, 237, 0.35) !important;
+}
+
+/* Reverse Monte Carlo Modal Light Mode Additions */
+[data-theme='light'] .monte-carlo-modal-window .bg-cyan-950\/30 {
+  background: rgba(6, 182, 212, 0.08) !important;
+  border-color: rgba(6, 182, 212, 0.25) !important;
+}
+[data-theme='light'] .monte-carlo-modal-window .bg-cyan-950\/20 {
+  background: rgba(6, 182, 212, 0.06) !important;
+  border-color: rgba(6, 182, 212, 0.2) !important;
+}
+[data-theme='light'] .monte-carlo-modal-window .bg-slate-950\/60 {
+  background: #f1f5f9 !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+

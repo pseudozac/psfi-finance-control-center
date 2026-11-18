@@ -179,4 +179,30 @@ describe('Reverse Monte Carlo FIRE Stress-Testing Engine', () => {
     expect(swr5?.verdict).toBe('DANGEROUS');
     expect(swr5?.ruinProbabilityPercent).toBeGreaterThanOrEqual(70);
   });
+
+  it('correctly models depletion horizon and solvency lifespan metrics', () => {
+    const safe = runMonteCarloSimulation({
+      currentCorpus: 10_000_000,
+      monthlySavings: 100_000,
+      monthlyRetirementBurn: 30_000,
+      yearsToRetire: 10,
+      yearsInRetirement: 30,
+      numSimulations: 300,
+      randomSeed: 42,
+    });
+    expect(safe.depletionHorizon.medianSolvencyYears).toBe(30);
+    expect(safe.depletionHorizon.medianDepletionYear).toBeNull();
+
+    const extremeRuin = runMonteCarloSimulation({
+      currentCorpus: 500_000,
+      monthlySavings: 0,
+      monthlyRetirementBurn: 300_000,
+      yearsToRetire: 0,
+      yearsInRetirement: 30,
+      numSimulations: 300,
+      randomSeed: 42,
+    });
+    expect(extremeRuin.depletionHorizon.worstCaseDepletionYear).not.toBeNull();
+    expect(extremeRuin.depletionHorizon.worstCaseRetirementSolvencyYears).toBeLessThan(30);
+  });
 });
