@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.12.0] - 2026-11-19
+
+### Added
+- **Comprehensive Light Mode Studio Design System (`[data-theme='light']`)**:
+  - **High-Contrast Typography & WCAG AA Compliance**: Calibrated `--ink-primary: #0f172a`, `--ink-secondary: #475569`, and `--ink-muted: #64748b` providing > 12:1 contrast ratio across all light mode surfaces.
+  - **Crisp Card Elevation & Depth Hierarchy**: Upgraded `.hipuku-kpi-card`, `.hipuku-card`, `.gateway-card`, and `.advertising-feature-card` from flat borders to layered studio elevation shadows (`0 1px 3px rgba(0,0,0,0.04), 0 4px 14px -2px rgba(0,0,0,0.06)`).
+  - **Frosted Light Mobile Bottom Dock**: Redesigned `.mobile-bottom-dock` from dark charcoal to a frosted glass white dock (`rgba(255, 255, 255, 0.94)`) with soft elevation shadow, indigo active capsule, and radiant Omnibar icon.
+  - **White Sovereign Tools Menu Sheet**: Transformed `.tools-dropdown-menu` from dark background to crisp white (`rgba(255, 255, 255, 0.98)`), dark ink headings, search bar, and segmented category filters.
+  - **Crisp White Command Palette Omnibar**: Overhauled `.palette-modal` with white card surface, indigo tab indicators, dark text, and high-contrast shortcut badges.
+  - **Luminous Hero Cyber Badge**: Overhauled `.hero-cyber-badge` with clean white surface, soft border, indigo FY metadata, green pulse dot, and emerald `🛡️ OFFLINE / PRIVATE` badge.
+  - **Light Sovereign Milestone Ribbon**: Adapted `.sovereign-milestone-ribbon` to clean elevated white surface with soft amber border and vibrant XP track.
+  - **Native Light Scrollbars**: Sleek light-themed scrollbar track and thumb (`rgba(0, 0, 0, 0.04)` / `rgba(0, 0, 0, 0.2)`).
+
+### Fixed
+- **Emergency Runway KPI Collision**: Added dedicated `.kpi-footer` flex layout with `gap: 8px`, eliminating badge and label text collision between `Rebuild to 6 Months` and `liquid buffer`.
+- **Black-on-Black Text in Modals**: Eliminated all unstyled dark modals where light-mode dark ink inherited onto dark containers.
+- **Shock Dial Chip Readability**: Replaced low-contrast yellow/pink active text with dark amber (`#b45309`) and rose (`#be123c`) on subtle tinted backgrounds.
+
+---
+
 ## [5.11.0] - 2026-11-19
 
 ### Added
