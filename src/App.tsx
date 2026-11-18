@@ -1807,6 +1807,7 @@ export function App() {
       <ExcelCamouflageOverlay
         isOpen={showCamouflage}
         onExit={() => setShowCamouflage(false)}
+        account={activeAccount}
       />
 
       {/* Steganographic PNG Vault & Decoy Modal */}
