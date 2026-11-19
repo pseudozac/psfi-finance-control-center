@@ -181,18 +181,17 @@ export function App() {
   const [appPhase, setAppPhase] = useState<AppPhase>(() => {
     if (typeof window !== 'undefined') {
       const search = window.location.search;
+      if (search.includes('intro') || search.includes('loading')) {
+        return 'loading';
+      }
       if (search.includes('gateway') || search.includes('switchVault')) {
         return 'gateway';
       }
       try {
-        const hasActiveAccount = !!localStorage.getItem('psfi_active_account_id');
-        const hasAccounts = !!localStorage.getItem('psfi_accounts_v1');
         const hasSession = sessionStorage.getItem('psfi_entered_dashboard') === 'true';
         if (
           search.includes('dashboard') ||
           search.includes('skipIntro') ||
-          hasActiveAccount ||
-          hasAccounts ||
           hasSession
         ) {
           return 'dashboard';
