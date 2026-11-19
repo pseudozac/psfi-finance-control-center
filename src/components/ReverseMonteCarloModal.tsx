@@ -369,6 +369,8 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
   return createPortal(
     <div className="monte-carlo-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Reverse Monte Carlo FIRE Simulator">
       <div className="monte-carlo-modal-window" onClick={(e) => e.stopPropagation()}>
+        {/* Mobile iOS-style drag handle indicator */}
+        <div className="monte-drag-handle" />
         
         {/* ================================================================= */}
         {/* 1. CLEAN EXECUTIVE HEADER                                         */}
@@ -379,17 +381,17 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
               <Activity size={18} className="text-cyan-400" />
             </div>
             <div className="monte-header-title-block min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <h2 className="text-sm sm:text-base font-bold tracking-tight m-0 text-slate-900 dark:text-white truncate">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="monte-header-title text-sm sm:text-base font-bold tracking-tight m-0 text-slate-900 dark:text-white truncate">
                   FIRE Stress Simulator
                 </h2>
-                <span className="text-[10px] sm:text-[11px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 font-semibold shrink-0">
+                <span className="monte-header-badge text-[10px] sm:text-[11px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 font-semibold shrink-0">
                   {simCount >= 1000 ? `${(simCount / 1000).toFixed(0)}k` : simCount} Paths
                 </span>
                 {scenario !== 'baseline' && (
-                  <span className="text-[10px] sm:text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 flex items-center gap-1 shrink-0">
+                  <span className="monte-header-shock-tag text-[10px] sm:text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 flex items-center gap-1 shrink-0">
                     <span>{activeScenarioMeta.icon}</span>
-                    <span className="truncate max-w-[90px] sm:max-w-none">{activeScenarioMeta.label}</span>
+                    <span className="truncate max-w-[85px] sm:max-w-none">{activeScenarioMeta.label}</span>
                   </span>
                 )}
               </div>
@@ -611,34 +613,34 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                     </div>
 
                     {/* 3 Breathable Metric Tiles */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
+                    <div className="monte-vitals-grid">
                       <div className="monte-vital-pill">
-                        <span className="monte-vital-label">Safe Spending Ceiling</span>
+                        <span className="monte-vital-label">Safe Ceiling</span>
                         <span className="monte-vital-value text-cyan-600 dark:text-cyan-400">
-                          {formatINR(maxSafeMonthlyBurn)}<span className="text-xs font-normal text-slate-500">/mo</span>
+                          {formatCompactINR(maxSafeMonthlyBurn)}<span className="text-xs font-normal text-slate-500">/mo</span>
                         </span>
-                        <span className="text-[10px] text-slate-500 font-mono">
+                        <span className="monte-vital-sub text-[10px] text-slate-500 font-mono">
                           {result.safeWithdrawalRatePercent}% Safe SWR
                         </span>
                       </div>
 
                       <div className="monte-vital-pill">
-                        <span className="monte-vital-label">Projected Nest Egg</span>
+                        <span className="monte-vital-label">Projected Corpus</span>
                         <span className="monte-vital-value text-slate-900 dark:text-white">
-                          {formatINR(result.medianRetirementCorpus)}
+                          {formatCompactINR(result.medianRetirementCorpus)}
                         </span>
-                        <span className="text-[10px] text-slate-500 font-mono">
-                          At Year {result.accumulationYears} Retirement
+                        <span className="monte-vital-sub text-[10px] text-slate-500 font-mono">
+                          At Yr {result.accumulationYears} Retirement
                         </span>
                       </div>
 
                       <div className="monte-vital-pill">
-                        <span className="monte-vital-label">Sequence Runway</span>
+                        <span className="monte-vital-label">Sequence Buffer</span>
                         <span className="monte-vital-value text-amber-600 dark:text-amber-400">
-                          {result.recommendedCashWedgeMonths} Mo Buffer
+                          {result.recommendedCashWedgeMonths} Mo Cash
                         </span>
-                        <span className="text-[10px] text-slate-500 font-mono">
-                          {formatINR(result.recommendedCashWedgeRupees)} Liquid
+                        <span className="monte-vital-sub text-[10px] text-slate-500 font-mono">
+                          {formatCompactINR(result.recommendedCashWedgeRupees)} Liquid
                         </span>
                       </div>
                     </div>
@@ -697,12 +699,10 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                 <svg
                   ref={svgRef}
                   viewBox={`0 0 ${width} ${height}`}
-                  className="w-full h-52 sm:h-60 select-none cursor-crosshair touch-none"
+                  className="w-full h-52 sm:h-60 select-none cursor-crosshair monte-corridor-svg"
+                  style={{ touchAction: 'pan-y' }}
                   onMouseMove={(e) => handlePointerInteraction(e.clientX)}
                   onMouseLeave={() => setHoveredYear(null)}
-                  onTouchMove={(e) => e.touches?.[0] && handlePointerInteraction(e.touches[0].clientX)}
-                  onTouchStart={(e) => e.touches?.[0] && handlePointerInteraction(e.touches[0].clientX)}
-                  onTouchEnd={() => setHoveredYear(null)}
                 >
                   <defs>
                     <linearGradient id="corridorGrad" x1="0" y1="0" x2="0" y2="1">
@@ -1010,16 +1010,14 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
             <div className="space-y-4">
               
               {/* Category Filter Pills */}
-              <div className="flex items-center gap-1.5 flex-wrap">
+              <div className="monte-crisis-chips-row">
                 {(['all', 'indian', 'global', 'domestic', 'baseline'] as ScenarioCategory[]).map((cat) => (
                   <button
                     key={cat}
                     type="button"
                     onClick={() => setCategoryFilter(cat)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-                      categoryFilter === cat
-                        ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
-                        : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                    className={`monte-crisis-chip-btn ${
+                      categoryFilter === cat ? 'active' : ''
                     }`}
                   >
                     {cat === 'all' ? 'All Crises (9)' :
