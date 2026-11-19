@@ -14036,6 +14036,8 @@ body {
   justify-content: center;
   padding: 12px;
   overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .monte-carlo-modal-window {
@@ -14050,6 +14052,10 @@ body {
   color: #f1f5f9;
   overflow: hidden;
   margin: auto;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  box-sizing: border-box;
 }
 
 .monte-carlo-scanline {
@@ -14096,6 +14102,135 @@ body {
   align-items: center;
   text-align: center;
   position: relative;
+}
+
+.monte-gauge-wrapper {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  max-width: 140px;
+  max-height: 140px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.monte-gauge-svg {
+  width: 140px;
+  height: 140px;
+  display: block;
+}
+
+.monte-hero-card {
+  border-radius: 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(2, 6, 23, 0.9) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.monte-hero-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 1024px) {
+  .monte-hero-grid {
+    grid-template-columns: 240px 1fr;
+    gap: 20px;
+  }
+}
+
+.monte-gauge-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.monte-status-pill-wrap {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  gap: 6px !important;
+  margin: 0 auto !important;
+  width: 100% !important;
+}
+
+.monte-status-text {
+  text-align: center !important;
+  margin: 0 auto !important;
+  width: 100% !important;
+}
+
+@media (min-width: 1024px) {
+  .monte-gauge-col {
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    padding-right: 20px;
+  }
+}
+
+.monte-telemetry-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 640px) {
+  .monte-telemetry-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+}
+
+.monte-telemetry-card {
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(2, 6, 23, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.monte-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+  padding: 8px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(2, 6, 23, 0.3);
+}
+
+.monte-nav-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .monte-chart-canvas-wrap {
@@ -15895,6 +16030,90 @@ body.skill-tree-theater-active .mobile-bottom-dock {
   background: #f1f5f9 !important;
   border-color: rgba(0, 0, 0, 0.06) !important;
 }
+[data-theme='light'] .monte-hero-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+}
+[data-theme='light'] .monte-telemetry-card {
+  background: #f8fafc !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+[data-theme='light'] .monte-nav-bar {
+  background: #f1f5f9 !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Reverse Monte Carlo Modal Mobile Responsive Overrides */
+@media (max-width: 640px) {
+  .monte-carlo-modal-overlay {
+    padding: 0 !important;
+    align-items: flex-end !important;
+    overflow-x: hidden !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+
+  .monte-carlo-modal-window {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 94vh !important;
+    max-height: 94vh !important;
+    border-radius: 20px 20px 0 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    margin: 0 !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  .monte-carlo-modal-window * {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .monte-carlo-modal-window svg text,
+  .monte-carlo-modal-window svg path,
+  .monte-carlo-modal-window svg circle,
+  .monte-carlo-modal-window svg line {
+    max-width: none !important;
+  }
+
+  .monte-nav-bar {
+    padding: 6px 10px !important;
+  }
+
+  .monte-tab-btn {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+    white-space: nowrap !important;
+  }
+
+  .monte-regime-pill {
+    display: none !important;
+  }
+
+  .monte-chart-canvas-wrap {
+    padding: 8px !important;
+    border-radius: 12px !important;
+  }
+
+  .swr-interactive-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
+  }
+
+  .scenario-chip-card {
+    padding: 8px 10px !important;
+  }
+
+  .tactile-lever-card {
+    padding: 10px !important;
+  }
+}
+
 
 
 
