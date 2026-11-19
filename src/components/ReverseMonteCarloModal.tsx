@@ -10,11 +10,10 @@ import {
   Copy,
   Check,
   Flame,
-  Compass,
+  TrendingUp,
   Sliders,
   ChevronDown,
   ChevronUp,
-  ArrowRight,
 } from 'lucide-react';
 import type { FinancePlan, FinanceSummary } from '../types/finance';
 import {
@@ -32,7 +31,7 @@ interface ReverseMonteCarloModalProps {
 }
 
 type ScenarioCategory = 'all' | 'indian' | 'global' | 'domestic' | 'baseline';
-type ModalTab = 'cockpit' | 'crises' | 'wedge_swr' | 'levers';
+type ModalTab = 'overview' | 'stress' | 'guardrails';
 
 interface ScenarioMeta {
   id: StressScenario;
@@ -155,25 +154,16 @@ export const ReverseMonteCarloModal: React.FC<ReverseMonteCarloModalProps> = ({
   summary,
 }) => {
   // Navigation & State
-  const [activeTab, setActiveTab] = useState<ModalTab>('cockpit');
+  const [activeTab, setActiveTab] = useState<ModalTab>('overview');
   const [categoryFilter, setCategoryFilter] = useState<ScenarioCategory>('all');
   const [copiedReport, setCopiedReport] = useState(false);
-  const [copiedSeed, setCopiedSeed] = useState(false);
+  const [showAdvancedLevers, setShowAdvancedLevers] = useState(false);
   const [showAssumptions, setShowAssumptions] = useState(false);
 
   // Simulation Controls & Hyperparameters
   const [simCount, setSimCount] = useState<number>(5000);
   const [scenario, setScenario] = useState<StressScenario>('baseline');
   const [randomSeed, setRandomSeed] = useState<number>(42);
-
-  // Percentile visibility toggles
-  const [visibleTrajectories, setVisibleTrajectories] = useState({
-    p95: true,
-    p75: true,
-    p50: true,
-    p25: true,
-    p5: true,
-  });
 
   // What-If Levers (derived initially from user live plan)
   const baselineCorpus = Math.max(500000, (plan?.savings?.emergencyFundBalance || 0) * 4 || 2500000);
@@ -187,7 +177,7 @@ export const ReverseMonteCarloModal: React.FC<ReverseMonteCarloModalProps> = ({
   const [customRetireYears, setCustomRetireYears] = useState<number>(10);
   const [customHorizonYears, setCustomHorizonYears] = useState<number>(30);
 
-  // Interactive Year Hover
+  // Interactive Year Hover on Chart
   const [hoveredYear, setHoveredYear] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
@@ -281,13 +271,9 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
     setTimeout(() => setCopiedReport(false), 2200);
   };
 
-  const handleCopySeed = () => {
-    navigator.clipboard.writeText(String(randomSeed));
-    setCopiedSeed(true);
-    setTimeout(() => setCopiedSeed(false), 1800);
-  };
 
-  // Lock body scroll and prevent background layout blow-out when modal is open
+
+  // Lock body scroll when modal is open
   useEffect(() => {
     if (!isOpen) return;
     const origBodyOverflow = document.body.style.overflow;
@@ -311,33 +297,29 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
 
   // SVG Chart Geometry
   const width = 860;
-  const height = 270;
-  const padLeft = 80;
-  const padRight = 30;
-  const padTop = 24;
-  const padBottom = 34;
+  const height = 240;
+  const padLeft = 70;
+  const padRight = 24;
+  const padTop = 20;
+  const padBottom = 30;
 
   const maxCorpus = Math.max(
     ...result.trajectories.map((t) => t.p95),
-    result.medianRetirementCorpus * 1.5,
+    result.medianRetirementCorpus * 1.4,
     10000000
   );
 
   const scaleX = (yr: number) => padLeft + (yr / result.totalYears) * (width - padLeft - padRight);
   const scaleY = (val: number) => height - padBottom - (Math.min(val, maxCorpus) / maxCorpus) * (height - padTop - padBottom);
 
-  const p95Points = result.trajectories.map((t) => `${scaleX(t.year)},${scaleY(t.p95)}`).join(' ');
-  const p75Points = result.trajectories.map((t) => `${scaleX(t.year)},${scaleY(t.p75)}`).join(' ');
   const p50Points = result.trajectories.map((t) => `${scaleX(t.year)},${scaleY(t.p50)}`).join(' ');
-  const p25Points = result.trajectories.map((t) => `${scaleX(t.year)},${scaleY(t.p25)}`).join(' ');
-  const p5Points = result.trajectories.map((t) => `${scaleX(t.year)},${scaleY(t.p5)}`).join(' ');
 
-  const fanAreaPoints = [
+  const confidenceBandPoints = [
     ...result.trajectories.map((t) => `${scaleX(t.year)},${scaleY(t.p95)}`),
     ...[...result.trajectories].reverse().map((t) => `${scaleX(t.year)},${scaleY(t.p5)}`),
   ].join(' ');
 
-  const innerFanAreaPoints = [
+  const innerBandPoints = [
     ...result.trajectories.map((t) => `${scaleX(t.year)},${scaleY(t.p75)}`),
     ...[...result.trajectories].reverse().map((t) => `${scaleX(t.year)},${scaleY(t.p25)}`),
   ].join(' ');
@@ -358,213 +340,193 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
     setHoveredYear(Math.max(0, Math.min(result.totalYears, yr)));
   };
 
-  const hoveredTrajectory = hoveredYear !== null ? result.trajectories[hoveredYear] : null;
+  const activeHoverYear = hoveredYear !== null ? hoveredYear : result.accumulationYears;
+  const hoveredTrajectory = result.trajectories[activeHoverYear] || result.trajectories[0];
 
-  // Solvency Calculations
+  // Solvency calculations
   const survivalRate = Math.max(0, 100 - result.ruinProbabilityPercent);
-  const isHealthySolvency = survivalRate >= 90;
-  const isCautionSolvency = survivalRate >= 75 && survivalRate < 90;
+  const isHealthySolvency = survivalRate >= 85;
+  const isCautionSolvency = survivalRate >= 70 && survivalRate < 85;
 
-  // Speedometer Gauge Math (240° arc spanning from 150° clockwise to 30°, leaving a 120° bottom gap)
+  // Gauge SVG Math (240° arc spanning from 150° to 30°)
   const gaugeRadius = 46;
   const gaugeCircumference = 2 * Math.PI * gaugeRadius; // ~289.03
   const gaugeArcLength = gaugeCircumference * (240 / 360); // ~192.68
   const strokeDashoffset = gaugeArcLength * (1 - Math.max(0, Math.min(100, survivalRate)) / 100);
 
+  const maxSafeMonthlyBurn = Math.round(
+    result.medianRetirementCorpus * (result.safeWithdrawalRatePercent / 100) / 12
+  );
+
   return createPortal(
     <div className="monte-carlo-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Reverse Monte Carlo FIRE Simulator">
       <div className="monte-carlo-modal-window" onClick={(e) => e.stopPropagation()}>
-        <div className="monte-carlo-scanline" />
-
-        {/* 1. EXECUTIVE HEADER */}
-        <header className="p-3 sm:p-5 border-b border-white/10 flex flex-col gap-2 bg-slate-950/40 shrink-0">
-          {/* Top Bar: Title, Badge, and Close Button */}
-          <div className="flex items-center justify-between gap-2 w-full min-w-0">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-cyan-950/60 border border-cyan-500/40 flex items-center justify-center text-cyan-400 shrink-0 shadow-[0_0_15px_rgba(6,182,212,0.25)]">
-                <Activity size={18} className="animate-pulse" />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <h2 className="text-sm sm:text-lg font-bold font-sans tracking-tight text-white m-0 truncate">
-                    FIRE Stress Simulator
-                  </h2>
-                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 shrink-0">
-                    {simCount >= 1000 ? `${(simCount / 1000).toFixed(0)}k` : simCount} Paths
+        
+        {/* ================================================================= */}
+        {/* 1. CLEAN EXECUTIVE HEADER                                         */}
+        {/* ================================================================= */}
+        <header className="monte-header-bar">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="monte-header-icon">
+              <Activity size={20} className="text-cyan-400" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-base sm:text-lg font-bold tracking-tight m-0 text-slate-900 dark:text-white">
+                  FIRE Stress Simulator
+                </h2>
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 font-semibold">
+                  {simCount >= 1000 ? `${(simCount / 1000).toFixed(0)}k` : simCount} Paths
+                </span>
+                {scenario !== 'baseline' && (
+                  <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 flex items-center gap-1">
+                    <span>{activeScenarioMeta.icon}</span>
+                    <span className="truncate max-w-[130px] sm:max-w-none">{activeScenarioMeta.label}</span>
                   </span>
-                </div>
+                )}
               </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 m-0 truncate mt-0.5 hidden sm:block">
+                Stochastic lifespan modeling of Indian inflation, equity volatility, and sequence risk.
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Header Actions */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Iterations Selector */}
+            <div className="flex items-center bg-slate-100 dark:bg-slate-900/80 rounded-lg p-0.5 border border-slate-200 dark:border-white/10 text-xs font-mono">
+              <button
+                type="button"
+                onClick={() => setSimCount(5000)}
+                className={`px-2 py-1 rounded text-[11px] transition-all font-semibold ${
+                  simCount === 5000
+                    ? 'bg-white dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+                title="5,000 simulations"
+              >
+                5k
+              </button>
+              <button
+                type="button"
+                onClick={() => setSimCount(10000)}
+                className={`px-2 py-1 rounded text-[11px] transition-all font-semibold ${
+                  simCount === 10000
+                    ? 'bg-white dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+                title="10,000 simulations (max precision)"
+              >
+                10k
+              </button>
+              <button
+                type="button"
+                onClick={() => setRandomSeed(Math.floor(Math.random() * 900000) + 100000)}
+                className="p-1 rounded text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors ml-0.5"
+                title="Roll new stochastic seed"
+                aria-label="New random seed"
+              >
+                <Dices size={13} />
+              </button>
             </div>
 
-            {/* Close Button - fixed top right */}
+            {/* Copy Audit */}
+            <button
+              type="button"
+              onClick={handleCopyReport}
+              className="monte-btn-ghost hidden sm:flex items-center gap-1.5"
+              title="Copy Fiduciary Audit to Clipboard"
+            >
+              {copiedReport ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+              <span>{copiedReport ? 'Copied' : 'Audit'}</span>
+            </button>
+
+            {/* Close Modal */}
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 sm:p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors shrink-0"
-              aria-label="Close"
+              className="p-2 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              aria-label="Close modal"
             >
               <X size={18} />
             </button>
           </div>
-
-          {/* Subtitle and Controls Row */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5 min-w-0">
-            <p className="text-[11px] sm:text-xs text-slate-400 m-0 truncate max-w-full sm:max-w-md">
-              Box-Muller client-side simulation modeling historical Indian black swans &amp; sequence risk.
-            </p>
-
-            <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
-              {/* Iteration Selector */}
-              <div className="flex items-center gap-0.5 bg-slate-900/80 border border-white/10 rounded-lg p-0.5 text-xs font-mono">
-                <button
-                  type="button"
-                  className={`px-2 py-0.5 rounded text-[10.5px] transition-all ${
-                    simCount === 5000
-                      ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40 shadow-sm'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                  onClick={() => setSimCount(5000)}
-                  title="5,000 stochastic lifespan paths"
-                >
-                  5k
-                </button>
-                <button
-                  type="button"
-                  className={`px-2 py-0.5 rounded text-[10.5px] transition-all ${
-                    simCount === 10000
-                      ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40 shadow-sm'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                  onClick={() => setSimCount(10000)}
-                  title="10,000 stochastic paths (maximum confidence)"
-                >
-                  10k
-                </button>
-
-                <div className="w-[1px] h-3 bg-white/10 mx-0.5" />
-
-                <button
-                  type="button"
-                  className="px-1.5 py-0.5 rounded text-[10.5px] flex items-center gap-1 text-cyan-400 hover:bg-cyan-500/10 transition-colors"
-                  onClick={() => setRandomSeed(Math.floor(Math.random() * 900000) + 100000)}
-                  title="Roll new stochastic seed"
-                >
-                  <Dices size={11} />
-                  <span>New</span>
-                </button>
-              </div>
-
-              {/* Seed indicator */}
-              <button
-                type="button"
-                onClick={handleCopySeed}
-                className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-purple-950/50 border border-purple-500/30 text-purple-300 hover:bg-purple-900/50 transition-colors"
-                title="Deterministic PRNG Seed"
-              >
-                Seed #{randomSeed} {copiedSeed && '✓'}
-              </button>
-
-              {/* Copy Fiduciary Audit */}
-              <button
-                type="button"
-                className="px-2.5 py-1 rounded-lg text-xs font-mono flex items-center gap-1 bg-slate-900/80 border border-white/10 text-slate-200 hover:text-white hover:border-cyan-500/50 transition-all shadow-sm"
-                onClick={handleCopyReport}
-                title="Copy Full Fiduciary Audit to Clipboard"
-              >
-                {copiedReport ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
-                <span className="text-[11px]">{copiedReport ? 'Copied!' : 'Audit'}</span>
-              </button>
-            </div>
-          </div>
         </header>
 
-        {/* 2. PERSPECTIVE TABS */}
+        {/* ================================================================= */}
+        {/* 2. REFINED 3-TAB SEGMENTED NAVIGATION                             */}
+        {/* ================================================================= */}
         <nav className="monte-nav-bar">
-          <div className="monte-nav-pills">
+          <div className="monte-segmented-dock">
             <button
               type="button"
-              onClick={() => setActiveTab('cockpit')}
-              className={`monte-tab-btn ${activeTab === 'cockpit' ? 'active' : ''}`}
+              onClick={() => setActiveTab('overview')}
+              className={`monte-segment-btn ${activeTab === 'overview' ? 'active' : ''}`}
             >
-              <Compass size={13} />
-              <span>Cockpit</span>
+              <TrendingUp size={14} />
+              <span>Overview &amp; Trajectory</span>
             </button>
 
             <button
               type="button"
-              onClick={() => setActiveTab('crises')}
-              className={`monte-tab-btn ${activeTab === 'crises' ? 'active' : ''}`}
+              onClick={() => setActiveTab('stress')}
+              className={`monte-segment-btn ${activeTab === 'stress' ? 'active' : ''}`}
             >
-              <Flame size={13} />
-              <span>Crises ({SCENARIOS.length})</span>
+              <Flame size={14} />
+              <span>Stress Regimes (9)</span>
             </button>
 
             <button
               type="button"
-              onClick={() => setActiveTab('wedge_swr')}
-              className={`monte-tab-btn ${activeTab === 'wedge_swr' ? 'active' : ''}`}
+              onClick={() => setActiveTab('guardrails')}
+              className={`monte-segment-btn ${activeTab === 'guardrails' ? 'active' : ''}`}
             >
-              <ShieldCheck size={13} />
-              <span>Safe SWR</span>
+              <ShieldCheck size={14} />
+              <span>Guardrails &amp; SWR</span>
             </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('levers')}
-              className={`monte-tab-btn ${activeTab === 'levers' ? 'active' : ''}`}
-            >
-              <Sliders size={13} />
-              <span>What-If</span>
-            </button>
-          </div>
-
-          <div className="monte-regime-pill flex items-center gap-2 text-xs font-mono text-slate-400 shrink-0">
-            <span className="text-[11px] text-slate-500">Regime:</span>
-            <span className="font-bold text-cyan-300 flex items-center gap-1 bg-cyan-950/40 border border-cyan-500/30 px-2 py-0.5 rounded-md text-[11px]">
-              <span>{activeScenarioMeta.icon}</span>
-              <span>{activeScenarioMeta.label}</span>
-            </span>
           </div>
         </nav>
 
-        {/* 3. MAIN MODAL BODY */}
-        <div className="p-3 sm:p-5 flex-1 overflow-y-auto overflow-x-hidden space-y-4 min-h-0">
+        {/* ================================================================= */}
+        {/* 3. MAIN MODAL BODY                                                */}
+        {/* ================================================================= */}
+        <div className="p-4 sm:p-6 flex-1 overflow-y-auto overflow-x-hidden space-y-5 min-h-0">
 
           {/* =============================================================== */}
-          {/* TAB 1: HORIZON COCKPIT */}
+          {/* TAB 1: OVERVIEW & TRAJECTORY                                    */}
           {/* =============================================================== */}
-          {activeTab === 'cockpit' && (
-            <div className="space-y-4">
+          {activeTab === 'overview' && (
+            <div className="space-y-5">
 
-              {/* HERO ACTUARIAL SOLVENCY HUD */}
-              <div className="monte-hero-card">
-                <div className="monte-hero-grid">
+              {/* 1.1 EXECUTIVE SOLVENCY HERO CARD */}
+              <div className="monte-solvency-hero">
+                <div className="monte-solvency-hero-content">
                   
-                  {/* Gauge Widget (Left col on desktop, centered on mobile) */}
-                  <div className="monte-gauge-col">
-                    <div className="monte-gauge-wrapper">
-                      <svg className="monte-gauge-svg" viewBox="0 0 120 120">
-                        {/* Background track (240° arc spanning from 150° clockwise to 30°, leaving a 120° bottom gap) */}
+                  {/* Gauge Column */}
+                  <div className="monte-hero-gauge-col">
+                    <div className="monte-hero-svg-wrap">
+                      <svg className="monte-hero-svg" viewBox="0 0 120 120">
+                        {/* Background track */}
                         <circle
                           cx="60"
                           cy="60"
                           r={gaugeRadius}
                           fill="none"
                           stroke="currentColor"
-                          className="text-slate-200 dark:text-white/10"
+                          className="text-slate-200 dark:text-slate-800"
                           strokeWidth="9"
                           strokeDasharray={`${gaugeArcLength} ${gaugeCircumference}`}
                           strokeDashoffset={0}
                           strokeLinecap="round"
                           transform="rotate(150 60 60)"
                         />
-                        {/* Value arc */}
+                        {/* Animated value arc */}
                         <circle
                           cx="60"
                           cy="60"
                           r={gaugeRadius}
                           fill="none"
-                          stroke={isHealthySolvency ? '#10b981' : isCautionSolvency ? '#f59e0b' : '#f43f5e'}
+                          stroke={isHealthySolvency ? '#10b981' : isCautionSolvency ? '#f59e0b' : '#ef4444'}
                           strokeWidth="9"
                           strokeDasharray={`${gaugeArcLength} ${gaugeCircumference}`}
                           strokeDashoffset={strokeDashoffset}
@@ -572,20 +534,20 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                           transform="rotate(150 60 60)"
                           className="transition-all duration-700 ease-out"
                         />
-                        {/* Centered Percentage Text directly inside SVG coordinate space */}
+                        {/* Percentage */}
                         <text
                           x="60"
                           y="56"
                           textAnchor="middle"
                           dominantBaseline="central"
-                          fill={isHealthySolvency ? '#10b981' : isCautionSolvency ? '#f59e0b' : '#f43f5e'}
-                          fontSize="23"
-                          fontWeight="900"
+                          fill={isHealthySolvency ? '#10b981' : isCautionSolvency ? '#f59e0b' : '#ef4444'}
+                          fontSize="22"
+                          fontWeight="800"
                           fontFamily="monospace"
                         >
                           {survivalRate.toFixed(0)}%
                         </text>
-                        {/* Centered SOLVENCY label directly inside SVG coordinate space */}
+                        {/* SOLVENCY */}
                         <text
                           x="60"
                           y="73"
@@ -602,209 +564,123 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                       </svg>
                     </div>
 
-                    <div className="monte-status-text space-y-1">
-                      <div className="monte-status-pill-wrap">
-                        <span className={`text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full ${
-                          result.antifragilityScore >= 80 ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/30' :
-                          result.antifragilityScore >= 60 ? 'bg-cyan-950/60 text-cyan-400 border border-cyan-500/30' :
-                          result.antifragilityScore >= 40 ? 'bg-amber-950/60 text-amber-400 border border-amber-500/30' :
-                          'bg-rose-950/60 text-rose-400 border border-rose-500/30'
-                        }`}>
-                          {result.antifragilityScore >= 80 ? 'TITAN GRADE' : result.antifragilityScore >= 60 ? 'FORTRESS' : result.antifragilityScore >= 40 ? 'MODERATE' : 'VULNERABLE'}
-                        </span>
-                        <span className="text-xs font-mono font-bold text-white">
-                          {result.antifragilityScore}/100
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-300 m-0 leading-tight text-center">
-                        {isHealthySolvency ? 'Superior black swan resilience.' : 'Subject to premature decumulation strain.'}
-                      </p>
-                      <span className="text-[10px] text-slate-400 block font-mono text-center">
-                        Ruin Probability: <strong className={result.ruinProbabilityPercent > 10 ? 'text-rose-400' : 'text-emerald-400'}>{result.ruinProbabilityPercent}%</strong>
+                    <div className="text-center space-y-1">
+                      <span className={`inline-flex items-center text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full ${
+                        result.antifragilityScore >= 80 ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30' :
+                        result.antifragilityScore >= 60 ? 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-400 border border-cyan-500/30' :
+                        result.antifragilityScore >= 40 ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30' :
+                        'bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30'
+                      }`}>
+                        {result.antifragilityScore >= 80 ? 'TITAN GRADE' :
+                         result.antifragilityScore >= 60 ? 'FORTRESS' :
+                         result.antifragilityScore >= 40 ? 'MODERATE' : 'VULNERABLE'} ({result.antifragilityScore}/100)
                       </span>
                     </div>
                   </div>
 
-                  {/* 3 Core Telemetry Pillars */}
-                  <div className="monte-telemetry-grid">
-                    
-                    {/* Pillar 1: Safe SWR Ceiling */}
-                    <div className="monte-telemetry-card space-y-1">
-                      <div className="flex items-center justify-between gap-1 text-[10px] font-mono text-slate-400 uppercase">
-                        <span className="truncate">Safe SWR Ceiling</span>
-                        <span className="text-cyan-400 font-bold shrink-0">≥90% Safe</span>
-                      </div>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-xl font-bold font-mono text-cyan-300">
-                          {result.safeWithdrawalRatePercent}%
-                        </span>
-                        <span className="text-[11px] font-mono text-slate-400">/ yr</span>
-                      </div>
-                      <div className="text-[10.5px] font-mono text-slate-400 truncate">
-                        Safe: <strong className="text-cyan-300">{formatINR(Math.round(result.medianRetirementCorpus * (result.safeWithdrawalRatePercent / 100) / 12))}/mo</strong>
-                      </div>
-                      <div className="text-[9.5px] text-slate-500 truncate pt-0.5 border-t border-white/5">
-                        Planned: {formatINR(monthlyRetirementBurn)}/mo ({result.plannedWithdrawalRatePercent}% burn)
-                      </div>
+                  {/* Story & Verdict Column */}
+                  <div className="monte-hero-story-col">
+                    <div>
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white m-0">
+                        {isHealthySolvency ? 'Your Retirement Plan is High-Resilience' :
+                         isCautionSolvency ? 'Plan Requires Targeted Buffering' :
+                         'High Decumulation Sequence Risk Detected'}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1 m-0 leading-relaxed">
+                        {isHealthySolvency
+                          ? `With a planned burn of ${formatINR(monthlyRetirementBurn)}/mo, your portfolio has an estimated ${survivalRate.toFixed(0)}% probability of sustaining 30 years through Indian bear markets and inflation.`
+                          : `At your planned burn of ${formatINR(monthlyRetirementBurn)}/mo (${result.plannedWithdrawalRatePercent}%/yr), your portfolio risks early exhaustion in adverse market regimes. Consider trimming planned burn to ${formatINR(maxSafeMonthlyBurn)}/mo.`}
+                      </p>
                     </div>
 
-                    {/* Pillar 2: Cash Wedge Buffer */}
-                    <div className="monte-telemetry-card space-y-1">
-                      <div className="flex items-center justify-between gap-1 text-[10px] font-mono text-slate-400 uppercase">
-                        <span className="truncate">Sequence Risk Buffer</span>
-                        <span className={`font-bold shrink-0 ${result.srrRiskRating === 'LOW' ? 'text-emerald-400' : 'text-amber-400'}`}>
-                          {result.srrRiskRating}
+                    {/* 3 Breathable Metric Tiles */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
+                      <div className="monte-vital-pill">
+                        <span className="monte-vital-label">Safe Spending Ceiling</span>
+                        <span className="monte-vital-value text-cyan-600 dark:text-cyan-400">
+                          {formatINR(maxSafeMonthlyBurn)}<span className="text-xs font-normal text-slate-500">/mo</span>
+                        </span>
+                        <span className="text-[10px] text-slate-500 font-mono">
+                          {result.safeWithdrawalRatePercent}% Safe SWR
                         </span>
                       </div>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-xl font-bold font-mono text-amber-400">
-                          {formatINR(result.recommendedCashWedgeRupees)}
-                        </span>
-                      </div>
-                      <div className="text-[10.5px] font-mono text-slate-400 truncate">
-                        Runway: <strong className="text-amber-300">{result.recommendedCashWedgeMonths} Mo Cash</strong>
-                      </div>
-                      <div className="text-[9.5px] text-slate-500 truncate pt-0.5 border-t border-white/5">
-                        Insulates Years 1–3 drawdown
-                      </div>
-                    </div>
 
-                    {/* Pillar 3: Median Nest Egg */}
-                    <div className="monte-telemetry-card space-y-1">
-                      <div className="flex items-center justify-between gap-1 text-[10px] font-mono text-slate-400 uppercase">
-                        <span className="truncate">Retirement Nest Egg</span>
-                        <span className="text-purple-300 font-bold shrink-0">Yr {result.accumulationYears}</span>
-                      </div>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-xl font-bold font-mono text-white">
+                      <div className="monte-vital-pill">
+                        <span className="monte-vital-label">Projected Nest Egg</span>
+                        <span className="monte-vital-value text-slate-900 dark:text-white">
                           {formatINR(result.medianRetirementCorpus)}
                         </span>
+                        <span className="text-[10px] text-slate-500 font-mono">
+                          At Year {result.accumulationYears} Retirement
+                        </span>
                       </div>
-                      <div className="text-[10.5px] font-mono text-slate-400 truncate">
-                        Terminal: <strong className="text-purple-300">{formatINR(result.medianTerminalCorpus)}</strong>
-                      </div>
-                      <div className="text-[9.5px] text-slate-500 truncate pt-0.5 border-t border-white/5">
-                        {result.depletionHorizon.worstCaseDepletionYear === null ? 'Full 30y Solvency' : `Depletes in Yr ${result.depletionHorizon.worstCaseDepletionYear}`}
+
+                      <div className="monte-vital-pill">
+                        <span className="monte-vital-label">Sequence Runway</span>
+                        <span className="monte-vital-value text-amber-600 dark:text-amber-400">
+                          {result.recommendedCashWedgeMonths} Mo Buffer
+                        </span>
+                        <span className="text-[10px] text-slate-500 font-mono">
+                          {formatINR(result.recommendedCashWedgeRupees)} Liquid
+                        </span>
                       </div>
                     </div>
-
                   </div>
+
                 </div>
 
-                {/* Scenario Delta Bar (if crisis active) */}
+                {/* Scenario Delta Strip (if active shock) */}
                 {baselineResult && (
-                  <div className="mt-3 pt-3 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono">
-                    <span className="text-cyan-300 font-semibold flex items-center gap-1.5">
-                      <span>{activeScenarioMeta.icon}</span>
-                      <span>{activeScenarioMeta.label} Shock vs Baseline:</span>
-                    </span>
-                    <div className="flex items-center gap-3 text-[11px] flex-wrap">
-                      <span>Ruin Risk: <strong className="text-slate-300">{baselineResult.ruinProbabilityPercent}%</strong> &rarr; <strong className="text-rose-400">{result.ruinProbabilityPercent}%</strong></span>
-                      <span>Safe SWR: <strong className="text-slate-300">{baselineResult.safeWithdrawalRatePercent}%</strong> &rarr; <strong className="text-cyan-300">{result.safeWithdrawalRatePercent}%</strong></span>
-                      <button
-                        type="button"
-                        onClick={() => setScenario('baseline')}
-                        className="text-cyan-400 hover:text-cyan-300 underline cursor-pointer"
-                      >
-                        Reset to Baseline
-                      </button>
+                  <div className="monte-shock-delta-banner">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-base">{activeScenarioMeta.icon}</span>
+                      <span className="font-semibold text-slate-900 dark:text-white text-xs truncate">
+                        {activeScenarioMeta.label}:
+                      </span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        Solvency shifts from <strong className="text-slate-900 dark:text-white">{100 - baselineResult.ruinProbabilityPercent}%</strong> to <strong className={result.ruinProbabilityPercent > baselineResult.ruinProbabilityPercent ? 'text-rose-500' : 'text-emerald-500'}>{100 - result.ruinProbabilityPercent}%</strong>
+                      </span>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => setScenario('baseline')}
+                      className="text-xs font-medium text-cyan-600 dark:text-cyan-400 hover:underline shrink-0"
+                    >
+                      Reset to Baseline
+                    </button>
                   </div>
                 )}
               </div>
 
-              {/* INTERACTIVE PERCENTILE FAN CHART */}
-              <div className="monte-chart-canvas-wrap">
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-3 px-1 text-xs">
-                  {/* Legend toggles */}
-                  <div className="flex items-center gap-2 font-mono text-[11px] flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => setVisibleTrajectories((p) => ({ ...p, p95: !p.p95 }))}
-                      className={`flex items-center gap-1.5 px-2 py-0.5 rounded transition-all ${
-                        visibleTrajectories.p95 ? 'text-emerald-400 font-semibold bg-emerald-950/30 border border-emerald-500/20' : 'text-slate-600 line-through'
-                      }`}
-                    >
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#10b981]" />
-                      95th (Bull)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setVisibleTrajectories((p) => ({ ...p, p75: !p.p75 }))}
-                      className={`flex items-center gap-1.5 px-2 py-0.5 rounded transition-all ${
-                        visibleTrajectories.p75 ? 'text-purple-300 font-semibold bg-purple-950/30 border border-purple-500/20' : 'text-slate-600 line-through'
-                      }`}
-                    >
-                      <span className="w-2 h-2 rounded-full bg-purple-400" />
-                      75th (Opt)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setVisibleTrajectories((p) => ({ ...p, p50: !p.p50 }))}
-                      className={`flex items-center gap-1.5 px-2 py-0.5 rounded transition-all ${
-                        visibleTrajectories.p50 ? 'text-cyan-400 font-semibold bg-cyan-950/30 border border-cyan-500/20' : 'text-slate-600 line-through'
-                      }`}
-                    >
-                      <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#06b6d4]" />
-                      50th (Median)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setVisibleTrajectories((p) => ({ ...p, p25: !p.p25 }))}
-                      className={`flex items-center gap-1.5 px-2 py-0.5 rounded transition-all ${
-                        visibleTrajectories.p25 ? 'text-amber-400 font-semibold bg-amber-950/30 border border-amber-500/20' : 'text-slate-600 line-through'
-                      }`}
-                    >
-                      <span className="w-2 h-2 rounded-full bg-amber-400" />
-                      25th (Cons)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setVisibleTrajectories((p) => ({ ...p, p5: !p.p5 }))}
-                      className={`flex items-center gap-1.5 px-2 py-0.5 rounded transition-all ${
-                        visibleTrajectories.p5 ? 'text-rose-400 font-semibold bg-rose-950/30 border border-rose-500/20' : 'text-slate-600 line-through'
-                      }`}
-                    >
-                      <span className="w-2.5 h-2.5 rounded-full bg-rose-400 shadow-[0_0_6px_#f43f5e]" />
-                      5th (Floor)
-                    </button>
+              {/* 1.2 CLEAN WEALTH TRAJECTORY RIBBON CHART */}
+              <div className="monte-chart-wrapper">
+                <div className="monte-chart-header">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp size={15} className="text-cyan-500" />
+                    <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                      Portfolio Wealth Corridor (30-Year Projection)
+                    </span>
                   </div>
 
-                  <div className="font-mono text-[11px] text-slate-400">
-                    Crossover: <strong className="text-amber-400 font-semibold">Year {result.accumulationYears} (Retirement)</strong>
+                  {/* Clean readout of currently scrubbed year */}
+                  <div className="monte-scrub-readout">
+                    <span className="text-slate-500 dark:text-slate-400">
+                      Yr {hoveredTrajectory.year} ({hoveredTrajectory.year <= result.accumulationYears ? 'Accumulation' : 'Retirement'}):
+                    </span>
+                    <strong className="text-cyan-600 dark:text-cyan-400 ml-1">
+                      {formatINR(hoveredTrajectory.p50)} Expected
+                    </strong>
+                    <span className="text-slate-400 dark:text-slate-500 text-[10px] hidden sm:inline ml-1.5">
+                      ({formatINR(hoveredTrajectory.p5)} – {formatINR(hoveredTrajectory.p95)})
+                    </span>
                   </div>
                 </div>
 
-                {/* Floating Inspection Card */}
-                {hoveredTrajectory && (
-                  <div className="monte-chart-hud-box">
-                    <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-1 mb-1.5">
-                      <span className="font-mono font-bold text-xs text-white">
-                        Year {hoveredTrajectory.year} ({hoveredTrajectory.year <= result.accumulationYears ? `Accumulation Yr ${hoveredTrajectory.year}` : `Retirement Yr ${hoveredTrajectory.year - result.accumulationYears}`})
-                      </span>
-                      <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
-                        hoveredTrajectory.year < result.accumulationYears
-                          ? 'bg-cyan-950/80 text-cyan-300'
-                          : 'bg-amber-950/80 text-amber-300'
-                      }`}>
-                        {hoveredTrajectory.year < result.accumulationYears ? 'Accumulation Phase' : 'Decumulation Phase'}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 font-mono text-[10.5px]">
-                      <div className="text-slate-400">95th (Bull): <strong className="text-emerald-400">{formatINR(hoveredTrajectory.p95)}</strong></div>
-                      <div className="text-slate-400">75th (Opt): <strong className="text-purple-300">{formatINR(hoveredTrajectory.p75)}</strong></div>
-                      <div className="text-slate-400">50th (Median): <strong className="text-cyan-300">{formatINR(hoveredTrajectory.p50)}</strong></div>
-                      <div className="text-slate-400">25th (Cons): <strong className="text-amber-400">{formatINR(hoveredTrajectory.p25)}</strong></div>
-                      <div className="text-slate-400 col-span-2">5th (Worst-Case): <strong className="text-rose-400">{formatINR(hoveredTrajectory.p5)}</strong></div>
-                    </div>
-                  </div>
-                )}
-
-                {/* SVG Canvas */}
+                {/* SVG Visual Canvas */}
                 <svg
                   ref={svgRef}
                   viewBox={`0 0 ${width} ${height}`}
-                  className="w-full h-64 sm:h-72 select-none cursor-crosshair touch-none"
+                  className="w-full h-56 sm:h-64 select-none cursor-crosshair touch-none"
                   onMouseMove={(e) => handlePointerInteraction(e.clientX)}
                   onMouseLeave={() => setHoveredYear(null)}
                   onTouchMove={(e) => e.touches?.[0] && handlePointerInteraction(e.touches[0].clientX)}
@@ -812,78 +688,82 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                   onTouchEnd={() => setHoveredYear(null)}
                 >
                   <defs>
-                    <linearGradient id="fanGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.22" />
-                      <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.02" />
+                    <linearGradient id="corridorGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.25" />
+                      <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.03" />
                     </linearGradient>
-                    <linearGradient id="innerFanGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.32" />
-                      <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.06" />
+                    <linearGradient id="innerCorridorGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.28" />
+                      <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.04" />
                     </linearGradient>
                   </defs>
 
-                  {/* Horizontal Grid */}
+                  {/* Horizontal Gridlines */}
                   {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
                     const y = height - padBottom - ratio * (height - padTop - padBottom);
                     const val = ratio * maxCorpus;
                     return (
                       <g key={ratio}>
-                        <line x1={padLeft} y1={y} x2={width - padRight} y2={y} stroke="#1e293b" strokeDasharray="3 3" />
-                        <text x={padLeft - 10} y={y + 3} textAnchor="end" fill="#64748b" fontSize="9.5" fontFamily="monospace">
+                        <line
+                          x1={padLeft}
+                          y1={y}
+                          x2={width - padRight}
+                          y2={y}
+                          stroke="currentColor"
+                          className="text-slate-200 dark:text-slate-800"
+                          strokeDasharray="3 3"
+                        />
+                        <text
+                          x={padLeft - 8}
+                          y={y + 3}
+                          textAnchor="end"
+                          fill="#94a3b8"
+                          fontSize="9.5"
+                          fontFamily="monospace"
+                        >
                           {formatINR(Math.round(val))}
                         </text>
                       </g>
                     );
                   })}
 
-                  {/* Fan Fills */}
-                  {visibleTrajectories.p95 && visibleTrajectories.p5 && (
-                    <polygon points={fanAreaPoints} fill="url(#fanGrad)" />
-                  )}
-                  {visibleTrajectories.p75 && visibleTrajectories.p25 && (
-                    <polygon points={innerFanAreaPoints} fill="url(#innerFanGrad)" />
-                  )}
+                  {/* Shaded Confidence Ribbon */}
+                  <polygon points={confidenceBandPoints} fill="url(#corridorGrad)" />
+                  <polygon points={innerBandPoints} fill="url(#innerCorridorGrad)" />
 
-                  {/* Polylines */}
-                  {visibleTrajectories.p95 && (
-                    <polyline points={p95Points} fill="none" stroke="#10b981" strokeWidth="1.8" strokeDasharray="3 3" opacity="0.85" />
-                  )}
-                  {visibleTrajectories.p75 && (
-                    <polyline points={p75Points} fill="none" stroke="#8b5cf6" strokeWidth="1.4" opacity="0.65" />
-                  )}
-                  {visibleTrajectories.p50 && (
-                    <polyline points={p50Points} fill="none" stroke="#06b6d4" strokeWidth="2.8" />
-                  )}
-                  {visibleTrajectories.p25 && (
-                    <polyline points={p25Points} fill="none" stroke="#f59e0b" strokeWidth="1.4" opacity="0.65" />
-                  )}
-                  {visibleTrajectories.p5 && (
-                    <polyline points={p5Points} fill="none" stroke="#f43f5e" strokeWidth="1.8" strokeDasharray="3 3" opacity="0.9" />
-                  )}
+                  {/* Expected Median Path */}
+                  <polyline
+                    points={p50Points}
+                    fill="none"
+                    stroke="#06b6d4"
+                    strokeWidth="2.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
 
-                  {/* Retirement Divider */}
+                  {/* Retirement Boundary Line */}
                   <line
                     x1={retirementSplitX}
                     y1={padTop}
                     x2={retirementSplitX}
                     y2={height - padBottom}
                     stroke="#f59e0b"
-                    strokeWidth="2"
+                    strokeWidth="1.8"
                     strokeDasharray="4 4"
                   />
                   <text
                     x={retirementSplitX}
-                    y={padTop + 12}
+                    y={padTop + 10}
                     textAnchor="middle"
                     fill="#f59e0b"
-                    fontSize="10"
+                    fontSize="9.5"
                     fontFamily="monospace"
-                    fontWeight="bold"
+                    fontWeight="700"
                   >
-                    RETIREMENT CROSSOVER (YR {result.accumulationYears})
+                    RETIRE AT YR {result.accumulationYears}
                   </text>
 
-                  {/* Hover Crosshair */}
+                  {/* Interactive Cursor */}
                   {hoveredYear !== null && (
                     <g>
                       <line
@@ -895,79 +775,94 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                         strokeWidth="1.5"
                         strokeDasharray="2 2"
                       />
-                      {visibleTrajectories.p95 && (
-                        <circle cx={scaleX(hoveredYear)} cy={scaleY(result.trajectories[hoveredYear].p95)} r="4" fill="#10b981" stroke="#fff" strokeWidth="1" />
-                      )}
-                      {visibleTrajectories.p50 && (
-                        <circle cx={scaleX(hoveredYear)} cy={scaleY(result.trajectories[hoveredYear].p50)} r="5" fill="#06b6d4" stroke="#fff" strokeWidth="1.5" />
-                      )}
-                      {visibleTrajectories.p5 && (
-                        <circle cx={scaleX(hoveredYear)} cy={scaleY(result.trajectories[hoveredYear].p5)} r="4" fill="#f43f5e" stroke="#fff" strokeWidth="1" />
-                      )}
+                      <circle
+                        cx={scaleX(hoveredYear)}
+                        cy={scaleY(result.trajectories[hoveredYear].p50)}
+                        r="5"
+                        fill="#06b6d4"
+                        stroke="#ffffff"
+                        strokeWidth="2"
+                      />
                     </g>
                   )}
 
-                  {/* X Axis Labels */}
-                  {Array.from({ length: 7 }).map((_, idx) => {
-                    const yr = Math.round((idx / 6) * result.totalYears);
+                  {/* X Axis Year Labels */}
+                  {Array.from({ length: 6 }).map((_, idx) => {
+                    const yr = Math.round((idx / 5) * result.totalYears);
                     const x = scaleX(yr);
                     return (
-                      <text key={idx} x={x} y={height - 10} textAnchor="middle" fill="#94a3b8" fontSize="9.5" fontFamily="monospace">
+                      <text
+                        key={idx}
+                        x={x}
+                        y={height - 10}
+                        textAnchor="middle"
+                        fill="#94a3b8"
+                        fontSize="9.5"
+                        fontFamily="monospace"
+                      >
                         Yr {yr}
                       </text>
                     );
                   })}
                 </svg>
 
-                {/* Tactile Scrubber Slider */}
-                <div className="flex items-center justify-between px-1 sm:px-2 pt-2 gap-2 sm:gap-3 flex-wrap">
-                  <div className="flex items-center gap-2 flex-1 min-w-0 w-full sm:w-auto">
-                    <span className="text-[10px] font-mono text-slate-400 shrink-0">Scrub Year:</span>
+                {/* Tactile Scrubber Track */}
+                <div className="monte-scrub-bar">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <span className="text-[11px] font-mono text-slate-500 shrink-0">Scrub Timeline:</span>
                     <input
                       type="range"
                       min="0"
                       max={result.totalYears}
-                      value={hoveredYear !== null ? hoveredYear : 0}
+                      value={activeHoverYear}
                       onChange={(e) => setHoveredYear(parseInt(e.target.value))}
-                      className="w-full accent-cyan-500 cursor-pointer h-1.5 bg-slate-700/50 rounded-lg"
-                      aria-label="Year Scrubber"
+                      className="w-full accent-cyan-500 cursor-pointer h-1.5 rounded-lg bg-slate-200 dark:bg-slate-700"
+                      aria-label="Timeline Year Scrubber"
                     />
-                    <span className="text-[10.5px] font-mono font-bold text-cyan-400 shrink-0 w-12 text-right">
-                      Yr {hoveredYear !== null ? hoveredYear : 0}
+                    <span className="text-xs font-mono font-bold text-cyan-600 dark:text-cyan-400 shrink-0 w-12 text-right">
+                      Yr {activeHoverYear}
                     </span>
                   </div>
-                  <div className="text-[10.5px] font-mono text-slate-400 truncate">
-                    Terminal Median: <strong className="text-cyan-300">{formatINR(result.medianTerminalCorpus)}</strong>
+
+                  <div className="text-[11px] text-slate-500 font-mono shrink-0 hidden sm:block">
+                    Terminal Surplus: <strong className="text-slate-900 dark:text-white">{formatINR(result.medianTerminalCorpus)}</strong>
                   </div>
                 </div>
               </div>
 
-              {/* TACTICAL LIVE WHAT-IF ADJUSTMENTS DRAWER */}
-              <div className="p-4 rounded-2xl bg-slate-900/40 border border-white/5 space-y-3">
-                <div className="flex items-center justify-between flex-wrap gap-2">
+              {/* 1.3 ESSENTIAL TACTILE WHAT-IF LEVERS */}
+              <div className="monte-levers-container">
+                <div className="flex items-center justify-between pb-1 flex-wrap gap-2">
                   <div className="flex items-center gap-2">
-                    <Sliders size={16} className="text-cyan-400" />
-                    <span className="font-mono font-bold text-xs uppercase tracking-wider text-slate-200">
-                      Live Actuarial Levers (Interactive Sensitivity Tuning)
-                    </span>
+                    <Sliders size={16} className="text-cyan-500" />
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white m-0">
+                      Tactile Sensitivity Levers
+                    </h4>
                   </div>
                   <button
                     type="button"
                     onClick={handleResetToBaseline}
-                    className="text-[10.5px] font-mono text-slate-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
+                    className="text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 flex items-center gap-1 transition-colors"
                   >
-                    <RotateCcw size={11} />
+                    <RotateCcw size={12} />
                     <span>Reset Levers</span>
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {/* Slider 1: Monthly Retirement Burn */}
-                  <div className="p-3 rounded-xl bg-slate-950/60 border border-white/5 space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-mono text-slate-300">Target Monthly Burn:</span>
-                      <span className="font-mono font-bold text-rose-400">{formatINR(monthlyRetirementBurn)}/mo</span>
+                {/* 2 Primary High-Impact Levers */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  
+                  {/* Lever 1: Planned Retirement Burn */}
+                  <div className="monte-lever-card">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+                        Target Retirement Burn:
+                      </span>
+                      <span className="text-sm font-bold font-mono text-slate-900 dark:text-white">
+                        {formatINR(monthlyRetirementBurn)}/mo
+                      </span>
                     </div>
+
                     <input
                       type="range"
                       min="20000"
@@ -975,42 +870,29 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                       step="5000"
                       value={monthlyRetirementBurn}
                       onChange={(e) => setMonthlyRetirementBurn(parseInt(e.target.value))}
-                      className="w-full accent-rose-500 cursor-pointer h-1.5"
+                      className="w-full accent-cyan-500 cursor-pointer h-2"
                     />
-                    <div className="flex items-center justify-between text-[10px] font-mono text-slate-500">
+
+                    <div className="flex items-center justify-between text-[10.5px] font-mono text-slate-400">
                       <span>₹20k/mo</span>
-                      <span>Safe: {formatINR(Math.round(result.medianRetirementCorpus * (result.safeWithdrawalRatePercent / 100) / 12))}</span>
+                      <span className="text-cyan-600 dark:text-cyan-400 font-semibold">
+                        Safe Ceiling: {formatINR(maxSafeMonthlyBurn)}/mo
+                      </span>
                       <span>₹300k/mo</span>
                     </div>
                   </div>
 
-                  {/* Slider 2: Asset Allocation */}
-                  <div className="p-3 rounded-xl bg-slate-950/60 border border-white/5 space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-mono text-slate-300">Equity / Debt Mix:</span>
-                      <span className="font-mono font-bold text-purple-300">{(equityRatio * 100).toFixed(0)}% / {((1 - equityRatio) * 100).toFixed(0)}%</span>
+                  {/* Lever 2: Years to Retire */}
+                  <div className="monte-lever-card">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+                        Accumulation Horizon:
+                      </span>
+                      <span className="text-sm font-bold font-mono text-slate-900 dark:text-white">
+                        {customRetireYears} Years (Yr {new Date().getFullYear() + customRetireYears})
+                      </span>
                     </div>
-                    <input
-                      type="range"
-                      min="0.30"
-                      max="0.90"
-                      step="0.05"
-                      value={equityRatio}
-                      onChange={(e) => setEquityRatio(parseFloat(e.target.value))}
-                      className="w-full accent-purple-500 cursor-pointer h-1.5"
-                    />
-                    <div className="flex items-center justify-between text-[10px] font-mono text-slate-500">
-                      <span>Conservative 30/70</span>
-                      <span>Aggressive 90/10</span>
-                    </div>
-                  </div>
 
-                  {/* Slider 3: Years to Retire */}
-                  <div className="p-3 rounded-xl bg-slate-950/60 border border-white/5 space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-mono text-slate-300">Accumulation Span:</span>
-                      <span className="font-mono font-bold text-cyan-300">{customRetireYears} Years</span>
-                    </div>
                     <input
                       type="range"
                       min="3"
@@ -1018,203 +900,247 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                       step="1"
                       value={customRetireYears}
                       onChange={(e) => setCustomRetireYears(parseInt(e.target.value))}
-                      className="w-full accent-cyan-500 cursor-pointer h-1.5"
+                      className="w-full accent-cyan-500 cursor-pointer h-2"
                     />
-                    <div className="flex items-center justify-between text-[10px] font-mono text-slate-500">
-                      <span>3 Years</span>
+
+                    <div className="flex items-center justify-between text-[10.5px] font-mono text-slate-400">
+                      <span>3 Yrs (Aggressive)</span>
                       <span>Retire at Yr {customRetireYears}</span>
-                      <span>25 Years</span>
+                      <span>25 Yrs (Extended)</span>
                     </div>
                   </div>
-                </div>
-              </div>
 
-              {/* QUICK SCENARIO CAROUSEL */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                    <Flame size={14} className="text-amber-400" />
-                    <span>Stress Regime Selector (Instant Simulation)</span>
-                  </span>
+                </div>
+
+                {/* Collapsible Advanced Parameters */}
+                <div className="pt-1">
                   <button
                     type="button"
-                    onClick={() => setActiveTab('crises')}
-                    className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+                    onClick={() => setShowAdvancedLevers(!showAdvancedLevers)}
+                    className="text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 transition-colors"
                   >
-                    <span>View all 9 crises</span>
-                    <ArrowRight size={12} />
+                    <span>{showAdvancedLevers ? 'Hide' : 'Show'} Advanced Portfolio Levers</span>
+                    {showAdvancedLevers ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                   </button>
+
+                  {showAdvancedLevers && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3">
+                      {/* Starting Corpus */}
+                      <div className="monte-lever-card">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-slate-500 font-medium">Starting Capital:</span>
+                          <span className="font-bold font-mono text-slate-900 dark:text-white">{formatINR(startingCorpus)}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="500000"
+                          max="20000000"
+                          step="250000"
+                          value={startingCorpus}
+                          onChange={(e) => setStartingCorpus(parseInt(e.target.value))}
+                          className="w-full accent-cyan-500 cursor-pointer h-1.5"
+                        />
+                      </div>
+
+                      {/* Monthly SIP Additions */}
+                      <div className="monte-lever-card">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-slate-500 font-medium">Monthly SIP:</span>
+                          <span className="font-bold font-mono text-emerald-600 dark:text-emerald-400">{formatINR(monthlySavings)}/mo</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="5000"
+                          max="200000"
+                          step="5000"
+                          value={monthlySavings}
+                          onChange={(e) => setMonthlySavings(parseInt(e.target.value))}
+                          className="w-full accent-cyan-500 cursor-pointer h-1.5"
+                        />
+                      </div>
+
+                      {/* Equity/Debt Ratio */}
+                      <div className="monte-lever-card">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-slate-500 font-medium">Equity / Debt Mix:</span>
+                          <span className="font-bold font-mono text-purple-600 dark:text-purple-400">
+                            {(equityRatio * 100).toFixed(0)}% / {((1 - equityRatio) * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0.30"
+                          max="0.90"
+                          step="0.05"
+                          value={equityRatio}
+                          onChange={(e) => setEquityRatio(parseFloat(e.target.value))}
+                          className="w-full accent-cyan-500 cursor-pointer h-1.5"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-                  {SCENARIOS.slice(0, 6).map((sc) => (
-                    <button
-                      key={sc.id}
-                      type="button"
-                      onClick={() => setScenario(sc.id)}
-                      className={`scenario-chip-card text-left transition-all ${scenario === sc.id ? 'active' : ''}`}
-                    >
-                      <div className="text-base mb-1">{sc.icon}</div>
-                      <div className="text-xs font-bold text-white truncate">{sc.label}</div>
-                      <div className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">{sc.impactTag}</div>
-                      <div className="mt-2 pt-1 border-t border-white/5 text-[9px] font-mono text-cyan-400">
-                        {scenario === sc.id ? 'Active ✓' : 'Test Shock'}
-                      </div>
-                    </button>
-                  ))}
-                </div>
               </div>
 
             </div>
           )}
 
           {/* =============================================================== */}
-          {/* TAB 2: HISTORICAL CRISES (DEEP-DIVE) */}
+          {/* TAB 2: STRESS REGIMES (9 HISTORICAL & DOMESTIC SHOCKS)          */}
           {/* =============================================================== */}
-          {activeTab === 'crises' && (
+          {activeTab === 'stress' && (
             <div className="space-y-4">
-              {/* Category Pills */}
-              <div className="flex items-center gap-2 flex-wrap">
+              
+              {/* Category Filter Pills */}
+              <div className="flex items-center gap-1.5 flex-wrap">
                 {(['all', 'indian', 'global', 'domestic', 'baseline'] as ScenarioCategory[]).map((cat) => (
                   <button
                     key={cat}
                     type="button"
                     onClick={() => setCategoryFilter(cat)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-mono uppercase tracking-wider transition-all border ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
                       categoryFilter === cat
-                        ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 font-bold shadow-[0_0_12px_rgba(6,182,212,0.25)]'
-                        : 'bg-slate-900/60 text-slate-400 border-white/5 hover:text-white'
+                        ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
+                        : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                     }`}
                   >
                     {cat === 'all' ? 'All Crises (9)' :
-                     cat === 'indian' ? 'Indian Crises 🇮🇳 (3)' :
-                     cat === 'global' ? 'Global Shocks 🌐 (2)' :
-                     cat === 'domestic' ? 'Domestic Shocks ⚡ (3)' : 'Baseline 📈 (1)'}
+                     cat === 'indian' ? 'Indian Crises 🇮🇳' :
+                     cat === 'global' ? 'Global Shocks 🌐' :
+                     cat === 'domestic' ? 'Domestic Shocks ⚡' : 'Baseline 📈'}
                   </button>
                 ))}
               </div>
 
               {/* Grid of Crisis Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {filteredScenarios.map((sc) => (
-                  <div
-                    key={sc.id}
-                    onClick={() => setScenario(sc.id)}
-                    className={`scenario-chip-card cursor-pointer p-4 rounded-xl transition-all ${scenario === sc.id ? 'active' : ''}`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-2xl">{sc.icon}</span>
-                      <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
-                        sc.severity === 'CRITICAL' ? 'bg-rose-950/80 text-rose-400 border border-rose-500/30' :
-                        sc.severity === 'SEVERE' ? 'bg-amber-950/80 text-amber-400 border border-amber-500/30' :
-                        sc.severity === 'MODERATE' ? 'bg-cyan-950/80 text-cyan-300 border border-cyan-500/30' :
-                        'bg-slate-800 text-slate-300 border border-white/10'
-                      }`}>
-                        {sc.impactTag}
-                      </span>
-                    </div>
-                    <h4 className="text-sm font-bold text-white mb-1 m-0">{sc.label}</h4>
-                    <p className="text-xs text-slate-300 mb-2 leading-relaxed m-0">{sc.desc}</p>
-                    <div className="p-2 rounded-lg bg-slate-950/60 border border-white/5 text-[11px] text-slate-400 leading-normal">
-                      <strong className="text-slate-300 block mb-0.5 font-mono text-[10px] uppercase">Historical Context:</strong>
-                      {sc.historicalContext}
-                    </div>
+                {filteredScenarios.map((sc) => {
+                  const isCurrent = scenario === sc.id;
+                  return (
+                    <div
+                      key={sc.id}
+                      onClick={() => setScenario(sc.id)}
+                      className={`monte-crisis-card cursor-pointer transition-all ${isCurrent ? 'active' : ''}`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-2xl">{sc.icon}</span>
+                        <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                          sc.severity === 'CRITICAL' ? 'bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30' :
+                          sc.severity === 'SEVERE' ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30' :
+                          sc.severity === 'MODERATE' ? 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-400 border border-cyan-500/30' :
+                          'bg-slate-500/15 text-slate-700 dark:text-slate-300 border border-slate-500/30'
+                        }`}>
+                          {sc.impactTag}
+                        </span>
+                      </div>
 
-                    <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between">
-                      <span className="text-[10px] font-mono text-slate-400">{sc.categoryLabel}</span>
-                      <button
-                        type="button"
-                        className={`text-xs font-mono font-bold px-2.5 py-1 rounded-lg transition-all ${
-                          scenario === sc.id
-                            ? 'bg-cyan-500 text-slate-950 shadow-[0_0_10px_#06b6d4]'
-                            : 'bg-white/5 text-slate-300 hover:bg-white/10'
-                        }`}
-                      >
-                        {scenario === sc.id ? 'Active Regime ✓' : 'Simulate'}
-                      </button>
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white m-0">{sc.label}</h4>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 m-0 leading-relaxed">
+                        {sc.desc}
+                      </p>
+
+                      <div className="mt-3 p-2 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/5 text-[11px] text-slate-500 leading-normal">
+                        <strong className="text-slate-700 dark:text-slate-300 block mb-0.5 font-sans font-semibold">
+                          Historical Context:
+                        </strong>
+                        {sc.historicalContext}
+                      </div>
+
+                      <div className="mt-3 pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+                        <span className="text-[10.5px] font-mono text-slate-400">{sc.categoryLabel}</span>
+                        <button
+                          type="button"
+                          className={`text-xs font-semibold px-3 py-1 rounded-lg transition-all ${
+                            isCurrent
+                              ? 'bg-cyan-500 text-slate-950 font-bold'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                          }`}
+                        >
+                          {isCurrent ? 'Active Regime ✓' : 'Simulate'}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
+
             </div>
           )}
 
           {/* =============================================================== */}
-          {/* TAB 3: SAFE SWR & CASH WEDGE */}
+          {/* TAB 3: GUARDRAILS & SAFE SWR                                     */}
           {/* =============================================================== */}
-          {activeTab === 'wedge_swr' && (
+          {activeTab === 'guardrails' && (
             <div className="space-y-4">
-              {/* 3-Tier Cash Wedge Blueprint */}
-              <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-4 sm:p-5">
+              
+              {/* 3-Tier Cash Wedge Architecture */}
+              <div className="monte-guardrails-card">
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                   <div>
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck size={20} className="text-cyan-400" />
-                      <h3 className="text-sm sm:text-base font-bold text-white font-sans m-0">
-                        3-Tier Sovereign Cash Wedge Architecture
-                      </h3>
-                    </div>
-                    <p className="text-xs text-slate-400 mt-0.5 m-0">
-                      Construct an Indian retirement cash buffer to eliminate early Sequence of Returns Risk (SRR).
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white m-0">
+                      3-Tier Sovereign Cash Wedge Architecture
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 m-0">
+                      Eliminate Sequence-of-Returns Risk (SRR) by funding early retirement from cash buffers.
                     </p>
                   </div>
-
                   <div className="text-right">
-                    <span className="text-[10.5px] font-mono text-slate-400 block uppercase">Recommended Cushion</span>
-                    <span className="text-xl font-bold font-mono text-cyan-300">
+                    <span className="text-xs font-mono text-slate-500 uppercase block">Recommended Cash Wedge</span>
+                    <span className="text-xl font-bold font-mono text-cyan-600 dark:text-cyan-400">
                       {formatINR(result.recommendedCashWedgeRupees)}
                     </span>
-                    <span className="text-xs font-mono text-slate-400 block">
+                    <span className="text-xs font-mono text-slate-500 block">
                       ({result.recommendedCashWedgeMonths} Months Runway)
                     </span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="wedge-tier-box">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-mono font-bold text-emerald-400">TIER 1 (MONTHS 1–12)</span>
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">
+                  <div className="monte-wedge-card">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">TIER 1 (MONTHS 1–12)</span>
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
                         Zero Volatility
                       </span>
                     </div>
-                    <h5 className="text-xs font-bold text-white mb-1 m-0">Instant Liquid &amp; Overnight Funds</h5>
-                    <p className="text-[11px] text-slate-400 leading-relaxed mb-2 m-0">
-                      Provides living expenses without liquidating equities during major market crashes.
+                    <h5 className="text-xs font-bold text-slate-900 dark:text-white m-0">Instant Liquid &amp; Overnight Funds</h5>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-1 m-0">
+                      Prevents forced equity sales during early bear market crashes.
                     </p>
-                    <div className="font-mono text-xs text-cyan-300 pt-1 border-t border-white/5">
+                    <div className="font-mono text-xs text-cyan-600 dark:text-cyan-400 pt-2 mt-2 border-t border-slate-100 dark:border-white/5">
                       Target: {formatINR(monthlyRetirementBurn * 12)}
                     </div>
                   </div>
 
-                  <div className="wedge-tier-box">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-mono font-bold text-cyan-400">TIER 2 (MONTHS 13–24)</span>
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-950/60 text-cyan-300 border border-cyan-500/30">
+                  <div className="monte-wedge-card">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-bold text-cyan-600 dark:text-cyan-400">TIER 2 (MONTHS 13–24)</span>
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-600 dark:text-cyan-400">
                         Tax Arbitrage
                       </span>
                     </div>
-                    <h5 className="text-xs font-bold text-white mb-1 m-0">Arbitrage Funds (Equity Taxation)</h5>
-                    <p className="text-[11px] text-slate-400 leading-relaxed mb-2 m-0">
-                      Captures cash-futures spread with low volatility and qualifies for favorable 12.5% LTCG taxation.
+                    <h5 className="text-xs font-bold text-slate-900 dark:text-white m-0">Arbitrage Mutual Funds</h5>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-1 m-0">
+                      Captures risk-free cash-futures spread with favorable 12.5% equity taxation.
                     </p>
-                    <div className="font-mono text-xs text-cyan-300 pt-1 border-t border-white/5">
+                    <div className="font-mono text-xs text-cyan-600 dark:text-cyan-400 pt-2 mt-2 border-t border-slate-100 dark:border-white/5">
                       Target: {formatINR(monthlyRetirementBurn * 12)}
                     </div>
                   </div>
 
-                  <div className="wedge-tier-box">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-mono font-bold text-purple-300">TIER 3 (MONTHS 25–36+)</span>
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-950/60 text-purple-300 border border-purple-500/30">
-                        Yield Inflation
+                  <div className="monte-wedge-card">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-bold text-purple-600 dark:text-purple-400">TIER 3 (MONTHS 25–36+)</span>
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-600 dark:text-purple-400">
+                        Sovereign Yield
                       </span>
                     </div>
-                    <h5 className="text-xs font-bold text-white mb-1 m-0">Target Maturity G-Sec &amp; Multi-Asset</h5>
-                    <p className="text-[11px] text-slate-400 leading-relaxed mb-2 m-0">
-                      Locks in sovereign G-Sec yields to replenish Tiers 1 and 2 systematically during bear markets.
+                    <h5 className="text-xs font-bold text-slate-900 dark:text-white m-0">Target Maturity G-Sec Funds</h5>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-1 m-0">
+                      Locks in sovereign RBI bond yields to systematically replenish Tiers 1 and 2.
                     </p>
-                    <div className="font-mono text-xs text-cyan-300 pt-1 border-t border-white/5">
+                    <div className="font-mono text-xs text-cyan-600 dark:text-cyan-400 pt-2 mt-2 border-t border-slate-100 dark:border-white/5">
                       Target: {formatINR(monthlyRetirementBurn * Math.max(0, result.recommendedCashWedgeMonths - 24))}
                     </div>
                   </div>
@@ -1222,49 +1148,53 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
               </div>
 
               {/* Bengen SWR Matrix */}
-              <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-4 sm:p-5">
+              <div className="monte-guardrails-card">
                 <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                   <div>
-                    <h3 className="text-sm sm:text-base font-bold text-white font-sans m-0">
-                      Safe Withdrawal Rate (SWR) Actuarial Matrix
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white m-0">
+                      Safe Withdrawal Rate (SWR) Bengen Matrix
                     </h3>
-                    <p className="text-xs text-slate-400 mt-0.5 m-0">
-                      Probability of surviving 30 years across varying annual decumulation withdrawal rates.
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 m-0">
+                      Historical 30-year survival probability across varying annual withdrawal rates.
                     </p>
                   </div>
-                  <div className="text-xs font-mono text-cyan-300 bg-cyan-950/40 border border-cyan-500/30 px-2.5 py-1 rounded-lg">
-                    Recommended SWR Ceiling: <strong>{result.safeWithdrawalRatePercent}%</strong>
+                  <div className="text-xs font-mono font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 border border-cyan-500/30 px-3 py-1 rounded-lg">
+                    Recommended SWR Ceiling: {result.safeWithdrawalRatePercent}%
                   </div>
                 </div>
 
                 <div className="space-y-2 font-mono text-xs">
                   {result.swrScenarios.map((s) => (
-                    <div key={s.swrPercent} className="swr-interactive-row">
+                    <div key={s.swrPercent} className="monte-swr-row">
                       <div className="flex items-center gap-3">
-                        <span className="font-bold text-sm text-white w-14">{s.swrPercent.toFixed(1)}%</span>
-                        <div className="text-slate-300">
+                        <span className="font-bold text-sm text-slate-900 dark:text-white w-14">
+                          {s.swrPercent.toFixed(1)}%
+                        </span>
+                        <div className="text-slate-600 dark:text-slate-300">
                           <span>{formatINR(s.annualWithdrawalRupees)}/yr</span>
-                          <span className="text-slate-500 text-[10.5px] ml-2">({formatINR(Math.round(s.annualWithdrawalRupees / 12))}/mo)</span>
+                          <span className="text-slate-400 text-[10.5px] ml-2">
+                            ({formatINR(Math.round(s.annualWithdrawalRupees / 12))}/mo)
+                          </span>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-3">
-                        <div className="w-24 sm:w-36 h-2 rounded-full bg-slate-800 overflow-hidden hidden sm:block">
+                        <div className="w-24 sm:w-36 h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden hidden sm:block">
                           <div
                             className={`h-full rounded-full transition-all ${
-                              s.verdict === 'SAFE' ? 'bg-emerald-500 shadow-[0_0_6px_#10b981]' :
+                              s.verdict === 'SAFE' ? 'bg-emerald-500' :
                               s.verdict === 'CAUTION' ? 'bg-amber-500' : 'bg-rose-500'
                             }`}
                             style={{ width: `${s.successProbabilityPercent}%` }}
                           />
                         </div>
-                        <span className="text-xs font-bold text-slate-200 w-12 text-right">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white w-12 text-right">
                           {s.successProbabilityPercent}%
                         </span>
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded w-24 text-center ${
-                          s.verdict === 'SAFE' ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/30' :
-                          s.verdict === 'CAUTION' ? 'bg-amber-950/80 text-amber-400 border border-amber-500/30' :
-                          'bg-rose-950/80 text-rose-400 border border-rose-500/30'
+                          s.verdict === 'SAFE' ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30' :
+                          s.verdict === 'CAUTION' ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30' :
+                          'bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30'
                         }`}>
                           {s.verdict}
                         </span>
@@ -1273,257 +1203,50 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                   ))}
                 </div>
               </div>
+
             </div>
           )}
 
           {/* =============================================================== */}
-          {/* TAB 4: WHAT-IF LAB */}
+          {/* 4. METHODOLOGY & ASSUMPTIONS ACCORDION                           */}
           {/* =============================================================== */}
-          {activeTab === 'levers' && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between pb-1 flex-wrap gap-2">
-                <div>
-                  <h3 className="text-sm font-bold text-white font-sans m-0">Full Actuarial What-If Lab</h3>
-                  <p className="text-xs text-slate-400 m-0">Tune all simulation levers to explore sensitivity and boundary scenarios.</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleResetToBaseline}
-                  className="px-2.5 py-1 text-xs font-mono rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-white/10 transition-colors flex items-center gap-1"
-                >
-                  <RotateCcw size={12} />
-                  <span>Reset to Plan Defaults</span>
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                {/* Starting Capital */}
-                <div className="tactile-lever-card">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-300 font-mono">Starting Nest Egg (Corpus):</span>
-                    <span className="text-sm font-bold font-mono text-cyan-300">{formatINR(startingCorpus)}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="500000"
-                    max="50000000"
-                    step="250000"
-                    value={startingCorpus}
-                    onChange={(e) => setStartingCorpus(parseInt(e.target.value))}
-                    className="w-full accent-cyan-500 cursor-pointer"
-                  />
-                  <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                    <span className="text-[10px] text-slate-400 font-mono">Presets:</span>
-                    {[2500000, 5000000, 10000000, 20000000].map((v) => (
-                      <button
-                        key={v}
-                        type="button"
-                        onClick={() => setStartingCorpus(v)}
-                        className={`tactile-preset-btn ${startingCorpus === v ? 'active' : ''}`}
-                      >
-                        {formatINR(v)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Monthly SIP Additions */}
-                <div className="tactile-lever-card">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-300 font-mono">Monthly Accumulation SIP:</span>
-                    <span className="text-sm font-bold font-mono text-emerald-400">{formatINR(monthlySavings)}/mo</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="5000"
-                    max="300000"
-                    step="5000"
-                    value={monthlySavings}
-                    onChange={(e) => setMonthlySavings(parseInt(e.target.value))}
-                    className="w-full accent-cyan-500 cursor-pointer"
-                  />
-                  <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                    <span className="text-[10px] text-slate-400 font-mono">Presets:</span>
-                    {[25000, 50000, 100000, 150000].map((v) => (
-                      <button
-                        key={v}
-                        type="button"
-                        onClick={() => setMonthlySavings(v)}
-                        className={`tactile-preset-btn ${monthlySavings === v ? 'active' : ''}`}
-                      >
-                        {formatINR(v)}/mo
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Monthly Retirement Burn */}
-                <div className="tactile-lever-card">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-300 font-mono">Target Retirement Burn (Today's INR):</span>
-                    <span className="text-sm font-bold font-mono text-rose-400">{formatINR(monthlyRetirementBurn)}/mo</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="20000"
-                    max="400000"
-                    step="5000"
-                    value={monthlyRetirementBurn}
-                    onChange={(e) => setMonthlyRetirementBurn(parseInt(e.target.value))}
-                    className="w-full accent-cyan-500 cursor-pointer"
-                  />
-                  <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                    <span className="text-[10px] text-slate-400 font-mono">Presets:</span>
-                    {[40000, 60000, 80000, 120000, 150000].map((v) => (
-                      <button
-                        key={v}
-                        type="button"
-                        onClick={() => setMonthlyRetirementBurn(v)}
-                        className={`tactile-preset-btn ${monthlyRetirementBurn === v ? 'active' : ''}`}
-                      >
-                        {formatINR(v)}/mo
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Equity Ratio Slider */}
-                <div className="tactile-lever-card">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-300 font-mono">Asset Allocation (Equity / Debt):</span>
-                    <span className="text-sm font-bold font-mono text-purple-300">
-                      {(equityRatio * 100).toFixed(0)}% Equity · {((1 - equityRatio) * 100).toFixed(0)}% Debt
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0.30"
-                    max="0.95"
-                    step="0.05"
-                    value={equityRatio}
-                    onChange={(e) => setEquityRatio(parseFloat(e.target.value))}
-                    className="w-full accent-cyan-500 cursor-pointer"
-                  />
-                  <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                    <span className="text-[10px] text-slate-400 font-mono">Presets:</span>
-                    {[0.50, 0.60, 0.70, 0.80, 0.90].map((r) => (
-                      <button
-                        key={r}
-                        type="button"
-                        onClick={() => setEquityRatio(r)}
-                        className={`tactile-preset-btn ${equityRatio === r ? 'active' : ''}`}
-                      >
-                        {(r * 100).toFixed(0)}/{(100 - r * 100).toFixed(0)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Accumulation Horizon */}
-                <div className="tactile-lever-card">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-300 font-mono">Accumulation Years to Retire:</span>
-                    <span className="text-sm font-bold font-mono text-cyan-300">{customRetireYears} Years</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="3"
-                    max="25"
-                    step="1"
-                    value={customRetireYears}
-                    onChange={(e) => setCustomRetireYears(parseInt(e.target.value))}
-                    className="w-full accent-cyan-500 cursor-pointer"
-                  />
-                  <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                    <span className="text-[10px] text-slate-400 font-mono">Presets:</span>
-                    {[5, 7, 10, 15, 20].map((yr) => (
-                      <button
-                        key={yr}
-                        type="button"
-                        onClick={() => setCustomRetireYears(yr)}
-                        className={`tactile-preset-btn ${customRetireYears === yr ? 'active' : ''}`}
-                      >
-                        {yr} Yrs
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Retirement Horizon */}
-                <div className="tactile-lever-card">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-300 font-mono">Decumulation Lifespan Horizon:</span>
-                    <span className="text-sm font-bold font-mono text-cyan-300">{customHorizonYears} Years</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="15"
-                    max="45"
-                    step="5"
-                    value={customHorizonYears}
-                    onChange={(e) => setCustomHorizonYears(parseInt(e.target.value))}
-                    className="w-full accent-cyan-500 cursor-pointer"
-                  />
-                  <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                    <span className="text-[10px] text-slate-400 font-mono">Presets:</span>
-                    {[20, 25, 30, 35, 40].map((yr) => (
-                      <button
-                        key={yr}
-                        type="button"
-                        onClick={() => setCustomHorizonYears(yr)}
-                        className={`tactile-preset-btn ${customHorizonYears === yr ? 'active' : ''}`}
-                      >
-                        {yr} Yrs
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 4. COLLAPSIBLE ACTUARIAL ASSUMPTIONS & METHODOLOGY */}
-          <div className="rounded-xl bg-slate-900/40 border border-white/5 overflow-hidden text-xs">
+          <div className="monte-assumptions-box">
             <button
               type="button"
               onClick={() => setShowAssumptions(!showAssumptions)}
-              className="w-full p-3 flex items-center justify-between text-left text-slate-400 hover:text-slate-200 transition-colors font-mono"
+              className="w-full p-3 flex items-center justify-between text-left text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
             >
               <div className="flex items-center gap-2">
-                <Info size={14} className="text-cyan-400" />
-                <span className="font-semibold text-xs text-slate-300">
-                  Actuarial Model Parameters &amp; Stochastic Assumptions
+                <Info size={14} className="text-cyan-500" />
+                <span className="text-xs font-semibold">
+                  Actuarial Model Parameters &amp; Stochastic Engine
                 </span>
               </div>
-              <div className="flex items-center gap-2 text-[10px] text-slate-500">
+              <div className="flex items-center gap-2 text-[10px] font-mono">
                 <span>Box-Muller Normal Dist · Seed #{randomSeed}</span>
                 {showAssumptions ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               </div>
             </button>
 
             {showAssumptions && (
-              <div className="p-3.5 pt-0 border-t border-white/5 space-y-2.5 font-mono text-[10.5px]">
+              <div className="p-3.5 pt-0 border-t border-slate-200 dark:border-white/5 space-y-2.5 font-mono text-[10.5px]">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2">
-                  <div className="p-2.5 rounded-lg bg-slate-950/60 border border-white/5">
-                    <span className="text-slate-300 block font-sans font-medium">Equity (Nifty 50 TRI):</span>
-                    <span className="text-cyan-300">μ = 12.5% CAGR, σ = 18.0%</span>
-                    <span className="text-slate-500 block text-[9.5px] mt-0.5">Log-normal returns with fat-tail drawdown sampling</span>
+                  <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/5">
+                    <span className="text-slate-700 dark:text-slate-300 block font-sans font-medium">Equity (Nifty 50 TRI):</span>
+                    <span className="text-cyan-600 dark:text-cyan-400">μ = 12.5% CAGR, σ = 18.0%</span>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-slate-950/60 border border-white/5">
-                    <span className="text-slate-300 block font-sans font-medium">Debt &amp; Fixed Income:</span>
-                    <span className="text-cyan-300">μ = 7.0%, σ = 3.0%</span>
-                    <span className="text-slate-500 block text-[9.5px] mt-0.5">Target maturity G-Sec &amp; corporate bond baseline</span>
+                  <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/5">
+                    <span className="text-slate-700 dark:text-slate-300 block font-sans font-medium">Debt &amp; Fixed Income:</span>
+                    <span className="text-cyan-600 dark:text-cyan-400">μ = 7.0%, σ = 3.0%</span>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-slate-950/60 border border-white/5">
-                    <span className="text-slate-300 block font-sans font-medium">Indian CPI Inflation:</span>
-                    <span className="text-cyan-300">μ = 6.5%, σ = 2.0%</span>
-                    <span className="text-slate-500 block text-[9.5px] mt-0.5">Annual compounding living expense adjustment</span>
+                  <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/5">
+                    <span className="text-slate-700 dark:text-slate-300 block font-sans font-medium">Indian CPI Inflation:</span>
+                    <span className="text-cyan-600 dark:text-cyan-400">μ = 6.5%, σ = 2.0%</span>
                   </div>
                 </div>
 
-                <p className="text-[10px] text-slate-400 leading-relaxed m-0 pt-1">
-                  • <strong>Why Ruin Risk may be high while SWR has safe tiers:</strong> Ruin Risk tests your <em>actual planned withdrawal</em> of {formatINR(monthlyRetirementBurn)}/mo ({result.plannedWithdrawalRatePercent}% of median corpus). Under severe shocks like {activeScenarioMeta.label}, your corpus is depressed, making {formatINR(monthlyRetirementBurn)}/mo unsustainable.<br />
-                  • <strong>Safe SWR ({result.safeWithdrawalRatePercent}%):</strong> The maximum percentage rate that <em>survives</em> ≥ 90% of paths in this specific crisis ({formatINR(Math.round(result.medianRetirementCorpus * (result.safeWithdrawalRatePercent / 100) / 12))}/mo at median corpus).
+                <p className="text-[11px] text-slate-500 leading-relaxed m-0 pt-1">
+                  • <strong>Planned Burn vs Safe SWR:</strong> Ruin Risk calculates whether your planned ₹{monthlyRetirementBurn.toLocaleString('en-IN')}/mo depletes your portfolio over 30 years under severe sequences of negative returns. The Safe SWR ({result.safeWithdrawalRatePercent}%) models the spending rate that survives ≥ 90% of all black swans.
                 </p>
               </div>
             )}

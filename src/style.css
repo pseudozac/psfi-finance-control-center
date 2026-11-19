@@ -14021,20 +14021,20 @@ body {
 }
 
 /* ==========================================================================
-   REVERSE MONTE CARLO & STOCHASTIC STRESS SIMULATOR (UPGRADED UI)
+   REVERSE MONTE CARLO & STOCHASTIC STRESS SIMULATOR (BREATHABLE MAKEOVER UI)
    ========================================================================== */
 
 .monte-carlo-modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 50000;
-  background: rgba(3, 7, 18, 0.88);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: rgba(3, 7, 18, 0.78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px;
+  padding: 16px;
   overflow-y: auto;
   overflow-x: hidden;
   box-sizing: border-box;
@@ -14042,12 +14042,13 @@ body {
 
 .monte-carlo-modal-window {
   width: 100%;
-  max-width: 1080px;
-  background: linear-gradient(180deg, #090e1a 0%, #050811 100%);
-  border: 1px solid rgba(56, 189, 248, 0.2);
-  border-radius: 20px;
-  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8),
-              0 0 40px -10px rgba(6, 182, 212, 0.15);
+  max-width: 1000px;
+  background: #090e1a;
+  background: linear-gradient(180deg, #0b1120 0%, #060913 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.8),
+              0 0 50px -15px rgba(6, 182, 212, 0.12);
   position: relative;
   color: #f1f5f9;
   overflow: hidden;
@@ -14058,299 +14059,323 @@ body {
   box-sizing: border-box;
 }
 
-.monte-carlo-scanline {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.8), rgba(168, 85, 247, 0.8), transparent);
-  pointer-events: none;
-}
-
-.monte-tab-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 8px 14px;
-  border-radius: 10px;
-  font-size: 12px;
-  font-weight: 600;
-  font-family: var(--font-sans, system-ui);
-  transition: all 0.18s ease;
-  border: 1px solid transparent;
-  cursor: pointer;
-  background: transparent;
-  color: #94a3b8;
-}
-
-.monte-tab-btn:hover {
-  color: #e2e8f0;
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.monte-tab-btn.active {
-  color: #38bdf8;
-  background: rgba(6, 182, 212, 0.12);
-  border-color: rgba(56, 189, 248, 0.35);
-  box-shadow: 0 0 16px -4px rgba(6, 182, 212, 0.25);
-}
-
-.monte-gauge-container {
+/* Header */
+.monte-header-bar {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  text-align: center;
-  position: relative;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.45);
+  flex-shrink: 0;
 }
 
-.monte-gauge-wrapper {
-  position: relative;
-  width: 140px;
-  height: 140px;
-  max-width: 140px;
-  max-height: 140px;
-  margin: 0 auto;
+.monte-header-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.monte-gauge-svg {
-  width: 140px;
-  height: 140px;
-  display: block;
-}
-
-.monte-hero-card {
-  border-radius: 16px;
-  padding: 16px;
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(2, 6, 23, 0.9) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-sizing: border-box;
-  width: 100%;
-  max-width: 100%;
-  overflow: hidden;
-}
-
-.monte-hero-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
+.monte-btn-ghost {
+  display: inline-flex;
   align-items: center;
-  width: 100%;
-  box-sizing: border-box;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-sans, system-ui);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-@media (min-width: 1024px) {
-  .monte-hero-grid {
-    grid-template-columns: 240px 1fr;
-    gap: 20px;
-  }
+.monte-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
-.monte-gauge-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 8px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.monte-status-pill-wrap {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  text-align: center !important;
-  gap: 6px !important;
-  margin: 0 auto !important;
-  width: 100% !important;
-}
-
-.monte-status-text {
-  text-align: center !important;
-  margin: 0 auto !important;
-  width: 100% !important;
-}
-
-@media (min-width: 1024px) {
-  .monte-gauge-col {
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
-    padding-right: 20px;
-  }
-}
-
-.monte-telemetry-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-@media (min-width: 640px) {
-  .monte-telemetry-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-  }
-}
-
-.monte-telemetry-card {
-  border-radius: 12px;
-  padding: 12px;
-  background: rgba(2, 6, 23, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-sizing: border-box;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
+/* Navigation Segmented Dock */
 .monte-nav-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  max-width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  box-sizing: border-box;
-  padding: 8px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(2, 6, 23, 0.3);
-}
-
-.monte-nav-pills {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  gap: 12px;
+  padding: 10px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(2, 6, 23, 0.35);
   flex-shrink: 0;
 }
 
-.monte-chart-canvas-wrap {
-  position: relative;
-  background: radial-gradient(circle at 50% 30%, rgba(15, 23, 42, 0.6) 0%, #030712 100%);
+.monte-segmented-dock {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  padding: 12px;
-  overflow: hidden;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
-.monte-chart-hud-box {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  background: rgba(10, 15, 29, 0.92);
-  border: 1px solid rgba(56, 189, 248, 0.35);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
+.monte-segment-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
   border-radius: 10px;
-  padding: 8px 12px;
-  pointer-events: none;
-  z-index: 10;
-  transition: opacity 0.15s ease;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-sans, system-ui);
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
-.scenario-chip-card {
+.monte-segment-btn:hover {
+  color: #f1f5f9;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.monte-segment-btn.active {
+  color: #06b6d4;
+  background: rgba(6, 182, 212, 0.15);
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* 1.1 Solvency Hero Card */
+.monte-solvency-hero {
+  border-radius: 20px;
+  padding: 22px;
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.75) 0%, rgba(2, 6, 23, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.monte-solvency-hero-content {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 24px;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .monte-solvency-hero-content {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: 16px;
+  }
+}
+
+.monte-hero-gauge-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.monte-hero-svg-wrap {
+  width: 124px;
+  height: 124px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
+  flex-shrink: 0;
+}
+
+.monte-hero-svg {
+  width: 124px;
+  height: 124px;
+  display: block;
+}
+
+.monte-hero-story-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.monte-vital-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  min-width: 0;
+}
+
+.monte-vital-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.monte-vital-value {
+  font-size: 18px;
+  font-weight: 700;
+  font-family: var(--font-mono, monospace);
+  line-height: 1.2;
+}
+
+.monte-shock-delta-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+/* 1.2 Wealth Trajectory Chart */
+.monte-chart-wrapper {
+  border-radius: 20px;
+  padding: 18px 20px;
+  background: rgba(15, 23, 42, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-sizing: border-box;
+}
+
+.monte-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.monte-scrub-readout {
+  font-family: var(--font-mono, monospace);
+  font-size: 11.5px;
+}
+
+.monte-scrub-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 12px;
+  margin-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* 1.3 Levers Container */
+.monte-levers-container {
+  border-radius: 20px;
+  padding: 18px 20px;
+  background: rgba(15, 23, 42, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.monte-lever-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* 2. Crisis Cards */
+.monte-crisis-card {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  text-align: left;
-  border-radius: 12px;
-  padding: 10px 12px;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(15, 23, 42, 0.4);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
 }
 
-.scenario-chip-card:hover {
+.monte-crisis-card:hover {
   background: rgba(30, 41, 59, 0.6);
-  border-color: rgba(255, 255, 255, 0.18);
-  transform: translateY(-1px);
+  border-color: rgba(6, 182, 212, 0.4);
+  transform: translateY(-2px);
 }
 
-.scenario-chip-card.active {
-  background: linear-gradient(145deg, rgba(8, 47, 73, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%);
-  border-color: rgba(56, 189, 248, 0.6);
-  box-shadow: 0 0 20px -5px rgba(6, 182, 212, 0.35);
+.monte-crisis-card.active {
+  background: linear-gradient(145deg, rgba(8, 47, 73, 0.4) 0%, rgba(15, 23, 42, 0.7) 100%);
+  border-color: rgba(6, 182, 212, 0.6);
+  box-shadow: 0 0 20px -5px rgba(6, 182, 212, 0.3);
 }
 
-.wedge-tier-box {
-  border-radius: 12px;
-  padding: 12px;
-  background: rgba(15, 23, 42, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  transition: border-color 0.18s ease;
+/* 3. Guardrails & SWR */
+.monte-guardrails-card {
+  border-radius: 20px;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.wedge-tier-box:hover {
-  border-color: rgba(56, 189, 248, 0.3);
+.monte-wedge-card {
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.swr-interactive-row {
+.monte-swr-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: rgba(15, 23, 42, 0.4);
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(2, 6, 23, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.15s ease;
+}
+
+.monte-swr-row:hover {
+  background: rgba(30, 41, 59, 0.5);
+}
+
+/* 4. Assumptions */
+.monte-assumptions-box {
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.35);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  transition: all 0.15s ease;
-  cursor: pointer;
-}
-
-.swr-interactive-row:hover {
-  background: rgba(30, 41, 59, 0.6);
-  border-color: rgba(56, 189, 248, 0.3);
-}
-
-.swr-interactive-row.selected {
-  background: rgba(6, 182, 212, 0.12);
-  border-color: rgba(56, 189, 248, 0.6);
-  box-shadow: 0 0 14px -3px rgba(6, 182, 212, 0.3);
-}
-
-.tactile-lever-card {
-  border-radius: 14px;
-  background: rgba(15, 23, 42, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  padding: 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.tactile-preset-btn {
-  font-family: var(--font-mono, monospace);
-  font-size: 10px;
-  padding: 3px 7px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
-  color: #94a3b8;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.tactile-preset-btn:hover {
-  color: #f8fafc;
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.tactile-preset-btn.active {
-  color: #38bdf8;
-  background: rgba(6, 182, 212, 0.15);
-  border-color: rgba(56, 189, 248, 0.4);
-  font-weight: 700;
+  overflow: hidden;
 }
 
 
@@ -16018,30 +16043,93 @@ body.skill-tree-theater-active .mobile-bottom-dock {
 }
 
 /* Reverse Monte Carlo Modal Light Mode Additions */
-[data-theme='light'] .monte-carlo-modal-window .bg-cyan-950\/30 {
-  background: rgba(6, 182, 212, 0.08) !important;
-  border-color: rgba(6, 182, 212, 0.25) !important;
-}
-[data-theme='light'] .monte-carlo-modal-window .bg-cyan-950\/20 {
-  background: rgba(6, 182, 212, 0.06) !important;
-  border-color: rgba(6, 182, 212, 0.2) !important;
-}
-[data-theme='light'] .monte-carlo-modal-window .bg-slate-950\/60 {
-  background: #f1f5f9 !important;
-  border-color: rgba(0, 0, 0, 0.06) !important;
-}
-[data-theme='light'] .monte-hero-card {
+[data-theme='light'] .monte-header-bar {
   background: #ffffff !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
-}
-[data-theme='light'] .monte-telemetry-card {
-  background: #f8fafc !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 [data-theme='light'] .monte-nav-bar {
-  background: #f1f5f9 !important;
+  background: #f8fafc !important;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+[data-theme='light'] .monte-segmented-dock {
+  background: #e2e8f0 !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+[data-theme='light'] .monte-segment-btn {
+  color: #64748b !important;
+}
+[data-theme='light'] .monte-segment-btn:hover {
+  color: #0f172a !important;
+  background: rgba(255, 255, 255, 0.5) !important;
+}
+[data-theme='light'] .monte-segment-btn.active {
+  color: #0284c7 !important;
+  background: #ffffff !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1) !important;
+}
+[data-theme='light'] .monte-solvency-hero {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03) !important;
+}
+[data-theme='light'] .monte-vital-pill {
+  background: #f8fafc !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+[data-theme='light'] .monte-chart-wrapper {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03) !important;
+}
+[data-theme='light'] .monte-levers-container {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+[data-theme='light'] .monte-lever-card {
+  background: #f8fafc !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+[data-theme='light'] .monte-crisis-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+[data-theme='light'] .monte-crisis-card:hover {
+  background: #f8fafc !important;
+  border-color: #0284c7 !important;
+}
+[data-theme='light'] .monte-crisis-card.active {
+  background: #f0fdfa !important;
+  border-color: #0d9488 !important;
+  box-shadow: 0 4px 16px rgba(13, 148, 136, 0.12) !important;
+}
+[data-theme='light'] .monte-guardrails-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+[data-theme='light'] .monte-wedge-card {
+  background: #f8fafc !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+[data-theme='light'] .monte-swr-row {
+  background: #f8fafc !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+[data-theme='light'] .monte-assumptions-box {
+  background: #f8fafc !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+[data-theme='light'] .monte-shock-delta-banner {
+  background: #fffbeb !important;
+  border: 1px solid #fde68a !important;
+}
+[data-theme='light'] .monte-btn-ghost {
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  background: rgba(0, 0, 0, 0.03) !important;
+  color: #334155 !important;
+}
+[data-theme='light'] .monte-btn-ghost:hover {
+  background: rgba(0, 0, 0, 0.06) !important;
+  color: #0f172a !important;
 }
 
 /* Reverse Monte Carlo Modal Mobile Responsive Overrides */
@@ -16080,37 +16168,36 @@ body.skill-tree-theater-active .mobile-bottom-dock {
     max-width: none !important;
   }
 
-  .monte-nav-bar {
-    padding: 6px 10px !important;
+  .monte-header-bar {
+    padding: 12px 14px !important;
   }
 
-  .monte-tab-btn {
+  .monte-nav-bar {
+    padding: 8px 12px !important;
+  }
+
+  .monte-segment-btn {
     padding: 6px 10px !important;
     font-size: 11px !important;
     white-space: nowrap !important;
   }
 
-  .monte-regime-pill {
-    display: none !important;
+  .monte-solvency-hero {
+    padding: 14px !important;
   }
 
-  .monte-chart-canvas-wrap {
-    padding: 8px !important;
-    border-radius: 12px !important;
+  .monte-chart-wrapper {
+    padding: 12px !important;
   }
 
-  .swr-interactive-row {
+  .monte-levers-container {
+    padding: 12px !important;
+  }
+
+  .monte-swr-row {
     flex-direction: column !important;
     align-items: flex-start !important;
     gap: 6px !important;
-  }
-
-  .scenario-chip-card {
-    padding: 8px 10px !important;
-  }
-
-  .tactile-lever-card {
-    padding: 10px !important;
   }
 }
 
