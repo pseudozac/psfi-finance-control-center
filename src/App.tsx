@@ -181,33 +181,15 @@ export function App() {
   const [appPhase, setAppPhase] = useState<AppPhase>(() => {
     if (typeof window !== 'undefined') {
       const search = window.location.search;
-      if (search.includes('intro') || search.includes('loading')) {
-        return 'loading';
-      }
       if (search.includes('gateway') || search.includes('switchVault')) {
         return 'gateway';
       }
-      try {
-        const hasSession = sessionStorage.getItem('psfi_entered_dashboard') === 'true';
-        if (
-          search.includes('dashboard') ||
-          search.includes('skipIntro') ||
-          hasSession
-        ) {
-          return 'dashboard';
-        }
-      } catch {}
+      if (search.includes('dashboard') || search.includes('skipIntro')) {
+        return 'dashboard';
+      }
     }
     return 'loading';
   });
-
-  useEffect(() => {
-    if (appPhase === 'dashboard' && typeof window !== 'undefined') {
-      try {
-        sessionStorage.setItem('psfi_entered_dashboard', 'true');
-      } catch {}
-    }
-  }, [appPhase]);
   const [activeView, setActiveView] = useState<'control' | 'terminal'>('control');
   const [dashboardMode, setDashboardMode] = useState<DashboardMode>(() => {
     try {
@@ -658,9 +640,6 @@ export function App() {
     return (
       <IntroLoader
         onFinish={() => {
-          try {
-            sessionStorage.setItem('psfi_entered_dashboard', 'true');
-          } catch {}
           setAppPhase('dashboard');
         }}
       />
