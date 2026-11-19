@@ -867,7 +867,7 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                 </div>
 
                 {/* 2 Primary High-Impact Levers */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="monte-levers-grid grid grid-cols-1 md:grid-cols-2 gap-3">
                   
                   {/* Lever 1: Planned Retirement Burn */}
                   <div className="monte-lever-card">
@@ -941,7 +941,7 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                   </button>
 
                   {showAdvancedLevers && (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3">
+                    <div className="monte-advanced-levers-grid grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3">
                       {/* Starting Corpus */}
                       <div className="monte-lever-card">
                         <div className="flex items-center justify-between text-xs">
@@ -1029,7 +1029,7 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
               </div>
 
               {/* Grid of Crisis Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="monte-crisis-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {filteredScenarios.map((sc) => {
                   const isCurrent = scenario === sc.id;
                   return (
@@ -1111,7 +1111,7 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="monte-guardrails-grid grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="monte-wedge-card">
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">TIER 1 (MONTHS 1–12)</span>

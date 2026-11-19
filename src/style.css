@@ -14071,21 +14071,22 @@ body {
   position: fixed;
   inset: 0;
   z-index: 50000;
-  background: rgba(3, 7, 18, 0.78);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(3, 7, 18, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
-  overflow-y: auto;
-  overflow-x: hidden;
+  padding: 24px 16px;
+  overflow: hidden !important; /* CRITICAL: Never scroll overlay on desktop or mobile */
   box-sizing: border-box;
 }
 
 .monte-carlo-modal-window {
   width: 100%;
-  max-width: 1000px;
+  max-width: 1040px;
+  height: min(88vh, 850px) !important;
+  max-height: min(88vh, 850px) !important;
   background: #090e1a;
   background: linear-gradient(180deg, #0b1120 0%, #060913 100%);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -14094,24 +14095,41 @@ body {
               0 0 50px -15px rgba(6, 182, 212, 0.12);
   position: relative;
   color: #f1f5f9;
-  overflow: hidden;
+  overflow: hidden !important;
   margin: auto;
-  display: flex;
-  flex-direction: column;
-  max-height: 90vh;
+  display: flex !important;
+  flex-direction: column !important;
   box-sizing: border-box;
 }
 
-/* Header */
+[data-theme='light'] .monte-carlo-modal-window {
+  background: #ffffff !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.25),
+              0 0 50px -15px rgba(6, 182, 212, 0.1) !important;
+  color: #0f172a !important;
+}
+
+/* Header - Fixed & Pinned */
 .monte-header-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 18px 24px;
+  padding: 16px 24px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(15, 23, 42, 0.45);
-  flex-shrink: 0;
+  background: rgba(11, 17, 32, 0.98) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  flex-shrink: 0 !important;
+  position: relative;
+  z-index: 25;
+}
+
+[data-theme='light'] .monte-header-bar {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 
 .monte-header-icon {
@@ -14148,7 +14166,7 @@ body {
   border-color: rgba(255, 255, 255, 0.2);
 }
 
-/* Navigation Segmented Dock */
+/* Navigation Segmented Dock - Fixed & Pinned */
 .monte-nav-bar {
   display: flex;
   align-items: center;
@@ -14156,8 +14174,113 @@ body {
   gap: 12px;
   padding: 10px 24px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(2, 6, 23, 0.35);
-  flex-shrink: 0;
+  background: rgba(6, 9, 19, 0.98) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  flex-shrink: 0 !important;
+  position: relative;
+  z-index: 20;
+}
+
+[data-theme='light'] .monte-nav-bar {
+  background: rgba(248, 250, 252, 0.98) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Master Scrollable Body - Desktop and Tablet */
+.monte-modal-body {
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior-y: contain !important;
+  box-sizing: border-box !important;
+  padding: 20px 24px 32px 24px !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+}
+
+.monte-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+.monte-modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.monte-modal-body::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 9999px;
+}
+
+/* Responsive Grid Systems for Monte Carlo */
+.monte-vitals-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  padding-top: 12px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.monte-crisis-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+@media (max-width: 1024px) {
+  .monte-crisis-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+@media (max-width: 640px) {
+  .monte-crisis-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+}
+
+.monte-guardrails-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+@media (max-width: 768px) {
+  .monte-guardrails-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+}
+
+.monte-levers-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+@media (max-width: 768px) {
+  .monte-levers-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+}
+
+.monte-advanced-levers-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+@media (max-width: 640px) {
+  .monte-advanced-levers-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
 }
 
 .monte-segmented-dock {
@@ -16310,8 +16433,17 @@ body.skill-tree-theater-active .mobile-bottom-dock {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding: 2px 2px 8px 2px;
-  margin: 0;
+  padding: 8px 4px;
+  margin: -4px 0 12px 0;
+  position: sticky;
+  top: -20px;
+  z-index: 15;
+  background: rgba(11, 17, 32, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+[data-theme='light'] .monte-crisis-chips-row {
+  background: rgba(255, 255, 255, 0.95);
 }
 .monte-crisis-chips-row::-webkit-scrollbar {
   display: none;
@@ -16589,8 +16721,16 @@ body.skill-tree-theater-active .mobile-bottom-dock {
     -webkit-overflow-scrolling: touch !important;
     scrollbar-width: none !important;
     gap: 6px !important;
-    padding: 4px 2px 10px 2px !important;
-    margin: 0 !important;
+    padding: 6px 2px 8px 2px !important;
+    margin: -6px 0 8px 0 !important;
+    position: sticky !important;
+    top: -12px !important;
+    z-index: 15 !important;
+    background: rgba(11, 17, 32, 0.95) !important;
+    backdrop-filter: blur(12px) !important;
+  }
+  [data-theme='light'] .monte-crisis-chips-row {
+    background: rgba(255, 255, 255, 0.95) !important;
   }
   .monte-crisis-chip-btn {
     padding: 5px 12px !important;
