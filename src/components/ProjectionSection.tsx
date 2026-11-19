@@ -199,20 +199,10 @@ export const ProjectionSection: React.FC<ProjectionSectionProps> = ({
               <p className="text-emerald-300 leading-relaxed mb-2">
                 At this milestone, hypothetical monthly compounding gains ({formatINR(crossover.monthlyPassiveGain ?? 0)}/mo) surpass your baseline living burn ({formatINR(crossover.monthlyExpenses)}/mo).
               </p>
-              <details className="group rounded-xl border border-amber-500/25 bg-amber-950/20 text-xs overflow-hidden transition-all">
-                <summary className="cursor-pointer select-none p-2.5 font-mono text-[11px] text-amber-300 font-semibold flex items-center justify-between hover:bg-amber-500/10 transition-colors">
-                  <span className="flex items-center gap-1.5">
-                    <span>⚠️ Actuarial Reality Notice: Projected Gain ≠ Dependable Cashflow</span>
-                  </span>
-                  <span className="text-[10px] font-mono text-amber-400/80 flex items-center gap-1">
-                    <span>Disclosure</span>
-                    <span className="transition-transform group-open:rotate-180">▾</span>
-                  </span>
-                </summary>
-                <div className="px-3 pb-3 pt-1.5 text-[11px] text-amber-200/90 leading-relaxed border-t border-amber-500/20">
-                  Equity returns are non-linear and volatile (about 18% annual deviation). Paper compounding cannot be withdrawn smoothly every month like a salary. Selling units to spend incurs <strong>Section 112A LTCG tax (12.5% over ₹1.25L)</strong>, while living expenses inflate with <strong>CPI ({plan.savings.inflationPercent}%/yr)</strong>. Dependable spendable income requires a conservative <strong>3.0%–3.5% Safe Withdrawal Rate (SWR)</strong> backed by a liquid cash wedge.
-                </div>
-              </details>
+              <div className="p-2.5 rounded-lg bg-slate-900/90 border border-amber-500/30 text-amber-200/90 leading-relaxed text-[11px]">
+                <strong className="text-amber-300 font-mono block mb-0.5">⚠️ Actuarial Reality Notice: A Projected Monthly Gain is NOT Dependable Spendable Income</strong>
+                Equity returns are non-linear and volatile (about 18% annual deviation). Paper compounding cannot be withdrawn smoothly every month like a salary. Selling units to spend incurs <strong>Section 112A LTCG tax (12.5% over ₹1.25L)</strong>, while living expenses inflate with <strong>CPI ({plan.savings.inflationPercent}%/yr)</strong>. Dependable spendable income requires a conservative <strong>3.0%–3.5% Safe Withdrawal Rate (SWR)</strong> backed by a liquid cash wedge.
+              </div>
             </div>
           </div>
 

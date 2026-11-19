@@ -179,83 +179,69 @@ export const IncomeExpensePanel: React.FC<IncomeExpensePanelProps> = ({ plan, pe
           </div>
         </div>
 
-        {/* 50/30/20 Visual Allocation Spectrum Bar */}
-        <div className="p-3 rounded-2xl bg-slate-900/40 border border-white/5 mb-4 space-y-2">
-          <div className="flex items-center justify-between text-xs font-mono">
-            <span className="text-slate-400 font-semibold flex items-center gap-1.5">
-              <span>50/30/20 Allocation Spectrum</span>
-              <span className="text-[10px] text-slate-500 font-normal">(Base: {formatINR(budgetRule.totalIncome)})</span>
-            </span>
-            <span className={`text-[10.5px] font-bold px-2 py-0.5 rounded-full border ${
-              budgetRule.score >= 80
-                ? 'bg-emerald-950/50 text-emerald-300 border-emerald-500/30'
-                : budgetRule.score >= 60
-                ? 'bg-blue-950/50 text-blue-300 border-blue-500/30'
-                : 'bg-amber-950/50 text-amber-300 border-amber-500/30'
-            }`}>
-              {budgetRule.rating} · {budgetRule.score}/100
-            </span>
+        {/* 50/30/20 Quick Distribution Health Bar with Denominator & Complete Allocation */}
+        <div
+          className="p-2.5 rounded-xl bg-slate-900/60 border border-subtle mb-3 flex items-center justify-between flex-wrap gap-2 text-xs font-mono"
+          title={`Denominator: Total Monthly Inflow ${formatINR(budgetRule.totalIncome)} (100% Base). Pillars: Needs ${budgetRule.needsPercent}% + Wants ${budgetRule.wantsPercent}% + Savings ${budgetRule.savingsPercent}% = ${budgetRule.pillarPercentSum}%. Auxiliary: Debt ${budgetRule.debtPercent}% + Buffer ${budgetRule.unallocatedBufferPercent}% = ${budgetRule.debtPercent + budgetRule.unallocatedBufferPercent}%. Percentages are rounded. Score: ${budgetRule.score}/100.`}
+        >
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-purple-400" />
+            <span className="text-muted">Needs:</span>
+            <strong className={budgetRule.needsPercent > 50 ? 'text-amber-400' : 'text-primary'}>
+              {budgetRule.needsPercent}%
+            </strong>
+            <span className="text-[10px] text-muted">(&le;50%)</span>
           </div>
 
-          {/* Proportional Colored Spectrum Bar */}
-          <div className="w-full h-2 rounded-full overflow-hidden flex bg-slate-800/80 gap-0.5 shadow-inner">
-            <div
-              className="bg-purple-500 transition-all duration-300 hover:brightness-125"
-              style={{ width: `${Math.max(1, budgetRule.needsPercent)}%` }}
-              title={`Needs: ${budgetRule.needsPercent}% (≤50%)`}
-            />
-            <div
-              className="bg-rose-500 transition-all duration-300 hover:brightness-125"
-              style={{ width: `${Math.max(1, budgetRule.wantsPercent)}%` }}
-              title={`Wants: ${budgetRule.wantsPercent}% (≤30%)`}
-            />
-            <div
-              className="bg-emerald-500 transition-all duration-300 hover:brightness-125"
-              style={{ width: `${Math.max(1, budgetRule.savingsPercent)}%` }}
-              title={`Savings & SIPs: ${budgetRule.savingsPercent}% (≥20%)`}
-            />
-            {budgetRule.debtPercent > 0 && (
-              <div
-                className="bg-amber-500 transition-all duration-300 hover:brightness-125"
-                style={{ width: `${Math.max(1, budgetRule.debtPercent)}%` }}
-                title={`Debt Service: ${budgetRule.debtPercent}%`}
-              />
-            )}
-            {budgetRule.unallocatedBufferPercent > 0 && (
-              <div
-                className="bg-cyan-500 transition-all duration-300 hover:brightness-125"
-                style={{ width: `${Math.max(1, budgetRule.unallocatedBufferPercent)}%` }}
-                title={`Unallocated Surplus: ${budgetRule.unallocatedBufferPercent}%`}
-              />
-            )}
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-rose-400" />
+            <span className="text-muted">Wants:</span>
+            <strong className={budgetRule.wantsPercent > 30 ? 'text-amber-400' : 'text-primary'}>
+              {budgetRule.wantsPercent}%
+            </strong>
+            <span className="text-[10px] text-muted">(&le;30%)</span>
           </div>
 
-          {/* Clean Legend */}
-          <div className="flex items-center justify-between flex-wrap gap-2 text-[11px] font-mono pt-0.5">
-            <span className="flex items-center gap-1.5 text-slate-300">
-              <span className="w-2 h-2 rounded-full bg-purple-400 inline-block" />
-              <span>Needs {budgetRule.needsPercent}%</span>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span className="text-muted">Savings/SIP:</span>
+            <strong className={budgetRule.savingsPercent < 20 ? 'text-amber-400' : 'text-emerald-300'}>
+              {budgetRule.savingsPercent}%
+            </strong>
+            <span className="text-[10px] text-muted">(&ge;20%)</span>
+          </div>
+
+          {budgetRule.debtPercent > 0 && (
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
+              <span className="text-muted">Debt:</span>
+              <strong className="text-amber-400">{budgetRule.debtPercent}%</strong>
+            </div>
+          )}
+
+          {budgetRule.unallocatedBufferPercent > 0 && (
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-cyan-400" />
+              <span className="text-muted">Buffer:</span>
+              <strong className="text-cyan-300">{budgetRule.unallocatedBufferPercent}%</strong>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-muted border border-subtle px-1.5 py-0.5 rounded bg-slate-950/60 font-mono">
+              Base: {formatINR(budgetRule.totalIncome)}
             </span>
-            <span className="flex items-center gap-1.5 text-slate-300">
-              <span className="w-2 h-2 rounded-full bg-rose-400 inline-block" />
-              <span>Wants {budgetRule.wantsPercent}%</span>
+            <span
+              className={`text-[10px] px-2 py-0.5 rounded-full font-sans font-bold border ${
+                budgetRule.score >= 80
+                  ? 'bg-emerald-950/60 text-emerald-300 border-emerald-600/40'
+                  : budgetRule.score >= 60
+                  ? 'bg-blue-950/60 text-blue-300 border-blue-600/40'
+                  : 'bg-amber-950/60 text-amber-300 border-amber-600/40'
+              }`}
+            >
+              {budgetRule.rating} ({budgetRule.score}/100)
             </span>
-            <span className="flex items-center gap-1.5 text-slate-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
-              <span>Savings {budgetRule.savingsPercent}%</span>
-            </span>
-            {budgetRule.debtPercent > 0 && (
-              <span className="flex items-center gap-1.5 text-slate-300">
-                <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
-                <span>Debt {budgetRule.debtPercent}%</span>
-              </span>
-            )}
-            {budgetRule.unallocatedBufferPercent > 0 && (
-              <span className="flex items-center gap-1.5 text-slate-300">
-                <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block" />
-                <span>Surplus {budgetRule.unallocatedBufferPercent}%</span>
-              </span>
-            )}
           </div>
         </div>
 
