@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.14.0] - 2026-11-19
+
+### Added
+- **Executive Sovereign UI/UX Architecture Overhaul (`v5.14.0`)**:
+  - **5-Perspective Focused Workspace Navigation**:
+    - Replaced the confusing stacked view switchers with a unified 5-perspective top navigation bar:
+      - **Cockpit**: High-level Executive Financial Vitals, Cashflow Pulse, 50/30/20 balance, and Compounding Wealth Curve.
+      - **Cashflow**: Deep cashflow architecture (salary, freelance, living expenses, 50/30/20 rule, and daily discretionary pocket).
+      - **Tax & Debt**: Statutory Indian Tax optimizer (FY 2025–26 / AY 2026–27 New vs Old regime, 80C/80D/NPS/HRA) and Debt Avalanche payoff engine.
+      - **Independence**: 3-Tier Emergency Runway Survival Stress Test, FIRE Milestone countdown, and Reverse Monte Carlo simulation.
+      - **Terminal**: 12-Month Financial Statement P&L and Stock-Market Compounding Valuation engine.
+  - **50/30/20 Visual Allocation Spectrum Bar**:
+    - Replaced the cluttered run-on text string with a proportional multi-colored segmented spectrum bar (Needs, Wants, Savings/SIPs, Debt, and Unallocated Buffer) with denominator reconciliation against total income.
+  - **Sleek Continuous Payday Horizon Timeline**:
+    - Replaced the 30 squished circular buttons in Impulse Shield with a continuous gradient progress bar showing Day 1 (Salary Credit) → Today → Month End.
+  - **Collapsible Fiduciary Actuarial Disclosure**:
+    - Converted the massive yellow "Actuarial Reality Notice" into an elegant collapsible accordion drawer (`⚠️ Actuarial Reality Notice: Projected Gain ≠ Dependable Cashflow Disclosure ▾`), saving over 120px of vertical space and letting the compounding curve sit prominently in view.
+  - **Swiss-Style Financial Vitals (Summary Cards)**:
+    - Cleaned up metric cards by eliminating repetitive `(?)` buttons, upgrading to high-impact typography, and standardizing single-line telemetry indicators.
+  - **Consolidated Executive Header**:
+    - Consolidated 11 scattered pill buttons into a balanced 3-cluster navbar: Brand/Vault on left, 5 Core Perspective tabs in center, and consolidated `mo/yr` · `⌘K` · `Tools ▾` · `Theme` on right.
+  - **Mobile 5-Perspective Bottom Dock**:
+    - Transformed the mobile bottom dock into 5 dedicated 1-tap perspective buttons (`Cockpit`, `Cashflow`, `Omnibar`, `Tax/Debt`, `FIRE`) with zero card stacking fatigue and zero occlusions.
+
+---
+
 ## [5.13.0] - 2026-11-19
 
 ### Added

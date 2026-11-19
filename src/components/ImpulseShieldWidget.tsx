@@ -1085,44 +1085,27 @@ export const ImpulseShieldWidget: React.FC<ImpulseShieldWidgetProps> = ({ plan, 
                 </span>
               </div>
 
-              {/* Day-by-Day Segmented Strip */}
-              <div className="pocket-payday-strip select-none" role="progressbar" aria-label="Monthly Payday Horizon">
-                {Array.from({ length: daysInCurrentMonth }, (_, i) => i + 1).map((dayNum) => {
-                  const isPast = dayNum < currentDayOfMonth;
-                  const isCurrent = dayNum === currentDayOfMonth;
-                  const isPayday = dayNum === 1;
-
-                  return (
-                    <div
-                      key={dayNum}
-                      title={`Day ${dayNum}${isPayday ? ' · Salary Credit Day 💰' : ''}${isCurrent ? ' · Today (Active Pocket)' : isPast ? ' · Shield Maintained' : ' · Planned Allowance'}`}
-                      className={`pocket-day-node ${
-                        isCurrent
-                          ? 'node-today'
-                          : isPayday
-                          ? 'node-payday'
-                          : isPast
-                          ? 'node-past'
-                          : 'node-future'
-                      }`}
-                    >
-                      {isCurrent ? '●' : isPayday ? '₹' : dayNum}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Payday Horizon Scale Benchmarks */}
-              <div className="pocket-runway-milestones">
-                <span className="milestone-badge milestone-payday">
-                  Day 1 (Salary Credit)
-                </span>
-                <span className="milestone-badge milestone-today">
-                  Day {currentDayOfMonth} (Today)
-                </span>
-                <span className="milestone-badge milestone-end">
-                  Day {daysInCurrentMonth} (Month End)
-                </span>
+              {/* Sleek Continuous Payday Horizon Progress Bar */}
+              <div className="space-y-1.5 my-2">
+                <div className="w-full h-2 rounded-full bg-slate-800/80 overflow-hidden relative border border-white/5 shadow-inner">
+                  <div
+                    className="h-full bg-gradient-to-r from-cyan-500 via-purple-500 to-emerald-400 rounded-full transition-all duration-300"
+                    style={{ width: `${Math.min(100, Math.max(3, (currentDayOfMonth / daysInCurrentMonth) * 100))}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[10.5px] font-mono text-slate-400">
+                  <span className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                    <span>Day 1 (Salary Credit)</span>
+                  </span>
+                  <span className="text-white font-bold px-2 py-0.5 rounded-md bg-purple-950/60 border border-purple-500/30">
+                    Day {currentDayOfMonth} of {daysInCurrentMonth} (Today)
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span>Day {daysInCurrentMonth} (Month End)</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  </span>
+                </div>
               </div>
             </div>
 

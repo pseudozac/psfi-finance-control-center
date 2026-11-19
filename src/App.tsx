@@ -32,6 +32,10 @@ import {
   Search,
   Scale,
   FolderArchive,
+  LayoutDashboard,
+  Wallet,
+  Receipt,
+  Flame,
 } from 'lucide-react';
 import type { FinancePlan, ViewPeriod } from './types/finance';
 import {
@@ -185,6 +189,36 @@ export function App() {
     return 'loading';
   });
   const [activeView, setActiveView] = useState<'control' | 'terminal'>('control');
+  const [perspectiveTab, setPerspectiveTab] = useState<'cockpit' | 'cashflow' | 'tax-debt' | 'independence' | 'terminal'>(() => {
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const h = window.location.hash.replace('#', '');
+      if (['cockpit', 'cashflow', 'tax-debt', 'independence', 'terminal'].includes(h)) {
+        return h as any;
+      }
+    }
+    return 'cockpit';
+  });
+
+  const handleSelectPerspective = (tab: 'cockpit' | 'cashflow' | 'tax-debt' | 'independence' | 'terminal') => {
+    setPerspectiveTab(tab);
+    if (tab === 'terminal') {
+      setActiveView('terminal');
+    } else {
+      setActiveView('control');
+    }
+    if (typeof window !== 'undefined') {
+      window.location.hash = tab;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  useEffect(() => {
+    if (activeView === 'terminal' && perspectiveTab !== 'terminal') {
+      setPerspectiveTab('terminal');
+    } else if (activeView === 'control' && perspectiveTab === 'terminal') {
+      setPerspectiveTab('cockpit');
+    }
+  }, [activeView]);
   const [dashboardMode, setDashboardMode] = useState<DashboardMode>(() => {
     try {
       const saved = localStorage.getItem('psfi_dashboard_mode');
@@ -1139,29 +1173,64 @@ export function App() {
           </button>
         </div>
 
-        {/* Center: Primary Workspace Switcher (Control Center vs Wealth Terminal) */}
-        <div className="pill-segmented dock-view-switcher" role="group" aria-label="Workspace view">
+        {/* Center: 5 Core Financial Perspective Tabs */}
+        <nav className="pill-segmented executive-perspective-nav" role="tablist" aria-label="Financial perspectives">
           <button
             type="button"
-            className={activeView === 'control' ? 'pill-active' : ''}
-            onClick={() => setActiveView('control')}
-            title="Tactile Control Center (Sliders & Cockpit)"
+            role="tab"
+            aria-selected={perspectiveTab === 'cockpit'}
+            className={perspectiveTab === 'cockpit' ? 'pill-active' : ''}
+            onClick={() => handleSelectPerspective('cockpit')}
+            title="Executive Cockpit: High-level vitals, cashflow pulse & compounding"
           >
-            <Sliders size={12} />
-            <span className="view-label view-label-full">Control Center</span>
-            <span className="view-label view-label-compact">Control</span>
+            <LayoutDashboard size={12} />
+            <span className="tab-text">Cockpit</span>
           </button>
           <button
             type="button"
-            className={activeView === 'terminal' ? 'pill-active pill-terminal-active' : ''}
-            onClick={() => setActiveView('terminal')}
-            title="Wealth Terminal (Stock-Market Expenditure & Valuation Engine)"
+            role="tab"
+            aria-selected={perspectiveTab === 'cashflow'}
+            className={perspectiveTab === 'cashflow' ? 'pill-active' : ''}
+            onClick={() => handleSelectPerspective('cashflow')}
+            title="Cashflow Architecture: Salary, freelance outlays, 50/30/20 & daily pocket"
           >
-            <TrendingUp size={12} className={activeView === 'terminal' ? 'text-nebula' : ''} />
-            <span className="view-label view-label-full">Wealth Terminal</span>
-            <span className="view-label view-label-compact">Terminal</span>
+            <Wallet size={12} />
+            <span className="tab-text">Cashflow</span>
           </button>
-        </div>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={perspectiveTab === 'tax-debt'}
+            className={perspectiveTab === 'tax-debt' ? 'pill-active' : ''}
+            onClick={() => handleSelectPerspective('tax-debt')}
+            title="Tax & Debt: FY26 New vs Old regime & debt payoff engine"
+          >
+            <Receipt size={12} />
+            <span className="tab-text">Tax &amp; Debt</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={perspectiveTab === 'independence'}
+            className={perspectiveTab === 'independence' ? 'pill-active' : ''}
+            onClick={() => handleSelectPerspective('independence')}
+            title="Independence: Emergency fortress, FIRE countdown & reverse monte carlo"
+          >
+            <Flame size={12} />
+            <span className="tab-text">FIRE</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={perspectiveTab === 'terminal'}
+            className={perspectiveTab === 'terminal' ? 'pill-active pill-terminal-active' : ''}
+            onClick={() => handleSelectPerspective('terminal')}
+            title="Wealth Terminal: 12-Month P&L statement & stock valuation engine"
+          >
+            <TrendingUp size={12} className={perspectiveTab === 'terminal' ? 'text-nebula' : ''} />
+            <span className="tab-text">Terminal</span>
+          </button>
+        </nav>
 
         {/* Right: Consolidated Action Cluster */}
         <div className="dock-actions-cluster">
@@ -1172,14 +1241,14 @@ export function App() {
               className={period === 'monthly' ? 'pill-active' : ''}
               onClick={() => setPeriod('monthly')}
             >
-              monthly
+              mo
             </button>
             <button
               type="button"
               className={period === 'annual' ? 'pill-active' : ''}
               onClick={() => setPeriod('annual')}
             >
-              annual
+              yr
             </button>
           </div>
 
@@ -1195,54 +1264,18 @@ export function App() {
             <span className="font-mono text-xs pill-label">⌘K</span>
           </button>
 
-          {/* Statement Parser Trigger */}
-          <button
-            type="button"
-            className="action-pill pill-ingest"
-            onClick={() => setShowStatementParser(true)}
-            title="Ingest Financial Statements: Mutual Fund CAS, Bank, Credit Cards & Payslips (100% Private in-memory)"
-          >
-            <FileText size={12} className="text-nebula" />
-            <span className="font-mono text-xs pill-label">ingest</span>
-          </button>
-
-          {/* Guided Tour Trigger */}
-          <button
-            type="button"
-            className="action-pill pill-tour"
-            onClick={() => handleStartTour(0)}
-            title="Start Interactive Guided Tour"
-          >
-            <Compass size={13} className="text-quasar" />
-            <span className="font-mono text-xs pill-label">tour</span>
-          </button>
-
-          {/* Sovereign Skill Tree Trigger */}
-          <button
-            type="button"
-            id="tour-skills"
-            className="action-pill pill-skills"
-            onClick={() => setShowSkillTree(true)}
-            title={`Sovereign Wealth RPG Skill Tree · Lvl ${skillTreeState.level} (${skillTreeState.levelTitle})`}
-          >
-            <Crown size={12} className="text-solstice" />
-            <span className="font-mono text-xs pill-label">skills · Lvl {skillTreeState.level}</span>
-          </button>
-
           {/* Unified Tools Dropdown Menu */}
           <div className="tools-dropdown-wrapper" ref={toolsDropdownRef}>
             <button
               type="button"
               className={`action-pill pill-tools ${toolsMenuOpen ? 'pill-active-mode' : ''}`}
               onClick={() => setToolsMenuOpen(!toolsMenuOpen)}
-              title="Tools, Scenarios & Data Operations"
+              title="Tools, Scenarios, Audits & Security"
             >
               <Sparkles size={13} className="text-solstice" />
-              <span className="font-mono text-xs pill-label">tools</span>
+              <span className="font-mono text-xs pill-label">Tools</span>
               <ChevronDown size={11} className={`text-muted transition-transform ${toolsMenuOpen ? 'rotate-180' : ''}`} />
             </button>
-
-            {/* Tools menu portal is handled globally at bottom of document body */}
           </div>
         </div>
 
@@ -1272,74 +1305,87 @@ export function App() {
         </div>
       </header>
 
-      {/* Minimalist Yet Cool Editorial Hero */}
-      <section className="hero-section hero-minimal-cool">
-        <div className="hero-ambient-aura" aria-hidden="true" />
+      {/* Minimalist Executive Hero Banner (Cockpit View) */}
+      {perspectiveTab === 'cockpit' && (
+        <section className="hero-section hero-minimal-cool">
+          <div className="hero-ambient-aura" aria-hidden="true" />
 
-        <div className="hero-cyber-badge">
-          <span className="cyber-pulse-dot" />
-          <span className="cyber-badge-tag" title="Income-tax Act, 1961 (FY 2025–26 / AY 2026–27) &amp; Income-tax Act, 2025 (TY 2026–27)">
-            FY 2025–26 (AY 2026–27) · TY 2026–27
-          </span>
-          <span className="cyber-badge-sep">·</span>
-          <span className="cyber-badge-secure">🛡️ OFFLINE / PRIVATE</span>
-        </div>
+          <div className="flex items-center justify-between flex-wrap gap-4 mb-2">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold">
+                  Sovereign Financial Cockpit · FY 2025–26 (AY 2026–27) · Offline Private
+                </span>
+              </div>
+              <h1 className="hero-headline m-0 text-2xl sm:text-3xl font-extrabold tracking-tight">
+                Tactile personal finance control for India<span className="hero-dot">.</span>
+              </h1>
+            </div>
 
-        <h1 className="hero-headline">
-          Tactile personal finance control for India<span className="hero-dot">.</span>
-        </h1>
+            {/* Sub-Actions: RPG Rank Badge & Mode Switcher */}
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setShowSkillTree(true)}
+                className="action-pill text-xs font-mono flex items-center gap-1.5 bg-purple-950/40 border border-purple-500/30 text-purple-300 hover:bg-purple-900/40 transition-colors"
+                title="View Sovereign Wealth RPG Astrolabe & Trophy Hall"
+              >
+                <Crown size={12} className="text-amber-400" />
+                <span>Lvl {skillTreeState.level} · {skillTreeState.levelTitle}</span>
+              </button>
 
-        {/* 3-Way Perspective Dock: Simple | Advance | Custom */}
-        <div className="hero-view-dock" role="tablist" aria-label="Dashboard perspective switcher">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={dashboardMode === 'simple'}
-            className={`hero-view-tab ${dashboardMode === 'simple' ? 'active-tab-simple' : ''}`}
-            onClick={() => {
-              setDashboardMode('simple');
-              setStatusMessage('Switched to Simple View — focused essentials');
-            }}
-            title="Simple View: Clean, focused essentials (Vitals, Cashflow, 50/30/20 & Compounding)"
-          >
-            <Sparkles size={14} className="view-tab-icon" />
-            <span className="view-tab-label">Simple</span>
-            <span className="view-tab-hint">Essentials</span>
-          </button>
+              <div className="hero-view-dock" role="tablist" aria-label="Dashboard perspective switcher">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={dashboardMode === 'simple'}
+                  className={`hero-view-tab ${dashboardMode === 'simple' ? 'active-tab-simple' : ''}`}
+                  onClick={() => {
+                    setDashboardMode('simple');
+                    setStatusMessage('Switched to Simple View — focused essentials');
+                  }}
+                  title="Simple View: Clean essentials (Vitals, Cashflow, 50/30/20 & Compounding)"
+                >
+                  <Sparkles size={13} className="view-tab-icon" />
+                  <span className="view-tab-label">Simple</span>
+                </button>
 
-          <button
-            type="button"
-            role="tab"
-            aria-selected={dashboardMode === 'advance'}
-            className={`hero-view-tab ${dashboardMode === 'advance' ? 'active-tab-advance' : ''}`}
-            onClick={() => {
-              setDashboardMode('advance');
-              setStatusMessage('Switched to Advance View — full telemetry & analytics');
-            }}
-            title="Advance View: Full deep telemetry, archetypes, statutory tax optimization & stress tests"
-          >
-            <Compass size={14} className="view-tab-icon" />
-            <span className="view-tab-label">Advance</span>
-            <span className="view-tab-hint">Full Suite</span>
-          </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={dashboardMode === 'advance'}
+                  className={`hero-view-tab ${dashboardMode === 'advance' ? 'active-tab-advance' : ''}`}
+                  onClick={() => {
+                    setDashboardMode('advance');
+                    setStatusMessage('Switched to Advance View — full telemetry & analytics');
+                  }}
+                  title="Advance View: Full telemetry, archetypes & stress tests"
+                >
+                  <Compass size={13} className="view-tab-icon" />
+                  <span className="view-tab-label">Advance</span>
+                </button>
 
-          <button
-            type="button"
-            role="tab"
-            aria-selected={dashboardMode === 'custom'}
-            className={`hero-view-tab ${dashboardMode === 'custom' ? 'active-tab-custom' : ''}`}
-            onClick={() => {
-              setDashboardMode('custom');
-              setStatusMessage('Switched to Custom View — tailored modular workspace');
-            }}
-            title="Custom View: Modular cockpit — toggle individual modules on and off"
-          >
-            <Sliders size={14} className="view-tab-icon" />
-            <span className="view-tab-label">Custom</span>
-            <span className="custom-active-count font-mono">{activeCustomCount}/9</span>
-          </button>
-        </div>
-      </section>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={dashboardMode === 'custom'}
+                  className={`hero-view-tab ${dashboardMode === 'custom' ? 'active-tab-custom' : ''}`}
+                  onClick={() => {
+                    setDashboardMode('custom');
+                    setStatusMessage('Switched to Custom View — tailored modular workspace');
+                  }}
+                  title="Custom View: Modular cockpit — toggle individual modules"
+                >
+                  <Sliders size={13} className="view-tab-icon" />
+                  <span className="view-tab-label">Custom</span>
+                  <span className="custom-active-count font-mono">{activeCustomCount}/9</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Toast Notification */}
       {statusMessage && (
@@ -1359,16 +1405,126 @@ export function App() {
         </div>
       )}
 
-      {/* View Switch: Core Control Stack vs Wealth Terminal */}
-      {activeView === 'terminal' ? (
+      {/* View Switch: Perspectives Routing (Cockpit, Cashflow, Tax & Debt, Independence, Terminal) */}
+      {perspectiveTab === 'terminal' || activeView === 'terminal' ? (
         <WealthTerminal
           plan={plan}
           summary={summary}
-          onReturnToDashboard={() => setActiveView('control')}
+          onReturnToDashboard={() => handleSelectPerspective('cockpit')}
           onLaunchTour={(stepIdx) => handleStartTour(stepIdx ?? 4)}
         />
+      ) : perspectiveTab === 'cashflow' ? (
+        <main className="main-stack">
+          {/* Cashflow Header Banner */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/40 border border-white/5 flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold">
+                  Pillar 1: Cashflow Architecture &amp; Living Expenses
+                </span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white m-0">
+                Inflow Streams &amp; Envelope Allocations
+              </h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowStatementParser(true)}
+              className="btn-secondary text-xs px-3.5 py-1.5 flex items-center gap-1.5"
+              title="Ingest Bank Statement, Mutual Fund CAS or Payslip"
+            >
+              <FileText size={13} className="text-nebula" />
+              <span>+ Import Statement (PDF)</span>
+            </button>
+          </div>
+
+          <section id="tour-cashflows" className="dashboard-section" aria-label="Cashflow Architecture">
+            <IncomeExpensePanel plan={plan} period={period} onChange={setPlan} />
+          </section>
+
+          <div className="dashboard-two-col-row" aria-label="Budget Health and Discretionary Pocket">
+            <div id="tour-budget-health" className="dashboard-col">
+              <BudgetHealthWidget analysis={budgetRule} />
+            </div>
+            <div id="tour-impulse-shield" className="dashboard-col">
+              <ImpulseShieldWidget plan={plan} summary={summary} onPlanChange={setPlan} />
+            </div>
+          </div>
+        </main>
+      ) : perspectiveTab === 'tax-debt' ? (
+        <main className="main-stack">
+          {/* Tax & Debt Header Banner */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/40 border border-white/5 flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-2 h-2 rounded-full bg-cyan-400" />
+                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold">
+                  Pillar 2: Statutory Tax Optimization &amp; Debt Elimination
+                </span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white m-0">
+                FY 2025–26 Tax Slabs &amp; Avalanche Payoff
+              </h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowLoanArbitrage(true)}
+              className="btn-secondary text-xs px-3.5 py-1.5 flex items-center gap-1.5"
+              title="Open Loan Prepayment Arbitrage Simulator"
+            >
+              <Scale size={13} className="text-amber-400" />
+              <span>Prepayment Arbitrage</span>
+            </button>
+          </div>
+
+          <section id="tour-tax" className="dashboard-section" aria-label="Tax & Debt Elimination">
+            <IndiaTaxAndDebtPanel
+              plan={plan}
+              debtPayoff={debtPayoff}
+              taxComparison={taxComparison}
+              onChange={setPlan}
+              onOpenLoanArbitrage={() => setShowLoanArbitrage(true)}
+            />
+          </section>
+        </main>
+      ) : perspectiveTab === 'independence' ? (
+        <main className="main-stack">
+          {/* Independence Header Banner */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/40 border border-white/5 flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-2 h-2 rounded-full bg-purple-400" />
+                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold">
+                  Pillars 3 &amp; 4: Emergency Fortress &amp; Financial Independence (FIRE)
+                </span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white m-0">
+                Survival Runway Stress Tests &amp; FIRE Milestones
+              </h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowMonteCarlo(true)}
+              className="btn-primary text-xs px-3.5 py-1.5 flex items-center gap-1.5"
+              title="Launch 5,000 Stochastic Reverse Monte Carlo Paths"
+            >
+              <Activity size={13} />
+              <span>Reverse Monte Carlo</span>
+            </button>
+          </div>
+
+          <div id="tour-survival" className="dashboard-two-col-row tour-survival-block" aria-label="Emergency Defense and Independence">
+            <div className="dashboard-col">
+              <EmergencyStressTestWidget plan={plan} />
+            </div>
+            <div className="dashboard-col">
+              <FireMilestoneTracker plan={plan} />
+            </div>
+          </div>
+        </main>
       ) : (
-        /* Main Stack */
+        /* Cockpit Executive Stack */
         <main className="main-stack">
           {/* Simple Perspective: Clean 1-Page Essentials */}
           {dashboardMode === 'simple' && (
@@ -1966,33 +2122,33 @@ export function App() {
         <TactileCommitSlider isDirty={isDirty} onSave={commitPlanChanges} onDiscard={discardPlanChanges} />
       )}
 
-      {/* Mobile Floating Bottom Navigation Dock (Hidden during Tour so tour controls are 100% unobstructed) */}
+      {/* Mobile Floating Bottom Navigation Dock (5 Core Perspectives) */}
       {!showTour && (
         <nav className="mobile-bottom-dock" aria-label="Mobile Navigation Dock">
           <button
             type="button"
-            className={`mobile-dock-btn ${activeView === 'control' && !isAnyModalActive ? 'active' : ''}`}
+            className={`mobile-dock-btn ${perspectiveTab === 'cockpit' && !isAnyModalActive ? 'active' : ''}`}
             onClick={() => {
               closeAllMobileOverlays();
-              setActiveView('control');
+              handleSelectPerspective('cockpit');
             }}
-            title="Tactile Control Center"
+            title="Cockpit Overview"
           >
-            <Sliders size={17} />
-            <span>Control</span>
+            <LayoutDashboard size={17} />
+            <span>Cockpit</span>
           </button>
 
           <button
             type="button"
-            className={`mobile-dock-btn ${activeView === 'terminal' && !isAnyModalActive ? 'active' : ''}`}
+            className={`mobile-dock-btn ${perspectiveTab === 'cashflow' && !isAnyModalActive ? 'active' : ''}`}
             onClick={() => {
               closeAllMobileOverlays();
-              setActiveView('terminal');
+              handleSelectPerspective('cashflow');
             }}
-            title="Wealth Terminal"
+            title="Cashflow & Expenses"
           >
-            <TrendingUp size={17} />
-            <span>Terminal</span>
+            <Wallet size={17} />
+            <span>Cashflow</span>
           </button>
 
           <button
@@ -2012,36 +2168,28 @@ export function App() {
 
           <button
             type="button"
-            className={`mobile-dock-btn ${showSkillTree ? 'active' : ''}`}
+            className={`mobile-dock-btn ${perspectiveTab === 'tax-debt' && !isAnyModalActive ? 'active' : ''}`}
             onClick={() => {
-              if (showSkillTree) {
-                setShowSkillTree(false);
-              } else {
-                closeAllMobileOverlays();
-                setShowSkillTree(true);
-              }
+              closeAllMobileOverlays();
+              handleSelectPerspective('tax-debt');
             }}
-            title="Sovereign RPG Constellation"
+            title="Tax Optimization & Debt"
           >
-            <Crown size={17} className="text-solstice" />
-            <span>RPG</span>
+            <Receipt size={17} />
+            <span>Tax/Debt</span>
           </button>
 
           <button
             type="button"
-            className={`mobile-dock-btn ${toolsMenuOpen ? 'active' : ''}`}
+            className={`mobile-dock-btn ${perspectiveTab === 'independence' && !isAnyModalActive ? 'active' : ''}`}
             onClick={() => {
-              if (toolsMenuOpen) {
-                setToolsMenuOpen(false);
-              } else {
-                closeAllMobileOverlays();
-                setToolsMenuOpen(true);
-              }
+              closeAllMobileOverlays();
+              handleSelectPerspective('independence');
             }}
-            title="Tools & Scenarios"
+            title="Emergency Fortress & FIRE"
           >
-            <Sparkles size={17} className="text-solstice" />
-            <span>Tools</span>
+            <Flame size={17} />
+            <span>FIRE</span>
           </button>
         </nav>
       )}
