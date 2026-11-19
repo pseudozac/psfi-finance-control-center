@@ -1609,9 +1609,10 @@ export function App() {
                     type="button"
                     className="btn-primary empty-slate-cta"
                     onClick={() => setCustomModules(DEFAULT_CUSTOM_MODULES)}
+                    style={{ color: '#ffffff' }}
                   >
-                    <Sparkles size={14} />
-                    <span>Load Recommended Layout</span>
+                    <Sparkles size={14} style={{ color: '#ffffff', stroke: '#ffffff' }} />
+                    <span style={{ color: '#ffffff' }}>Load Recommended Layout</span>
                   </button>
                 </div>
               ) : (

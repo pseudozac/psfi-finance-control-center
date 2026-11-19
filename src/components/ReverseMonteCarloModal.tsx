@@ -23,6 +23,14 @@ import {
 } from '../lib/monteCarlo';
 import { formatINR } from '../lib/finance';
 
+function formatCompactINR(val: number): string {
+  const abs = Math.abs(val);
+  if (abs >= 10000000) return `₹${(val / 10000000).toFixed(1)} Cr`;
+  if (abs >= 100000) return `₹${(val / 100000).toFixed(1)} L`;
+  if (abs >= 1000) return `₹${(val / 1000).toFixed(0)}k`;
+  return `₹${Math.round(val)}`;
+}
+
 interface ReverseMonteCarloModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -298,10 +306,10 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
   // SVG Chart Geometry
   const width = 860;
   const height = 240;
-  const padLeft = 70;
+  const padLeft = 62;
   const padRight = 24;
-  const padTop = 20;
-  const padBottom = 30;
+  const padTop = 18;
+  const padBottom = 26;
 
   const maxCorpus = Math.max(
     ...result.trajectories.map((t) => t.p95),
@@ -366,39 +374,39 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
         {/* 1. CLEAN EXECUTIVE HEADER                                         */}
         {/* ================================================================= */}
         <header className="monte-header-bar">
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="monte-header-left">
             <div className="monte-header-icon">
-              <Activity size={20} className="text-cyan-400" />
+              <Activity size={18} className="text-cyan-400" />
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-base sm:text-lg font-bold tracking-tight m-0 text-slate-900 dark:text-white">
+            <div className="monte-header-title-block min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h2 className="text-sm sm:text-base font-bold tracking-tight m-0 text-slate-900 dark:text-white truncate">
                   FIRE Stress Simulator
                 </h2>
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 font-semibold">
+                <span className="text-[10px] sm:text-[11px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 font-semibold shrink-0">
                   {simCount >= 1000 ? `${(simCount / 1000).toFixed(0)}k` : simCount} Paths
                 </span>
                 {scenario !== 'baseline' && (
-                  <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 flex items-center gap-1">
+                  <span className="text-[10px] sm:text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 flex items-center gap-1 shrink-0">
                     <span>{activeScenarioMeta.icon}</span>
-                    <span className="truncate max-w-[130px] sm:max-w-none">{activeScenarioMeta.label}</span>
+                    <span className="truncate max-w-[90px] sm:max-w-none">{activeScenarioMeta.label}</span>
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 m-0 truncate mt-0.5 hidden sm:block">
+              <p className="monte-header-subtitle text-xs text-slate-500 dark:text-slate-400 m-0 truncate mt-0.5 hidden sm:block">
                 Stochastic lifespan modeling of Indian inflation, equity volatility, and sequence risk.
               </p>
             </div>
           </div>
 
           {/* Quick Header Actions */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="monte-header-actions flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Iterations Selector */}
-            <div className="flex items-center bg-slate-100 dark:bg-slate-900/80 rounded-lg p-0.5 border border-slate-200 dark:border-white/10 text-xs font-mono">
+            <div className="flex items-center bg-slate-100 dark:bg-slate-900/80 rounded-lg p-0.5 border border-slate-200 dark:border-white/10 text-xs font-mono shrink-0">
               <button
                 type="button"
                 onClick={() => setSimCount(5000)}
-                className={`px-2 py-1 rounded text-[11px] transition-all font-semibold ${
+                className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10.5px] sm:text-[11px] transition-all font-semibold ${
                   simCount === 5000
                     ? 'bg-white dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 shadow-sm'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -410,7 +418,7 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
               <button
                 type="button"
                 onClick={() => setSimCount(10000)}
-                className={`px-2 py-1 rounded text-[11px] transition-all font-semibold ${
+                className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10.5px] sm:text-[11px] transition-all font-semibold ${
                   simCount === 10000
                     ? 'bg-white dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 shadow-sm'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -426,7 +434,7 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                 title="Roll new stochastic seed"
                 aria-label="New random seed"
               >
-                <Dices size={13} />
+                <Dices size={12} />
               </button>
             </div>
 
@@ -434,18 +442,18 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
             <button
               type="button"
               onClick={handleCopyReport}
-              className="monte-btn-ghost hidden sm:flex items-center gap-1.5"
+              className="monte-btn-ghost hidden sm:inline-flex items-center gap-1.5 shrink-0"
               title="Copy Fiduciary Audit to Clipboard"
             >
-              {copiedReport ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+              {copiedReport ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
               <span>{copiedReport ? 'Copied' : 'Audit'}</span>
             </button>
 
-            {/* Close Modal */}
+            {/* Close Modal - Always pinned top right */}
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-1.5 sm:p-2 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
               aria-label="Close modal"
             >
               <X size={18} />
@@ -463,8 +471,11 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
               onClick={() => setActiveTab('overview')}
               className={`monte-segment-btn ${activeTab === 'overview' ? 'active' : ''}`}
             >
-              <TrendingUp size={14} />
-              <span>Overview &amp; Trajectory</span>
+              <TrendingUp size={13} className="shrink-0" />
+              <span>
+                <span className="monte-tab-label-short">Overview</span>
+                <span className="monte-tab-label-full">Overview &amp; Trajectory</span>
+              </span>
             </button>
 
             <button
@@ -472,8 +483,11 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
               onClick={() => setActiveTab('stress')}
               className={`monte-segment-btn ${activeTab === 'stress' ? 'active' : ''}`}
             >
-              <Flame size={14} />
-              <span>Stress Regimes (9)</span>
+              <Flame size={13} className="shrink-0" />
+              <span>
+                <span className="monte-tab-label-short">Crises (9)</span>
+                <span className="monte-tab-label-full">Stress Regimes (9)</span>
+              </span>
             </button>
 
             <button
@@ -481,8 +495,11 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
               onClick={() => setActiveTab('guardrails')}
               className={`monte-segment-btn ${activeTab === 'guardrails' ? 'active' : ''}`}
             >
-              <ShieldCheck size={14} />
-              <span>Guardrails &amp; SWR</span>
+              <ShieldCheck size={13} className="shrink-0" />
+              <span>
+                <span className="monte-tab-label-short">Guardrails</span>
+                <span className="monte-tab-label-full">Guardrails &amp; SWR</span>
+              </span>
             </button>
           </div>
         </nav>
@@ -490,7 +507,7 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
         {/* ================================================================= */}
         {/* 3. MAIN MODAL BODY                                                */}
         {/* ================================================================= */}
-        <div className="p-4 sm:p-6 flex-1 overflow-y-auto overflow-x-hidden space-y-5 min-h-0">
+        <div className="p-3 sm:p-5 flex-1 overflow-y-auto overflow-x-hidden space-y-4 min-h-0 monte-modal-body">
 
           {/* =============================================================== */}
           {/* TAB 1: OVERVIEW & TRAJECTORY                                    */}
@@ -655,23 +672,23 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
               {/* 1.2 CLEAN WEALTH TRAJECTORY RIBBON CHART */}
               <div className="monte-chart-wrapper">
                 <div className="monte-chart-header">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp size={15} className="text-cyan-500" />
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <TrendingUp size={14} className="text-cyan-500" />
                     <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
-                      Portfolio Wealth Corridor (30-Year Projection)
+                      Wealth Corridor
                     </span>
                   </div>
 
                   {/* Clean readout of currently scrubbed year */}
                   <div className="monte-scrub-readout">
                     <span className="text-slate-500 dark:text-slate-400">
-                      Yr {hoveredTrajectory.year} ({hoveredTrajectory.year <= result.accumulationYears ? 'Accumulation' : 'Retirement'}):
+                      Yr {hoveredTrajectory.year}:
                     </span>
                     <strong className="text-cyan-600 dark:text-cyan-400 ml-1">
-                      {formatINR(hoveredTrajectory.p50)} Expected
+                      {formatCompactINR(hoveredTrajectory.p50)} Expected
                     </strong>
-                    <span className="text-slate-400 dark:text-slate-500 text-[10px] hidden sm:inline ml-1.5">
-                      ({formatINR(hoveredTrajectory.p5)} – {formatINR(hoveredTrajectory.p95)})
+                    <span className="text-slate-400 dark:text-slate-500 text-[10px] ml-1">
+                      ({formatCompactINR(hoveredTrajectory.p5)} – {formatCompactINR(hoveredTrajectory.p95)})
                     </span>
                   </div>
                 </div>
@@ -680,7 +697,7 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                 <svg
                   ref={svgRef}
                   viewBox={`0 0 ${width} ${height}`}
-                  className="w-full h-56 sm:h-64 select-none cursor-crosshair touch-none"
+                  className="w-full h-52 sm:h-60 select-none cursor-crosshair touch-none"
                   onMouseMove={(e) => handlePointerInteraction(e.clientX)}
                   onMouseLeave={() => setHoveredYear(null)}
                   onTouchMove={(e) => e.touches?.[0] && handlePointerInteraction(e.touches[0].clientX)}
@@ -718,10 +735,10 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                           y={y + 3}
                           textAnchor="end"
                           fill="#94a3b8"
-                          fontSize="9.5"
+                          fontSize="9"
                           fontFamily="monospace"
                         >
-                          {formatINR(Math.round(val))}
+                          {formatCompactINR(val)}
                         </text>
                       </g>
                     );
@@ -825,7 +842,7 @@ Generated client-side via Pseudo-Fi Sovereign Actuarial Engine (Seed #${randomSe
                   </div>
 
                   <div className="text-[11px] text-slate-500 font-mono shrink-0 hidden sm:block">
-                    Terminal Surplus: <strong className="text-slate-900 dark:text-white">{formatINR(result.medianTerminalCorpus)}</strong>
+                    Terminal Surplus: <strong className="text-slate-900 dark:text-white">{formatCompactINR(result.medianTerminalCorpus)}</strong>
                   </div>
                 </div>
               </div>

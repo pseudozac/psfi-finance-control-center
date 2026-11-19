@@ -422,12 +422,10 @@ INSTRUCTIONS FOR RESTORATION:
         {/* Alerts / Notifications */}
         {error && (
           <div
+            className="vault-alert-error"
             style={{
               padding: '10px 14px',
               borderRadius: 12,
-              background: 'rgba(239, 68, 68, 0.14)',
-              border: '1px solid rgba(239, 68, 68, 0.4)',
-              color: '#fca5a5',
               fontSize: 12,
               display: 'flex',
               alignItems: 'center',
@@ -443,12 +441,10 @@ INSTRUCTIONS FOR RESTORATION:
 
         {success && (
           <div
+            className="vault-alert-success"
             style={{
               padding: '10px 14px',
               borderRadius: 12,
-              background: 'rgba(16, 185, 129, 0.15)',
-              border: '1px solid rgba(16, 185, 129, 0.4)',
-              color: '#6ee7b7',
               fontSize: 12,
               display: 'flex',
               alignItems: 'center',
