@@ -636,23 +636,25 @@ const CustomTerminalTooltip = ({ active, payload, label }: any) => {
     const data = payload[0].payload;
     return (
       <div className="terminal-tooltip-box font-mono">
-        <div className="terminal-tooltip-header">{data.label || label}</div>
+        <div className="terminal-tooltip-header" style={{ color: 'var(--ink-primary)' }}>
+          {data.label || label}
+        </div>
         <div className="terminal-tooltip-body">
           {data.inflow !== undefined && (
             <div className="flex-between gap-3 text-xs">
-              <span className="text-muted">Inflow Revenue:</span>
+              <span className="text-muted" style={{ color: 'var(--ink-muted)' }}>Inflow Revenue:</span>
               <span className="text-nebula font-bold">+₹{data.inflow.toLocaleString('en-IN')}</span>
             </div>
           )}
           {data.outflow !== undefined && (
             <div className="flex-between gap-3 text-xs">
-              <span className="text-muted">Outflow Burn:</span>
+              <span className="text-muted" style={{ color: 'var(--ink-muted)' }}>Outflow Burn:</span>
               <span className="text-corona font-bold">-₹{data.outflow.toLocaleString('en-IN')}</span>
             </div>
           )}
           {data.netPnL !== undefined && (
             <div className="flex-between gap-3 text-xs pt-1 border-t border-subtle">
-              <span className="text-muted">Net Cashflow P&L:</span>
+              <span className="text-muted" style={{ color: 'var(--ink-muted)' }}>Net Cashflow P&amp;L:</span>
               <span className={`font-bold ${data.netPnL >= 0 ? 'text-nebula' : 'text-corona'}`}>
                 {data.netPnL >= 0 ? '+' : ''}₹{data.netPnL.toLocaleString('en-IN')}
               </span>
@@ -660,7 +662,7 @@ const CustomTerminalTooltip = ({ active, payload, label }: any) => {
           )}
           {data.cumulativeValuation !== undefined && (
             <div className="flex-between gap-3 text-xs pt-1 border-t border-subtle">
-              <span className="text-muted">Valuation Equity:</span>
+              <span className="text-muted" style={{ color: 'var(--ink-muted)' }}>Valuation Equity:</span>
               <span className="text-quasar font-bold">₹{data.cumulativeValuation.toLocaleString('en-IN')}</span>
             </div>
           )}

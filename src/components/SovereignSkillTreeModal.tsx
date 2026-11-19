@@ -889,24 +889,12 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
               <div
                 className="astrolabe-floating-hud"
                 onClick={(e) => e.stopPropagation()}
-                style={{
-                  background: 'rgba(10, 14, 26, 0.94)',
-                  backdropFilter: 'blur(20px)',
-                  WebkitBackdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(139, 92, 246, 0.35)',
-                  borderRadius: '999px',
-                }}
               >
                 <div className="hud-wings-cluster">
                   <button
                     type="button"
                     className={`hud-pill ${selectedTier === 'all' ? 'active' : ''}`}
                     onClick={() => handleFilterTier('all')}
-                    style={{
-                      background: selectedTier === 'all' ? 'rgba(124, 79, 217, 0.35)' : 'rgba(255, 255, 255, 0.06)',
-                      border: selectedTier === 'all' ? '1px solid rgba(191, 159, 241, 0.75)' : '1px solid rgba(255, 255, 255, 0.12)',
-                      color: selectedTier === 'all' ? '#ffffff' : '#cbd5e1',
-                    }}
                     title="Full Constellation (15 Nodes)"
                   >
                     <span>🌌 All</span>
@@ -915,11 +903,6 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                     type="button"
                     className={`hud-pill hud-pill-citadel ${selectedTier === 'tier1_survival' ? 'active' : ''}`}
                     onClick={() => handleFilterTier('tier1_survival')}
-                    style={{
-                      background: selectedTier === 'tier1_survival' ? 'rgba(16, 185, 129, 0.28)' : 'rgba(255, 255, 255, 0.06)',
-                      border: selectedTier === 'tier1_survival' ? '1px solid rgba(16, 185, 129, 0.75)' : '1px solid rgba(255, 255, 255, 0.12)',
-                      color: selectedTier === 'tier1_survival' ? '#6ee7b7' : '#cbd5e1',
-                    }}
                     title="Focus Defensive Citadel (5 Nodes)"
                   >
                     <span>🛡️ Citadel</span>
@@ -929,11 +912,6 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                     type="button"
                     className={`hud-pill hud-pill-velocity ${selectedTier === 'tier2_velocity' ? 'active' : ''}`}
                     onClick={() => handleFilterTier('tier2_velocity')}
-                    style={{
-                      background: selectedTier === 'tier2_velocity' ? 'rgba(6, 182, 212, 0.28)' : 'rgba(255, 255, 255, 0.06)',
-                      border: selectedTier === 'tier2_velocity' ? '1px solid rgba(6, 182, 212, 0.75)' : '1px solid rgba(255, 255, 255, 0.12)',
-                      color: selectedTier === 'tier2_velocity' ? '#67e8f9' : '#cbd5e1',
-                    }}
                     title="Focus Compounding Velocity (5 Nodes)"
                   >
                     <span>⚡ Velocity</span>
@@ -943,11 +921,6 @@ Verified via Pseudo-Fi Client-Side Wealth Actuary
                     type="button"
                     className={`hud-pill hud-pill-autonomy ${selectedTier === 'tier3_autonomy' ? 'active' : ''}`}
                     onClick={() => handleFilterTier('tier3_autonomy')}
-                    style={{
-                      background: selectedTier === 'tier3_autonomy' ? 'rgba(245, 158, 11, 0.28)' : 'rgba(255, 255, 255, 0.06)',
-                      border: selectedTier === 'tier3_autonomy' ? '1px solid rgba(245, 158, 11, 0.75)' : '1px solid rgba(255, 255, 255, 0.12)',
-                      color: selectedTier === 'tier3_autonomy' ? '#fcd34d' : '#cbd5e1',
-                    }}
                     title="Focus Sovereign Autonomy (5 Nodes)"
                   >
                     <span>👑 Autonomy</span>

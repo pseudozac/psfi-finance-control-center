@@ -183,11 +183,36 @@ export function App() {
 
   // App phase control: loading -> gateway -> dashboard
   const [appPhase, setAppPhase] = useState<AppPhase>(() => {
-    if (typeof window !== 'undefined' && (window.location.search.includes('dashboard') || window.location.search.includes('skipIntro'))) {
-      return 'dashboard';
+    if (typeof window !== 'undefined') {
+      const search = window.location.search;
+      if (search.includes('gateway') || search.includes('switchVault')) {
+        return 'gateway';
+      }
+      try {
+        const hasActiveAccount = !!localStorage.getItem('psfi_active_account_id');
+        const hasAccounts = !!localStorage.getItem('psfi_accounts_v1');
+        const hasSession = sessionStorage.getItem('psfi_entered_dashboard') === 'true';
+        if (
+          search.includes('dashboard') ||
+          search.includes('skipIntro') ||
+          hasActiveAccount ||
+          hasAccounts ||
+          hasSession
+        ) {
+          return 'dashboard';
+        }
+      } catch {}
     }
     return 'loading';
   });
+
+  useEffect(() => {
+    if (appPhase === 'dashboard' && typeof window !== 'undefined') {
+      try {
+        sessionStorage.setItem('psfi_entered_dashboard', 'true');
+      } catch {}
+    }
+  }, [appPhase]);
   const [activeView, setActiveView] = useState<'control' | 'terminal'>('control');
   const [perspectiveTab, setPerspectiveTab] = useState<'cockpit' | 'cashflow' | 'tax-debt' | 'independence' | 'terminal'>(() => {
     if (typeof window !== 'undefined' && window.location.hash) {
@@ -665,7 +690,16 @@ export function App() {
 
   // Phase 1: Intro Loader
   if (appPhase === 'loading') {
-    return <IntroLoader onFinish={() => setAppPhase('gateway')} />;
+    return (
+      <IntroLoader
+        onFinish={() => {
+          try {
+            sessionStorage.setItem('psfi_entered_dashboard', 'true');
+          } catch {}
+          setAppPhase('dashboard');
+        }}
+      />
+    );
   }
 
   // Phase 2: Vault Storage Unlock / Recovery
