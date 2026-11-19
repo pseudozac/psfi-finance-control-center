@@ -640,7 +640,7 @@ export function App() {
     return (
       <IntroLoader
         onFinish={() => {
-          setAppPhase('dashboard');
+          setAppPhase('gateway');
         }}
       />
     );
